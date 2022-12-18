@@ -36,7 +36,7 @@ export class GraphClient {
                 .catch((error) => {
                     this.token = undefined;
                     vscode.window.registerTreeDataProvider(view, new SignInDataProvider());
-                    vscode.window.showInformationMessage("An authentication error occurred. Please ensure you are signed in to Azure CLI.");
+                    vscode.window.showInformationMessage("Please ensure you are signed in to Azure CLI.");
                 });
         } catch (error) {
             console.log("Error: " + error);

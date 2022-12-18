@@ -9,7 +9,7 @@ export class SignInDataProvider implements vscode.TreeDataProvider<TreeItem> {
 
     public getTreeItem(_element: TreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return {
-            label: <any>{ label: "Sign in to Azure CLI..." },
+            label: <any>{ label: "Sign in to Azure CLI with az login" },
             contextValue: "SIGNIN",
             iconPath: new vscode.ThemeIcon('sign-in')
         };
