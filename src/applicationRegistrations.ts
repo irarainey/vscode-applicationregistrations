@@ -10,6 +10,7 @@ export class ApplicationRegistrations {
     private filterText: string = '';
     private graphClient: GraphClient = new GraphClient();
     private subscriptions: vscode.Disposable[] = [];
+    private authenticated: boolean = false;
 
     constructor({ subscriptions }: vscode.ExtensionContext) {
         vscode.commands.registerCommand(`${view}.addApp`, () => this.addApp());
@@ -22,10 +23,21 @@ export class ApplicationRegistrations {
         vscode.commands.registerCommand(`${view}.openAppInPortal`, node => this.openAppInPortal(node));
         vscode.commands.registerCommand(`${view}.copyValue`, node => this.copyValue(node));
         this.subscriptions = subscriptions;
-        this.refreshApps();
+
+        vscode.window.registerTreeDataProvider(view, new LoadingDataProvider());
+
+        this.graphClient.authenticated = () => {
+            this.authenticated = true;
+            this.refreshApps();
+        };
     }
 
     private refreshApps(): void {
+        
+        if (!this.authenticated) {
+            return;
+        }
+
         vscode.window.registerTreeDataProvider(view, new LoadingDataProvider());
         this.graphClient.getApplicationsAll(this.filterCommand)
             .then((apps) => {
@@ -36,6 +48,11 @@ export class ApplicationRegistrations {
     };
 
     private async filterApps(): Promise<void> {
+
+        if (!this.authenticated) {
+            return;
+        }
+
         const filterText = await vscode.window.showInputBox({
             placeHolder: "Name starts with...",
             prompt: "Filter applications by display name",
@@ -54,6 +71,11 @@ export class ApplicationRegistrations {
     };
 
     private async addApp(): Promise<void> {
+
+        if (!this.authenticated) {
+            return;
+        }
+
         const newName = await vscode.window.showInputBox({
             placeHolder: "Application name...",
             prompt: "Create new application registration with display name",
