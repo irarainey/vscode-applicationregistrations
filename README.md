@@ -4,9 +4,17 @@
 
 This Visual Studio Code extension provides an easy way to view and manage Azure Application Registrations outside of the Azure Portal.
 
-It allows for the viewing, copying, and editing of most of the core application properties, such as Application Id; Sign In Audience; Redirect URIs; API Permissions; Exposed API Permissions; App Roles; and Owners.
+It allows for easy viewing, copying, adding, and editing of most the core application properties, such as:
 
-It also allows for the simple creation of new applications, quickly viewing of the full application manifest, and has the ability to open the application registration directly in the Azure Portal when you need full editing control. Once loaded, the application registration list can also be filtered by display name.
+* Application Id
+* Sign In Audience
+* Redirect URIs
+* API Permissions
+* Exposed API Permissions
+* App Roles
+* Owners
+
+It also allows for the simple creation of new applications, quickly viewing of the full application manifest in the editor, and has the ability to open the application registration directly in the Azure Portal when you need full editing control. Once loaded, the application registration list can also be filtered by display name.
 
 ![Application Registration List](resources/images/application_list.png)
 
