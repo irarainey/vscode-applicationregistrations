@@ -164,8 +164,23 @@ export class ApplicationRegistrations {
         vscode.window.showInformationMessage(`Value: ${item.label}`);
     };
 
-    public invokeSignIn(): void {
-        execShellCmd('az login')
+    public async invokeSignIn(): Promise<void> {
+
+        const tenant = await vscode.window.showInputBox({
+            placeHolder: "Tenant name or Id...",
+            prompt: "Enter the tenant name or Id, or leave blank for the default tenant",
+        });
+
+        if(tenant === undefined) {
+            return;
+        } 
+
+        let command = "az login";
+        if(tenant.length > 0) { 
+            command += ` --tenant ${tenant}`;
+        }
+
+        execShellCmd(command)
             .then(() => {
                 this.isUserAuthenticated(true);
             }).catch(() => {
