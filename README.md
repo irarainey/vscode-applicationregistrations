@@ -1,5 +1,6 @@
 # Azure Application Registration Management for VS Code
-<img style="float:left; padding-right:20px; padding-bottom:6px; margin-top:6px;" src="resources/images/app.png" width="125"/>
+
+![](resources/images/banner.png)
 
 This Visual Studio Code extension provides an easy way to view and manage Azure Application Registrations outside of the Azure Portal.
 
