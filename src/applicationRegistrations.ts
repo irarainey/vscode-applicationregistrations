@@ -172,12 +172,12 @@ export class ApplicationRegistrations {
             prompt: "Enter the tenant name or Id, or leave blank for the default tenant",
         });
 
-        if(tenant === undefined) {
+        if (tenant === undefined) {
             return;
-        } 
+        }
 
         let command = "az login";
-        if(tenant.length > 0) { 
+        if (tenant.length > 0) {
             command += ` --tenant ${tenant}`;
         }
 

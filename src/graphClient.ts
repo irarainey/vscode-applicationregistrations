@@ -41,11 +41,11 @@ export class GraphClient {
         // Attempt to get an access token to determine the authentication state
         try {
             credential.getToken(scope)
-                .then((_response) => {
+                .then(() => {
                     // If the access token is returned, the user is authenticated
                     this.authenticationStateChange(true);
                 })
-                .catch((_error) => {
+                .catch(() => {
                     // If the access token is not returned, the user is not authenticated
                     this.authenticationStateChange(false);
                 });
