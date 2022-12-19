@@ -63,15 +63,108 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                     new AppItem({
                         label: "Application Id",
                         context: "PROPERTY",
-                        children:
-                            [
-                                new AppItem({
-                                    label: app.appId!,
-                                    context: "VALUE"
+                        icon: new ThemeIcon("preview"),
+                        children: [
+                            new AppItem({
+                                label: app.appId!,
+                                context: "VALUE"
+                            })
+                        ]
+                    }),
+                    new AppItem({
+                        label: "Sign In Audience",
+                        context: "PROPERTY",
+                        icon: new ThemeIcon("account"),
+                        children: [
+                            new AppItem({
+                                label: app.signInAudience!,
+                                context: "VALUE"
+                            })
+                        ]
+                    }),
+                    new AppItem({
+                        label: "Redirect URIs",
+                        context: "PROPERTY",
+                        icon: new ThemeIcon("go-to-file"),
+                        children: [
+                            new AppItem({
+                                label: "Web",
+                                context: "PROPERTY",
+                                icon: new ThemeIcon("globe"),
+                                children: app.web?.redirectUris?.map(uri => {
+                                    return new AppItem({
+                                        label: uri,
+                                        context: "VALUE"
+                                    });
                                 })
-                            ]
-                    }
-                    )
+                            }),
+                            new AppItem({
+                                label: "SPA",
+                                context: "PROPERTY",
+                                icon: new ThemeIcon("browser"),
+                                children: app.spa?.redirectUris?.map(uri => {
+                                    return new AppItem({
+                                        label: uri,
+                                        context: "VALUE"
+                                    });
+                                })
+                            }),
+                            new AppItem({
+                                label: "Mobile and Desktop",
+                                context: "PROPERTY",
+                                icon: new ThemeIcon("editor-layout"),
+                                children: app.publicClient?.redirectUris?.map(uri => {
+                                    return new AppItem({
+                                        label: uri,
+                                        context: "VALUE"
+                                    });
+                                })
+                            })
+                        ]
+                    }),
+                    new AppItem({
+                        label: "Credentials",
+                        context: "PROPERTY",
+                        icon: new ThemeIcon("key"),
+                        children: [
+                            new AppItem({
+                                label: "Client Secrets",
+                                context: "PROPERTY",
+                                icon: new ThemeIcon("key"),
+                                children: []
+                            }),
+                            new AppItem({
+                                label: "Certificates",
+                                context: "PROPERTY",
+                                icon: new ThemeIcon("gist-secret"),
+                                children: []
+                            })
+                        ]
+                    }),
+                    new AppItem({
+                        label: "API Permissions",
+                        context: "PROPERTY",
+                        icon: new ThemeIcon("checklist"),
+                        children: []
+                    }),
+                    new AppItem({
+                        label: "Exposed API Permissions",
+                        context: "PROPERTY",
+                        icon: new ThemeIcon("list-tree"),
+                        children: []
+                    }),
+                    new AppItem({
+                        label: "App Roles",
+                        context: "PROPERTY",
+                        icon: new ThemeIcon("note"),
+                        children: []
+                    }),
+                    new AppItem({
+                        label: "Owners",
+                        context: "PROPERTY",
+                        icon: new ThemeIcon("organization"),
+                        children: []
+                    })
                 ]
             }
             ));
@@ -121,6 +214,11 @@ export class AppItem extends vscode.TreeItem {
         this.manifest = params.manifest;
         this.command = params.command;
 
+        if(params.icon !== undefined) { 
+            this.iconPath = params.icon;
+            return;
+        }
+
         // Determine the tree view item icon based on the context
         switch (params.context) {
             case "APPLICATION":
@@ -159,4 +257,5 @@ interface AppParams {
     manifest?: Application;
     children?: AppItem[];
     command?: vscode.Command;
+    icon?: ThemeIcon;
 }
