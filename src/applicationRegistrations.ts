@@ -19,6 +19,7 @@ export class ApplicationRegistrations {
         this.graphClient = graphClient;
         this.subscriptions = subscriptions;
         this.isUserAuthenticated = () => { };
+        vscode.window.registerTreeDataProvider(view, new LoadingDataProvider());
         this.determineAuthenticationState();
     }
 
