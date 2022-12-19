@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { execShellCmd } from './utils';
-import { view, portalUri } from './constants';
+import { portalUri } from './constants';
 import { GraphClient } from './graphClient';
 import { AppRegDataProvider, AppItem } from './appRegDataProvider';
 
