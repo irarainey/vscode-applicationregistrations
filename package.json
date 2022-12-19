@@ -38,10 +38,6 @@
     },
     "commands": [
       {
-        "command": "appRegistrations.signInToAzure",
-        "title": "Sign In to Azure CLI"
-      },
-      {
         "command": "appRegistrations.viewAppManifest",
         "title": "View Manifest"
       },

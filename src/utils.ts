@@ -1,11 +1,12 @@
-import * as cp from "child_process";
+import * as ChildProcess from "child_process";
 
-export const execShell = (cmd: string) =>
-new Promise<string>((resolve, reject) => {
-    cp.exec(cmd, (err, out) => {
-        if (err) {
-            return reject(err);
-        }
-        return resolve(out);
+// This function is used to execute shell commands
+export const execShellCmd = (cmd: string) =>
+    new Promise<string>((resolve, reject) => {
+        ChildProcess.exec(cmd, (error, response) => {
+            if (error) {
+                return reject(error);
+            }
+            return resolve(response);
+        });
     });
-});

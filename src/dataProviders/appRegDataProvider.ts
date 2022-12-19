@@ -2,12 +2,19 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { Application } from "@microsoft/microsoft-graph-types";
 
+// // This is the data provider for the tree view to load applications.
 export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
-    
+
+    // Private instance of the tree data
     private treeData: AppItem[] = [];
 
+    // Constructor
     constructor(apps: Application[]) {
+
+        // Iterate through the applications and create the tree data
         apps.forEach(app => {
+
+            // Create the tree view item for the application and it's children
             this.treeData.push(new AppItem({
                 label: app.displayName ? app.displayName : "Application",
                 context: "APPLICATION",
@@ -33,20 +40,26 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
         });
     }
 
+    // This is the event that is fired when the tree view is refreshed.
+    // Returns the children for the given element or root (if no element is passed).
     public getTreeItem(element: AppItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return element;
     }
 
+    // Returns the UI representation (AppItem) of the element that gets displayed in the view
     public getChildren(element?: AppItem | undefined): vscode.ProviderResult<AppItem[]> {
         if (element === undefined) {
             return this.treeData;
         }
         return element.children;
     }
+
 }
 
+// This is the data structure for the application registration tree view item
 export class AppItem extends vscode.TreeItem {
-    
+
+    // Public properties
     public children: AppItem[] | undefined;
     public context: string = "";
     public objectId?: string = "";
@@ -54,12 +67,14 @@ export class AppItem extends vscode.TreeItem {
     public manifest?: Application = {};
     public value?: string = "";
 
+    // Constructor
     constructor(params: AppParams) {
         super(
             params.label,
             params.children === undefined ? vscode.TreeItemCollapsibleState.None :
                 vscode.TreeItemCollapsibleState.Collapsed);
 
+        // Set the properties
         this.children = params.children;
         this.contextValue = params.context;
         this.value = params.value;
@@ -67,6 +82,7 @@ export class AppItem extends vscode.TreeItem {
         this.appId = params.appId;
         this.manifest = params.manifest;
 
+        // Determine the tree view item icon based on the context
         switch (params.context) {
             case "APPLICATION":
                 this.iconPath = path.join(__filename, '..', '..', '..', 'resources', "icons", "app.svg");
@@ -85,8 +101,10 @@ export class AppItem extends vscode.TreeItem {
                 break;
         }
     }
+
 }
 
+// This is the interface for the application registration tree view item parameters
 interface AppParams {
     label: string;
     context: string;

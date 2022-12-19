@@ -1,6 +1,27 @@
 import * as vscode from 'vscode';
+import { view } from './constants';
 import { ApplicationRegistrations } from './applicationRegistrations';
+import { GraphClient } from './graphClient';
 
+// This method is called when the extension is activated.
 export async function activate(context: vscode.ExtensionContext) {
-	new ApplicationRegistrations(context);
+
+	// Create a new instance of the GraphClient class.
+	const graphClient =	new GraphClient();
+
+	// Create a new instance of the ApplicationRegistrations class.
+	const appReg = new ApplicationRegistrations(graphClient, context);
+
+	// Register the commands.
+	vscode.commands.registerCommand(`${view}.addApp`, () => appReg.addApp());
+	vscode.commands.registerCommand(`${view}.deleteApp`, app => appReg.deleteApp(app));
+	vscode.commands.registerCommand(`${view}.renameApp`, app => appReg.renameApp(app));
+	vscode.commands.registerCommand(`${view}.refreshApps`, () => appReg.populateTreeView());
+	vscode.commands.registerCommand(`${view}.filterApps`, () => appReg.filterApps());
+	vscode.commands.registerCommand(`${view}.viewAppManifest`, app => appReg.viewAppManifest(app));
+	vscode.commands.registerCommand(`${view}.copyAppId`, app => appReg.copyAppId(app));
+	vscode.commands.registerCommand(`${view}.openAppInPortal`, app => appReg.openAppInPortal(app));
+	vscode.commands.registerCommand(`${view}.copyValue`, app => appReg.copyValue(app));
+	vscode.commands.registerCommand(`${view}.signInToAzure`, () => appReg.invokeSignIn());
+
 }

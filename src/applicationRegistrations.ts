@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { execShell } from './utils';
+import { execShellCmd } from './utils';
 import { view, portalUri } from './constants';
 import { GraphClient } from './graphClient';
 import { SignInDataProvider } from './dataProviders/signInDataProvider';
@@ -8,34 +8,24 @@ import { AppRegDataProvider, AppItem } from './dataProviders/appRegDataProvider'
 
 export class ApplicationRegistrations {
 
+    private graphClient: GraphClient;
     private filterCommand?: string = undefined;
     private filterText: string = '';
-    private graphClient: GraphClient = new GraphClient();
     private subscriptions: vscode.Disposable[] = [];
     private authenticated: boolean = false;
     public isUserAuthenticated: (state: boolean | undefined) => void;
 
-    constructor({ subscriptions }: vscode.ExtensionContext) {
-        vscode.commands.registerCommand(`${view}.addApp`, () => this.addApp());
-        vscode.commands.registerCommand(`${view}.deleteApp`, node => this.deleteApp(node));
-        vscode.commands.registerCommand(`${view}.renameApp`, node => this.renameApp(node));
-        vscode.commands.registerCommand(`${view}.refreshApps`, () => this.populateTreeView());
-        vscode.commands.registerCommand(`${view}.filterApps`, () => this.filterApps());
-        vscode.commands.registerCommand(`${view}.viewAppManifest`, node => this.viewAppManifest(node));
-        vscode.commands.registerCommand(`${view}.copyAppId`, node => this.copyAppId(node));
-        vscode.commands.registerCommand(`${view}.openAppInPortal`, node => this.openAppInPortal(node));
-        vscode.commands.registerCommand(`${view}.copyValue`, node => this.copyValue(node));
-        vscode.commands.registerCommand(`${view}.signInToAzure`, () => this.invokeSignIn());
-        vscode.window.registerTreeDataProvider(view, new LoadingDataProvider());
-        this.isUserAuthenticated = () => { };
+    constructor(graphClient: GraphClient, { subscriptions }: vscode.ExtensionContext) {
+        this.graphClient = graphClient;
         this.subscriptions = subscriptions;
+        this.isUserAuthenticated = () => { };
         this.determineAuthenticationState();
     }
 
     private determineAuthenticationState(): void {
         if (this.authenticated === false) {
             this.graphClient.initialise();
-            this.graphClient.isAuthenticated = (state: boolean | undefined) => {
+            this.graphClient.authenticationStateChange = (state: boolean | undefined) => {
                 if (state === true) {
                     this.authenticated = true;
                     this.populateTreeView();
@@ -55,18 +45,18 @@ export class ApplicationRegistrations {
         }
     }
 
-    private populateTreeView(): void {
+    public populateTreeView(): void {
         vscode.window.registerTreeDataProvider(view, new LoadingDataProvider());
         this.graphClient.getApplicationsAll(this.filterCommand)
             .then((apps) => {
                 vscode.window.registerTreeDataProvider(view, new AppRegDataProvider(apps));
-            }).catch((error) => {
+            }).catch(() => {
                 this.authenticated = false;
                 this.determineAuthenticationState();
             });
     };
 
-    private async filterApps(): Promise<void> {
+    public async filterApps(): Promise<void> {
 
         if (!this.authenticated) {
             return;
@@ -89,7 +79,7 @@ export class ApplicationRegistrations {
         }
     };
 
-    private async addApp(): Promise<void> {
+    public async addApp(): Promise<void> {
 
         if (!this.authenticated) {
             return;
@@ -102,8 +92,7 @@ export class ApplicationRegistrations {
 
         if (newName !== undefined) {
             this.graphClient.createApplication({ displayName: newName })
-                .then((response) => {
-                    console.log(response);
+                .then(() => {
                     this.populateTreeView();
                 }).catch((error) => {
                     console.error(error);
@@ -111,18 +100,16 @@ export class ApplicationRegistrations {
         }
     };
 
-    private async renameApp(node: AppItem): Promise<void> {
-        let app = node.manifest;
-
+    public async renameApp(app: AppItem): Promise<void> {
         const newName = await vscode.window.showInputBox({
             placeHolder: "New application name...",
             prompt: "Rename application with new display name",
-            value: app!.displayName!
+            value: app.manifest!.displayName!
         });
 
         if (newName !== undefined) {
-            this.graphClient.updateApplication(node.objectId!, { displayName: newName })
-                .then((response) => {
+            this.graphClient.updateApplication(app.objectId!, { displayName: newName })
+                .then(() => {
                     this.populateTreeView();
                 }).catch((error) => {
                     console.error(error);
@@ -131,12 +118,12 @@ export class ApplicationRegistrations {
 
     };
 
-    private deleteApp(node: AppItem): void {
+    public deleteApp(app: AppItem): void {
         vscode.window
-            .showInformationMessage(`Do you want to delete the application ${node.label}?`, "Yes", "No")
+            .showInformationMessage(`Do you want to delete the application ${app.label}?`, "Yes", "No")
             .then(answer => {
                 if (answer === "Yes") {
-                    this.graphClient.deleteApplication(node.objectId!)
+                    this.graphClient.deleteApplication(app.objectId!)
                         .then((response) => {
                             console.log(response);
                             this.populateTreeView();
@@ -148,40 +135,40 @@ export class ApplicationRegistrations {
 
     };
 
-    private copyAppId(node: AppItem): void {
-        vscode.env.clipboard.writeText(node.appId!);
-        vscode.window.showInformationMessage(`Application Id: ${node.appId}`);
+    public copyAppId(app: AppItem): void {
+        vscode.env.clipboard.writeText(app.appId!);
+        vscode.window.showInformationMessage(`Application Id: ${app.appId}`);
     };
 
-    private copyValue(node: AppItem): void {
-        vscode.env.clipboard.writeText(node.value!);
-        vscode.window.showInformationMessage(`Value: ${node.label}`);
-    };
-
-    private openAppInPortal(node: AppItem): void {
-        vscode.env.openExternal(vscode.Uri.parse(`${portalUri}${node.appId}`));
+    public openAppInPortal(app: AppItem): void {
+        vscode.env.openExternal(vscode.Uri.parse(`${portalUri}${app.appId}`));
     }
 
-    private async viewAppManifest(node: AppItem): Promise<void> {
+    public async viewAppManifest(app: AppItem): Promise<void> {
         const myProvider = new class implements vscode.TextDocumentContentProvider {
             onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
             onDidChange = this.onDidChangeEmitter.event;
             provideTextDocumentContent(uri: vscode.Uri): string {
-                return JSON.stringify(node.manifest, null, 4);
+                return JSON.stringify(app.manifest, null, 4);
             }
         };
         this.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('manifest', myProvider));
 
-        const uri = vscode.Uri.parse('manifest:' + node.label + ".json");
+        const uri = vscode.Uri.parse('manifest:' + app.label + ".json");
         const doc = await vscode.workspace.openTextDocument(uri);
         await vscode.window.showTextDocument(doc, { preview: false });
     };
 
-    private invokeSignIn(): void {
-        execShell('az login')
-            .then((out) => {
+    public copyValue(item: AppItem): void {
+        vscode.env.clipboard.writeText(item.value!);
+        vscode.window.showInformationMessage(`Value: ${item.label}`);
+    };
+
+    public invokeSignIn(): void {
+        execShellCmd('az login')
+            .then(() => {
                 this.isUserAuthenticated(true);
-            }).catch((error) => {
+            }).catch(() => {
                 this.isUserAuthenticated(false);
             });
     }
