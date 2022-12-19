@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
+import { execShell } from './utils';
 import { view, portalUri } from './constants';
 import { GraphClient } from './graphClient';
+import { SignInDataProvider } from './dataProviders/signInDataProvider';
 import { LoadingDataProvider } from './dataProviders/loadingDataProvider';
 import { AppRegDataProvider, AppItem } from './dataProviders/appRegDataProvider';
 
@@ -11,39 +13,56 @@ export class ApplicationRegistrations {
     private graphClient: GraphClient = new GraphClient();
     private subscriptions: vscode.Disposable[] = [];
     private authenticated: boolean = false;
+    public isUserAuthenticated: (state: boolean | undefined) => void;
 
     constructor({ subscriptions }: vscode.ExtensionContext) {
         vscode.commands.registerCommand(`${view}.addApp`, () => this.addApp());
         vscode.commands.registerCommand(`${view}.deleteApp`, node => this.deleteApp(node));
         vscode.commands.registerCommand(`${view}.renameApp`, node => this.renameApp(node));
-        vscode.commands.registerCommand(`${view}.refreshApps`, () => this.refreshApps());
+        vscode.commands.registerCommand(`${view}.refreshApps`, () => this.populateTreeView());
         vscode.commands.registerCommand(`${view}.filterApps`, () => this.filterApps());
         vscode.commands.registerCommand(`${view}.viewAppManifest`, node => this.viewAppManifest(node));
         vscode.commands.registerCommand(`${view}.copyAppId`, node => this.copyAppId(node));
         vscode.commands.registerCommand(`${view}.openAppInPortal`, node => this.openAppInPortal(node));
         vscode.commands.registerCommand(`${view}.copyValue`, node => this.copyValue(node));
-        this.subscriptions = subscriptions;
-
+        vscode.commands.registerCommand(`${view}.signInToAzure`, () => this.invokeSignIn());
         vscode.window.registerTreeDataProvider(view, new LoadingDataProvider());
-
-        this.graphClient.authenticated = () => {
-            this.authenticated = true;
-            this.refreshApps();
-        };
+        this.isUserAuthenticated = () => { };
+        this.subscriptions = subscriptions;
+        this.determineAuthenticationState();
     }
 
-    private refreshApps(): void {
-        
-        if (!this.authenticated) {
-            return;
+    private determineAuthenticationState(): void {
+        if (this.authenticated === false) {
+            this.graphClient.initialise();
+            this.graphClient.isAuthenticated = (state: boolean | undefined) => {
+                if (state === true) {
+                    this.authenticated = true;
+                    this.populateTreeView();
+                } else if (state === false) {
+                    vscode.window.registerTreeDataProvider(view, new SignInDataProvider());
+                    this.isUserAuthenticated = (state: boolean | undefined) => {
+                        if (state === true) {
+                            this.determineAuthenticationState();
+                        } else if (state === false) {
+                            vscode.window.showErrorMessage("Please sign in to Azure CLI.");
+                        }
+                    };
+                }
+            };
+        } else {
+            this.populateTreeView();
         }
+    }
 
+    private populateTreeView(): void {
         vscode.window.registerTreeDataProvider(view, new LoadingDataProvider());
         this.graphClient.getApplicationsAll(this.filterCommand)
             .then((apps) => {
                 vscode.window.registerTreeDataProvider(view, new AppRegDataProvider(apps));
             }).catch((error) => {
-                console.error(error);
+                this.authenticated = false;
+                this.determineAuthenticationState();
             });
     };
 
@@ -62,11 +81,11 @@ export class ApplicationRegistrations {
         if (filterText === '' || filterText === undefined) {
             this.filterCommand = undefined;
             this.filterText = '';
-            this.refreshApps();
+            this.populateTreeView();
         } else {
             this.filterText = filterText;
             this.filterCommand = `startsWith(displayName, \'${filterText}\')`;
-            this.refreshApps();
+            this.populateTreeView();
         }
     };
 
@@ -85,7 +104,7 @@ export class ApplicationRegistrations {
             this.graphClient.createApplication({ displayName: newName })
                 .then((response) => {
                     console.log(response);
-                    this.refreshApps();
+                    this.populateTreeView();
                 }).catch((error) => {
                     console.error(error);
                 });
@@ -104,7 +123,7 @@ export class ApplicationRegistrations {
         if (newName !== undefined) {
             this.graphClient.updateApplication(node.objectId!, { displayName: newName })
                 .then((response) => {
-                    this.refreshApps();
+                    this.populateTreeView();
                 }).catch((error) => {
                     console.error(error);
                 });
@@ -120,7 +139,7 @@ export class ApplicationRegistrations {
                     this.graphClient.deleteApplication(node.objectId!)
                         .then((response) => {
                             console.log(response);
-                            this.refreshApps();
+                            this.populateTreeView();
                         }).catch((error) => {
                             console.error(error);
                         });
@@ -157,4 +176,13 @@ export class ApplicationRegistrations {
         const doc = await vscode.workspace.openTextDocument(uri);
         await vscode.window.showTextDocument(doc, { preview: false });
     };
+
+    private invokeSignIn(): void {
+        execShell('az login')
+            .then((out) => {
+                this.isUserAuthenticated(true);
+            }).catch((error) => {
+                this.isUserAuthenticated(false);
+            });
+    }
 }

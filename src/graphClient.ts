@@ -1,7 +1,5 @@
 import "isomorphic-fetch";
-import * as vscode from 'vscode';
-import { view, scope } from './constants';
-import { SignInDataProvider } from './dataProviders/signInDataProvider';
+import { scope } from './constants';
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
@@ -9,14 +7,15 @@ import { Application } from "@microsoft/microsoft-graph-types";
 
 export class GraphClient {
 
-    private client: Client;
+    private client?: Client;
     public token?: string;
-    public authenticated: () => void;
+    public isAuthenticated: (state: boolean | undefined) => void;
 
     constructor() {
+        this.isAuthenticated = () => { };
+    }
 
-        this.authenticated = () => { };
-
+    public initialise(): void {
         const credential = new AzureCliCredential();
         const authProvider = new TokenCredentialAuthenticationProvider(credential, { scopes: [scope] });
         const clientOptions: ClientOptions = {
@@ -31,12 +30,11 @@ export class GraphClient {
             credential.getToken(scope)
                 .then((response) => {
                     this.token = response.token;
-                    this.authenticated();
+                    this.isAuthenticated(true);
                 })
                 .catch((error) => {
                     this.token = undefined;
-                    vscode.window.registerTreeDataProvider(view, new SignInDataProvider());
-                    vscode.window.showInformationMessage("Please ensure you are signed in to Azure CLI.");
+                    this.isAuthenticated(false);
                 });
         } catch (error) {
             console.log("Error: " + error);
@@ -44,19 +42,19 @@ export class GraphClient {
     }
 
     public async getApplicationsAll(filter?: string): Promise<Application[]> {
-        const request = await this.client.api("/applications/")
+        const request = await this.client!.api("/applications/")
             .filter(filter === undefined ? "" : filter)
             .get();
         return request.value;
     }
 
     public async deleteApplication(id: string): Promise<void> {
-        await this.client.api(`/applications/${id}`)
+        await this.client!.api(`/applications/${id}`)
             .delete();
     }
 
     public async createApplication(application: Application): Promise<Application> {
-        return await this.client.api("/applications/")
+        return await this.client!.api("/applications/")
             .post(application);
     }
 
@@ -75,7 +73,7 @@ export class GraphClient {
         delete application['tags'];
         delete application['tokenEncryptionKeyId'];
 
-        return await this.client.api(`/applications/${id}`)
+        return await this.client!.api(`/applications/${id}`)
             .update(application);
     }
 }
