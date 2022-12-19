@@ -4,7 +4,7 @@ import { signInCommandText } from './constants';
 import { ThemeIcon } from 'vscode';
 import { Application } from "@microsoft/microsoft-graph-types";
 
-// // This is the data provider for the tree view.
+// This is the data provider for the tree view.
 export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
 
     // Private instance of the tree data
