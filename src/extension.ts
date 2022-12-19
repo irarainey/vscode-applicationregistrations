@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { view } from './constants';
-import { ApplicationRegistrations } from './applicationRegistrations';
+import { AppRegDataProvider } from './appRegDataProvider';
 import { GraphClient } from './graphClient';
+import { ApplicationRegistrations } from './applicationRegistrations';
 
 // This method is called when the extension is activated.
 export async function activate(context: vscode.ExtensionContext) {
@@ -9,8 +10,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Create a new instance of the GraphClient class.
 	const graphClient =	new GraphClient();
 
+	// Create a new instance of the ApplicationDataProvider class.
+	const dataProvider = new AppRegDataProvider();
+
 	// Create a new instance of the ApplicationRegistrations class.
-	const appReg = new ApplicationRegistrations(graphClient, context);
+	const appReg = new ApplicationRegistrations(graphClient, dataProvider, context);
 
 	// Register the commands.
 	vscode.commands.registerCommand(`${view}.addApp`, () => appReg.addApp());
@@ -24,4 +28,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	vscode.commands.registerCommand(`${view}.copyValue`, app => appReg.copyValue(app));
 	vscode.commands.registerCommand(`${view}.signInToAzure`, () => appReg.invokeSignIn());
 
+	// Register the tree view data provider.
+	vscode.window.registerTreeDataProvider(view, dataProvider);
+
+	// Set the initial state of the tree view.
+	dataProvider.initialise("LOADING");
 }

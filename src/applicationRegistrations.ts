@@ -2,24 +2,23 @@ import * as vscode from 'vscode';
 import { execShellCmd } from './utils';
 import { view, portalUri } from './constants';
 import { GraphClient } from './graphClient';
-import { SignInDataProvider } from './dataProviders/signInDataProvider';
-import { LoadingDataProvider } from './dataProviders/loadingDataProvider';
-import { AppRegDataProvider, AppItem } from './dataProviders/appRegDataProvider';
+import { AppRegDataProvider, AppItem } from './appRegDataProvider';
 
 export class ApplicationRegistrations {
 
     private graphClient: GraphClient;
+    private dataProvider: AppRegDataProvider;
     private filterCommand?: string = undefined;
     private filterText: string = '';
     private subscriptions: vscode.Disposable[] = [];
     private authenticated: boolean = false;
     public isUserAuthenticated: (state: boolean | undefined) => void;
 
-    constructor(graphClient: GraphClient, { subscriptions }: vscode.ExtensionContext) {
+    constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider, { subscriptions }: vscode.ExtensionContext) {
         this.graphClient = graphClient;
         this.subscriptions = subscriptions;
         this.isUserAuthenticated = () => { };
-        vscode.window.registerTreeDataProvider(view, new LoadingDataProvider());
+        this.dataProvider = dataProvider;
         this.determineAuthenticationState();
     }
 
@@ -31,7 +30,7 @@ export class ApplicationRegistrations {
                     this.authenticated = true;
                     this.populateTreeView();
                 } else if (state === false) {
-                    vscode.window.registerTreeDataProvider(view, new SignInDataProvider());
+                    this.dataProvider.initialise("SIGNIN");
                     this.isUserAuthenticated = (state: boolean | undefined) => {
                         if (state === true) {
                             this.determineAuthenticationState();
@@ -47,10 +46,10 @@ export class ApplicationRegistrations {
     }
 
     public populateTreeView(): void {
-        vscode.window.registerTreeDataProvider(view, new LoadingDataProvider());
+        this.dataProvider.initialise("LOADING");
         this.graphClient.getApplicationsAll(this.filterCommand)
             .then((apps) => {
-                vscode.window.registerTreeDataProvider(view, new AppRegDataProvider(apps));
+                this.dataProvider.initialise("APPLICATIONS", apps);
             }).catch(() => {
                 this.authenticated = false;
                 this.determineAuthenticationState();
@@ -126,7 +125,6 @@ export class ApplicationRegistrations {
                 if (answer === "Yes") {
                     this.graphClient.deleteApplication(app.objectId!)
                         .then((response) => {
-                            console.log(response);
                             this.populateTreeView();
                         }).catch((error) => {
                             console.error(error);

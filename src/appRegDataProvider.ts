@@ -1,19 +1,57 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { signInCommandText } from './constants';
+import { ThemeIcon } from 'vscode';
 import { Application } from "@microsoft/microsoft-graph-types";
 
-// // This is the data provider for the tree view to load applications.
+// // This is the data provider for the tree view.
 export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
 
     // Private instance of the tree data
     private treeData: AppItem[] = [];
 
-    // Constructor
-    constructor(apps: Application[]) {
+    // This is the event that is fired when the tree view is refreshed.
+    private _onDidChangeTreeData: vscode.EventEmitter<AppItem | undefined | null | void> = new vscode.EventEmitter<AppItem | undefined | null | void>();
 
+    //Defines the event that is fired when the tree view is refreshed.
+    readonly onDidChangeTreeData: vscode.Event<AppItem | undefined | null | void> = this._onDidChangeTreeData.event;
+
+    // Initialises the tree view data based on the type of data to be displayed.
+    public initialise(type: string, apps?: Application[]) {
+
+        // Clear the tree data
+        this.treeData = [];
+
+        // Add the appropriate tree view item based on the type of data to be displayed.
+        switch (type) {
+            case "LOADING":
+                this.treeData.push(new AppItem({
+                    label: "Loading...",
+                    context: "LOADING"
+                }));
+                break;
+            case "SIGNIN":
+                this.treeData.push(new AppItem({
+                    label: signInCommandText,
+                    context: "SIGNIN",
+                    command: {
+                        command: "appRegistrations.signInToAzure",
+                        title: signInCommandText,
+                    }
+                }));
+                break;
+            case "APPLICATIONS":
+                this.buildTree(apps!);
+                break;
+        }
+
+        // Fire the event to refresh the tree view
+        this._onDidChangeTreeData.fire();
+    }
+
+    private buildTree(apps: Application[]) {
         // Iterate through the applications and create the tree data
-        apps.forEach(app => {
-
+        apps!.forEach(app => {
             // Create the tree view item for the application and it's children
             this.treeData.push(new AppItem({
                 label: app.displayName ? app.displayName : "Application",
@@ -81,23 +119,30 @@ export class AppItem extends vscode.TreeItem {
         this.objectId = params.objectId;
         this.appId = params.appId;
         this.manifest = params.manifest;
+        this.command = params.command;
 
         // Determine the tree view item icon based on the context
         switch (params.context) {
             case "APPLICATION":
-                this.iconPath = path.join(__filename, '..', '..', '..', 'resources', "icons", "app.svg");
+                this.iconPath = path.join(__filename, "..", "..", "resources", "icons", "app.svg");
                 break;
             case "PROPERTY":
                 this.iconPath = {
-                    light: path.join(__filename, '..', '..', '..', 'resources', "icons", "light", "property.svg"),
-                    dark: path.join(__filename, '..', '..', '..', 'resources', "icons", "dark", "property.svg")
+                    light: path.join(__filename, "..", "..", "resources", "icons", "light", "property.svg"),
+                    dark: path.join(__filename, "..", "..", "resources", "icons", "dark", "property.svg")
                 };
                 break;
             case "VALUE":
                 this.iconPath = {
-                    light: path.join(__filename, '..', '..', '..', 'resources', "icons", "light", "string.svg"),
-                    dark: path.join(__filename, '..', '..', '..', 'resources', "icons", "dark", "string.svg")
+                    light: path.join(__filename, "..", "..", "resources", "icons", "light", "string.svg"),
+                    dark: path.join(__filename, "..", "..", "resources", "icons", "dark", "string.svg")
                 };
+                break;
+            case "LOADING":
+                this.iconPath = new ThemeIcon("loading~spin");
+                break;
+            case "SIGNIN":
+                this.iconPath = new ThemeIcon("sign-in");
                 break;
         }
     }
@@ -113,4 +158,5 @@ interface AppParams {
     appId?: string;
     manifest?: Application;
     children?: AppItem[];
+    command?: vscode.Command;
 }
