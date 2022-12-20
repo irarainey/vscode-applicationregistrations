@@ -27,3 +27,13 @@ export const propertiesToIgnoreOnUpdate = [
     "tags",
     "tokenEncryptionKeyId"
 ];
+
+// A list of sign in audience options
+export const signInAudienceOptions = [
+    "Single Tenant",
+    "Multiple Tenants",
+    "Multiple Tenants and Personal Accounts"
+];
+
+// URI to the documentation for sign in audience
+export const signInAudienceDocumentation = "https://learn.microsoft.com/en-gb/azure/active-directory/develop/supported-accounts-validation";

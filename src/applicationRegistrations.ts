@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { execShellCmd } from './utils';
-import { portalUri } from './constants';
+import { portalUri, signInAudienceOptions, signInAudienceDocumentation } from './constants';
 import { GraphClient } from './graphClient';
 import { AppRegDataProvider, AppItem } from './appRegDataProvider';
 
@@ -218,37 +218,27 @@ export class ApplicationRegistrations {
     // Edits the application sign in audience.
     public async editAudience(item: AppItem): Promise<void> {
         // Prompt the user for the new audience.
-        const audience = await vscode.window.showQuickPick([
-            "Single Tenant",
-            "Multiple Tenants",
-            "Multiple Tenants and Personal Accounts"
-        ], {
+        const audience = await vscode.window.showQuickPick(signInAudienceOptions, {
             placeHolder: "Select the sign in audience...",
         });
 
         // If the new audience is not empty then update the application.
         if (audience !== undefined) {
             // Convert the audience to the correct format.
-            const newAudience = audience === "Single Tenant"
-                ? "AzureADMyOrg"
-                : audience === "Multiple Tenants"
-                    ? "AzureADMultipleOrgs"
-                    : "AzureADandPersonalMicrosoftAccount";
-
             // Update the application.
-            this.graphClient.updateApplication(item.objectId!, { signInAudience: newAudience })
+            this.graphClient.updateApplication(item.objectId!, { signInAudience: this.convertSignInAudience(audience) })
                 .then(() => {
                     // If the application is updated then populate the tree view.
                     this.populateTreeView();
                 }).catch(() => {
                     // If the application is not updated then show an error message and a link to the documentation.
                     vscode.window.showErrorMessage(
-                        "An error occurred while attempting to change the sign in audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at https://learn.microsoft.com/en-gb/azure/active-directory/develop/supported-accounts-validation.",
+                        `An error occurred while attempting to change the sign in audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at ${signInAudienceDocumentation}.`,
                         ...["OK", "Open Documentation"]
                         )
                         .then((answer) => {
                             if (answer === "Open Documentation") {
-                                vscode.env.openExternal(vscode.Uri.parse("https://learn.microsoft.com/en-gb/azure/active-directory/develop/supported-accounts-validation"));
+                                vscode.env.openExternal(vscode.Uri.parse(signInAudienceDocumentation));
                             }
                         });
                 });
@@ -282,5 +272,14 @@ export class ApplicationRegistrations {
             }).catch(() => {
                 this.isUserAuthenticated(false);
             });
+    }
+
+    // Converts the audience to the correct format as required for the manifest.
+    private convertSignInAudience(audience: string): string {
+        return audience === "Single Tenant"
+        ? "AzureADMyOrg"
+        : audience === "Multiple Tenants"
+            ? "AzureADMultipleOrgs"
+            : "AzureADandPersonalMicrosoftAccount";
     }
 }
