@@ -94,7 +94,7 @@ export class ApplicationRegistrations {
     };
 
     // Filters the applications by display name.
-    public async filterApps(): Promise<void> {
+    public filterApps(): void {
         // If the user is not authenticated then we don't want to do anything        
         if (!this.authenticated) {
             return;
@@ -107,7 +107,7 @@ export class ApplicationRegistrations {
             value: this.filterText
         }).then((newFilter) => {
             // Escape has been hit so we don't want to do anything.
-            if((newFilter === undefined) || (newFilter === '' && newFilter === (this.filterText ?? ""))) {
+            if ((newFilter === undefined) || (newFilter === '' && newFilter === (this.filterText ?? ""))) {
                 return;
             } else if (newFilter === '' && this.filterText !== '') {
                 this.filterCommand = undefined;
@@ -123,57 +123,60 @@ export class ApplicationRegistrations {
     };
 
     // Creates a new application registration.
-    public async addApp(): Promise<void> {
+    public addApp(): void {
         // If the user is not authenticated then we don't want to do anything        
         if (!this.authenticated) {
             return;
         }
 
         // Prompt the user for the new application name.
-        const newName = await vscode.window.showInputBox({
+        vscode.window.showInputBox({
             placeHolder: "Application name...",
             prompt: "Create new application registration",
-        });
-
-        // If the new application name is not empty then determine the sign in audience.
-        if (newName !== undefined) {
-            // Prompt the user for the sign in audience.
-            const audience = await vscode.window.showQuickPick(signInAudienceOptions, {
-                placeHolder: "Select the sign in audience...",
+        })
+            .then((newName) => {
+                // If the new application name is not empty then determine the sign in audience.
+                if (newName !== undefined) {
+                    // Prompt the user for the sign in audience.
+                    vscode.window.showQuickPick(signInAudienceOptions, {
+                        placeHolder: "Select the sign in audience...",
+                    })
+                        .then((audience) => {
+                            // If the sign in audience is not undefined then create the application.
+                            if (audience !== undefined) {
+                                this.graphClient.createApplication({ displayName: newName, signInAudience: this.convertSignInAudience(audience) })
+                                    .then(() => {
+                                        // If the application is created then populate the tree view.
+                                        this.populateTreeView();
+                                    }).catch((error) => {
+                                        console.error(error);
+                                    });
+                            }
+                        });
+                }
             });
-
-            // If the sign in audience is not undefined then create the application.
-            if (audience !== undefined) {
-                this.graphClient.createApplication({ displayName: newName, signInAudience: this.convertSignInAudience(audience) })
-                .then(() => {
-                    // If the application is created then populate the tree view.
-                    this.populateTreeView();
-                }).catch((error) => {
-                    console.error(error);
-                });
-            }
-        }
     };
 
     // Renames an application registration.
-    public async renameApp(app: AppItem): Promise<void> {
+    public renameApp(app: AppItem): void {
         // Prompt the user for the new application name.
-        const newName = await vscode.window.showInputBox({
+        vscode.window.showInputBox({
             placeHolder: "New application name...",
             prompt: "Rename application with new display name",
             value: app.manifest!.displayName!
-        });
-
-        // If the new application name is not empty then update the application.
-        if (newName !== undefined) {
-            this.graphClient.updateApplication(app.objectId!, { displayName: newName })
-                .then(() => {
-                    // If the application is updated then populate the tree view.
-                    this.populateTreeView();
-                }).catch((error) => {
-                    console.error(error);
-                });
-        }
+        })
+            .then((newName) => {
+                // If the new application name is not empty then update the application.
+                if (newName !== undefined) {
+                    this.graphClient.updateApplication(app.objectId!, { displayName: newName })
+                        .then(() => {
+                            // If the application is updated then populate the tree view.
+                            this.populateTreeView();
+                        }).catch((error) => {
+                            console.error(error);
+                        });
+                }
+            });
     };
 
     // Deletes an application registration.
@@ -209,47 +212,48 @@ export class ApplicationRegistrations {
     public openUserInPortal(user: AppItem): void {
         vscode.env.openExternal(vscode.Uri.parse(`${portalUserUri}${user.userId}`));
     }
-    
+
     // Adds a new owner to an application registration.
-    public async addOwner(item: AppItem): Promise<void> {
+    public addOwner(item: AppItem): void {
         // Prompt the user for the new owner.
-        const newOwner = await vscode.window.showInputBox({
+        vscode.window.showInputBox({
             placeHolder: "Enter user name or email address...",
             prompt: "Add new owner to application"
-        });
+        })
+            .then(async (newOwner) => {
+                // If the new owner name is not empty then add as an owner.
+                if (newOwner !== undefined) {
 
-        // If the new owner name is not empty then add as an owner.
-        if (newOwner !== undefined) {
+                    let userList: User[] = [];
+                    let identifier: string = "";
+                    if (newOwner.indexOf('@') > -1) {
+                        // Try to find the user by email.
+                        userList = await this.graphClient.findUserByEmail(newOwner);
+                        identifier = "email address";
+                    } else {
+                        // Try to find the user by name.
+                        userList = await this.graphClient.findUserByName(newOwner);
+                        identifier = "name";
+                    }
 
-            let userList: User[] = [];
-            let identifier: string = "";
-            if(newOwner.indexOf('@') > -1) {
-                // Try to find the user by email.
-                userList = await this.graphClient.findUserByEmail(newOwner);
-                identifier = "email address";
-            } else {
-                // Try to find the user by name.
-                userList = await this.graphClient.findUserByName(newOwner);
-                identifier = "name";
-            }
-
-            if (userList.length === 0) {
-                // User not found
-                vscode.window.showErrorMessage(`No user with the ${identifier} ${newOwner} was found in your directory.`);
-            } else if (userList.length > 1) {
-                // More than one user found
-                vscode.window.showErrorMessage(`More than one user with the ${identifier} ${newOwner} has been found in your directory.`);
-            } else {
-                // Sweet spot
-                this.graphClient.addApplicationOwner(item.objectId!, userList[0].id!)
-                    .then(() => {
-                        // If the application is updated then populate the tree view.
-                        this.populateTreeView();
-                    }).catch((error) => {
-                        console.error(error);
-                    });
-            }
-        }
+                    if (userList.length === 0) {
+                        // User not found
+                        vscode.window.showErrorMessage(`No user with the ${identifier} ${newOwner} was found in your directory.`);
+                    } else if (userList.length > 1) {
+                        // More than one user found
+                        vscode.window.showErrorMessage(`More than one user with the ${identifier} ${newOwner} has been found in your directory.`);
+                    } else {
+                        // Sweet spot
+                        this.graphClient.addApplicationOwner(item.objectId!, userList[0].id!)
+                            .then(() => {
+                                // If the application is updated then populate the tree view.
+                                this.populateTreeView();
+                            }).catch((error) => {
+                                console.error(error);
+                            });
+                    }
+                }
+            });
     }
 
     // Removes an owner from an application registration.
@@ -283,8 +287,8 @@ export class ApplicationRegistrations {
         this.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('manifest', myProvider));
 
         const uri = vscode.Uri.parse('manifest:' + app.label + ".json");
-        const doc = await vscode.workspace.openTextDocument(uri);
-        await vscode.window.showTextDocument(doc, { preview: false });
+        vscode.workspace.openTextDocument(uri)
+            .then(doc => vscode.window.showTextDocument(doc, { preview: false }));
     };
 
     // Copies the selected value to the clipboard.
@@ -293,33 +297,33 @@ export class ApplicationRegistrations {
     };
 
     // Edits the application sign in audience.
-    public async editAudience(item: AppItem): Promise<void> {
+    public editAudience(item: AppItem): void {
         // Prompt the user for the new audience.
-        const audience = await vscode.window.showQuickPick(signInAudienceOptions, {
+        vscode.window.showQuickPick(signInAudienceOptions, {
             placeHolder: "Select the sign in audience...",
-        });
-
-        // If the new audience is not empty then update the application.
-        if (audience !== undefined) {
-            // Convert the audience to the correct format.
-            // Update the application.
-            this.graphClient.updateApplication(item.objectId!, { signInAudience: this.convertSignInAudience(audience) })
-                .then(() => {
-                    // If the application is updated then populate the tree view.
-                    this.populateTreeView();
-                }).catch(() => {
-                    // If the application is not updated then show an error message and a link to the documentation.
-                    vscode.window.showErrorMessage(
-                        `An error occurred while attempting to change the sign in audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at ${signInAudienceDocumentation}.`,
-                        ...["OK", "Open Documentation"]
-                        )
-                        .then((answer) => {
-                            if (answer === "Open Documentation") {
-                                vscode.env.openExternal(vscode.Uri.parse(signInAudienceDocumentation));
-                            }
+        })
+            .then((audience) => {
+                // If the new audience is not empty then update the application.
+                if (audience !== undefined) {
+                    // Update the application.
+                    this.graphClient.updateApplication(item.objectId!, { signInAudience: this.convertSignInAudience(audience) })
+                        .then(() => {
+                            // If the application is updated then populate the tree view.
+                            this.populateTreeView();
+                        }).catch(() => {
+                            // If the application is not updated then show an error message and a link to the documentation.
+                            vscode.window.showErrorMessage(
+                                `An error occurred while attempting to change the sign in audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at ${signInAudienceDocumentation}.`,
+                                ...["OK", "Open Documentation"]
+                            )
+                                .then((answer) => {
+                                    if (answer === "Open Documentation") {
+                                        vscode.env.openExternal(vscode.Uri.parse(signInAudienceDocumentation));
+                                    }
+                                });
                         });
-                });
-        }
+                }
+            });
     }
 
     public addRedirectUri(item: AppItem): void {
@@ -347,38 +351,39 @@ export class ApplicationRegistrations {
     // Invokes the Azure CLI sign-in command.
     public async invokeSignIn(): Promise<void> {
         // Prompt the user for the tenant name or Id.
-        const tenant = await vscode.window.showInputBox({
+        vscode.window.showInputBox({
             placeHolder: "Tenant name or Id...",
             prompt: "Enter the tenant name or Id, or leave blank for the default tenant",
-        });
+        })
+            .then((tenant) => {
+                // If the tenant is undefined then we don't want to do anything because they pressed cancel.
+                if (tenant === undefined) {
+                    return;
+                }
 
-        // If the tenant is undefined then we don't want to do anything because they pressed cancel.
-        if (tenant === undefined) {
-            return;
-        }
+                // Build the command to invoke the Azure CLI sign-in command.
+                let command = "az login";
+                if (tenant.length > 0) {
+                    command += ` --tenant ${tenant}`;
+                }
 
-        // Build the command to invoke the Azure CLI sign-in command.
-        let command = "az login";
-        if (tenant.length > 0) {
-            command += ` --tenant ${tenant}`;
-        }
-
-        // Execute the command.
-        execShellCmd(command)
-            .then(() => {
-                // If the sign-in is successful then trigger the authentication state change.
-                this.isUserAuthenticated(true);
-            }).catch(() => {
-                this.isUserAuthenticated(false);
+                // Execute the command.
+                execShellCmd(command)
+                    .then(() => {
+                        // If the sign-in is successful then trigger the authentication state change.
+                        this.isUserAuthenticated(true);
+                    }).catch(() => {
+                        this.isUserAuthenticated(false);
+                    });
             });
     }
 
     // Converts the audience to the correct format as required for the manifest.
     private convertSignInAudience(audience: string): string {
         return audience === "Single Tenant"
-        ? "AzureADMyOrg"
-        : audience === "Multiple Tenants"
-            ? "AzureADMultipleOrgs"
-            : "AzureADandPersonalMicrosoftAccount";
+            ? "AzureADMyOrg"
+            : audience === "Multiple Tenants"
+                ? "AzureADMultipleOrgs"
+                : "AzureADandPersonalMicrosoftAccount";
     }
 }
