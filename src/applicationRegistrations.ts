@@ -215,25 +215,42 @@ export class ApplicationRegistrations {
         vscode.env.clipboard.writeText(item.contextValue === "COPY" ? item.value! : item.children![0].value!);
     };
 
-    // Edits the application sign-in audience.
+    // Edits the application sign in audience.
     public async editAudience(item: AppItem): Promise<void> {
-        // Prompt the user for the sign-in audience.
-        // The audience can be either "Single Tenant" or "Multiple Tenants".
-        // Audience cannot be set back to "AzureADandPersonalMicrosoftAccount" after creation.
+        // Prompt the user for the new audience.
         const audience = await vscode.window.showQuickPick([
             "Single Tenant",
-            "Multiple Tenants"
+            "Multiple Tenants",
+            "Multiple Tenants and Personal Accounts"
         ], {
             placeHolder: "Select the sign in audience...",
         });
 
+        // If the new audience is not empty then update the application.
         if (audience !== undefined) {
-            this.graphClient.updateApplication(item.objectId!, { signInAudience: audience === "Single Tenant" ? "AzureADMyOrg" : "AzureADMultipleOrgs" })
+            // Convert the audience to the correct format.
+            const newAudience = audience === "Single Tenant"
+                ? "AzureADMyOrg"
+                : audience === "Multiple Tenants"
+                    ? "AzureADMultipleOrgs"
+                    : "AzureADandPersonalMicrosoftAccount";
+
+            // Update the application.
+            this.graphClient.updateApplication(item.objectId!, { signInAudience: newAudience })
                 .then(() => {
                     // If the application is updated then populate the tree view.
                     this.populateTreeView();
-                }).catch((error) => {
-                    console.error(error);
+                }).catch(() => {
+                    // If the application is not updated then show an error message and a link to the documentation.
+                    vscode.window.showErrorMessage(
+                        "An error occurred while attempting to change the sign in audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at https://learn.microsoft.com/en-gb/azure/active-directory/develop/supported-accounts-validation.",
+                        ...["OK", "Open Documentation"]
+                        )
+                        .then((answer) => {
+                            if (answer === "Open Documentation") {
+                                vscode.env.openExternal(vscode.Uri.parse("https://learn.microsoft.com/en-gb/azure/active-directory/develop/supported-accounts-validation"));
+                            }
+                        });
                 });
         }
     }
