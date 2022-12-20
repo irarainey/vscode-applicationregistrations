@@ -1,5 +1,5 @@
 import "isomorphic-fetch";
-import { scope, propertiesToIgnoreOnUpdate } from './constants';
+import { scope, propertiesToIgnoreOnUpdate, directoryObjectsUri } from './constants';
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
@@ -95,7 +95,8 @@ export class GraphClient {
     public async addApplicationOwner(id: string, userId: string): Promise<void> {
         const request = await this.client!.api(`/applications/${id}/owners/$ref`)
             .post({
-                "@odata.id": `https://graph.microsoft.com/v1.0/directoryObjects/${userId}`
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                "@odata.id": `${directoryObjectsUri}${userId}`
             });
     }
 

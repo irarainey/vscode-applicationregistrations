@@ -15,6 +15,9 @@ export const portalAppUri = "https://portal.azure.com/#view/Microsoft_AAD_Regist
 // The URI to the User blade in the Azure Portal
 export const portalUserUri = "https://portal.azure.com/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/";
 
+// The URI to access directory objects in the Microsoft Graph API
+export const directoryObjectsUri = "https://graph.microsoft.com/v1.0/directoryObjects/";
+
 // A list of properties to ignore when updating an application registration
 export const propertiesToIgnoreOnUpdate = [
     "appId",
