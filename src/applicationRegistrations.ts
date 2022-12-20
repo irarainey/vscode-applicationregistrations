@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { execShellCmd } from './utils';
-import { portalUri, signInAudienceOptions, signInAudienceDocumentation } from './constants';
+import { portalAppUri, signInAudienceOptions, signInAudienceDocumentation, portalUserUri } from './constants';
 import { GraphClient } from './graphClient';
+import { User } from "@microsoft/microsoft-graph-types";
 import { AppRegDataProvider, AppItem } from './appRegDataProvider';
 
 // This class is responsible for managing the application registrations tree view.
@@ -84,7 +85,7 @@ export class ApplicationRegistrations {
         this.graphClient.getApplicationsAll(this.filterCommand)
             .then((apps) => {
                 // Initialise the data provider with the list of applications.
-                this.dataProvider.initialise("APPLICATIONS", apps);
+                this.dataProvider.initialise("APPLICATIONS", this.graphClient, apps);
             }).catch(() => {
                 // If there is an error then determine the authentication state.
                 this.authenticated = false;
@@ -199,7 +200,73 @@ export class ApplicationRegistrations {
 
     // Opens the application registration in the Azure Portal.
     public openAppInPortal(app: AppItem): void {
-        vscode.env.openExternal(vscode.Uri.parse(`${portalUri}${app.appId}`));
+        vscode.env.openExternal(vscode.Uri.parse(`${portalAppUri}${app.appId}`));
+    }
+
+    // Opens the user in the Azure Portal.
+    public openUserInPortal(user: AppItem): void {
+        vscode.env.openExternal(vscode.Uri.parse(`${portalUserUri}${user.userId}`));
+    }
+    
+    // Adds a new owner to an application registration.
+    public async addOwner(item: AppItem): Promise<void> {
+        // Prompt the user for the new owner.
+        const newOwner = await vscode.window.showInputBox({
+            placeHolder: "Enter user name or email address...",
+            prompt: "Add new owner to application"
+        });
+
+        // If the new owner name is not empty then add as an owner.
+        if (newOwner !== undefined) {
+
+            let userList: User[] = [];
+            let identifier: string = "";
+            if(newOwner.indexOf('@') > -1) {
+                // Try to find the user by email.
+                userList = await this.graphClient.findUserByEmail(newOwner);
+                identifier = "email address";
+            } else {
+                // Try to find the user by name.
+                userList = await this.graphClient.findUserByName(newOwner);
+                identifier = "name";
+            }
+
+            if (userList.length === 0) {
+                // User not found
+                vscode.window.showErrorMessage(`No user with the ${identifier} ${newOwner} was found in your directory.`);
+            } else if (userList.length > 1) {
+                // More than one user found
+                vscode.window.showErrorMessage(`More than one user with the ${identifier} ${newOwner} has been found in your directory.`);
+            } else {
+                // Sweet spot
+                this.graphClient.addApplicationOwner(item.objectId!, userList[0].id!)
+                    .then(() => {
+                        // If the application is updated then populate the tree view.
+                        this.populateTreeView();
+                    }).catch((error) => {
+                        console.error(error);
+                    });
+            }
+        }
+    }
+
+    // Removes an owner from an application registration.
+    public removeOwner(item: AppItem): void {
+        // Prompt the user to confirm the removal.
+        vscode.window
+            .showInformationMessage(`Do you want to remove ${item.label} as an owner of this application?`, "Yes", "No")
+            .then(answer => {
+                if (answer === "Yes") {
+                    // If the user confirms the removal then remove the user.
+                    this.graphClient.removeApplicationOwner(item.objectId!, item.userId!)
+                        .then(() => {
+                            // If the owner is removed then populate the tree view.
+                            this.populateTreeView();
+                        }).catch((error) => {
+                            console.error(error);
+                        });
+                }
+            });
     }
 
     // Opens the application manifest in a new editor window.

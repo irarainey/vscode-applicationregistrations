@@ -66,6 +66,18 @@
         "title": "Copy Value"
       },
       {
+        "command": "appRegistrations.openUserInPortal",
+        "title": "Open In Portal"
+      },
+      {
+        "command": "appRegistrations.addOwner",
+        "title": "Add Owner"
+      },
+      {
+        "command": "appRegistrations.removeOwner",
+        "title": "Remove Owner"
+      },
+      {
         "command": "appRegistrations.refreshApps",
         "title": "Refresh",
         "icon": {
@@ -128,6 +140,21 @@
           "command": "appRegistrations.openAppInPortal",
           "when": "view == appRegistrations && viewItem == APPLICATION",
           "group": "appRegistrations@3"
+        },
+        {
+          "command": "appRegistrations.addOwner",
+          "when": "view == appRegistrations && viewItem == OWNERS",
+          "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.removeOwner",
+          "when": "view == appRegistrations && viewItem == OWNER",
+          "group": "appRegistrations@1"
+        },
+        {
+          "command": "appRegistrations.openUserInPortal",
+          "when": "view == appRegistrations && viewItem == OWNER",
+          "group": "appRegistrations@2"
         },
         {
           "command": "appRegistrations.viewAppManifest",

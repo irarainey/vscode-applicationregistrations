@@ -9,8 +9,11 @@ export const signInCommandText = "Sign in to Azure CLI...";
 // The scope required when authenticating with Azure CLI
 export const scope = "https://graph.microsoft.com/.default";
 
-// The URI to the Azure Portal
-export const portalUri = "https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/";
+// The URI to the Application Registration blade in the Azure Portal
+export const portalAppUri = "https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/";
+
+// The URI to the User blade in the Azure Portal
+export const portalUserUri = "https://portal.azure.com/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/";
 
 // A list of properties to ignore when updating an application registration
 export const propertiesToIgnoreOnUpdate = [

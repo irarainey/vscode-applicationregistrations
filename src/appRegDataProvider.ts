@@ -3,9 +3,13 @@ import * as path from 'path';
 import { signInCommandText } from './constants';
 import { ThemeIcon, ThemeColor } from 'vscode';
 import { Application } from "@microsoft/microsoft-graph-types";
+import { GraphClient } from './graphClient';
 
 // This is the data provider for the tree view.
 export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
+
+    // A private instance of the GraphClient class.
+    private graphClient?: GraphClient;
 
     // Private instance of the tree data
     private treeData: AppItem[] = [];
@@ -17,7 +21,11 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
     readonly onDidChangeTreeData: vscode.Event<AppItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
     // Initialises the tree view data based on the type of data to be displayed.
-    public initialise(type: string, apps?: Application[]) {
+    public initialise(type: string, graphClient?: GraphClient, apps?: Application[]) {
+
+        if(graphClient !== undefined) { 
+            this.graphClient = graphClient;
+        }
 
         // Clear the tree data
         this.treeData = [];
@@ -176,10 +184,11 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                     }),
                     new AppItem({
                         label: "Owners",
-                        context: "PROPERTYARRAY",
+                        context: "OWNERS",
                         icon: new ThemeIcon("organization", new ThemeColor("editor.foreground")),
-                        children: []
-                    })
+                        objectId: app.id!,
+                        children: this.getApplicationOwners(app.id!)
+                    }),
                 ]
             }
             ));
@@ -200,6 +209,28 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
         return element.children;
     }
 
+    // Returns the owners of the application registration as an array of AppItem
+    private getApplicationOwners(objectId: string): AppItem[] {
+
+        let appOwners: AppItem[] = [];
+
+        this.graphClient?.getApplicationOwners(objectId)
+            .then(owners => {
+                owners.forEach(owner => {
+                    appOwners.push(new AppItem({
+                        label: owner.displayName!,
+                        context: "OWNER",
+                        icon: new ThemeIcon("person", new ThemeColor("editor.foreground")),
+                        objectId: objectId,
+                        userId: owner.id!
+                    }));
+                });
+            });
+
+        return appOwners;
+
+    }
+
 }
 
 // This is the data structure for the application registration tree view item
@@ -210,6 +241,7 @@ export class AppItem extends vscode.TreeItem {
     public context: string = "";
     public objectId?: string = "";
     public appId?: string = "";
+    public userId?: string = "";
     public manifest?: Application = {};
     public value?: string = "";
 
@@ -225,6 +257,7 @@ export class AppItem extends vscode.TreeItem {
         this.value = params.value;
         this.objectId = params.objectId;
         this.appId = params.appId;
+        this.userId = params.userId;
         this.manifest = params.manifest;
         this.command = params.command;
         this.iconPath = params.icon;
@@ -239,6 +272,7 @@ interface AppParams {
     value?: string;
     objectId?: string;
     appId?: string;
+    userId?: string;
     manifest?: Application;
     children?: AppItem[];
     command?: vscode.Command;
