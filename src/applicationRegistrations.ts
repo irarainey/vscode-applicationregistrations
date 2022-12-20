@@ -187,7 +187,6 @@ export class ApplicationRegistrations {
     // Copies the application Id to the clipboard.
     public copyAppId(app: AppItem): void {
         vscode.env.clipboard.writeText(app.appId!);
-        vscode.window.showInformationMessage(`Application Id: ${app.appId}`);
     };
 
     // Opens the application registration in the Azure Portal.
@@ -213,8 +212,7 @@ export class ApplicationRegistrations {
 
     // Copies the selected value to the clipboard.
     public copyValue(item: AppItem): void {
-        vscode.env.clipboard.writeText(item.value!);
-        vscode.window.showInformationMessage(`Value: ${item.label}`);
+        vscode.env.clipboard.writeText(item.contextValue === "COPY" ? item.value! : item.children![0].value!);
     };
 
     // Invokes the Azure CLI sign-in command.

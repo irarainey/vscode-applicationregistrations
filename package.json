@@ -132,7 +132,7 @@
         },
         {
           "command": "appRegistrations.copyValue",
-          "when": "view == appRegistrations && viewItem == VALUE",
+          "when": "view == appRegistrations && viewItem == COPY || viewItem == CHILDCOPY",
           "group": "appRegistrations@0"
         }
       ]

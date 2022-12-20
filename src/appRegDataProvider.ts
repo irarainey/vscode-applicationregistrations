@@ -65,19 +65,20 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                 children: [
                     new AppItem({
                         label: "Application Id",
-                        context: "PROPERTY",
+                        context: "CHILDCOPY",
                         icon: new ThemeIcon("preview"),
                         children: [
                             new AppItem({
                                 label: app.appId!,
-                                context: "VALUE",
+                                value: app.appId!,
+                                context: "COPY",
                                 icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                             })
                         ]
                     }),
                     new AppItem({
                         label: "Sign In Audience",
-                        context: "PROPERTY",
+                        context: "CHILDEDIT",
                         icon: new ThemeIcon("account"),
                         children: [
                             new AppItem({
@@ -86,14 +87,14 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                                     : app.signInAudience! === "AzureADMultipleOrgs"
                                         ? "Multi Tenant"
                                         : "Multi Tenant and Personal Accounts",
-                                context: "VALUE",
+                                context: "EDIT",
                                 icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                             })
                         ]
                     }),
                     new AppItem({
                         label: "Redirect URIs",
-                        context: "PROPERTY",
+                        context: "PROPERTYARRAY",
                         icon: new ThemeIcon("go-to-file", new ThemeColor("editor.foreground")),
                         children: [
                             new AppItem({
@@ -110,7 +111,7 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                             }),
                             new AppItem({
                                 label: "SPA",
-                                context: "PROPERTY",
+                                context: "PROPERTYARRAY",
                                 icon: new ThemeIcon("browser"),
                                 children: app.spa?.redirectUris?.map(uri => {
                                     return new AppItem({
@@ -122,7 +123,7 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                             }),
                             new AppItem({
                                 label: "Mobile and Desktop",
-                                context: "PROPERTY",
+                                context: "PROPERTYARRAY",
                                 icon: new ThemeIcon("editor-layout"),
                                 children: app.publicClient?.redirectUris?.map(uri => {
                                     return new AppItem({
@@ -136,18 +137,18 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                     }),
                     new AppItem({
                         label: "Credentials",
-                        context: "PROPERTY",
+                        context: "PROPERTYARRAY",
                         icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
                         children: [
                             new AppItem({
                                 label: "Client Secrets",
-                                context: "PROPERTY",
+                                context: "PROPERTYARRAY",
                                 icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
                                 children: []
                             }),
                             new AppItem({
                                 label: "Certificates",
-                                context: "PROPERTY",
+                                context: "PROPERTYARRAY",
                                 icon: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
                                 children: []
                             })
@@ -155,25 +156,25 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                     }),
                     new AppItem({
                         label: "API Permissions",
-                        context: "PROPERTY",
+                        context: "PROPERTYARRAY",
                         icon: new ThemeIcon("checklist", new ThemeColor("editor.foreground")),
                         children: []
                     }),
                     new AppItem({
                         label: "Exposed API Permissions",
-                        context: "PROPERTY",
+                        context: "PROPERTYARRAY",
                         icon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
                         children: []
                     }),
                     new AppItem({
                         label: "App Roles",
-                        context: "PROPERTY",
+                        context: "PROPERTYARRAY",
                         icon: new ThemeIcon("note", new ThemeColor("editor.foreground")),
                         children: []
                     }),
                     new AppItem({
                         label: "Owners",
-                        context: "PROPERTY",
+                        context: "PROPERTYARRAY",
                         icon: new ThemeIcon("organization", new ThemeColor("editor.foreground")),
                         children: []
                     })
