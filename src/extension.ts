@@ -25,6 +25,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	vscode.commands.registerCommand(`${view}.viewAppManifest`, app => appReg.viewAppManifest(app));
 	vscode.commands.registerCommand(`${view}.copyAppId`, app => appReg.copyAppId(app));
 	vscode.commands.registerCommand(`${view}.openAppInPortal`, app => appReg.openAppInPortal(app));
+	vscode.commands.registerCommand(`${view}.editAudience`, app => appReg.editAudience(app));
 	vscode.commands.registerCommand(`${view}.copyValue`, app => appReg.copyValue(app));
 	vscode.commands.registerCommand(`${view}.signInToAzure`, () => appReg.invokeSignIn());
 

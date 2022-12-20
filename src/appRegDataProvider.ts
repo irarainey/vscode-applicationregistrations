@@ -78,8 +78,9 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                     }),
                     new AppItem({
                         label: "Sign In Audience",
-                        context: "CHILDEDIT",
+                        context: "AUDIENCECHILDEDIT",
                         icon: new ThemeIcon("account"),
+                        objectId: app.id!,
                         children: [
                             new AppItem({
                                 label: app.signInAudience! === "AzureADMyOrg"
@@ -87,8 +88,9 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                                     : app.signInAudience! === "AzureADMultipleOrgs"
                                         ? "Multi Tenant"
                                         : "Multi Tenant and Personal Accounts",
-                                context: "EDIT",
-                                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                                context: "AUDIENCEEDIT",
+                                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                objectId: app.id!,
                             })
                         ]
                     }),

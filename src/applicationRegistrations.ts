@@ -215,6 +215,29 @@ export class ApplicationRegistrations {
         vscode.env.clipboard.writeText(item.contextValue === "COPY" ? item.value! : item.children![0].value!);
     };
 
+    // Edits the application sign-in audience.
+    public async editAudience(item: AppItem): Promise<void> {
+        // Prompt the user for the sign-in audience.
+        // The audience can be either "Single Tenant" or "Multiple Tenants".
+        // Audience cannot be set back to "AzureADandPersonalMicrosoftAccount" after creation.
+        const audience = await vscode.window.showQuickPick([
+            "Single Tenant",
+            "Multiple Tenants"
+        ], {
+            placeHolder: "Select the sign in audience...",
+        });
+
+        if (audience !== undefined) {
+            this.graphClient.updateApplication(item.objectId!, { signInAudience: audience === "Single Tenant" ? "AzureADMyOrg" : "AzureADMultipleOrgs" })
+                .then(() => {
+                    // If the application is updated then populate the tree view.
+                    this.populateTreeView();
+                }).catch((error) => {
+                    console.error(error);
+                });
+        }
+    }
+
     // Invokes the Azure CLI sign-in command.
     public async invokeSignIn(): Promise<void> {
         // Prompt the user for the tenant name or Id.

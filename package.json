@@ -58,6 +58,10 @@
         "title": "Open In Portal"
       },
       {
+        "command": "appRegistrations.editAudience",
+        "title": "Edit Audience"
+      },
+      {
         "command": "appRegistrations.copyValue",
         "title": "Copy Value"
       },
@@ -133,6 +137,11 @@
         {
           "command": "appRegistrations.copyValue",
           "when": "view == appRegistrations && viewItem == COPY || viewItem == CHILDCOPY",
+          "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.editAudience",
+          "when": "view == appRegistrations && viewItem == AUDIENCEEDIT || viewItem == AUDIENCECHILDEDIT",
           "group": "appRegistrations@0"
         }
       ]
