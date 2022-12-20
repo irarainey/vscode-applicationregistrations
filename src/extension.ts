@@ -31,6 +31,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	vscode.commands.registerCommand(`${view}.openUserInPortal`, user => appReg.openUserInPortal(user));
 	vscode.commands.registerCommand(`${view}.addOwner`, user => appReg.addOwner(user));
 	vscode.commands.registerCommand(`${view}.removeOwner`, user => appReg.removeOwner(user));
+	vscode.commands.registerCommand(`${view}.addRedirectUri`, app => appReg.addRedirectUri(app));
 
 	// Register the tree view data provider.
 	vscode.window.registerTreeDataProvider(view, dataProvider);

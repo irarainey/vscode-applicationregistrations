@@ -109,36 +109,36 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                         children: [
                             new AppItem({
                                 label: "Web",
-                                context: "PROPERTY",
+                                context: "REDIRECT-URI",
                                 icon: new ThemeIcon("globe"),
                                 children: app.web?.redirectUris?.map(uri => {
                                     return new AppItem({
                                         label: uri,
-                                        context: "VALUE",
+                                        context: "STRING",
                                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                                     });
                                 })
                             }),
                             new AppItem({
                                 label: "SPA",
-                                context: "PROPERTYARRAY",
+                                context: "REDIRECT-URI",
                                 icon: new ThemeIcon("browser"),
                                 children: app.spa?.redirectUris?.map(uri => {
                                     return new AppItem({
                                         label: uri,
-                                        context: "VALUE",
+                                        context: "STRING",
                                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                                     });
                                 })
                             }),
                             new AppItem({
                                 label: "Mobile and Desktop",
-                                context: "PROPERTYARRAY",
+                                context: "REDIRECT-URI",
                                 icon: new ThemeIcon("editor-layout"),
                                 children: app.publicClient?.redirectUris?.map(uri => {
                                     return new AppItem({
                                         label: uri,
-                                        context: "VALUE",
+                                        context: "STRING",
                                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                                     });
                                 })

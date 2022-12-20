@@ -38,6 +38,10 @@
     },
     "commands": [
       {
+        "command": "appRegistrations.addRedirectUri",
+        "title": "Add Redirect URI"
+      },
+      {
         "command": "appRegistrations.viewAppManifest",
         "title": "View Manifest"
       },
@@ -121,6 +125,11 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "appRegistrations.addRedirectUri",
+          "when": "view == appRegistrations && viewItem == REDIRECT-URI",
+          "group": "appRegistrations@0"
+        },
         {
           "command": "appRegistrations.renameApp",
           "when": "view == appRegistrations && viewItem == APPLICATION",

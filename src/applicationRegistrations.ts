@@ -18,7 +18,7 @@ export class ApplicationRegistrations {
     private filterCommand?: string = undefined;
 
     // A private string to store the filter text.
-    private filterText: string = '';
+    private filterText?: string = undefined;
 
     // A private array to store the subscriptions.
     private subscriptions: vscode.Disposable[] = [];
@@ -101,23 +101,25 @@ export class ApplicationRegistrations {
         }
 
         // Prompt the user for the filter text.
-        const filterText = await vscode.window.showInputBox({
+        vscode.window.showInputBox({
             placeHolder: "Name starts with...",
             prompt: "Filter applications by display name",
             value: this.filterText
+        }).then((newFilter) => {
+            // Escape has been hit so we don't want to do anything.
+            if((newFilter === undefined) || (newFilter === '' && newFilter === (this.filterText ?? ""))) {
+                return;
+            } else if (newFilter === '' && this.filterText !== '') {
+                this.filterCommand = undefined;
+                this.filterText = undefined;
+                this.populateTreeView();
+            } else if (newFilter !== '' && newFilter !== this.filterText) {
+                // If the filter text is not empty then set the filter command and filter text.
+                this.filterText = newFilter!;
+                this.filterCommand = `startsWith(displayName, \'${newFilter}\')`;
+                this.populateTreeView();
+            }
         });
-
-        // If the filter text is empty or undefined then clear the filter.
-        if (filterText === '' || filterText === undefined) {
-            this.filterCommand = undefined;
-            this.filterText = '';
-            this.populateTreeView();
-        } else {
-            // If the filter text is not empty then set the filter command and filter text.
-            this.filterText = filterText;
-            this.filterCommand = `startsWith(displayName, \'${filterText}\')`;
-            this.populateTreeView();
-        }
     };
 
     // Creates a new application registration.
@@ -318,6 +320,28 @@ export class ApplicationRegistrations {
                         });
                 });
         }
+    }
+
+    public addRedirectUri(item: AppItem): void {
+        // Prompt the user for the new redirect URI.
+        vscode.window.showInputBox({
+            placeHolder: "Enter redirect URI...",
+            prompt: "Add a new redirect URI to the application"
+        }).then((redirectUri) => {
+            // If the redirect URI is not empty then add it to the application.
+            if (redirectUri !== undefined && redirectUri.length > 0) {
+                const tmp = "";
+
+                // // Add the redirect URI to the application.
+                // this.graphClient.addRedirectUri(item.objectId!, redirectUri)
+                //     .then(() => {
+                //         // If the application is updated then populate the tree view.
+                //         this.populateTreeView();
+                //     }).catch((error) => {
+                //         console.error(error);
+                //     });
+            }
+        });
     }
 
     // Invokes the Azure CLI sign-in command.
