@@ -129,18 +129,26 @@ export class ApplicationRegistrations {
         // Prompt the user for the new application name.
         const newName = await vscode.window.showInputBox({
             placeHolder: "Application name...",
-            prompt: "Create new application registration with display name",
+            prompt: "Create new application registration",
         });
 
-        // If the new application name is not empty then create the application.
+        // If the new application name is not empty then determine the sign in audience.
         if (newName !== undefined) {
-            this.graphClient.createApplication({ displayName: newName })
+            // Prompt the user for the sign in audience.
+            const audience = await vscode.window.showQuickPick(signInAudienceOptions, {
+                placeHolder: "Select the sign in audience...",
+            });
+
+            // If the sign in audience is not undefined then create the application.
+            if (audience !== undefined) {
+                this.graphClient.createApplication({ displayName: newName, signInAudience: this.convertSignInAudience(audience) })
                 .then(() => {
                     // If the application is created then populate the tree view.
                     this.populateTreeView();
                 }).catch((error) => {
                     console.error(error);
                 });
+            }
         }
     };
 
