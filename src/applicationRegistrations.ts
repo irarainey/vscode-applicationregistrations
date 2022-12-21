@@ -347,14 +347,15 @@ export class ApplicationRegistrations {
             // If the redirect URI is not empty then add it to the application.
             if (redirectUri !== undefined && redirectUri.length > 0) {
 
-                if (this.validateRedirectUri(redirectUri, item.contextValue!) === false) {
-                    return;
-                }
-
                 let existingRedirectUris: string[] = item.children!.map((child) => {
                     return child.label!.toString();
                 });
+
                 // Validate the redirect URI.
+                if (this.validateRedirectUri(redirectUri, item.contextValue!, existingRedirectUris) === false) {
+                    return;
+                }
+
                 existingRedirectUris.push(redirectUri);
                 item.iconPath = new vscode.ThemeIcon("loading~spin");
                 this.dataProvider.triggerOnDidChangeTreeData();
@@ -408,35 +409,37 @@ export class ApplicationRegistrations {
                 // If the new application name is not empty then update the application.
                 if (updatedUri !== undefined && updatedUri !== uri.label!.toString()) {
 
-                    if (this.validateRedirectUri(updatedUri, uri.contextValue!) === false) {
+                    const parent = this.dataProvider.getParentApplication(uri.objectId!);
+                    let existingRedirectUris: string[] = [];
+
+                    // Get the existing redirect URIs.
+                    switch (uri.contextValue) {
+                        case "WEB-REDIRECT-URI":
+                            existingRedirectUris = parent.web!.redirectUris!;
+                            break;
+                        case "SPA-REDIRECT-URI":
+                            existingRedirectUris = parent.spa!.redirectUris!;
+                            break;
+                        case "NATIVE-REDIRECT-URI":
+                            existingRedirectUris = parent.publicClient!.redirectUris!;
+                            break;
+                    }
+
+                    // Validate the edited redirect URI.
+                    if (this.validateRedirectUri(updatedUri, uri.contextValue!, existingRedirectUris) === false) {
                         return;
                     }
 
-                    const parent = this.dataProvider.getParentApplication(uri.objectId!);
-                    let newArray: string[] = [];
+                    // Remove the old redirect URI and add the new one.
+                    existingRedirectUris.splice(existingRedirectUris.indexOf(uri.label!.toString()), 1);
+                    existingRedirectUris.push(updatedUri);
 
-                    // Remove the old redirect URI from the array and add the new one in
-                    switch (uri.contextValue) {
-                        case "WEB-REDIRECT-URI":
-                            parent.web!.redirectUris!.splice(parent.web!.redirectUris!.indexOf(uri.label!.toString()), 1);
-                            parent.web!.redirectUris!.push(updatedUri);
-                            newArray = parent.web!.redirectUris!;
-                            break;
-                        case "SPA-REDIRECT-URI":
-                            parent.spa!.redirectUris!.splice(parent.spa!.redirectUris!.indexOf(uri.label!.toString()), 1);
-                            parent.spa!.redirectUris!.push(updatedUri);
-                            newArray = parent.spa!.redirectUris!;
-                            break;
-                        case "NATIVE-REDIRECT-URI":
-                            parent.publicClient!.redirectUris!.splice(parent.publicClient!.redirectUris!.indexOf(uri.label!.toString()), 1);
-                            parent.publicClient!.redirectUris!.push(updatedUri);
-                            newArray = parent.publicClient!.redirectUris!;
-                            break;
-                    }
+                    // Show progress indicator.
                     uri.iconPath = new vscode.ThemeIcon("loading~spin");
                     this.dataProvider.triggerOnDidChangeTreeData();
+
                     // Update the application.
-                    this.updateRedirectUri(uri, newArray);
+                    this.updateRedirectUri(uri, existingRedirectUris);
                 }
             });
     };
@@ -473,7 +476,13 @@ export class ApplicationRegistrations {
     }
 
     // Validates the redirect URI as per https://learn.microsoft.com/en-us/azure/active-directory/develop/reply-url
-    private validateRedirectUri(uri: string, context: string): boolean {
+    private validateRedirectUri(uri: string, context: string, existingRedirectUris: string[]): boolean {
+
+        // Check to see if the redirect URI already exists.
+        if(existingRedirectUris.includes(uri)) {
+            vscode.window.showErrorMessage("The redirect URI specified already exists.");
+            return false;
+        }
 
         if (context === "WEB-REDIRECT-URI" || context === "WEB-REDIRECT") {
             // Check the redirect URI starts with https://
