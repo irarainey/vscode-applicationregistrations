@@ -8,7 +8,7 @@ import { ApplicationRegistrations } from './applicationRegistrations';
 export async function activate(context: vscode.ExtensionContext) {
 
 	// Create a new instance of the GraphClient class.
-	const graphClient =	new GraphClient();
+	const graphClient = new GraphClient();
 
 	// Create a new instance of the ApplicationDataProvider class.
 	const dataProvider = new AppRegDataProvider();

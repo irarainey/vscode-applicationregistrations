@@ -335,6 +335,11 @@ export class ApplicationRegistrations {
         }).then((redirectUri) => {
             // If the redirect URI is not empty then add it to the application.
             if (redirectUri !== undefined && redirectUri.length > 0) {
+
+                if(this.validateRedirectUri(redirectUri, item.contextValue!) === false) {
+                    return;
+                }
+
                 let existingRedirectUris: string[] = item.children!.map((child) => {
                     return child.label!.toString();
                 });
@@ -387,8 +392,14 @@ export class ApplicationRegistrations {
             .then((updatedUri) => {
                 // If the new application name is not empty then update the application.
                 if (updatedUri !== undefined && updatedUri !== uri.label!.toString()) {
+
+                    if(this.validateRedirectUri(updatedUri, uri.contextValue!) === false) {
+                        return;
+                    }
+
                     const parent = this.dataProvider.getParentApplication(uri.objectId!);
                     let newArray: string[] = [];
+
                     // Remove the old redirect URI from the array and add the new one in
                     switch (uri.contextValue) {
                         case "WEB-REDIRECT-URI":
@@ -442,6 +453,33 @@ export class ApplicationRegistrations {
                     console.error(error);
                 });
         }
+    }
+
+    // Validates the redirect URI as per https://learn.microsoft.com/en-us/azure/active-directory/develop/reply-url
+    private validateRedirectUri(uri: string, context: string): boolean {
+
+        if (context === "WEB-REDIRECT-URI" || context === "WEB-REDIRECT") {
+            // Check the redirect URI starts with https://
+            if(uri.startsWith("https://") === false && uri.startsWith("http://localhost") === false) {
+                vscode.window.showErrorMessage("The redirect URI is not valid. A redirect URI must start with https:// unless it is using http://localhost.");
+                return false;
+            }
+        }
+        else if (context === "SPA-REDIRECT-URI" || context === "SPA-REDIRECT" || context === "NATIVE-REDIRECT-URI" || context === "NATIVE-REDIRECT") {
+            // Check the redirect URI starts with https:// or http:// or customScheme://
+            if(uri.includes("://") === false) {
+                vscode.window.showErrorMessage("The redirect URI is not valid. A redirect URI must start with https, http, or customScheme://.");
+                return false;
+            }
+        }
+
+        // Check the length of the redirect URI.
+        if(uri.length > 256) {
+            vscode.window.showErrorMessage("The redirect URI is not valid. A redirect URI cannot be longer than 256 characters.");
+            return false;
+        }
+        
+        return true;
     }
 
     // Invokes the Azure CLI sign-in command.
