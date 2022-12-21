@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { execShellCmd } from './utils';
 import { portalAppUri, signInAudienceOptions, signInAudienceDocumentation, portalUserUri } from './constants';
 import { GraphClient } from './graphClient';
-import { User } from "@microsoft/microsoft-graph-types";
+import { Application, User } from "@microsoft/microsoft-graph-types";
 import { AppRegDataProvider, AppItem } from './appRegDataProvider';
 
 // This class is responsible for managing the application registrations tree view.
@@ -57,7 +57,7 @@ export class ApplicationRegistrations {
                 } else if (state === false) {
 
                     // If the user is not authenticated then prompt them to sign in.
-                    this.dataProvider.initialise("SIGNIN");
+                    this.dataProvider.initialise("SIGN-IN");
 
                     // Handle the authentication state change from the sign-in command.
                     this.isUserAuthenticated = (state: boolean | undefined) => {
@@ -326,6 +326,7 @@ export class ApplicationRegistrations {
             });
     }
 
+    // Adds a new redirect URI to an application registration.
     public addRedirectUri(item: AppItem): void {
         // Prompt the user for the new redirect URI.
         vscode.window.showInputBox({
@@ -334,18 +335,113 @@ export class ApplicationRegistrations {
         }).then((redirectUri) => {
             // If the redirect URI is not empty then add it to the application.
             if (redirectUri !== undefined && redirectUri.length > 0) {
-                const tmp = "";
-
-                // // Add the redirect URI to the application.
-                // this.graphClient.addRedirectUri(item.objectId!, redirectUri)
-                //     .then(() => {
-                //         // If the application is updated then populate the tree view.
-                //         this.populateTreeView();
-                //     }).catch((error) => {
-                //         console.error(error);
-                //     });
+                let existingRedirectUris: string[] = item.children!.map((child) => {
+                    return child.label!.toString();
+                });
+                // Validate the redirect URI.
+                existingRedirectUris.push(redirectUri);
+                this.updateRedirectUri(item.contextValue!, item.objectId!, existingRedirectUris);
             }
         });
+    }
+
+    // Deletes a redirect URI.
+    public deleteRedirectUri(uri: AppItem): void {
+        // Prompt the user to confirm the deletion.
+        vscode.window
+            .showInformationMessage(`Do you want to delete the Redirect URI ${uri.label!}?`, "Yes", "No")
+            .then(answer => {
+                if (answer === "Yes") {
+                    // Get the parent application so we can read the manifest.
+                    const parent = this.dataProvider.getParentApplication(uri.objectId!);
+                    let newArray: string[] = [];
+                    // Remove the redirect URI from the array.
+                    switch (uri.contextValue) {
+                        case "WEB-REDIRECT-URI":
+                            parent.web!.redirectUris!.splice(parent.web!.redirectUris!.indexOf(uri.label!.toString()), 1);
+                            newArray = parent.web!.redirectUris!;
+                            break;
+                        case "SPA-REDIRECT-URI":
+                            parent.spa!.redirectUris!.splice(parent.spa!.redirectUris!.indexOf(uri.label!.toString()), 1);
+                            newArray = parent.spa!.redirectUris!;
+                            break;
+                        case "NATIVE-REDIRECT-URI":
+                            parent.publicClient!.redirectUris!.splice(parent.publicClient!.redirectUris!.indexOf(uri.label!.toString()), 1);
+                            newArray = parent.publicClient!.redirectUris!;
+                            break;
+                    }
+                    // Update the application.
+                    this.updateRedirectUri(uri.contextValue!, uri.objectId!, newArray);
+                }
+            });
+    };
+
+    // Edits a redirect URI.   
+    public editRedirectUri(uri: AppItem): void {
+        // Prompt the user for the new application name.
+        vscode.window.showInputBox({
+            placeHolder: "New application name...",
+            prompt: "Rename application with new display name",
+            value: uri.label!.toString()
+            })
+            .then((updatedUri) => {
+                // If the new application name is not empty then update the application.
+                if (updatedUri !== undefined && updatedUri !== uri.label!.toString()) {
+                    const parent = this.dataProvider.getParentApplication(uri.objectId!);
+                    let newArray: string[] = [];
+                    // Remove the old redirect URI from the array and add the new one in
+                    switch (uri.contextValue) {
+                        case "WEB-REDIRECT-URI":
+                            parent.web!.redirectUris!.splice(parent.web!.redirectUris!.indexOf(uri.label!.toString()), 1);
+                            parent.web!.redirectUris!.push(updatedUri);
+                            newArray = parent.web!.redirectUris!;
+                            break;
+                        case "SPA-REDIRECT-URI":
+                            parent.spa!.redirectUris!.splice(parent.spa!.redirectUris!.indexOf(uri.label!.toString()), 1);
+                            parent.spa!.redirectUris!.push(updatedUri);
+                            newArray = parent.spa!.redirectUris!;
+                            break;
+                        case "NATIVE-REDIRECT-URI":
+                            parent.publicClient!.redirectUris!.splice(parent.publicClient!.redirectUris!.indexOf(uri.label!.toString()), 1);
+                            parent.publicClient!.redirectUris!.push(updatedUri);
+                            newArray = parent.publicClient!.redirectUris!;
+                            break;
+                    }
+                    // Update the application.
+                    this.updateRedirectUri(uri.contextValue!, uri.objectId!, newArray);
+                }
+            });
+    };
+
+    private updateRedirectUri(contextValue: string, objectId: string, redirectUris: string[]): void {
+        // Determine which section to add the redirect URI to.
+        if (contextValue === "WEB-REDIRECT-URI" || contextValue === "WEB-REDIRECT") {
+            this.graphClient.updateApplication(objectId, { web: { redirectUris: redirectUris } })
+                .then(() => {
+                    // If the application is updated then populate the tree view.
+                    this.populateTreeView();
+                }).catch((error) => {
+                    console.error(error);
+                });
+        }
+        else if (contextValue === "SPA-REDIRECT-URI" || contextValue === "SPA-REDIRECT") {
+            this.graphClient.updateApplication(objectId, { spa: { redirectUris: redirectUris } })
+                .then(() => {
+                    // If the application is updated then populate the tree view.
+                    this.populateTreeView();
+                }).catch((error) => {
+                    console.error(error);
+                });
+        }
+        else if (contextValue === "NATIVE-REDIRECT-URI" || contextValue === "NATIVE-REDIRECT") {
+            this.graphClient.updateApplication(objectId, { publicClient: { redirectUris: redirectUris } })
+                .then(() => {
+                    // If the application is updated then populate the tree view.
+                    this.populateTreeView();
+                }).catch((error) => {
+                    console.error(error);
+                });
+        }
     }
 
     // Invokes the Azure CLI sign-in command.

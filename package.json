@@ -42,6 +42,14 @@
         "title": "Add Redirect URI"
       },
       {
+        "command": "appRegistrations.editRedirectUri",
+        "title": "Edit Redirect URI"
+      },
+      {
+        "command": "appRegistrations.deleteRedirectUri",
+        "title": "Delete Redirect URI"
+      },
+      {
         "command": "appRegistrations.viewAppManifest",
         "title": "View Manifest"
       },
@@ -127,8 +135,18 @@
       "view/item/context": [
         {
           "command": "appRegistrations.addRedirectUri",
-          "when": "view == appRegistrations && viewItem == REDIRECT-URI",
+          "when": "view == appRegistrations && viewItem == WEB-REDIRECT || viewItem == SPA-REDIRECT || viewItem == NATIVE-REDIRECT",
           "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.editRedirectUri",
+          "when": "view == appRegistrations && viewItem == WEB-REDIRECT-URI || viewItem == SPA-REDIRECT-URI || viewItem == NATIVE-REDIRECT-URI",
+          "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.deleteRedirectUri",
+          "when": "view == appRegistrations && viewItem == WEB-REDIRECT-URI || viewItem == SPA-REDIRECT-URI || viewItem == NATIVE-REDIRECT-URI",
+          "group": "appRegistrations@1"
         },
         {
           "command": "appRegistrations.renameApp",
@@ -172,12 +190,12 @@
         },
         {
           "command": "appRegistrations.copyValue",
-          "when": "view == appRegistrations && viewItem == COPY || viewItem == CHILDCOPY",
+          "when": "view == appRegistrations && viewItem == COPY || viewItem == CHILD-COPY",
           "group": "appRegistrations@0"
         },
         {
           "command": "appRegistrations.editAudience",
-          "when": "view == appRegistrations && viewItem == AUDIENCEEDIT || viewItem == AUDIENCECHILDEDIT",
+          "when": "view == appRegistrations && viewItem == AUDIENCE-EDIT || viewItem == AUDIENCE-CHILD-EDIT",
           "group": "appRegistrations@0"
         }
       ]
