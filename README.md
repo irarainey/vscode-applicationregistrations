@@ -33,4 +33,4 @@ This extension was created both as a learning exercise, and to address the commo
 It has a dependency on the [Azure Tools extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack), but only because it places the application registrations view into the Azure view container.
 
 ## Known Limitations
-Due to the eventual consistency of Azure Active Directory, occasionally when adding, editing, or deleting objects they do not show correctly when the tree view renders after the change. If this happens just refresh the list again.
+Due to the [eventual consistency](https://blogs.aaddevsup.xyz/2021/08/why-do-i-sometimes-get-a-404-when-trying-to-update-an-azure-directory-object-after-i-just-created-it/) of Azure Active Directory, occasionally when adding, editing, or deleting objects they do not show correctly when the tree view renders after the change. If this happens just refresh the list again.
