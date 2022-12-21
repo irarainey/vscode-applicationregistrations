@@ -336,7 +336,7 @@ export class ApplicationRegistrations {
             // If the redirect URI is not empty then add it to the application.
             if (redirectUri !== undefined && redirectUri.length > 0) {
 
-                if(this.validateRedirectUri(redirectUri, item.contextValue!) === false) {
+                if (this.validateRedirectUri(redirectUri, item.contextValue!) === false) {
                     return;
                 }
 
@@ -388,12 +388,12 @@ export class ApplicationRegistrations {
             placeHolder: "New application name...",
             prompt: "Rename application with new display name",
             value: uri.label!.toString()
-            })
+        })
             .then((updatedUri) => {
                 // If the new application name is not empty then update the application.
                 if (updatedUri !== undefined && updatedUri !== uri.label!.toString()) {
 
-                    if(this.validateRedirectUri(updatedUri, uri.contextValue!) === false) {
+                    if (this.validateRedirectUri(updatedUri, uri.contextValue!) === false) {
                         return;
                     }
 
@@ -460,25 +460,25 @@ export class ApplicationRegistrations {
 
         if (context === "WEB-REDIRECT-URI" || context === "WEB-REDIRECT") {
             // Check the redirect URI starts with https://
-            if(uri.startsWith("https://") === false && uri.startsWith("http://localhost") === false) {
+            if (uri.startsWith("https://") === false && uri.startsWith("http://localhost") === false) {
                 vscode.window.showErrorMessage("The redirect URI is not valid. A redirect URI must start with https:// unless it is using http://localhost.");
                 return false;
             }
         }
         else if (context === "SPA-REDIRECT-URI" || context === "SPA-REDIRECT" || context === "NATIVE-REDIRECT-URI" || context === "NATIVE-REDIRECT") {
             // Check the redirect URI starts with https:// or http:// or customScheme://
-            if(uri.includes("://") === false) {
+            if (uri.includes("://") === false) {
                 vscode.window.showErrorMessage("The redirect URI is not valid. A redirect URI must start with https, http, or customScheme://.");
                 return false;
             }
         }
 
         // Check the length of the redirect URI.
-        if(uri.length > 256) {
+        if (uri.length > 256) {
             vscode.window.showErrorMessage("The redirect URI is not valid. A redirect URI cannot be longer than 256 characters.");
             return false;
         }
-        
+
         return true;
     }
 
