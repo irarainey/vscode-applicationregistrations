@@ -311,7 +311,7 @@ export class ApplicationRegistrations {
                 // If the new audience is not empty then update the application.
                 if (audience !== undefined) {
                     // Update the application.
-                    if(item.contextValue! === "AUDIENCE-CHILD-EDIT") {
+                    if(item.contextValue! === "AUDIENCE-PARENT") {
                         item.children![0].iconPath = new vscode.ThemeIcon("loading~spin");
                     } else {
                         item.iconPath = new vscode.ThemeIcon("loading~spin");

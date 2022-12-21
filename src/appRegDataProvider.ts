@@ -78,7 +78,7 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                 children: [
                     new AppItem({
                         label: "Application Id",
-                        context: "CHILD-COPY",
+                        context: "APPID-PARENT",
                         icon: new ThemeIcon("preview"),
                         children: [
                             new AppItem({
@@ -91,7 +91,7 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                     }),
                     new AppItem({
                         label: "Sign In Audience",
-                        context: "AUDIENCE-CHILD-EDIT",
+                        context: "AUDIENCE-PARENT",
                         icon: new ThemeIcon("account"),
                         objectId: app.id!,
                         children: [
@@ -101,7 +101,7 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                                     : app.signInAudience! === "AzureADMultipleOrgs"
                                         ? "Multi Tenant"
                                         : "Multi Tenant and Personal Accounts",
-                                context: "AUDIENCE-EDIT",
+                                context: "AUDIENCE",
                                 icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                                 objectId: app.id!,
                             })
@@ -109,7 +109,7 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                     }),
                     new AppItem({
                         label: "Redirect URIs",
-                        context: "PROPERTY-ARRAY",
+                        context: "REDIRECT-PARENT",
                         icon: new ThemeIcon("go-to-file", new ThemeColor("editor.foreground")),
                         objectId: app.id!,
                         children: [
@@ -268,6 +268,7 @@ export class AppItem extends vscode.TreeItem {
 
         // Call the base constructor
         super(params.label, params.children === undefined ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
+        
         // Set the remaining properties
         this.children = params.children;
         this.contextValue = params.context;

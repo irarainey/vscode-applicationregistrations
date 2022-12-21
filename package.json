@@ -190,12 +190,12 @@
         },
         {
           "command": "appRegistrations.copyValue",
-          "when": "view == appRegistrations && viewItem == COPY || viewItem == CHILD-COPY",
+          "when": "view == appRegistrations && viewItem == COPY || viewItem == APPID-PARENT",
           "group": "appRegistrations@0"
         },
         {
           "command": "appRegistrations.editAudience",
-          "when": "view == appRegistrations && viewItem == AUDIENCE-EDIT || viewItem == AUDIENCE-CHILD-EDIT",
+          "when": "view == appRegistrations && viewItem == AUDIENCE || viewItem == AUDIENCE-PARENT",
           "group": "appRegistrations@0"
         }
       ]
