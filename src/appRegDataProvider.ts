@@ -59,6 +59,11 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
         this._onDidChangeTreeData.fire();
     }
 
+    // Trigger the event to refresh the tree view
+    public triggerOnDidChangeTreeData() {
+        this._onDidChangeTreeData.fire();
+    }
+
     private buildTree(apps: Application[]) {
         // Iterate through the applications and create the tree data
         apps!.forEach(app => {
@@ -263,7 +268,6 @@ export class AppItem extends vscode.TreeItem {
 
         // Call the base constructor
         super(params.label, params.children === undefined ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
-
         // Set the remaining properties
         this.children = params.children;
         this.contextValue = params.context;

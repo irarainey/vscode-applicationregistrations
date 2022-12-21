@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { execShellCmd } from './utils';
 import { portalAppUri, signInAudienceOptions, signInAudienceDocumentation, portalUserUri } from './constants';
 import { GraphClient } from './graphClient';
-import { Application, User } from "@microsoft/microsoft-graph-types";
+import { User } from "@microsoft/microsoft-graph-types";
 import { AppRegDataProvider, AppItem } from './appRegDataProvider';
 
 // This class is responsible for managing the application registrations tree view.
@@ -165,6 +165,8 @@ export class ApplicationRegistrations {
             .then((newName) => {
                 // If the new application name is not empty then update the application.
                 if (newName !== undefined) {
+                    app.iconPath = new vscode.ThemeIcon("loading~spin");
+                    this.dataProvider.triggerOnDidChangeTreeData();
                     this.graphClient.updateApplication(app.objectId!, { displayName: newName })
                         .then(() => {
                             // If the application is updated then populate the tree view.
@@ -183,6 +185,8 @@ export class ApplicationRegistrations {
             .showInformationMessage(`Do you want to delete the application ${app.label}?`, "Yes", "No")
             .then(answer => {
                 if (answer === "Yes") {
+                    app.iconPath = new vscode.ThemeIcon("loading~spin");
+                    this.dataProvider.triggerOnDidChangeTreeData();
                     // If the user confirms the deletion then delete the application.
                     this.graphClient.deleteApplication(app.objectId!)
                         .then((response) => {
@@ -241,6 +245,8 @@ export class ApplicationRegistrations {
                         vscode.window.showErrorMessage(`More than one user with the ${identifier} ${newOwner} has been found in your directory.`);
                     } else {
                         // Sweet spot
+                        item.iconPath = new vscode.ThemeIcon("loading~spin");
+                        this.dataProvider.triggerOnDidChangeTreeData();
                         this.graphClient.addApplicationOwner(item.objectId!, userList[0].id!)
                             .then(() => {
                                 // If the application is updated then populate the tree view.
@@ -261,6 +267,8 @@ export class ApplicationRegistrations {
             .then(answer => {
                 if (answer === "Yes") {
                     // If the user confirms the removal then remove the user.
+                    item.iconPath = new vscode.ThemeIcon("loading~spin");
+                    this.dataProvider.triggerOnDidChangeTreeData();
                     this.graphClient.removeApplicationOwner(item.objectId!, item.userId!)
                         .then(() => {
                             // If the owner is removed then populate the tree view.
@@ -303,6 +311,12 @@ export class ApplicationRegistrations {
                 // If the new audience is not empty then update the application.
                 if (audience !== undefined) {
                     // Update the application.
+                    if(item.contextValue! === "AUDIENCE-CHILD-EDIT") {
+                        item.children![0].iconPath = new vscode.ThemeIcon("loading~spin");
+                    } else {
+                        item.iconPath = new vscode.ThemeIcon("loading~spin");
+                    }
+                    this.dataProvider.triggerOnDidChangeTreeData();
                     this.graphClient.updateApplication(item.objectId!, { signInAudience: this.convertSignInAudience(audience) })
                         .then(() => {
                             // If the application is updated then populate the tree view.
@@ -342,7 +356,9 @@ export class ApplicationRegistrations {
                 });
                 // Validate the redirect URI.
                 existingRedirectUris.push(redirectUri);
-                this.updateRedirectUri(item.contextValue!, item.objectId!, existingRedirectUris);
+                item.iconPath = new vscode.ThemeIcon("loading~spin");
+                this.dataProvider.triggerOnDidChangeTreeData();
+                this.updateRedirectUri(item, existingRedirectUris);
             }
         });
     }
@@ -372,8 +388,10 @@ export class ApplicationRegistrations {
                             newArray = parent.publicClient!.redirectUris!;
                             break;
                     }
+                    uri.iconPath = new vscode.ThemeIcon("loading~spin");
+                    this.dataProvider.triggerOnDidChangeTreeData();
                     // Update the application.
-                    this.updateRedirectUri(uri.contextValue!, uri.objectId!, newArray);
+                    this.updateRedirectUri(uri, newArray);
                 }
             });
     };
@@ -415,16 +433,18 @@ export class ApplicationRegistrations {
                             newArray = parent.publicClient!.redirectUris!;
                             break;
                     }
+                    uri.iconPath = new vscode.ThemeIcon("loading~spin");
+                    this.dataProvider.triggerOnDidChangeTreeData();
                     // Update the application.
-                    this.updateRedirectUri(uri.contextValue!, uri.objectId!, newArray);
+                    this.updateRedirectUri(uri, newArray);
                 }
             });
     };
 
-    private updateRedirectUri(contextValue: string, objectId: string, redirectUris: string[]): void {
+    private updateRedirectUri(item: AppItem, redirectUris: string[]): void {
         // Determine which section to add the redirect URI to.
-        if (contextValue === "WEB-REDIRECT-URI" || contextValue === "WEB-REDIRECT") {
-            this.graphClient.updateApplication(objectId, { web: { redirectUris: redirectUris } })
+        if (item.contextValue! === "WEB-REDIRECT-URI" || item.contextValue! === "WEB-REDIRECT") {
+            this.graphClient.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } })
                 .then(() => {
                     // If the application is updated then populate the tree view.
                     this.populateTreeView();
@@ -432,8 +452,8 @@ export class ApplicationRegistrations {
                     console.error(error);
                 });
         }
-        else if (contextValue === "SPA-REDIRECT-URI" || contextValue === "SPA-REDIRECT") {
-            this.graphClient.updateApplication(objectId, { spa: { redirectUris: redirectUris } })
+        else if (item.contextValue! === "SPA-REDIRECT-URI" || item.contextValue! === "SPA-REDIRECT") {
+            this.graphClient.updateApplication(item.objectId!, { spa: { redirectUris: redirectUris } })
                 .then(() => {
                     // If the application is updated then populate the tree view.
                     this.populateTreeView();
@@ -441,8 +461,8 @@ export class ApplicationRegistrations {
                     console.error(error);
                 });
         }
-        else if (contextValue === "NATIVE-REDIRECT-URI" || contextValue === "NATIVE-REDIRECT") {
-            this.graphClient.updateApplication(objectId, { publicClient: { redirectUris: redirectUris } })
+        else if (item.contextValue! === "NATIVE-REDIRECT-URI" || item.contextValue! === "NATIVE-REDIRECT") {
+            this.graphClient.updateApplication(item.objectId!, { publicClient: { redirectUris: redirectUris } })
                 .then(() => {
                     // If the application is updated then populate the tree view.
                     this.populateTreeView();
