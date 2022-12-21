@@ -67,6 +67,11 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
     private buildTree(apps: Application[]) {
         // Iterate through the applications and create the tree data
         apps!.forEach(app => {
+
+            if(app.displayName!.startsWith("aad-extensions-app")){
+                return;
+            }
+
             // Create the tree view item for the application and it's children
             this.treeData.push(new AppItem({
                 label: app.displayName ? app.displayName : "Application",
@@ -121,7 +126,7 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                                 context: "WEB-REDIRECT",
                                 icon: new ThemeIcon("globe"),
                                 objectId: app.id!,
-                                children: app.web?.redirectUris?.map(uri => {
+                                children: app.web?.redirectUris?.length === 0 ? undefined : app.web?.redirectUris?.map(uri => {
                                     return new AppItem({
                                         label: uri,
                                         context: "WEB-REDIRECT-URI",
@@ -135,7 +140,7 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                                 context: "SPA-REDIRECT",
                                 icon: new ThemeIcon("browser"),
                                 objectId: app.id!,
-                                children: app.spa?.redirectUris?.map(uri => {
+                                children: app.spa?.redirectUris?.length === 0 ? undefined : app.spa?.redirectUris?.map(uri => {
                                     return new AppItem({
                                         label: uri,
                                         context: "SPA-REDIRECT-URI",
@@ -149,7 +154,7 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                                 context: "NATIVE-REDIRECT",
                                 icon: new ThemeIcon("editor-layout"),
                                 objectId: app.id!,
-                                children: app.publicClient?.redirectUris?.map(uri => {
+                                children: app.publicClient?.redirectUris?.length === 0 ? undefined : app.publicClient?.redirectUris?.map(uri => {
                                     return new AppItem({
                                         label: uri,
                                         context: "NATIVE-REDIRECT-URI",
@@ -170,13 +175,100 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                                 label: "Client Secrets",
                                 context: "PROPERTY-ARRAY",
                                 icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
-                                children: []
+                                children: app.passwordCredentials!.length === 0 ? undefined : app.passwordCredentials!.map(password => {
+                                    return new AppItem({
+                                        label: password.displayName!,
+                                        context: "PASSWORD",
+                                        icon: new ThemeIcon("symbol-key", new ThemeColor("editor.foreground")),
+                                        objectId: app.id!,
+                                        value: password.keyId!,
+                                        children: [
+                                            new AppItem({
+                                                label: "Created",
+                                                context: "PASSWORD-VALUE",
+                                                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                                children: [
+                                                    new AppItem({
+                                                        label: password.startDateTime!,
+                                                        context: "PASSWORD-VALUE",
+                                                    }),
+                                                ]
+                                            }),
+                                            new AppItem({
+                                                label: "Expires",
+                                                context: "PASSWORD-VALUE",
+                                                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                                children: [
+                                                    new AppItem({
+                                                        label: password.endDateTime!,
+                                                        context: "PASSWORD-VALUE",
+                                                    }),
+                                                ]
+                                            })
+                                        ]
+                                    });
+                                })
                             }),
                             new AppItem({
                                 label: "Certificates",
                                 context: "PROPERTY-ARRAY",
                                 icon: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
-                                children: []
+                                children: app.keyCredentials!.length === 0 ? undefined : app.keyCredentials!.map(password => {
+                                    return new AppItem({
+                                        label: password.displayName!,
+                                        context: "CERTIFICATE",
+                                        icon: new ThemeIcon("symbol-key", new ThemeColor("editor.foreground")),
+                                        objectId: app.id!,
+                                        value: password.keyId!,
+                                        children: [
+                                            new AppItem({
+                                                label: "Type",
+                                                context: "CERTIFICATE-VALUE",
+                                                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                                children: [
+                                                    new AppItem({
+                                                        label: password.type!,
+                                                        context: "PASSWORD-VALUE",
+                                                    }),
+                                                ]
+                                            }),
+                                            new AppItem({
+                                                label: "Key Identifier",
+                                                context: "CERTIFICATE-VALUE",
+                                                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                                children: [
+                                                    new AppItem({
+                                                        label: password.customKeyIdentifier!,
+                                                        context: "PASSWORD-VALUE",
+                                                    }),
+                                                ]
+                                            }),
+                                            new AppItem({
+                                                label: "Created",
+                                                context: "CERTIFICATE-VALUE",
+                                                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                                children: [
+                                                    new AppItem({
+                                                        label: password.startDateTime!,
+                                                        context: "PASSWORD-VALUE",
+                                                    }),
+                                                ]
+                                            }),
+                                            new AppItem({
+                                                label: "Expires",
+                                                context: "CERTIFICATE-VALUE",
+                                                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                                children: [
+                                                    new AppItem({
+                                                        label: password.endDateTime!,
+                                                        context: "PASSWORD-VALUE",
+                                                    }),
+                                                ]
+                                            })
+                                        ]
+                                    });
+                                })
+
                             })
                         ]
                     }),
@@ -185,21 +277,93 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                         label: "API Permissions",
                         context: "PROPERTY-ARRAY",
                         icon: new ThemeIcon("checklist", new ThemeColor("editor.foreground")),
-                        children: []
+                        children: app.requiredResourceAccess?.length === 0 ? undefined : app.requiredResourceAccess!.map(api => {
+                            return new AppItem({
+                                label: api.resourceAppId!,
+                                context: "SCOPE",
+                                icon: new ThemeIcon("symbol-variable", new ThemeColor("editor.foreground")),
+                                objectId: app.id!,
+                                value: api.resourceAppId!,
+                                children: api.resourceAccess!.map(scope => {
+                                    return new AppItem({
+                                        label: scope.type!,
+                                        context: "SCOPE-VALUE",
+                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                        objectId: app.id!,
+                                        value: scope.id!,
+                                    });
+                                })
+                            });
+                        })
                     }),
                     // Exposed API Permissions
                     new AppItem({
                         label: "Exposed API Permissions",
                         context: "PROPERTY-ARRAY",
                         icon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
-                        children: []
+                        children: app.api!.oauth2PermissionScopes!.length === 0 ? undefined : app.api!.oauth2PermissionScopes!.map(scope => {
+                            return new AppItem({
+                                label: scope.adminConsentDisplayName!,
+                                context: "SCOPE",
+                                icon: new ThemeIcon("symbol-variable", new ThemeColor("editor.foreground")),
+                                objectId: app.id!,
+                                value: scope.id!,
+                                children: [
+                                    new AppItem({
+                                        label: scope.value!,
+                                        context: "SCOPE-VALUE",
+                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                    }),
+                                    new AppItem({
+                                        label: scope.adminConsentDescription!,
+                                        context: "SCOPE-DESCRIPTION",
+                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                    }),
+                                    new AppItem({
+                                        label: scope.type! === "User" ? "Admins and Users" : "Admins Only",
+                                        context: "SCOPE-TYPE",
+                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                    }),
+                                    new AppItem({
+                                        label: scope.isEnabled! ? "Enabled" : "Disabled",
+                                        context: "SCOPE-ENABLED",
+                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                    })
+                                ]
+                            });
+                        })
                     }),
                     // App Roles
                     new AppItem({
                         label: "App Roles",
                         context: "PROPERTY-ARRAY",
                         icon: new ThemeIcon("note", new ThemeColor("editor.foreground")),
-                        children: []
+                        children: app.appRoles!.length === 0 ? undefined : app.appRoles!.map(role => {
+                            return new AppItem({
+                                label: role.displayName!,
+                                context: "ROLE",
+                                icon: new ThemeIcon("person", new ThemeColor("editor.foreground")),
+                                objectId: app.id!,
+                                value: role.id!,
+                                children: [
+                                    new AppItem({
+                                        label: role.value!,
+                                        context: "ROLE-VALUE",
+                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                    }),
+                                    new AppItem({
+                                        label: role.description!,
+                                        context: "ROLE-DESCRIPTION",
+                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                    }),
+                                    new AppItem({
+                                        label: role.isEnabled! ? "Enabled" : "Disabled",
+                                        context: "ROLE-ENABLED",
+                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                    })
+                                ]
+                            });
+                        })
                     }),
                     // Owners
                     new AppItem({
@@ -276,7 +440,7 @@ export class AppItem extends vscode.TreeItem {
 
         // Call the base constructor
         super(params.label, params.children === undefined ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
-        
+
         // Set the remaining properties
         this.children = params.children;
         this.contextValue = params.context;
