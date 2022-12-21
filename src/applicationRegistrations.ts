@@ -78,9 +78,6 @@ export class ApplicationRegistrations {
 
     // Populates the tree view with the applications.
     public populateTreeView(): void {
-        // Initialise the data provider with the loading state.
-        this.dataProvider.initialise("LOADING");
-
         // Get the applications from the GraphClient.
         this.graphClient.getApplicationsAll(this.filterCommand)
             .then((apps) => {
