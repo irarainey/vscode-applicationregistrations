@@ -76,6 +76,7 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                 appId: app.appId!,
                 manifest: app,
                 children: [
+                    // Application Id
                     new AppItem({
                         label: "Application Id",
                         context: "APPID-PARENT",
@@ -89,6 +90,7 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                             })
                         ]
                     }),
+                    // Sign In Audience
                     new AppItem({
                         label: "Sign In Audience",
                         context: "AUDIENCE-PARENT",
@@ -107,6 +109,7 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                             })
                         ]
                     }),
+                    // Redirect URIs
                     new AppItem({
                         label: "Redirect URIs",
                         context: "REDIRECT-PARENT",
@@ -157,6 +160,7 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                             })
                         ]
                     }),
+                    // Credentials
                     new AppItem({
                         label: "Credentials",
                         context: "PROPERTY-ARRAY",
@@ -176,24 +180,28 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
                             })
                         ]
                     }),
+                    // API Permissions
                     new AppItem({
                         label: "API Permissions",
                         context: "PROPERTY-ARRAY",
                         icon: new ThemeIcon("checklist", new ThemeColor("editor.foreground")),
                         children: []
                     }),
+                    // Exposed API Permissions
                     new AppItem({
                         label: "Exposed API Permissions",
                         context: "PROPERTY-ARRAY",
                         icon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
                         children: []
                     }),
+                    // App Roles
                     new AppItem({
                         label: "App Roles",
                         context: "PROPERTY-ARRAY",
                         icon: new ThemeIcon("note", new ThemeColor("editor.foreground")),
                         children: []
                     }),
+                    // Owners
                     new AppItem({
                         label: "Owners",
                         context: "OWNERS",
