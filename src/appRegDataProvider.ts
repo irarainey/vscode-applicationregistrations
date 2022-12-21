@@ -23,7 +23,7 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
     // Initialises the tree view data based on the type of data to be displayed.
     public initialise(type: string, graphClient?: GraphClient, apps?: Application[]) {
 
-        if(graphClient !== undefined) { 
+        if (graphClient !== undefined) {
             this.graphClient = graphClient;
         }
 
@@ -218,13 +218,8 @@ export class AppRegDataProvider implements vscode.TreeDataProvider<AppItem> {
 
     // Returns the application registration that is the parent of the given element
     public getParentApplication(objectId: string): Application {
-        let app: Application;
-        this.treeData.forEach(item => {
-            if (item.objectId === objectId) {
-                app = item.manifest!;
-            }
-        });
-        return app!;
+        const app: AppItem = this.treeData.filter(item => item.objectId === objectId)[0];
+        return app.manifest!;
     }
 
     // Returns the owners of the application registration as an array of AppItem
