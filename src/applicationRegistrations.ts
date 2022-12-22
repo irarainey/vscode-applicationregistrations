@@ -208,12 +208,12 @@ export class AppReg {
 
     // Copies the application Id to the clipboard.
     public copyAppId(app: AppRegItem): void {
-        this.applicationService.copyAppId(app);
+        this.applicationService.copyId(app);
     };
 
     // Opens the application registration in the Azure Portal.
     public openAppInPortal(app: AppRegItem): void {
-        this.applicationService.openAppInPortal(app);
+        this.applicationService.openInPortal(app);
     }
 
     // Opens the application manifest in a new editor window.

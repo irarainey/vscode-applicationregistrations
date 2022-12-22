@@ -112,12 +112,12 @@ export class ApplicationService {
     };
 
     // Copies the application Id to the clipboard.
-    public copyAppId(app: AppRegItem): void {
+    public copyId(app: AppRegItem): void {
         env.clipboard.writeText(app.appId!);
     };
 
     // Opens the application registration in the Azure Portal.
-    public openAppInPortal(app: AppRegItem): void {
+    public openInPortal(app: AppRegItem): void {
         env.openExternal(Uri.parse(`${portalAppUri}${app.appId}`));
     }
 
