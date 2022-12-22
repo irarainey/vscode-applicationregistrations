@@ -29,9 +29,12 @@ export class RedirectUriService {
         // If the redirect URI is not empty then add it to the application.
         if (redirectUri !== undefined && redirectUri.length > 0) {
 
-            let existingRedirectUris: string[] = item.children!.map((child) => {
-                return child.label!.toString();
-            });
+            let existingRedirectUris: string[] = [];
+            if(item.children !== undefined) {
+                existingRedirectUris = item.children!.map((child) => {
+                    return child.label!.toString();
+                });
+                }
 
             // Validate the redirect URI.
             if (this.validateRedirectUri(redirectUri, item.contextValue!, existingRedirectUris) === false) {
