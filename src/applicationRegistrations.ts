@@ -134,6 +134,7 @@ export class AppReg {
             return;
         }
 
+        // Add a new application registration and reload the tree view if successful.
         await this.applicationService.add()
             .then((result) => { 
                 if(result === true) {
@@ -144,6 +145,7 @@ export class AppReg {
 
     // Renames an application registration.
     public async renameApp(app: AppRegItem): Promise<void> {
+        // Rename the application registration and reload the tree view if successful.
         await this.applicationService.rename(app)
             .then((result) => { 
                 if(result === true) {
@@ -154,6 +156,7 @@ export class AppReg {
 
     // Deletes an application registration.
     public async deleteApp(app: AppRegItem): Promise<void> {
+        // Delete the application registration and reload the tree view if successful.
         await this.applicationService.delete(app)
             .then((result) => { 
                 if(result === true) {
