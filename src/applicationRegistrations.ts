@@ -1,12 +1,11 @@
 import { ExtensionContext, window, ThemeIcon, env, Uri } from 'vscode';
 import { execShellCmd } from './utils/shellUtils';
-import { signInAudienceOptions, signInAudienceDocumentation } from './constants';
 import { GraphClient } from './clients/graph';
 import { AppRegDataProvider } from './dataProviders/applicationRegistration';
 import { AppRegItem } from './models/appRegItem';
 import { ApplicationService } from './services/application';
 import { OwnerService } from './services/owner';
-import { convertSignInAudience } from './utils/signInAudienceUtils';
+import { SignInAudienceService } from './services/signInAudience';
 
 // This class is responsible for managing the application registrations tree view.
 export class AppReg {
@@ -32,6 +31,7 @@ export class AppReg {
     // Private instances of our services
     private applicationService: ApplicationService;
     private ownerService: OwnerService;
+    private signInAudienceService: SignInAudienceService;
 
     // The constructor for the ApplicationRegistrations class.
     constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider, context: ExtensionContext) {
@@ -39,6 +39,7 @@ export class AppReg {
         this.dataProvider = dataProvider;
         this.applicationService = new ApplicationService(graphClient, dataProvider, context);
         this.ownerService = new OwnerService(graphClient, dataProvider);
+        this.signInAudienceService = new SignInAudienceService(graphClient, dataProvider);
 
         this.isUserAuthenticated = () => { };
         this.determineAuthenticationState();
@@ -256,39 +257,14 @@ export class AppReg {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Edits the application sign in audience.
-    public editAudience(item: AppRegItem): void {
-        // Prompt the user for the new audience.
-        window.showQuickPick(signInAudienceOptions, {
-            placeHolder: "Select the sign in audience...",
-        })
-            .then((audience) => {
-                // If the new audience is not empty then update the application.
-                if (audience !== undefined) {
-                    // Update the application.
-                    if (item.contextValue! === "AUDIENCE-PARENT") {
-                        item.children![0].iconPath = new ThemeIcon("loading~spin");
-                    } else {
-                        item.iconPath = new ThemeIcon("loading~spin");
-                    }
-                    this.dataProvider.triggerOnDidChangeTreeData();
-                    this.graphClient.updateApplication(item.objectId!, { signInAudience: convertSignInAudience(audience) })
-                        .then(() => {
-                            // If the application is updated then populate the tree view.
-                            this.populateTreeView();
-                        }).catch(() => {
-                            // If the application is not updated then show an error message and a link to the documentation.
-                            window.showErrorMessage(
-                                `An error occurred while attempting to change the sign in audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at ${signInAudienceDocumentation}.`,
-                                ...["OK", "Open Documentation"]
-                            )
-                                .then((answer) => {
-                                    if (answer === "Open Documentation") {
-                                        env.openExternal(Uri.parse(signInAudienceDocumentation));
-                                    }
-                                });
-                        });
-                }
-            });
+    public async editAudience(item: AppRegItem): Promise<void> {
+        // Edit the sign in audience and reload the tree view if successful.
+        await this.signInAudienceService.edit(item)
+        .then((result) => {
+            if (result === true) {
+                this.populateTreeView();
+            }
+        });
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
