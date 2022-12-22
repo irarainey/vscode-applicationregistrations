@@ -45,6 +45,10 @@ export class AppReg {
         this.determineAuthenticationState();
     }
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Authentication
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     // Determines the authentication state and populates the tree view if authenticated.
     // If not authenticated, the user is prompted to sign in.
     private determineAuthenticationState(): void {
@@ -82,6 +86,40 @@ export class AppReg {
             this.populateTreeView();
         }
     }
+
+    // Invokes the Azure CLI sign-in command.
+    public async invokeSignIn(): Promise<void> {
+        // Prompt the user for the tenant name or Id.
+        window.showInputBox({
+            placeHolder: "Tenant name or Id...",
+            prompt: "Enter the tenant name or Id, or leave blank for the default tenant",
+        })
+            .then((tenant) => {
+                // If the tenant is undefined then we don't want to do anything because they pressed cancel.
+                if (tenant === undefined) {
+                    return;
+                }
+
+                // Build the command to invoke the Azure CLI sign-in command.
+                let command = "az login";
+                if (tenant.length > 0) {
+                    command += ` --tenant ${tenant}`;
+                }
+
+                // Execute the command.
+                execShellCmd(command)
+                    .then(() => {
+                        // If the sign-in is successful then trigger the authentication state change.
+                        this.isUserAuthenticated(true);
+                    }).catch(() => {
+                        this.isUserAuthenticated(false);
+                    });
+            });
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Tree View
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Populates the tree view with the applications.
     public populateTreeView(): void {
@@ -127,7 +165,7 @@ export class AppReg {
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Application Registration Commands
+    // Application Commands
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Creates a new application registration.
@@ -184,7 +222,7 @@ export class AppReg {
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Application Owner Commands
+    // Owner Commands
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Adds a new owner to an application registration.
@@ -258,10 +296,9 @@ export class AppReg {
         env.openExternal(Uri.parse(`${portalUserUri}${user.userId}`));
     }
 
-    // Copies the selected value to the clipboard.
-    public copyValue(item: AppRegItem): void {
-        env.clipboard.writeText(item.contextValue === "COPY" ? item.value! : item.children![0].value!);
-    };
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Sign In Audience Commands
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Edits the application sign in audience.
     public editAudience(item: AppRegItem): void {
@@ -298,6 +335,10 @@ export class AppReg {
                 }
             });
     }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Redirect URI Commands
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Adds a new redirect URI to an application registration.
     public addRedirectUri(item: AppRegItem): void {
@@ -470,33 +511,12 @@ export class AppReg {
         return true;
     }
 
-    // Invokes the Azure CLI sign-in command.
-    public async invokeSignIn(): Promise<void> {
-        // Prompt the user for the tenant name or Id.
-        window.showInputBox({
-            placeHolder: "Tenant name or Id...",
-            prompt: "Enter the tenant name or Id, or leave blank for the default tenant",
-        })
-            .then((tenant) => {
-                // If the tenant is undefined then we don't want to do anything because they pressed cancel.
-                if (tenant === undefined) {
-                    return;
-                }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Common Commands
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-                // Build the command to invoke the Azure CLI sign-in command.
-                let command = "az login";
-                if (tenant.length > 0) {
-                    command += ` --tenant ${tenant}`;
-                }
-
-                // Execute the command.
-                execShellCmd(command)
-                    .then(() => {
-                        // If the sign-in is successful then trigger the authentication state change.
-                        this.isUserAuthenticated(true);
-                    }).catch(() => {
-                        this.isUserAuthenticated(false);
-                    });
-            });
-    }
+    // Copies the selected value to the clipboard.
+    public copyValue(item: AppRegItem): void {
+        env.clipboard.writeText(item.contextValue === "COPY" ? item.value! : item.children![0].value!);
+    };
 }
