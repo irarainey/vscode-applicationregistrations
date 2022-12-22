@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { view } from './constants';
-import { AppRegDataProvider } from './appRegDataProvider';
-import { GraphClient } from './graphClient';
-import { ApplicationRegistrations } from './applicationRegistrations';
+import { AppRegDataProvider } from './dataProviders/applicationRegistration';
+import { GraphClient } from './clients/graph';
+import { AppReg } from './applicationRegistrations';
 
 // This method is called when the extension is activated.
 export async function activate(context: vscode.ExtensionContext) {
@@ -14,14 +14,14 @@ export async function activate(context: vscode.ExtensionContext) {
 	const dataProvider = new AppRegDataProvider();
 
 	// Create a new instance of the ApplicationRegistrations class.
-	const appReg = new ApplicationRegistrations(graphClient, dataProvider, context);
+	const appReg = new AppReg(graphClient, dataProvider, context);
 
 	// Register the commands.
 	vscode.commands.registerCommand(`${view}.addApp`, () => appReg.addApp());
 	vscode.commands.registerCommand(`${view}.deleteApp`, app => appReg.deleteApp(app));
 	vscode.commands.registerCommand(`${view}.renameApp`, app => appReg.renameApp(app));
 	vscode.commands.registerCommand(`${view}.refreshApps`, () => appReg.populateTreeView());
-	vscode.commands.registerCommand(`${view}.filterApps`, () => appReg.filterApps());
+	vscode.commands.registerCommand(`${view}.filterApps`, () => appReg.filterTreeView());
 	vscode.commands.registerCommand(`${view}.viewAppManifest`, app => appReg.viewAppManifest(app));
 	vscode.commands.registerCommand(`${view}.copyAppId`, app => appReg.copyAppId(app));
 	vscode.commands.registerCommand(`${view}.openAppInPortal`, app => appReg.openAppInPortal(app));

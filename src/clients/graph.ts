@@ -1,5 +1,5 @@
 import "isomorphic-fetch";
-import { scope, propertiesToIgnoreOnUpdate, directoryObjectsUri } from './constants';
+import { scope, propertiesToIgnoreOnUpdate, directoryObjectsUri } from '../constants';
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";

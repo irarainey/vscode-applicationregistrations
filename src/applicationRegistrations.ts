@@ -1,12 +1,15 @@
-import * as vscode from 'vscode';
-import { execShellCmd } from './utils';
+import { Disposable, ExtensionContext, window, ThemeIcon, env, Uri, TextDocumentContentProvider, EventEmitter, workspace } from 'vscode';
+import { execShellCmd } from './utils/shellUtils';
 import { portalAppUri, signInAudienceOptions, signInAudienceDocumentation, portalUserUri } from './constants';
-import { GraphClient } from './graphClient';
+import { GraphClient } from './clients/graph';
 import { User } from "@microsoft/microsoft-graph-types";
-import { AppRegDataProvider, AppItem } from './appRegDataProvider';
+import { AppRegDataProvider } from './dataProviders/applicationRegistration';
+import { AppRegItem } from './models/appRegItem';
+import { ApplicationService } from './services/application';
+import { convertSignInAudience } from './utils/signInAudienceUtils';
 
 // This class is responsible for managing the application registrations tree view.
-export class ApplicationRegistrations {
+export class AppReg {
 
     // A private instance of the GraphClient class.
     private graphClient: GraphClient;
@@ -21,7 +24,7 @@ export class ApplicationRegistrations {
     private filterText?: string = undefined;
 
     // A private array to store the subscriptions.
-    private subscriptions: vscode.Disposable[] = [];
+    private subscriptions: Disposable[] = [];
 
     // A private boolean to store the authentication state.
     private authenticated: boolean = false;
@@ -29,11 +32,16 @@ export class ApplicationRegistrations {
     // A private function to trigger a change in the authentication state.
     public isUserAuthenticated: (state: boolean | undefined) => void;
 
+    private applicationService: ApplicationService;
+
     // The constructor for the ApplicationRegistrations class.
-    constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider, { subscriptions }: vscode.ExtensionContext) {
+    constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider, { subscriptions }: ExtensionContext) {
         this.graphClient = graphClient;
         this.subscriptions = subscriptions;
         this.dataProvider = dataProvider;
+
+        this.applicationService = new ApplicationService(this.graphClient, this.dataProvider);
+
         this.isUserAuthenticated = () => { };
         this.determineAuthenticationState();
     }
@@ -65,7 +73,7 @@ export class ApplicationRegistrations {
                             // If the user has signed in then go back to determine the authentication state.
                             this.determineAuthenticationState();
                         } else if (state === false) {
-                            vscode.window.showErrorMessage("Please sign in to Azure CLI.");
+                            window.showErrorMessage("Please sign in to Azure CLI.");
                         }
                     };
                 }
@@ -91,14 +99,14 @@ export class ApplicationRegistrations {
     };
 
     // Filters the applications by display name.
-    public filterApps(): void {
+    public filterTreeView(): void {
         // If the user is not authenticated then we don't want to do anything        
         if (!this.authenticated) {
             return;
         }
 
         // Prompt the user for the filter text.
-        vscode.window.showInputBox({
+        window.showInputBox({
             placeHolder: "Name starts with...",
             prompt: "Filter applications by display name",
             value: this.filterText
@@ -120,104 +128,59 @@ export class ApplicationRegistrations {
     };
 
     // Creates a new application registration.
-    public addApp(): void {
+    public async addApp(): Promise<void> {
         // If the user is not authenticated then we don't want to do anything        
         if (!this.authenticated) {
             return;
         }
 
-        // Prompt the user for the new application name.
-        vscode.window.showInputBox({
-            placeHolder: "Application name...",
-            prompt: "Create new application registration",
-        })
-            .then((newName) => {
-                // If the new application name is not empty then determine the sign in audience.
-                if (newName !== undefined) {
-                    // Prompt the user for the sign in audience.
-                    vscode.window.showQuickPick(signInAudienceOptions, {
-                        placeHolder: "Select the sign in audience...",
-                    })
-                        .then((audience) => {
-                            // If the sign in audience is not undefined then create the application.
-                            if (audience !== undefined) {
-                                this.graphClient.createApplication({ displayName: newName, signInAudience: this.convertSignInAudience(audience) })
-                                    .then(() => {
-                                        // If the application is created then populate the tree view.
-                                        this.populateTreeView();
-                                    }).catch((error) => {
-                                        console.error(error);
-                                    });
-                            }
-                        });
+        await this.applicationService.add()
+            .then((result) => { 
+                if(result === true) {
+                    this.populateTreeView();
                 }
             });
     };
 
     // Renames an application registration.
-    public renameApp(app: AppItem): void {
-        // Prompt the user for the new application name.
-        vscode.window.showInputBox({
-            placeHolder: "New application name...",
-            prompt: "Rename application with new display name",
-            value: app.manifest!.displayName!
-        })
-            .then((newName) => {
-                // If the new application name is not empty then update the application.
-                if (newName !== undefined) {
-                    app.iconPath = new vscode.ThemeIcon("loading~spin");
-                    this.dataProvider.triggerOnDidChangeTreeData();
-                    this.graphClient.updateApplication(app.objectId!, { displayName: newName })
-                        .then(() => {
-                            // If the application is updated then populate the tree view.
-                            this.populateTreeView();
-                        }).catch((error) => {
-                            console.error(error);
-                        });
+    public async renameApp(app: AppRegItem): Promise<void> {
+        await this.applicationService.rename(app)
+            .then((result) => { 
+                if(result === true) {
+                    this.populateTreeView();
                 }
             });
-    };
+    }
 
     // Deletes an application registration.
-    public deleteApp(app: AppItem): void {
-        // Prompt the user to confirm the deletion.
-        vscode.window
-            .showInformationMessage(`Do you want to delete the application ${app.label}?`, "Yes", "No")
-            .then(answer => {
-                if (answer === "Yes") {
-                    app.iconPath = new vscode.ThemeIcon("loading~spin");
-                    this.dataProvider.triggerOnDidChangeTreeData();
-                    // If the user confirms the deletion then delete the application.
-                    this.graphClient.deleteApplication(app.objectId!)
-                        .then((response) => {
-                            // If the application is deleted then populate the tree view.
-                            this.populateTreeView();
-                        }).catch((error) => {
-                            console.error(error);
-                        });
+    public async deleteApp(app: AppRegItem): Promise<void> {
+        await this.applicationService.delete(app)
+            .then((result) => { 
+                if(result === true) {
+                    this.populateTreeView();
                 }
             });
     };
 
     // Copies the application Id to the clipboard.
-    public copyAppId(app: AppItem): void {
-        vscode.env.clipboard.writeText(app.appId!);
+    public copyAppId(app: AppRegItem): void {
+        env.clipboard.writeText(app.appId!);
     };
 
     // Opens the application registration in the Azure Portal.
-    public openAppInPortal(app: AppItem): void {
-        vscode.env.openExternal(vscode.Uri.parse(`${portalAppUri}${app.appId}`));
+    public openAppInPortal(app: AppRegItem): void {
+        env.openExternal(Uri.parse(`${portalAppUri}${app.appId}`));
     }
 
     // Opens the user in the Azure Portal.
-    public openUserInPortal(user: AppItem): void {
-        vscode.env.openExternal(vscode.Uri.parse(`${portalUserUri}${user.userId}`));
+    public openUserInPortal(user: AppRegItem): void {
+        env.openExternal(Uri.parse(`${portalUserUri}${user.userId}`));
     }
 
     // Adds a new owner to an application registration.
-    public addOwner(item: AppItem): void {
+    public addOwner(item: AppRegItem): void {
         // Prompt the user for the new owner.
-        vscode.window.showInputBox({
+        window.showInputBox({
             placeHolder: "Enter user name or email address...",
             prompt: "Add new owner to application"
         })
@@ -239,13 +202,13 @@ export class ApplicationRegistrations {
 
                     if (userList.length === 0) {
                         // User not found
-                        vscode.window.showErrorMessage(`No user with the ${identifier} ${newOwner} was found in your directory.`);
+                        window.showErrorMessage(`No user with the ${identifier} ${newOwner} was found in your directory.`);
                     } else if (userList.length > 1) {
                         // More than one user found
-                        vscode.window.showErrorMessage(`More than one user with the ${identifier} ${newOwner} has been found in your directory.`);
+                        window.showErrorMessage(`More than one user with the ${identifier} ${newOwner} has been found in your directory.`);
                     } else {
                         // Sweet spot
-                        item.iconPath = new vscode.ThemeIcon("loading~spin");
+                        item.iconPath = new ThemeIcon("loading~spin");
                         this.dataProvider.triggerOnDidChangeTreeData();
                         this.graphClient.addApplicationOwner(item.objectId!, userList[0].id!)
                             .then(() => {
@@ -260,14 +223,14 @@ export class ApplicationRegistrations {
     }
 
     // Removes an owner from an application registration.
-    public removeOwner(item: AppItem): void {
+    public removeOwner(item: AppRegItem): void {
         // Prompt the user to confirm the removal.
-        vscode.window
+        window
             .showInformationMessage(`Do you want to remove ${item.label} as an owner of this application?`, "Yes", "No")
             .then(answer => {
                 if (answer === "Yes") {
                     // If the user confirms the removal then remove the user.
-                    item.iconPath = new vscode.ThemeIcon("loading~spin");
+                    item.iconPath = new ThemeIcon("loading~spin");
                     this.dataProvider.triggerOnDidChangeTreeData();
                     this.graphClient.removeApplicationOwner(item.objectId!, item.userId!)
                         .then(() => {
@@ -281,55 +244,55 @@ export class ApplicationRegistrations {
     }
 
     // Opens the application manifest in a new editor window.
-    public async viewAppManifest(app: AppItem): Promise<void> {
-        const myProvider = new class implements vscode.TextDocumentContentProvider {
-            onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
+    public async viewAppManifest(app: AppRegItem): Promise<void> {
+        const myProvider = new class implements TextDocumentContentProvider {
+            onDidChangeEmitter = new EventEmitter<Uri>();
             onDidChange = this.onDidChangeEmitter.event;
-            provideTextDocumentContent(uri: vscode.Uri): string {
+            provideTextDocumentContent(uri: Uri): string {
                 return JSON.stringify(app.manifest, null, 4);
             }
         };
-        this.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('manifest', myProvider));
+        this.subscriptions.push(workspace.registerTextDocumentContentProvider('manifest', myProvider));
 
-        const uri = vscode.Uri.parse('manifest:' + app.label + ".json");
-        vscode.workspace.openTextDocument(uri)
-            .then(doc => vscode.window.showTextDocument(doc, { preview: false }));
+        const uri = Uri.parse('manifest:' + app.label + ".json");
+        workspace.openTextDocument(uri)
+            .then(doc => window.showTextDocument(doc, { preview: false }));
     };
 
     // Copies the selected value to the clipboard.
-    public copyValue(item: AppItem): void {
-        vscode.env.clipboard.writeText(item.contextValue === "COPY" ? item.value! : item.children![0].value!);
+    public copyValue(item: AppRegItem): void {
+        env.clipboard.writeText(item.contextValue === "COPY" ? item.value! : item.children![0].value!);
     };
 
     // Edits the application sign in audience.
-    public editAudience(item: AppItem): void {
+    public editAudience(item: AppRegItem): void {
         // Prompt the user for the new audience.
-        vscode.window.showQuickPick(signInAudienceOptions, {
+        window.showQuickPick(signInAudienceOptions, {
             placeHolder: "Select the sign in audience...",
         })
             .then((audience) => {
                 // If the new audience is not empty then update the application.
                 if (audience !== undefined) {
                     // Update the application.
-                    if(item.contextValue! === "AUDIENCE-PARENT") {
-                        item.children![0].iconPath = new vscode.ThemeIcon("loading~spin");
+                    if (item.contextValue! === "AUDIENCE-PARENT") {
+                        item.children![0].iconPath = new ThemeIcon("loading~spin");
                     } else {
-                        item.iconPath = new vscode.ThemeIcon("loading~spin");
+                        item.iconPath = new ThemeIcon("loading~spin");
                     }
                     this.dataProvider.triggerOnDidChangeTreeData();
-                    this.graphClient.updateApplication(item.objectId!, { signInAudience: this.convertSignInAudience(audience) })
+                    this.graphClient.updateApplication(item.objectId!, { signInAudience: convertSignInAudience(audience) })
                         .then(() => {
                             // If the application is updated then populate the tree view.
                             this.populateTreeView();
                         }).catch(() => {
                             // If the application is not updated then show an error message and a link to the documentation.
-                            vscode.window.showErrorMessage(
+                            window.showErrorMessage(
                                 `An error occurred while attempting to change the sign in audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at ${signInAudienceDocumentation}.`,
                                 ...["OK", "Open Documentation"]
                             )
                                 .then((answer) => {
                                     if (answer === "Open Documentation") {
-                                        vscode.env.openExternal(vscode.Uri.parse(signInAudienceDocumentation));
+                                        env.openExternal(Uri.parse(signInAudienceDocumentation));
                                     }
                                 });
                         });
@@ -338,9 +301,9 @@ export class ApplicationRegistrations {
     }
 
     // Adds a new redirect URI to an application registration.
-    public addRedirectUri(item: AppItem): void {
+    public addRedirectUri(item: AppRegItem): void {
         // Prompt the user for the new redirect URI.
-        vscode.window.showInputBox({
+        window.showInputBox({
             placeHolder: "Enter redirect URI...",
             prompt: "Add a new redirect URI to the application"
         }).then((redirectUri) => {
@@ -357,7 +320,7 @@ export class ApplicationRegistrations {
                 }
 
                 existingRedirectUris.push(redirectUri);
-                item.iconPath = new vscode.ThemeIcon("loading~spin");
+                item.iconPath = new ThemeIcon("loading~spin");
                 this.dataProvider.triggerOnDidChangeTreeData();
                 this.updateRedirectUri(item, existingRedirectUris);
             }
@@ -365,9 +328,9 @@ export class ApplicationRegistrations {
     }
 
     // Deletes a redirect URI.
-    public deleteRedirectUri(uri: AppItem): void {
+    public deleteRedirectUri(uri: AppRegItem): void {
         // Prompt the user to confirm the deletion.
-        vscode.window
+        window
             .showInformationMessage(`Do you want to delete the Redirect URI ${uri.label!}?`, "Yes", "No")
             .then(answer => {
                 if (answer === "Yes") {
@@ -389,7 +352,7 @@ export class ApplicationRegistrations {
                             newArray = parent.publicClient!.redirectUris!;
                             break;
                     }
-                    uri.iconPath = new vscode.ThemeIcon("loading~spin");
+                    uri.iconPath = new ThemeIcon("loading~spin");
                     this.dataProvider.triggerOnDidChangeTreeData();
                     // Update the application.
                     this.updateRedirectUri(uri, newArray);
@@ -398,9 +361,9 @@ export class ApplicationRegistrations {
     };
 
     // Edits a redirect URI.   
-    public editRedirectUri(uri: AppItem): void {
+    public editRedirectUri(uri: AppRegItem): void {
         // Prompt the user for the new application name.
-        vscode.window.showInputBox({
+        window.showInputBox({
             placeHolder: "New application name...",
             prompt: "Rename application with new display name",
             value: uri.label!.toString()
@@ -435,7 +398,7 @@ export class ApplicationRegistrations {
                     existingRedirectUris.push(updatedUri);
 
                     // Show progress indicator.
-                    uri.iconPath = new vscode.ThemeIcon("loading~spin");
+                    uri.iconPath = new ThemeIcon("loading~spin");
                     this.dataProvider.triggerOnDidChangeTreeData();
 
                     // Update the application.
@@ -444,7 +407,7 @@ export class ApplicationRegistrations {
             });
     };
 
-    private updateRedirectUri(item: AppItem, redirectUris: string[]): void {
+    private updateRedirectUri(item: AppRegItem, redirectUris: string[]): void {
         // Determine which section to add the redirect URI to.
         if (item.contextValue! === "WEB-REDIRECT-URI" || item.contextValue! === "WEB-REDIRECT") {
             this.graphClient.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } })
@@ -479,29 +442,29 @@ export class ApplicationRegistrations {
     private validateRedirectUri(uri: string, context: string, existingRedirectUris: string[]): boolean {
 
         // Check to see if the redirect URI already exists.
-        if(existingRedirectUris.includes(uri)) {
-            vscode.window.showErrorMessage("The redirect URI specified already exists.");
+        if (existingRedirectUris.includes(uri)) {
+            window.showErrorMessage("The redirect URI specified already exists.");
             return false;
         }
 
         if (context === "WEB-REDIRECT-URI" || context === "WEB-REDIRECT") {
             // Check the redirect URI starts with https://
             if (uri.startsWith("https://") === false && uri.startsWith("http://localhost") === false) {
-                vscode.window.showErrorMessage("The redirect URI is not valid. A redirect URI must start with https:// unless it is using http://localhost.");
+                window.showErrorMessage("The redirect URI is not valid. A redirect URI must start with https:// unless it is using http://localhost.");
                 return false;
             }
         }
         else if (context === "SPA-REDIRECT-URI" || context === "SPA-REDIRECT" || context === "NATIVE-REDIRECT-URI" || context === "NATIVE-REDIRECT") {
             // Check the redirect URI starts with https:// or http:// or customScheme://
             if (uri.includes("://") === false) {
-                vscode.window.showErrorMessage("The redirect URI is not valid. A redirect URI must start with https, http, or customScheme://.");
+                window.showErrorMessage("The redirect URI is not valid. A redirect URI must start with https, http, or customScheme://.");
                 return false;
             }
         }
 
         // Check the length of the redirect URI.
         if (uri.length > 256) {
-            vscode.window.showErrorMessage("The redirect URI is not valid. A redirect URI cannot be longer than 256 characters.");
+            window.showErrorMessage("The redirect URI is not valid. A redirect URI cannot be longer than 256 characters.");
             return false;
         }
 
@@ -511,7 +474,7 @@ export class ApplicationRegistrations {
     // Invokes the Azure CLI sign-in command.
     public async invokeSignIn(): Promise<void> {
         // Prompt the user for the tenant name or Id.
-        vscode.window.showInputBox({
+        window.showInputBox({
             placeHolder: "Tenant name or Id...",
             prompt: "Enter the tenant name or Id, or leave blank for the default tenant",
         })
@@ -536,14 +499,5 @@ export class ApplicationRegistrations {
                         this.isUserAuthenticated(false);
                     });
             });
-    }
-
-    // Converts the audience to the correct format as required for the manifest.
-    private convertSignInAudience(audience: string): string {
-        return audience === "Single Tenant"
-            ? "AzureADMyOrg"
-            : audience === "Multiple Tenants"
-                ? "AzureADMultipleOrgs"
-                : "AzureADandPersonalMicrosoftAccount";
     }
 }
