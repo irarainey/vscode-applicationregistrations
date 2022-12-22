@@ -4,9 +4,14 @@ import { GraphClient } from './clients/graph';
 import { AppRegDataProvider } from './dataProviders/applicationRegistration';
 import { AppRegItem } from './models/appRegItem';
 import { ApplicationService } from './services/application';
+import { AppRolesService } from './services/appRoles';
+import { KeyCredentialsService } from './services/keyCredentials';
+import { OAuth2PermissionScopeService } from './services/oauth2PermissionScopes';
 import { OwnerService } from './services/owner';
-import { SignInAudienceService } from './services/signInAudience';
+import { PasswordCredentialsService } from './services/passwordCredentials';
 import { RedirectUriService } from './services/redirectUris';
+import { RequiredResourceAccessService } from './services/requiredResourceAccess';
+import { SignInAudienceService } from './services/signInAudience';
 
 // This class is responsible for managing the application registrations tree view.
 export class AppReg {
@@ -31,18 +36,28 @@ export class AppReg {
 
     // Private instances of our services
     private applicationService: ApplicationService;
+    private appRolesService: AppRolesService;
+    private keyCredentialsService: KeyCredentialsService;
+    private oauth2PermissionScopeService: OAuth2PermissionScopeService;
     private ownerService: OwnerService;
-    private signInAudienceService: SignInAudienceService;
+    private passwordCredentialsService: PasswordCredentialsService;
     private redirectUriService: RedirectUriService;
+    private requiredResourceAccessService: RequiredResourceAccessService;
+    private signInAudienceService: SignInAudienceService;
 
     // The constructor for the ApplicationRegistrations class.
     constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider, context: ExtensionContext) {
         this.graphClient = graphClient;
         this.dataProvider = dataProvider;
         this.applicationService = new ApplicationService(graphClient, dataProvider, context);
+        this.appRolesService = new AppRolesService(graphClient, dataProvider);
+        this.keyCredentialsService = new KeyCredentialsService(graphClient, dataProvider);
+        this.oauth2PermissionScopeService = new OAuth2PermissionScopeService(graphClient, dataProvider);
         this.ownerService = new OwnerService(graphClient, dataProvider);
-        this.signInAudienceService = new SignInAudienceService(graphClient, dataProvider);
+        this.passwordCredentialsService = new PasswordCredentialsService(graphClient, dataProvider);
         this.redirectUriService = new RedirectUriService(graphClient, dataProvider);
+        this.requiredResourceAccessService = new RequiredResourceAccessService(graphClient, dataProvider);
+        this.signInAudienceService = new SignInAudienceService(graphClient, dataProvider);
 
         this.isUserAuthenticated = () => { };
         this.authenticate();
