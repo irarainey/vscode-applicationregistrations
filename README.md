@@ -16,7 +16,11 @@ It allows for easy viewing, copying, adding, and editing of most the core applic
 
 It also allows for the simple creation of new applications, quickly viewing of the full application manifest in the editor, and has the ability to open the application registration directly in the Azure Portal when you need full editing control. Once loaded, the application registration list can also be filtered by display name.
 
-![Application Registration List](resources/images/application_tree.png)
+![Application Registration List](resources/images/applications.png)
+
+All application properties have their own range of functionality. From the application itself, down to each individual property, functionality can be accessed via a range of context menus. If required functionality is not currently implemented for a particular property then you can open the application registration in the Azure portal from the context menu of the application itself.
+
+![Context Menus](resources/images/context.png)
 
 ## Authentication
 This extension uses the `AzureCliCredential` to authenticate the user and gain an access token required to manage applications. This means it does not use the Azure Account identity, but rather the Azure CLI. This is a workaround due to a [known issue](https://learn.microsoft.com/en-us/javascript/api/overview/azure/identity-readme?view=azure-node-latest#note-about-visualstudiocodecredential) with the `VisualStudioCodeCredential` and Azure Account extension >= v0.10.0.
@@ -31,6 +35,9 @@ The access token used for this extension uses the scope `Directory.AccessAsUser.
 This extension was created both as a learning exercise, and to address the common annoyances of managing Application Registrations. It is not officially supported and you use it at your own risk.
 
 It has a dependency on the [Azure Tools extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack), but only because it places the application registrations view into the Azure view container.
+
+## Current Limitations
+To minimise the impact on performance the application list is currently limited to show only 100 applications. However, the filter is applied before this limit so if a required application isn't being shown simply apply a filter on the application display name. This limit will be made available as a user setting in a later release.
 
 ## Known Issues
 Due to the [eventual consistency](https://blogs.aaddevsup.xyz/2021/08/why-do-i-sometimes-get-a-404-when-trying-to-update-an-azure-directory-object-after-i-just-created-it/) of Azure Active Directory, when adding or removing owners they do not always show correctly when the tree view renders after the change. If this happens just wait a short time before refreshing the list again.

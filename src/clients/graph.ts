@@ -57,7 +57,6 @@ export class GraphClient {
     // Returns all application registrations
     public async getApplicationsAll(filter?: string): Promise<Application[]> {
         const request = await this.client!.api("/applications/")
-            .header('ConsistencyLevel', 'eventual')
             .filter(filter === undefined ? "" : filter)
             .top(maximumAppRegistrations)
             .get()
@@ -70,7 +69,6 @@ export class GraphClient {
     // Returns all owners for a specified application registration
     public async getApplicationOwners(id: string): Promise<User[]> {
         const request = await this.client!.api(`/applications/${id}/owners`)
-            .header('ConsistencyLevel', 'eventual')
             .get()
             .catch((error: any) => {
                 console.log(error);
@@ -90,7 +88,6 @@ export class GraphClient {
     // Find users by display name
     public async findUserByName(name: string): Promise<User[]> {
         const request = await this.client!.api("/users")
-            .header('ConsistencyLevel', 'eventual')
             .filter(`startswith(displayName, '${name}')`)
             .get()
             .catch((error: any) => {
@@ -102,7 +99,6 @@ export class GraphClient {
     // Find users by email address
     public async findUserByEmail(name: string): Promise<User[]> {
         const request = await this.client!.api("/users")
-            .header('ConsistencyLevel', 'eventual')
             .filter(`startswith(mail, '${name}')`)
             .get()
             .catch((error: any) => {
