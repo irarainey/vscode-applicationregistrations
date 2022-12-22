@@ -24,10 +24,10 @@ export class ApplicationService {
     }
 
     // Creates a new application registration.
-    public async add(): Promise<boolean> {
+    public async add(): Promise<Disposable | undefined> {
 
-        // Set the created trigger default to false.
-        let added = false;
+        // Set the created trigger default to undefined.
+        let added = undefined;
 
         // Prompt the user for the application name.
         const newName = await window.showInputBox({
@@ -44,10 +44,9 @@ export class ApplicationService {
 
             // If the sign in audience is not undefined then create the application.
             if (audience !== undefined) {
+                added = window.setStatusBarMessage("Creating application registration...");
                 await this.graphClient.createApplication({ displayName: newName, signInAudience: convertSignInAudience(audience) })
-                    .then(() => {
-                        added = true;
-                    }).catch((error) => {
+                    .catch((error) => {
                         console.error(error);
                     });
             }
@@ -58,10 +57,10 @@ export class ApplicationService {
     };
 
     // Renames an application registration.
-    public async rename(app: AppRegItem): Promise<boolean> {
+    public async rename(app: AppRegItem): Promise<Disposable | undefined> {
 
-        // Set the update trigger default to false.
-        let updated = false;
+        // Set the update trigger default to undefined.
+        let updated = undefined;
 
         // Prompt the user for the new application name.
         const newName = await window.showInputBox({
@@ -72,12 +71,11 @@ export class ApplicationService {
 
         // If the new application name is not undefined then update the application.
         if (newName !== undefined) {
+            updated = window.setStatusBarMessage("Renaming application registration...");
             app.iconPath = new ThemeIcon("loading~spin");
             this.dataProvider.triggerOnDidChangeTreeData();
             await this.graphClient.updateApplication(app.objectId!, { displayName: newName })
-                .then(() => {
-                    updated = true;
-                }).catch((error) => {
+                .catch((error) => {
                     console.error(error);
                 });
         }
@@ -87,22 +85,21 @@ export class ApplicationService {
     };
 
     // Deletes an application registration.
-    public async delete(app: AppRegItem): Promise<boolean> {
+    public async delete(app: AppRegItem): Promise<Disposable | undefined> {
 
-        // Set the deleted trigger default to false.
-        let deleted = false;
+        // Set the deleted trigger default to undefined.
+        let deleted = undefined;
 
         // Prompt the user to confirm the deletion.
         const answer = await window.showInformationMessage(`Do you want to delete the application ${app.label}?`, "Yes", "No");
 
         // If the user confirms the deletion then delete the application.
         if (answer === "Yes") {
+            deleted = window.setStatusBarMessage("Deleting application registration...");
             app.iconPath = new ThemeIcon("loading~spin");
             this.dataProvider.triggerOnDidChangeTreeData();
             await this.graphClient.deleteApplication(app.objectId!)
-                .then(() => {
-                    deleted = true;
-                }).catch((error) => {
+                .catch((error) => {
                     console.error(error);
                 });
         }

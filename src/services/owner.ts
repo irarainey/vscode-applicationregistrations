@@ -1,4 +1,4 @@
-import { window, ThemeIcon, env, Uri } from 'vscode';
+import { window, ThemeIcon, env, Uri, Disposable } from 'vscode';
 import { portalUserUri } from '../constants';
 import { GraphClient } from '../clients/graph';
 import { User } from "@microsoft/microsoft-graph-types";
@@ -20,10 +20,10 @@ export class OwnerService {
     }
 
     // Adds a new owner to an application registration.
-    public async add(item: AppRegItem): Promise<boolean> {
+    public async add(item: AppRegItem): Promise<Disposable | undefined> {
 
-        // Set the created trigger default to false.
-        let added = false;
+        // Set the created trigger default to undefined.
+        let added = undefined;
 
         // Prompt the user for the new owner.
         const newOwner = await window.showInputBox({
@@ -53,12 +53,11 @@ export class OwnerService {
                 window.showErrorMessage(`More than one user with the ${identifier} ${newOwner} has been found in your directory.`);
             } else {
                 // Sweet spot
+                added = window.setStatusBarMessage("Adding owner...");
                 item.iconPath = new ThemeIcon("loading~spin");
                 this.dataProvider.triggerOnDidChangeTreeData();
                 await this.graphClient.addApplicationOwner(item.objectId!, userList[0].id!)
-                    .then(() => {
-                        added = true;
-                    }).catch((error) => {
+                    .catch((error) => {
                         console.error(error);
                     });
             }
@@ -68,23 +67,21 @@ export class OwnerService {
     }
 
     // Removes an owner from an application registration.
-    public async remove(item: AppRegItem): Promise<boolean> {
+    public async remove(item: AppRegItem): Promise<Disposable | undefined> {
 
-        // Set the removed trigger default to false.
-        let removed = false;
+        // Set the removed trigger default to undefined.
+        let removed = undefined;
 
         // Prompt the user to confirm the removal.
         const answer = await window.showInformationMessage(`Do you want to remove ${item.label} as an owner of this application?`, "Yes", "No");
 
         // If the user confirms the removal then remove the user.
         if (answer === "Yes") {
+            removed = window.setStatusBarMessage("Adding owner...");
             item.iconPath = new ThemeIcon("loading~spin");
             this.dataProvider.triggerOnDidChangeTreeData();
             await this.graphClient.removeApplicationOwner(item.objectId!, item.userId!)
-                .then(() => {
-                    // If the owner is removed then populate the tree view.
-                    removed = true;
-                }).catch((error) => {
+                .catch((error) => {
                     console.error(error);
                 });
         }

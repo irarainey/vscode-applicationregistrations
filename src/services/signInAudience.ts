@@ -1,4 +1,4 @@
-import { window, ThemeIcon, env, Uri } from 'vscode';
+import { Disposable, window, ThemeIcon, env, Uri } from 'vscode';
 import { signInAudienceOptions, signInAudienceDocumentation } from '../constants';
 import { GraphClient } from '../clients/graph';
 import { AppRegDataProvider } from '../dataProviders/applicationRegistration';
@@ -20,10 +20,10 @@ export class SignInAudienceService {
     }
 
     // Edits the application sign in audience.
-    public async edit(item: AppRegItem): Promise<boolean> {
+    public async edit(item: AppRegItem): Promise<Disposable | undefined> {
 
-        // Set the edited trigger default to false.
-        let edited = false;
+        // Set the edited trigger default to undefined.
+        let edited = undefined;
 
         const audience = await window.showQuickPick(signInAudienceOptions, {
             placeHolder: "Select the sign in audience...",
@@ -31,6 +31,7 @@ export class SignInAudienceService {
 
         if (audience !== undefined) {
             // Update the application.
+            edited = window.setStatusBarMessage("Updating sign in audience...");
             if (item.contextValue! === "AUDIENCE-PARENT") {
                 item.children![0].iconPath = new ThemeIcon("loading~spin");
             } else {
@@ -38,10 +39,7 @@ export class SignInAudienceService {
             }
             this.dataProvider.triggerOnDidChangeTreeData();
             await this.graphClient.updateApplication(item.objectId!, { signInAudience: convertSignInAudience(audience) })
-                .then(() => {
-                    // If the application is updated then populate the tree view.
-                    edited = true;
-                }).catch(() => {
+                .catch(() => {
                     // If the application is not updated then show an error message and a link to the documentation.
                     window.showErrorMessage(
                         `An error occurred while attempting to change the sign in audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at ${signInAudienceDocumentation}.`,

@@ -1,4 +1,4 @@
-import { ExtensionContext, window, ThemeIcon, env, Uri } from 'vscode';
+import { ExtensionContext, window, ThemeIcon, env, Uri, Disposable } from 'vscode';
 import { execShellCmd } from './utils/shellUtils';
 import { GraphClient } from './clients/graph';
 import { AppRegDataProvider } from './dataProviders/applicationRegistration';
@@ -42,7 +42,7 @@ export class AppReg {
         this.signInAudienceService = new SignInAudienceService(graphClient, dataProvider);
 
         this.isUserAuthenticated = () => { };
-        this.determineAuthenticationState();
+        this.authenticate();
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,10 +51,9 @@ export class AppReg {
 
     // Determines the authentication state and populates the tree view if authenticated.
     // If not authenticated, the user is prompted to sign in.
-    private determineAuthenticationState(): void {
+    private async authenticate(): Promise<void> {
         // Do we think the user is authenticated?
         if (this.authenticated === false) {
-
             // If not then initialise the GraphClient.
             this.graphClient.initialise();
 
@@ -64,17 +63,18 @@ export class AppReg {
                 // If the user is authenticated then populate the tree view.
                 if (state === true) {
                     this.authenticated = true;
-                    this.populateTreeView();
+                    this.loadTreeView(window.setStatusBarMessage("Loading Application Registrations..."));
                 } else if (state === false) {
 
                     // If the user is not authenticated then prompt them to sign in.
-                    this.dataProvider.initialise("SIGN-IN");
+                    const status = window.setStatusBarMessage("Waiting for Azure CLI sign in...");
+                    this.dataProvider.initialise("SIGN-IN", status);
 
                     // Handle the authentication state change from the sign-in command.
                     this.isUserAuthenticated = (state: boolean | undefined) => {
                         if (state === true) {
                             // If the user has signed in then go back to determine the authentication state.
-                            this.determineAuthenticationState();
+                            this.authenticate();
                         } else if (state === false) {
                             window.showErrorMessage("Please sign in to Azure CLI.");
                         }
@@ -83,12 +83,12 @@ export class AppReg {
             };
         } else {
             // If the user is authenticated then just populate the tree view.
-            this.populateTreeView();
+            this.loadTreeView(window.setStatusBarMessage("Loading Application Registrations..."));
         }
     }
 
     // Invokes the Azure CLI sign-in command.
-    public async invokeSignIn(): Promise<void> {
+    public async cliSignIn(): Promise<void> {
         // Prompt the user for the tenant name or Id.
         window.showInputBox({
             placeHolder: "Tenant name or Id...",
@@ -122,46 +122,46 @@ export class AppReg {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Populates the tree view with the applications.
-    public populateTreeView(): void {
+    public async loadTreeView(statusBar: Disposable | undefined = undefined): Promise<void> {
         // Get the applications from the GraphClient.
-        this.graphClient.getApplicationsAll(this.filterCommand)
+        await this.graphClient.getApplicationsAll(this.filterCommand)
             .then((apps) => {
                 // Initialise the data provider with the list of applications.
-                this.dataProvider.initialise("APPLICATIONS", this.graphClient, apps);
+                this.dataProvider.initialise("APPLICATIONS", statusBar, this.graphClient, apps);
             }).catch(() => {
                 // If there is an error then determine the authentication state.
                 this.authenticated = false;
-                this.determineAuthenticationState();
+                this.authenticate();
             });
     };
 
     // Filters the applications by display name.
-    public filterTreeView(): void {
+    public async filterTreeView(): Promise<void> {
         // If the user is not authenticated then we don't want to do anything        
         if (!this.authenticated) {
             return;
         }
 
         // Prompt the user for the filter text.
-        window.showInputBox({
+        const newFilter = await window.showInputBox({
             placeHolder: "Name starts with...",
             prompt: "Filter applications by display name",
             value: this.filterText
-        }).then((newFilter) => {
-            // Escape has been hit so we don't want to do anything.
-            if ((newFilter === undefined) || (newFilter === '' && newFilter === (this.filterText ?? ""))) {
-                return;
-            } else if (newFilter === '' && this.filterText !== '') {
-                this.filterCommand = undefined;
-                this.filterText = undefined;
-                this.populateTreeView();
-            } else if (newFilter !== '' && newFilter !== this.filterText) {
-                // If the filter text is not empty then set the filter command and filter text.
-                this.filterText = newFilter!;
-                this.filterCommand = `startsWith(displayName, \'${newFilter}\')`;
-                this.populateTreeView();
-            }
         });
+
+        // Escape has been hit so we don't want to do anything.
+        if ((newFilter === undefined) || (newFilter === '' && newFilter === (this.filterText ?? ""))) {
+            return;
+        } else if (newFilter === '' && this.filterText !== '') {
+            this.filterCommand = undefined;
+            this.filterText = undefined;
+            await this.loadTreeView(window.setStatusBarMessage("Loading Application Registrations..."));
+        } else if (newFilter !== '' && newFilter !== this.filterText) {
+            // If the filter text is not empty then set the filter command and filter text.
+            this.filterText = newFilter!;
+            this.filterCommand = `startsWith(displayName, \'${newFilter}\')`;
+            await this.loadTreeView(window.setStatusBarMessage("Filtering Application Registrations..."));
+        }
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,9 +177,9 @@ export class AppReg {
 
         // Add a new application registration and reload the tree view if successful.
         await this.applicationService.add()
-            .then((result) => {
-                if (result === true) {
-                    this.populateTreeView();
+            .then((status) => {
+                if (status !== undefined) {
+                    this.loadTreeView(status);
                 }
             });
     };
@@ -188,9 +188,9 @@ export class AppReg {
     public async renameApp(item: AppRegItem): Promise<void> {
         // Rename the application registration and reload the tree view if successful.
         await this.applicationService.rename(item)
-            .then((result) => {
-                if (result === true) {
-                    this.populateTreeView();
+            .then((status) => {
+                if (status !== undefined) {
+                    this.loadTreeView(status);
                 }
             });
     }
@@ -199,9 +199,9 @@ export class AppReg {
     public async deleteApp(item: AppRegItem): Promise<void> {
         // Delete the application registration and reload the tree view if successful.
         await this.applicationService.delete(item)
-            .then((result) => {
-                if (result === true) {
-                    this.populateTreeView();
+            .then((status) => {
+                if (status !== undefined) {
+                    this.loadTreeView(status);
                 }
             });
     };
@@ -229,22 +229,22 @@ export class AppReg {
     public async addOwner(item: AppRegItem): Promise<void> {
         // Add a new owner and reload the tree view if successful.
         await this.ownerService.add(item)
-        .then((result) => {
-            if (result === true) {
-                this.populateTreeView();
-            }
-        });
+            .then((status) => {
+                if (status !== undefined) {
+                    this.loadTreeView(status);
+                }
+            });
     }
 
     // Removes an owner from an application registration.
     public async removeOwner(item: AppRegItem): Promise<void> {
         // Add a new owner and reload the tree view if successful.
         await this.ownerService.remove(item)
-        .then((result) => {
-            if (result === true) {
-                this.populateTreeView();
-            }
-        });
+            .then((status) => {
+                if (status !== undefined) {
+                    this.loadTreeView(status);
+                }
+            });
     }
 
     // Opens the user in the Azure Portal.
@@ -260,11 +260,11 @@ export class AppReg {
     public async editAudience(item: AppRegItem): Promise<void> {
         // Edit the sign in audience and reload the tree view if successful.
         await this.signInAudienceService.edit(item)
-        .then((result) => {
-            if (result === true) {
-                this.populateTreeView();
-            }
-        });
+            .then((status) => {
+                if (status !== undefined) {
+                    this.loadTreeView(status);
+                }
+            });
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -378,31 +378,31 @@ export class AppReg {
             });
     };
 
-    private updateRedirectUri(item: AppRegItem, redirectUris: string[]): void {
+    private async updateRedirectUri(item: AppRegItem, redirectUris: string[]): Promise<void> {
         // Determine which section to add the redirect URI to.
         if (item.contextValue! === "WEB-REDIRECT-URI" || item.contextValue! === "WEB-REDIRECT") {
-            this.graphClient.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } })
-                .then(() => {
+            await this.graphClient.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } })
+                .then(async () => {
                     // If the application is updated then populate the tree view.
-                    this.populateTreeView();
+                    await this.loadTreeView();
                 }).catch((error) => {
                     console.error(error);
                 });
         }
         else if (item.contextValue! === "SPA-REDIRECT-URI" || item.contextValue! === "SPA-REDIRECT") {
-            this.graphClient.updateApplication(item.objectId!, { spa: { redirectUris: redirectUris } })
-                .then(() => {
+            await this.graphClient.updateApplication(item.objectId!, { spa: { redirectUris: redirectUris } })
+                .then(async () => {
                     // If the application is updated then populate the tree view.
-                    this.populateTreeView();
+                    await this.loadTreeView();
                 }).catch((error) => {
                     console.error(error);
                 });
         }
         else if (item.contextValue! === "NATIVE-REDIRECT-URI" || item.contextValue! === "NATIVE-REDIRECT") {
-            this.graphClient.updateApplication(item.objectId!, { publicClient: { redirectUris: redirectUris } })
-                .then(() => {
+            await this.graphClient.updateApplication(item.objectId!, { publicClient: { redirectUris: redirectUris } })
+                .then(async () => {
                     // If the application is updated then populate the tree view.
-                    this.populateTreeView();
+                    await this.loadTreeView();
                 }).catch((error) => {
                     console.error(error);
                 });

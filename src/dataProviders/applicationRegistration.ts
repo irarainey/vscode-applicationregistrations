@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { signInCommandText } from '../constants';
-import { ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult } from 'vscode';
+import { ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, Disposable } from 'vscode';
 import { Application } from "@microsoft/microsoft-graph-types";
 import { GraphClient } from '../clients/graph';
 import { AppRegItem } from '../models/appRegItem';
@@ -14,6 +14,8 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     // Private instance of the tree data
     private treeData: AppRegItem[] = [];
 
+    private statusBarMessage: Disposable | undefined;
+
     // This is the event that is fired when the tree view is refreshed.
     private _onDidChangeTreeData: EventEmitter<AppRegItem | undefined | null | void> = new EventEmitter<AppRegItem | undefined | null | void>();
 
@@ -21,7 +23,14 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     readonly onDidChangeTreeData: Event<AppRegItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
     // Initialises the tree view data based on the type of data to be displayed.
-    public initialise(type: string, graphClient?: GraphClient, apps?: Application[]) {
+    public initialise(type: string, statusBarMessage: Disposable | undefined, graphClient?: GraphClient, apps?: Application[]) {
+
+        // Clear any existing status bar message
+        if(this.statusBarMessage !== undefined) {
+            this.statusBarMessage.dispose();
+        }
+        
+        this.statusBarMessage = statusBarMessage;
 
         if (graphClient !== undefined) {
             this.graphClient = graphClient;
@@ -377,6 +386,11 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
             }
             ));
         });
+
+        // Clear any status bar message
+        if(this,this.statusBarMessage !== undefined) {
+            this.statusBarMessage.dispose();
+        }
     }
 
     // This is the event that is fired when the tree view is refreshed.
