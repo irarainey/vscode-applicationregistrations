@@ -1,4 +1,4 @@
-import { Disposable, ExtensionContext, window, ThemeIcon, env, Uri, TextDocumentContentProvider, EventEmitter, workspace } from 'vscode';
+import { Disposable, ExtensionContext, window, ThemeIcon, env, Uri } from 'vscode';
 import { execShellCmd } from './utils/shellUtils';
 import { signInAudienceOptions, signInAudienceDocumentation, portalUserUri } from './constants';
 import { GraphClient } from './clients/graph';
