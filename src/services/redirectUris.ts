@@ -20,27 +20,24 @@ export class RedirectUriService {
     // Adds a new redirect URI to an application registration.
     public async add(item: AppRegItem): Promise<Disposable | undefined> {
 
+        let existingRedirectUris: string[] = [];
+        if(item.children !== undefined) {
+            existingRedirectUris = item.children!.map((child) => {
+                return child.label!.toString();
+            });
+            }
+
         // Prompt the user for the new redirect URI.
         const redirectUri = await window.showInputBox({
             placeHolder: "Enter redirect URI...",
-            prompt: "Add a new redirect URI to the application"
+            prompt: "Add a new redirect URI to the application",
+            validateInput: (value) => {
+                return this.validateRedirectUri(value, item.contextValue!, existingRedirectUris);
+            }
         });
 
         // If the redirect URI is not empty then add it to the application.
         if (redirectUri !== undefined && redirectUri.length > 0) {
-
-            let existingRedirectUris: string[] = [];
-            if(item.children !== undefined) {
-                existingRedirectUris = item.children!.map((child) => {
-                    return child.label!.toString();
-                });
-                }
-
-            // Validate the redirect URI.
-            if (this.validateRedirectUri(redirectUri, item.contextValue!, existingRedirectUris) === false) {
-                return undefined;
-            }
-
             existingRedirectUris.push(redirectUri);
             return await this.update(item, existingRedirectUris);
         } else {
@@ -83,37 +80,34 @@ export class RedirectUriService {
     // Edits a redirect URI.   
     public async edit(item: AppRegItem): Promise<Disposable | undefined> {
 
+        const parent = await this.dataProvider.getParentApplication(item.objectId!);
+        let existingRedirectUris: string[] = [];
+
+        // Get the existing redirect URIs.
+        switch (item.contextValue) {
+            case "WEB-REDIRECT-URI":
+                existingRedirectUris = parent.web!.redirectUris!;
+                break;
+            case "SPA-REDIRECT-URI":
+                existingRedirectUris = parent.spa!.redirectUris!;
+                break;
+            case "NATIVE-REDIRECT-URI":
+                existingRedirectUris = parent.publicClient!.redirectUris!;
+                break;
+        }
+
         // Prompt the user for the new redirect URI.
         const redirectUri = await window.showInputBox({
             placeHolder: "New application name...",
             prompt: "Rename application with new display name",
-            value: item.label!.toString()
+            value: item.label!.toString(),
+            validateInput: (value) => {
+                return this.validateRedirectUri(value, item.contextValue!, existingRedirectUris);
+            }
         });
 
         // If the new application name is not empty then update the application.
         if (redirectUri !== undefined && redirectUri !== item.label!.toString()) {
-
-            const parent = await this.dataProvider.getParentApplication(item.objectId!);
-            let existingRedirectUris: string[] = [];
-
-            // Get the existing redirect URIs.
-            switch (item.contextValue) {
-                case "WEB-REDIRECT-URI":
-                    existingRedirectUris = parent.web!.redirectUris!;
-                    break;
-                case "SPA-REDIRECT-URI":
-                    existingRedirectUris = parent.spa!.redirectUris!;
-                    break;
-                case "NATIVE-REDIRECT-URI":
-                    existingRedirectUris = parent.publicClient!.redirectUris!;
-                    break;
-            }
-
-            // Validate the edited redirect URI.
-            if (this.validateRedirectUri(redirectUri, item.contextValue!, existingRedirectUris) === false) {
-                return undefined;
-            }
-
             // Remove the old redirect URI and add the new one.
             existingRedirectUris.splice(existingRedirectUris.indexOf(item.label!.toString()), 1);
             existingRedirectUris.push(redirectUri);
@@ -155,35 +149,31 @@ export class RedirectUriService {
     }
 
     // Validates the redirect URI as per https://learn.microsoft.com/en-us/azure/active-directory/develop/reply-url
-    private validateRedirectUri(uri: string, context: string, existingRedirectUris: string[]): boolean {
+    private validateRedirectUri(uri: string, context: string, existingRedirectUris: string[]): string | undefined {
 
         // Check to see if the redirect URI already exists.
         if (existingRedirectUris.includes(uri)) {
-            window.showErrorMessage("The redirect URI specified already exists.");
-            return false;
+            return "The redirect URI specified already exists.";
         }
 
         if (context === "WEB-REDIRECT-URI" || context === "WEB-REDIRECT") {
             // Check the redirect URI starts with https://
             if (uri.startsWith("https://") === false && uri.startsWith("http://localhost") === false) {
-                window.showErrorMessage("The redirect URI is not valid. A redirect URI must start with https:// unless it is using http://localhost.");
-                return false;
+                return "The redirect URI is not valid. A redirect URI must start with https:// unless it is using http://localhost.";
             }
         }
         else if (context === "SPA-REDIRECT-URI" || context === "SPA-REDIRECT" || context === "NATIVE-REDIRECT-URI" || context === "NATIVE-REDIRECT") {
             // Check the redirect URI starts with https:// or http:// or customScheme://
             if (uri.includes("://") === false) {
-                window.showErrorMessage("The redirect URI is not valid. A redirect URI must start with https, http, or customScheme://.");
-                return false;
+                return "The redirect URI is not valid. A redirect URI must start with https, http, or customScheme://.";
             }
         }
 
         // Check the length of the redirect URI.
         if (uri.length > 256) {
-            window.showErrorMessage("The redirect URI is not valid. A redirect URI cannot be longer than 256 characters.");
-            return false;
+            return "The redirect URI is not valid. A redirect URI cannot be longer than 256 characters.";
         }
 
-        return true;
+        return undefined;
     }
 }
