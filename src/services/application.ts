@@ -1,4 +1,4 @@
-import { window, ThemeIcon, env, Uri } from 'vscode';
+import { window, ThemeIcon, env, Uri, TextDocumentContentProvider, EventEmitter, workspace, Disposable, ExtensionContext } from 'vscode';
 import { portalAppUri, signInAudienceOptions } from '../constants';
 import { GraphClient } from '../clients/graph';
 import { AppRegDataProvider } from '../dataProviders/applicationRegistration';
@@ -13,10 +13,14 @@ export class ApplicationService {
     // A private instance of the AppRegDataProvider class.
     private dataProvider: AppRegDataProvider;
 
+    // A private array to store the subscriptions.
+    private subscriptions: Disposable[] = [];
+
     // The constructor for the ApplicationRegistrations class.
-    constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider) {
+    constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider, context: ExtensionContext) {
         this.graphClient = graphClient;
         this.dataProvider = dataProvider;
+        this.subscriptions = context.subscriptions;
     }
 
     // Creates a new application registration.
@@ -117,4 +121,20 @@ export class ApplicationService {
         env.openExternal(Uri.parse(`${portalAppUri}${app.appId}`));
     }
 
+    // Opens the application manifest in a new editor window.
+    public viewManifest(app: AppRegItem): void {
+        const newDocument = new class implements TextDocumentContentProvider {
+            onDidChangeEmitter = new EventEmitter<Uri>();
+            onDidChange = this.onDidChangeEmitter.event;
+            provideTextDocumentContent(uri: Uri): string {
+                return JSON.stringify(app.manifest, null, 4);
+            }
+        };
+        this.subscriptions.push(workspace.registerTextDocumentContentProvider('manifest', newDocument));
+        const uri = Uri.parse('manifest:' + app.label + ".json");
+        workspace.openTextDocument(uri)
+            .then(doc => window.showTextDocument(
+                doc, { preview: false }
+            ));
+    };
 }

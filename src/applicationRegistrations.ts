@@ -1,6 +1,6 @@
 import { Disposable, ExtensionContext, window, ThemeIcon, env, Uri, TextDocumentContentProvider, EventEmitter, workspace } from 'vscode';
 import { execShellCmd } from './utils/shellUtils';
-import { portalAppUri, signInAudienceOptions, signInAudienceDocumentation, portalUserUri } from './constants';
+import { signInAudienceOptions, signInAudienceDocumentation, portalUserUri } from './constants';
 import { GraphClient } from './clients/graph';
 import { User } from "@microsoft/microsoft-graph-types";
 import { AppRegDataProvider } from './dataProviders/applicationRegistration';
@@ -35,12 +35,11 @@ export class AppReg {
     private applicationService: ApplicationService;
 
     // The constructor for the ApplicationRegistrations class.
-    constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider, { subscriptions }: ExtensionContext) {
+    constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider, context: ExtensionContext) {
         this.graphClient = graphClient;
-        this.subscriptions = subscriptions;
+        this.subscriptions = context.subscriptions;
         this.dataProvider = dataProvider;
-
-        this.applicationService = new ApplicationService(this.graphClient, this.dataProvider);
+        this.applicationService = new ApplicationService(graphClient, dataProvider, context);
 
         this.isUserAuthenticated = () => { };
         this.determineAuthenticationState();
@@ -127,6 +126,10 @@ export class AppReg {
         });
     };
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Application Registration Commands
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     // Creates a new application registration.
     public async addApp(): Promise<void> {
         // If the user is not authenticated then we don't want to do anything        
@@ -136,8 +139,8 @@ export class AppReg {
 
         // Add a new application registration and reload the tree view if successful.
         await this.applicationService.add()
-            .then((result) => { 
-                if(result === true) {
+            .then((result) => {
+                if (result === true) {
                     this.populateTreeView();
                 }
             });
@@ -147,8 +150,8 @@ export class AppReg {
     public async renameApp(app: AppRegItem): Promise<void> {
         // Rename the application registration and reload the tree view if successful.
         await this.applicationService.rename(app)
-            .then((result) => { 
-                if(result === true) {
+            .then((result) => {
+                if (result === true) {
                     this.populateTreeView();
                 }
             });
@@ -158,8 +161,8 @@ export class AppReg {
     public async deleteApp(app: AppRegItem): Promise<void> {
         // Delete the application registration and reload the tree view if successful.
         await this.applicationService.delete(app)
-            .then((result) => { 
-                if(result === true) {
+            .then((result) => {
+                if (result === true) {
                     this.populateTreeView();
                 }
             });
@@ -167,18 +170,22 @@ export class AppReg {
 
     // Copies the application Id to the clipboard.
     public copyAppId(app: AppRegItem): void {
-        env.clipboard.writeText(app.appId!);
+        this.applicationService.copyAppId(app);
     };
 
     // Opens the application registration in the Azure Portal.
     public openAppInPortal(app: AppRegItem): void {
-        env.openExternal(Uri.parse(`${portalAppUri}${app.appId}`));
+        this.applicationService.openAppInPortal(app);
     }
 
-    // Opens the user in the Azure Portal.
-    public openUserInPortal(user: AppRegItem): void {
-        env.openExternal(Uri.parse(`${portalUserUri}${user.userId}`));
-    }
+    // Opens the application manifest in a new editor window.
+    public viewAppManifest(app: AppRegItem): void {
+        this.applicationService.viewManifest(app);
+    };
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Application Owner Commands
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Adds a new owner to an application registration.
     public addOwner(item: AppRegItem): void {
@@ -246,21 +253,10 @@ export class AppReg {
             });
     }
 
-    // Opens the application manifest in a new editor window.
-    public async viewAppManifest(app: AppRegItem): Promise<void> {
-        const myProvider = new class implements TextDocumentContentProvider {
-            onDidChangeEmitter = new EventEmitter<Uri>();
-            onDidChange = this.onDidChangeEmitter.event;
-            provideTextDocumentContent(uri: Uri): string {
-                return JSON.stringify(app.manifest, null, 4);
-            }
-        };
-        this.subscriptions.push(workspace.registerTextDocumentContentProvider('manifest', myProvider));
-
-        const uri = Uri.parse('manifest:' + app.label + ".json");
-        workspace.openTextDocument(uri)
-            .then(doc => window.showTextDocument(doc, { preview: false }));
-    };
+    // Opens the user in the Azure Portal.
+    public openUserInPortal(user: AppRegItem): void {
+        env.openExternal(Uri.parse(`${portalUserUri}${user.userId}`));
+    }
 
     // Copies the selected value to the clipboard.
     public copyValue(item: AppRegItem): void {
