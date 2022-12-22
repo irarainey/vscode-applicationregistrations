@@ -53,7 +53,7 @@ export class OwnerService {
                 window.showErrorMessage(`More than one user with the ${identifier} ${newOwner} has been found in your directory.`);
             } else {
                 // Sweet spot
-                added = window.setStatusBarMessage("Adding owner...");
+                added = window.setStatusBarMessage("$(loading~spin) Adding owner...");
                 item.iconPath = new ThemeIcon("loading~spin");
                 this.dataProvider.triggerOnDidChangeTreeData();
                 await this.graphClient.addApplicationOwner(item.objectId!, userList[0].id!)
@@ -77,7 +77,7 @@ export class OwnerService {
 
         // If the user confirms the removal then remove the user.
         if (answer === "Yes") {
-            removed = window.setStatusBarMessage("Adding owner...");
+            removed = window.setStatusBarMessage("$(loading~spin) Removing owner...");
             item.iconPath = new ThemeIcon("loading~spin");
             this.dataProvider.triggerOnDidChangeTreeData();
             await this.graphClient.removeApplicationOwner(item.objectId!, item.userId!)

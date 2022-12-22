@@ -44,7 +44,7 @@ export class ApplicationService {
 
             // If the sign in audience is not undefined then create the application.
             if (audience !== undefined) {
-                added = window.setStatusBarMessage("Creating application registration...");
+                added = window.setStatusBarMessage("$(loading~spin) Creating application registration...");
                 await this.graphClient.createApplication({ displayName: newName, signInAudience: convertSignInAudience(audience) })
                     .catch((error) => {
                         console.error(error);
@@ -71,7 +71,7 @@ export class ApplicationService {
 
         // If the new application name is not undefined then update the application.
         if (newName !== undefined) {
-            updated = window.setStatusBarMessage("Renaming application registration...");
+            updated = window.setStatusBarMessage("$(loading~spin) Renaming application registration...");
             app.iconPath = new ThemeIcon("loading~spin");
             this.dataProvider.triggerOnDidChangeTreeData();
             await this.graphClient.updateApplication(app.objectId!, { displayName: newName })
@@ -95,7 +95,7 @@ export class ApplicationService {
 
         // If the user confirms the deletion then delete the application.
         if (answer === "Yes") {
-            deleted = window.setStatusBarMessage("Deleting application registration...");
+            deleted = window.setStatusBarMessage("$(loading~spin) Deleting application registration...");
             app.iconPath = new ThemeIcon("loading~spin");
             this.dataProvider.triggerOnDidChangeTreeData();
             await this.graphClient.deleteApplication(app.objectId!)

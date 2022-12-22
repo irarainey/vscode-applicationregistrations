@@ -63,11 +63,11 @@ export class AppReg {
                 // If the user is authenticated then populate the tree view.
                 if (state === true) {
                     this.authenticated = true;
-                    this.loadTreeView(window.setStatusBarMessage("Loading Application Registrations..."));
+                    this.loadTreeView(window.setStatusBarMessage("$(loading~spin) Loading Application Registrations..."));
                 } else if (state === false) {
 
                     // If the user is not authenticated then prompt them to sign in.
-                    const status = window.setStatusBarMessage("Waiting for Azure CLI sign in...");
+                    const status = window.setStatusBarMessage("$(loading~spin) Waiting for Azure CLI sign in...");
                     this.dataProvider.initialise("SIGN-IN", status);
 
                     // Handle the authentication state change from the sign-in command.
@@ -83,7 +83,7 @@ export class AppReg {
             };
         } else {
             // If the user is authenticated then just populate the tree view.
-            this.loadTreeView(window.setStatusBarMessage("Loading Application Registrations..."));
+            this.loadTreeView(window.setStatusBarMessage("$(loading~spin) Loading Application Registrations..."));
         }
     }
 
@@ -155,12 +155,12 @@ export class AppReg {
         } else if (newFilter === '' && this.filterText !== '') {
             this.filterCommand = undefined;
             this.filterText = undefined;
-            await this.loadTreeView(window.setStatusBarMessage("Loading Application Registrations..."));
+            await this.loadTreeView(window.setStatusBarMessage("$(loading~spin) Loading Application Registrations..."));
         } else if (newFilter !== '' && newFilter !== this.filterText) {
             // If the filter text is not empty then set the filter command and filter text.
             this.filterText = newFilter!;
             this.filterCommand = `startsWith(displayName, \'${newFilter}\')`;
-            await this.loadTreeView(window.setStatusBarMessage("Filtering Application Registrations..."));
+            await this.loadTreeView(window.setStatusBarMessage("$(loading~spin) Filtering Application Registrations..."));
         }
     };
 

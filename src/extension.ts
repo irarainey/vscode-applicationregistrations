@@ -18,7 +18,7 @@ export async function activate(context: ExtensionContext) {
 
 	// Register the commands.
 	commands.registerCommand(`${view}.signInToAzure`, () => appReg.cliSignIn());
-	commands.registerCommand(`${view}.refreshApps`, () => appReg.loadTreeView(window.setStatusBarMessage("Refreshing Application Registrations...")));
+	commands.registerCommand(`${view}.refreshApps`, () => appReg.loadTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations...")));
 	commands.registerCommand(`${view}.filterApps`, () => appReg.filterTreeView());
 	commands.registerCommand(`${view}.addApp`, () => appReg.addApp());
 	commands.registerCommand(`${view}.deleteApp`, app => appReg.deleteApp(app));
@@ -39,5 +39,5 @@ export async function activate(context: ExtensionContext) {
 	window.registerTreeDataProvider(view, dataProvider);
 
 	// Set the initial state of the tree view.
-	dataProvider.initialise("LOADING", window.setStatusBarMessage("Initialising Application Registration Extension..."));
+	dataProvider.initialise("LOADING", window.setStatusBarMessage("$(loading~spin) Initialising Application Registration Extension..."));
 }

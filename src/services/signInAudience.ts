@@ -31,7 +31,7 @@ export class SignInAudienceService {
 
         if (audience !== undefined) {
             // Update the application.
-            edited = window.setStatusBarMessage("Updating sign in audience...");
+            edited = window.setStatusBarMessage("$(loading~spin) Updating sign in audience...");
             if (item.contextValue! === "AUDIENCE-PARENT") {
                 item.children![0].iconPath = new ThemeIcon("loading~spin");
             } else {
