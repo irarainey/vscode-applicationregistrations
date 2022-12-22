@@ -76,11 +76,6 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     private buildAppRegTree(apps: Application[]) {
         // Iterate through the applications and create the tree data
         apps!.forEach(app => {
-
-            if(app.displayName!.startsWith("aad-extensions-app")){
-                return;
-            }
-
             // Create the tree view item for the application and it's children
             this.treeData.push(new AppRegItem({
                 label: app.displayName ? app.displayName : "Application",

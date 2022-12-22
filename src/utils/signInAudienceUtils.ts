@@ -4,5 +4,7 @@ export function convertSignInAudience(audience: string): string {
         ? "AzureADMyOrg"
         : audience === "Multiple Tenants"
             ? "AzureADMultipleOrgs"
-            : "AzureADandPersonalMicrosoftAccount";
+            : audience === "Multiple Tenants and Personal Accounts"
+                ? "AzureADandPersonalMicrosoftAccount"
+                : "PersonalMicrosoftAccount";
 }

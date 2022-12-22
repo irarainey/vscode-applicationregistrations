@@ -38,8 +38,12 @@ export const propertiesToIgnoreOnUpdate = [
 export const signInAudienceOptions = [
     "Single Tenant",
     "Multiple Tenants",
-    "Multiple Tenants and Personal Accounts"
+    "Multiple Tenants and Personal Accounts",
+    "Personal Accounts"
 ];
 
 // URI to the documentation for sign in audience
 export const signInAudienceDocumentation = "https://learn.microsoft.com/en-gb/azure/active-directory/develop/supported-accounts-validation";
+
+// The maximum number of application registrations to return
+export const maximumAppRegistrations = 100;

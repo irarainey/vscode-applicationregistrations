@@ -33,6 +33,9 @@ export class ApplicationService {
         const newName = await window.showInputBox({
             placeHolder: "Application name...",
             prompt: "Create new application registration",
+            validateInput: (value) => {
+                return this.validateDisplayName(value);
+            }
         });
 
         // If the application name is not undefined then prompt the user for the sign in audience.
@@ -66,7 +69,10 @@ export class ApplicationService {
         const newName = await window.showInputBox({
             placeHolder: "New application name...",
             prompt: "Rename application with new display name",
-            value: app.manifest!.displayName!
+            value: app.manifest!.displayName!,
+            validateInput: (value) => {
+                return this.validateDisplayName(value);
+            }
         });
 
         // If the new application name is not undefined then update the application.
@@ -134,4 +140,19 @@ export class ApplicationService {
                 doc, { preview: false }
             ));
     };
+
+    // Validates the display name of the application.
+    private validateDisplayName(displayName: string): string | undefined {
+
+        // Check the length of the application name.
+        if (displayName.length < 1) {
+            return "An application name must be at least one character.";
+        }
+
+        if (displayName.length > 120) {
+            return "An application name cannot be longer than 120 characters.";
+        }
+
+        return undefined;
+    }    
 }
