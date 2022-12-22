@@ -27,7 +27,7 @@ export class ApplicationService {
     public async add(): Promise<boolean> {
 
         // Set the created trigger default to false.
-        let created = false;
+        let added = false;
 
         // Prompt the user for the application name.
         const newName = await window.showInputBox({
@@ -46,7 +46,7 @@ export class ApplicationService {
             if (audience !== undefined) {
                 await this.graphClient.createApplication({ displayName: newName, signInAudience: convertSignInAudience(audience) })
                     .then(() => {
-                        created = true;
+                        added = true;
                     }).catch((error) => {
                         console.error(error);
                     });
@@ -54,7 +54,7 @@ export class ApplicationService {
         }
 
         // Return the state of the action to refresh the list if required.
-        return created;
+        return added;
     };
 
     // Renames an application registration.

@@ -1,11 +1,11 @@
-import { Disposable, ExtensionContext, window, ThemeIcon, env, Uri } from 'vscode';
+import { ExtensionContext, window, ThemeIcon, env, Uri } from 'vscode';
 import { execShellCmd } from './utils/shellUtils';
-import { signInAudienceOptions, signInAudienceDocumentation, portalUserUri } from './constants';
+import { signInAudienceOptions, signInAudienceDocumentation } from './constants';
 import { GraphClient } from './clients/graph';
-import { User } from "@microsoft/microsoft-graph-types";
 import { AppRegDataProvider } from './dataProviders/applicationRegistration';
 import { AppRegItem } from './models/appRegItem';
 import { ApplicationService } from './services/application';
+import { OwnerService } from './services/owner';
 import { convertSignInAudience } from './utils/signInAudienceUtils';
 
 // This class is responsible for managing the application registrations tree view.
@@ -23,23 +23,22 @@ export class AppReg {
     // A private string to store the filter text.
     private filterText?: string = undefined;
 
-    // A private array to store the subscriptions.
-    private subscriptions: Disposable[] = [];
-
     // A private boolean to store the authentication state.
     private authenticated: boolean = false;
 
     // A private function to trigger a change in the authentication state.
     public isUserAuthenticated: (state: boolean | undefined) => void;
 
+    // Private instances of our services
     private applicationService: ApplicationService;
+    private ownerService: OwnerService;
 
     // The constructor for the ApplicationRegistrations class.
     constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider, context: ExtensionContext) {
         this.graphClient = graphClient;
-        this.subscriptions = context.subscriptions;
         this.dataProvider = dataProvider;
         this.applicationService = new ApplicationService(graphClient, dataProvider, context);
+        this.ownerService = new OwnerService(graphClient, dataProvider);
 
         this.isUserAuthenticated = () => { };
         this.determineAuthenticationState();
@@ -185,9 +184,9 @@ export class AppReg {
     };
 
     // Renames an application registration.
-    public async renameApp(app: AppRegItem): Promise<void> {
+    public async renameApp(item: AppRegItem): Promise<void> {
         // Rename the application registration and reload the tree view if successful.
-        await this.applicationService.rename(app)
+        await this.applicationService.rename(item)
             .then((result) => {
                 if (result === true) {
                     this.populateTreeView();
@@ -196,9 +195,9 @@ export class AppReg {
     }
 
     // Deletes an application registration.
-    public async deleteApp(app: AppRegItem): Promise<void> {
+    public async deleteApp(item: AppRegItem): Promise<void> {
         // Delete the application registration and reload the tree view if successful.
-        await this.applicationService.delete(app)
+        await this.applicationService.delete(item)
             .then((result) => {
                 if (result === true) {
                     this.populateTreeView();
@@ -207,18 +206,18 @@ export class AppReg {
     };
 
     // Copies the application Id to the clipboard.
-    public copyAppId(app: AppRegItem): void {
-        this.applicationService.copyId(app);
+    public copyAppId(item: AppRegItem): void {
+        this.applicationService.copyId(item);
     };
 
     // Opens the application registration in the Azure Portal.
-    public openAppInPortal(app: AppRegItem): void {
-        this.applicationService.openInPortal(app);
+    public openAppInPortal(item: AppRegItem): void {
+        this.applicationService.openInPortal(item);
     }
 
     // Opens the application manifest in a new editor window.
-    public viewAppManifest(app: AppRegItem): void {
-        this.applicationService.viewManifest(app);
+    public viewAppManifest(item: AppRegItem): void {
+        this.applicationService.viewManifest(item);
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -226,74 +225,30 @@ export class AppReg {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Adds a new owner to an application registration.
-    public addOwner(item: AppRegItem): void {
-        // Prompt the user for the new owner.
-        window.showInputBox({
-            placeHolder: "Enter user name or email address...",
-            prompt: "Add new owner to application"
-        })
-            .then(async (newOwner) => {
-                // If the new owner name is not empty then add as an owner.
-                if (newOwner !== undefined) {
-
-                    let userList: User[] = [];
-                    let identifier: string = "";
-                    if (newOwner.indexOf('@') > -1) {
-                        // Try to find the user by email.
-                        userList = await this.graphClient.findUserByEmail(newOwner);
-                        identifier = "email address";
-                    } else {
-                        // Try to find the user by name.
-                        userList = await this.graphClient.findUserByName(newOwner);
-                        identifier = "name";
-                    }
-
-                    if (userList.length === 0) {
-                        // User not found
-                        window.showErrorMessage(`No user with the ${identifier} ${newOwner} was found in your directory.`);
-                    } else if (userList.length > 1) {
-                        // More than one user found
-                        window.showErrorMessage(`More than one user with the ${identifier} ${newOwner} has been found in your directory.`);
-                    } else {
-                        // Sweet spot
-                        item.iconPath = new ThemeIcon("loading~spin");
-                        this.dataProvider.triggerOnDidChangeTreeData();
-                        this.graphClient.addApplicationOwner(item.objectId!, userList[0].id!)
-                            .then(() => {
-                                // If the application is updated then populate the tree view.
-                                this.populateTreeView();
-                            }).catch((error) => {
-                                console.error(error);
-                            });
-                    }
-                }
-            });
+    public async addOwner(item: AppRegItem): Promise<void> {
+        // Add a new owner and reload the tree view if successful.
+        await this.ownerService.add(item)
+        .then((result) => {
+            if (result === true) {
+                this.populateTreeView();
+            }
+        });
     }
 
     // Removes an owner from an application registration.
-    public removeOwner(item: AppRegItem): void {
-        // Prompt the user to confirm the removal.
-        window
-            .showInformationMessage(`Do you want to remove ${item.label} as an owner of this application?`, "Yes", "No")
-            .then(answer => {
-                if (answer === "Yes") {
-                    // If the user confirms the removal then remove the user.
-                    item.iconPath = new ThemeIcon("loading~spin");
-                    this.dataProvider.triggerOnDidChangeTreeData();
-                    this.graphClient.removeApplicationOwner(item.objectId!, item.userId!)
-                        .then(() => {
-                            // If the owner is removed then populate the tree view.
-                            this.populateTreeView();
-                        }).catch((error) => {
-                            console.error(error);
-                        });
-                }
-            });
+    public async removeOwner(item: AppRegItem): Promise<void> {
+        // Add a new owner and reload the tree view if successful.
+        await this.ownerService.remove(item)
+        .then((result) => {
+            if (result === true) {
+                this.populateTreeView();
+            }
+        });
     }
 
     // Opens the user in the Azure Portal.
-    public openUserInPortal(user: AppRegItem): void {
-        env.openExternal(Uri.parse(`${portalUserUri}${user.userId}`));
+    public openUserInPortal(item: AppRegItem): void {
+        this.ownerService.openInPortal(item);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -368,55 +323,55 @@ export class AppReg {
     }
 
     // Deletes a redirect URI.
-    public deleteRedirectUri(uri: AppRegItem): void {
+    public deleteRedirectUri(item: AppRegItem): void {
         // Prompt the user to confirm the deletion.
         window
-            .showInformationMessage(`Do you want to delete the Redirect URI ${uri.label!}?`, "Yes", "No")
+            .showInformationMessage(`Do you want to delete the Redirect URI ${item.label!}?`, "Yes", "No")
             .then(answer => {
                 if (answer === "Yes") {
                     // Get the parent application so we can read the manifest.
-                    const parent = this.dataProvider.getParentApplication(uri.objectId!);
+                    const parent = this.dataProvider.getParentApplication(item.objectId!);
                     let newArray: string[] = [];
                     // Remove the redirect URI from the array.
-                    switch (uri.contextValue) {
+                    switch (item.contextValue) {
                         case "WEB-REDIRECT-URI":
-                            parent.web!.redirectUris!.splice(parent.web!.redirectUris!.indexOf(uri.label!.toString()), 1);
+                            parent.web!.redirectUris!.splice(parent.web!.redirectUris!.indexOf(item.label!.toString()), 1);
                             newArray = parent.web!.redirectUris!;
                             break;
                         case "SPA-REDIRECT-URI":
-                            parent.spa!.redirectUris!.splice(parent.spa!.redirectUris!.indexOf(uri.label!.toString()), 1);
+                            parent.spa!.redirectUris!.splice(parent.spa!.redirectUris!.indexOf(item.label!.toString()), 1);
                             newArray = parent.spa!.redirectUris!;
                             break;
                         case "NATIVE-REDIRECT-URI":
-                            parent.publicClient!.redirectUris!.splice(parent.publicClient!.redirectUris!.indexOf(uri.label!.toString()), 1);
+                            parent.publicClient!.redirectUris!.splice(parent.publicClient!.redirectUris!.indexOf(item.label!.toString()), 1);
                             newArray = parent.publicClient!.redirectUris!;
                             break;
                     }
-                    uri.iconPath = new ThemeIcon("loading~spin");
+                    item.iconPath = new ThemeIcon("loading~spin");
                     this.dataProvider.triggerOnDidChangeTreeData();
                     // Update the application.
-                    this.updateRedirectUri(uri, newArray);
+                    this.updateRedirectUri(item, newArray);
                 }
             });
     };
 
     // Edits a redirect URI.   
-    public editRedirectUri(uri: AppRegItem): void {
+    public editRedirectUri(item: AppRegItem): void {
         // Prompt the user for the new application name.
         window.showInputBox({
             placeHolder: "New application name...",
             prompt: "Rename application with new display name",
-            value: uri.label!.toString()
+            value: item.label!.toString()
         })
             .then((updatedUri) => {
                 // If the new application name is not empty then update the application.
-                if (updatedUri !== undefined && updatedUri !== uri.label!.toString()) {
+                if (updatedUri !== undefined && updatedUri !== item.label!.toString()) {
 
-                    const parent = this.dataProvider.getParentApplication(uri.objectId!);
+                    const parent = this.dataProvider.getParentApplication(item.objectId!);
                     let existingRedirectUris: string[] = [];
 
                     // Get the existing redirect URIs.
-                    switch (uri.contextValue) {
+                    switch (item.contextValue) {
                         case "WEB-REDIRECT-URI":
                             existingRedirectUris = parent.web!.redirectUris!;
                             break;
@@ -429,20 +384,20 @@ export class AppReg {
                     }
 
                     // Validate the edited redirect URI.
-                    if (this.validateRedirectUri(updatedUri, uri.contextValue!, existingRedirectUris) === false) {
+                    if (this.validateRedirectUri(updatedUri, item.contextValue!, existingRedirectUris) === false) {
                         return;
                     }
 
                     // Remove the old redirect URI and add the new one.
-                    existingRedirectUris.splice(existingRedirectUris.indexOf(uri.label!.toString()), 1);
+                    existingRedirectUris.splice(existingRedirectUris.indexOf(item.label!.toString()), 1);
                     existingRedirectUris.push(updatedUri);
 
                     // Show progress indicator.
-                    uri.iconPath = new ThemeIcon("loading~spin");
+                    item.iconPath = new ThemeIcon("loading~spin");
                     this.dataProvider.triggerOnDidChangeTreeData();
 
                     // Update the application.
-                    this.updateRedirectUri(uri, existingRedirectUris);
+                    this.updateRedirectUri(item, existingRedirectUris);
                 }
             });
     };
