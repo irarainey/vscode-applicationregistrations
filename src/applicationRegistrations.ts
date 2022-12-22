@@ -6,6 +6,7 @@ import { AppRegItem } from './models/appRegItem';
 import { ApplicationService } from './services/application';
 import { OwnerService } from './services/owner';
 import { SignInAudienceService } from './services/signInAudience';
+import { RedirectUriService } from './services/redirectUris';
 
 // This class is responsible for managing the application registrations tree view.
 export class AppReg {
@@ -32,6 +33,7 @@ export class AppReg {
     private applicationService: ApplicationService;
     private ownerService: OwnerService;
     private signInAudienceService: SignInAudienceService;
+    private redirectUriService: RedirectUriService;
 
     // The constructor for the ApplicationRegistrations class.
     constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider, context: ExtensionContext) {
@@ -40,6 +42,7 @@ export class AppReg {
         this.applicationService = new ApplicationService(graphClient, dataProvider, context);
         this.ownerService = new OwnerService(graphClient, dataProvider);
         this.signInAudienceService = new SignInAudienceService(graphClient, dataProvider);
+        this.redirectUriService = new RedirectUriService(graphClient, dataProvider);
 
         this.isUserAuthenticated = () => { };
         this.authenticate();
@@ -272,175 +275,37 @@ export class AppReg {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Adds a new redirect URI to an application registration.
-    public addRedirectUri(item: AppRegItem): void {
-        // Prompt the user for the new redirect URI.
-        window.showInputBox({
-            placeHolder: "Enter redirect URI...",
-            prompt: "Add a new redirect URI to the application"
-        }).then((redirectUri) => {
-            // If the redirect URI is not empty then add it to the application.
-            if (redirectUri !== undefined && redirectUri.length > 0) {
-
-                let existingRedirectUris: string[] = item.children!.map((child) => {
-                    return child.label!.toString();
-                });
-
-                // Validate the redirect URI.
-                if (this.validateRedirectUri(redirectUri, item.contextValue!, existingRedirectUris) === false) {
-                    return;
+    public async addRedirectUri(item: AppRegItem): Promise<void> {
+        // Add a new redirect URI and reload the tree view if successful.
+        await this.redirectUriService.add(item)
+            .then((status) => {
+                if (status !== undefined) {
+                    this.loadTreeView(status);
                 }
-
-                existingRedirectUris.push(redirectUri);
-                item.iconPath = new ThemeIcon("loading~spin");
-                this.dataProvider.triggerOnDidChangeTreeData();
-                this.updateRedirectUri(item, existingRedirectUris);
-            }
-        });
+            });
     }
 
     // Deletes a redirect URI.
-    public deleteRedirectUri(item: AppRegItem): void {
-        // Prompt the user to confirm the deletion.
-        window
-            .showInformationMessage(`Do you want to delete the Redirect URI ${item.label!}?`, "Yes", "No")
-            .then(answer => {
-                if (answer === "Yes") {
-                    // Get the parent application so we can read the manifest.
-                    const parent = this.dataProvider.getParentApplication(item.objectId!);
-                    let newArray: string[] = [];
-                    // Remove the redirect URI from the array.
-                    switch (item.contextValue) {
-                        case "WEB-REDIRECT-URI":
-                            parent.web!.redirectUris!.splice(parent.web!.redirectUris!.indexOf(item.label!.toString()), 1);
-                            newArray = parent.web!.redirectUris!;
-                            break;
-                        case "SPA-REDIRECT-URI":
-                            parent.spa!.redirectUris!.splice(parent.spa!.redirectUris!.indexOf(item.label!.toString()), 1);
-                            newArray = parent.spa!.redirectUris!;
-                            break;
-                        case "NATIVE-REDIRECT-URI":
-                            parent.publicClient!.redirectUris!.splice(parent.publicClient!.redirectUris!.indexOf(item.label!.toString()), 1);
-                            newArray = parent.publicClient!.redirectUris!;
-                            break;
-                    }
-                    item.iconPath = new ThemeIcon("loading~spin");
-                    this.dataProvider.triggerOnDidChangeTreeData();
-                    // Update the application.
-                    this.updateRedirectUri(item, newArray);
+    public async deleteRedirectUri(item: AppRegItem): Promise<void> {
+        // Delete the redirect URI and reload the tree view if successful.
+        await this.redirectUriService.delete(item)
+            .then((status) => {
+                if (status !== undefined) {
+                    this.loadTreeView(status);
                 }
             });
     };
 
     // Edits a redirect URI.   
-    public editRedirectUri(item: AppRegItem): void {
-        // Prompt the user for the new application name.
-        window.showInputBox({
-            placeHolder: "New application name...",
-            prompt: "Rename application with new display name",
-            value: item.label!.toString()
-        })
-            .then((updatedUri) => {
-                // If the new application name is not empty then update the application.
-                if (updatedUri !== undefined && updatedUri !== item.label!.toString()) {
-
-                    const parent = this.dataProvider.getParentApplication(item.objectId!);
-                    let existingRedirectUris: string[] = [];
-
-                    // Get the existing redirect URIs.
-                    switch (item.contextValue) {
-                        case "WEB-REDIRECT-URI":
-                            existingRedirectUris = parent.web!.redirectUris!;
-                            break;
-                        case "SPA-REDIRECT-URI":
-                            existingRedirectUris = parent.spa!.redirectUris!;
-                            break;
-                        case "NATIVE-REDIRECT-URI":
-                            existingRedirectUris = parent.publicClient!.redirectUris!;
-                            break;
-                    }
-
-                    // Validate the edited redirect URI.
-                    if (this.validateRedirectUri(updatedUri, item.contextValue!, existingRedirectUris) === false) {
-                        return;
-                    }
-
-                    // Remove the old redirect URI and add the new one.
-                    existingRedirectUris.splice(existingRedirectUris.indexOf(item.label!.toString()), 1);
-                    existingRedirectUris.push(updatedUri);
-
-                    // Show progress indicator.
-                    item.iconPath = new ThemeIcon("loading~spin");
-                    this.dataProvider.triggerOnDidChangeTreeData();
-
-                    // Update the application.
-                    this.updateRedirectUri(item, existingRedirectUris);
+    public async editRedirectUri(item: AppRegItem): Promise<void> {
+        // Edit the redirect URI and reload the tree view if successful.
+        await this.redirectUriService.edit(item)
+            .then((status) => {
+                if (status !== undefined) {
+                    this.loadTreeView(status);
                 }
             });
     };
-
-    private async updateRedirectUri(item: AppRegItem, redirectUris: string[]): Promise<void> {
-        // Determine which section to add the redirect URI to.
-        if (item.contextValue! === "WEB-REDIRECT-URI" || item.contextValue! === "WEB-REDIRECT") {
-            await this.graphClient.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } })
-                .then(async () => {
-                    // If the application is updated then populate the tree view.
-                    await this.loadTreeView();
-                }).catch((error) => {
-                    console.error(error);
-                });
-        }
-        else if (item.contextValue! === "SPA-REDIRECT-URI" || item.contextValue! === "SPA-REDIRECT") {
-            await this.graphClient.updateApplication(item.objectId!, { spa: { redirectUris: redirectUris } })
-                .then(async () => {
-                    // If the application is updated then populate the tree view.
-                    await this.loadTreeView();
-                }).catch((error) => {
-                    console.error(error);
-                });
-        }
-        else if (item.contextValue! === "NATIVE-REDIRECT-URI" || item.contextValue! === "NATIVE-REDIRECT") {
-            await this.graphClient.updateApplication(item.objectId!, { publicClient: { redirectUris: redirectUris } })
-                .then(async () => {
-                    // If the application is updated then populate the tree view.
-                    await this.loadTreeView();
-                }).catch((error) => {
-                    console.error(error);
-                });
-        }
-    }
-
-    // Validates the redirect URI as per https://learn.microsoft.com/en-us/azure/active-directory/develop/reply-url
-    private validateRedirectUri(uri: string, context: string, existingRedirectUris: string[]): boolean {
-
-        // Check to see if the redirect URI already exists.
-        if (existingRedirectUris.includes(uri)) {
-            window.showErrorMessage("The redirect URI specified already exists.");
-            return false;
-        }
-
-        if (context === "WEB-REDIRECT-URI" || context === "WEB-REDIRECT") {
-            // Check the redirect URI starts with https://
-            if (uri.startsWith("https://") === false && uri.startsWith("http://localhost") === false) {
-                window.showErrorMessage("The redirect URI is not valid. A redirect URI must start with https:// unless it is using http://localhost.");
-                return false;
-            }
-        }
-        else if (context === "SPA-REDIRECT-URI" || context === "SPA-REDIRECT" || context === "NATIVE-REDIRECT-URI" || context === "NATIVE-REDIRECT") {
-            // Check the redirect URI starts with https:// or http:// or customScheme://
-            if (uri.includes("://") === false) {
-                window.showErrorMessage("The redirect URI is not valid. A redirect URI must start with https, http, or customScheme://.");
-                return false;
-            }
-        }
-
-        // Check the length of the redirect URI.
-        if (uri.length > 256) {
-            window.showErrorMessage("The redirect URI is not valid. A redirect URI cannot be longer than 256 characters.");
-            return false;
-        }
-
-        return true;
-    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Common Commands

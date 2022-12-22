@@ -408,7 +408,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Returns the application registration that is the parent of the given element
-    public getParentApplication(objectId: string): Application {
+    public async getParentApplication(objectId: string): Promise<Application> {
         const app: AppRegItem = this.treeData.filter(item => item.objectId === objectId)[0];
         return app.manifest!;
     }
