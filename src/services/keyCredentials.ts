@@ -1,5 +1,5 @@
 import { GraphClient } from '../clients/graph';
-import { AppRegDataProvider } from '../dataProviders/applicationRegistration';
+import { AppRegDataProvider } from '../data/applicationRegistration';
 
 export class KeyCredentialsService {
 

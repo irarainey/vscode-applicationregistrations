@@ -1,7 +1,7 @@
 import { Disposable, window, ThemeIcon, env, Uri } from 'vscode';
 import { signInAudienceOptions, signInAudienceDocumentation } from '../constants';
 import { GraphClient } from '../clients/graph';
-import { AppRegDataProvider } from '../dataProviders/applicationRegistration';
+import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 import { convertSignInAudience } from '../utils/signInAudienceUtils';
 

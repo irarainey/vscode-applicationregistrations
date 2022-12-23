@@ -1,6 +1,6 @@
 import { window, ThemeIcon, Disposable } from 'vscode';
 import { GraphClient } from '../clients/graph';
-import { AppRegDataProvider } from '../dataProviders/applicationRegistration';
+import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 
 export class RedirectUriService {

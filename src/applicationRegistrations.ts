@@ -1,7 +1,7 @@
 import { ExtensionContext, window, ThemeIcon, env, Uri, Disposable } from 'vscode';
 import { execShellCmd } from './utils/shellUtils';
 import { GraphClient } from './clients/graph';
-import { AppRegDataProvider } from './dataProviders/applicationRegistration';
+import { AppRegDataProvider } from './data/applicationRegistration';
 import { AppRegItem } from './models/appRegItem';
 import { ApplicationService } from './services/application';
 import { AppRolesService } from './services/appRoles';

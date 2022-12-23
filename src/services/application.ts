@@ -1,7 +1,7 @@
 import { window, ThemeIcon, env, Uri, TextDocumentContentProvider, EventEmitter, workspace, Disposable, ExtensionContext } from 'vscode';
 import { portalAppUri, signInAudienceOptions } from '../constants';
 import { GraphClient } from '../clients/graph';
-import { AppRegDataProvider } from '../dataProviders/applicationRegistration';
+import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 import { convertSignInAudience } from '../utils/signInAudienceUtils';
 

@@ -1,6 +1,6 @@
 import { commands, ExtensionContext, window } from 'vscode';
 import { view } from './constants';
-import { AppRegDataProvider } from './dataProviders/applicationRegistration';
+import { AppRegDataProvider } from './data/applicationRegistration';
 import { GraphClient } from './clients/graph';
 import { AppReg } from './applicationRegistrations';
 
