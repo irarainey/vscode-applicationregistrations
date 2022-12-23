@@ -14,6 +14,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     // Private instance of the tree data
     private _treeData: AppRegItem[] = [];
 
+    // A private instance of the status bar message
     private _statusBarMessage: Disposable | undefined;
 
     // This is the event that is fired when the tree view is refreshed.
@@ -27,6 +28,16 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
         this._graphClient = graphClient;
         window.registerTreeDataProvider(view, this);
         this.renderTreeView("INITIALISING", undefined, undefined);
+        this.initialiseGraphClient(undefined);
+    }
+
+    // A public method to initialise the graph client.
+    public initialiseGraphClient(statusBar: Disposable | undefined = undefined): void {
+
+        if (statusBar !== undefined) {
+            statusBar.dispose();
+        }
+
         this._graphClient.initialiseTreeView = (type: string, statusBarMessage: Disposable | undefined, filter?: string) => { this.renderTreeView(type, statusBarMessage, filter); };
         this._graphClient.initialise();
     }
@@ -34,6 +45,11 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     // A public get property for the graphClient.
     public get graphClient() {
         return this._graphClient;
+    }
+
+    // A public get property for the graphClientInitialised state.
+    public get isGraphClientInitialised() {
+        return this._graphClient.isGraphClientInitialised;
     }
 
     // Initialises the tree view data based on the type of data to be displayed.

@@ -18,9 +18,6 @@ export class AppReg {
     // A private instance of the AppRegDataProvider class.
     private _dataProvider: AppRegDataProvider;
 
-    // A private instance of the GraphClient class.
-    private _graphClient: GraphClient;
-
     // A private string to store the filter command.
     private _filterCommand?: string = undefined;
 
@@ -51,7 +48,6 @@ export class AppReg {
         requiredResourceAccessService: RequiredResourceAccessService,
         signInAudienceService: SignInAudienceService) {
         this._dataProvider = dataProvider;
-        this._graphClient = dataProvider.graphClient;
         this._applicationService = applicationService;
         this._appRolesService = appRolesService;
         this._keyCredentialsService = keyCredentialsService;
@@ -69,16 +65,20 @@ export class AppReg {
 
     // Populates the tree view with the applications.
     public async populateTreeView(statusBar: Disposable | undefined = undefined): Promise<void> {
+        if (!this._dataProvider.isGraphClientInitialised) {
+            this._dataProvider.initialiseGraphClient(statusBar);
+            return;
+        }
         await this._dataProvider.renderTreeView("APPLICATIONS", statusBar, this._filterCommand);
     };
 
     // Filters the applications by display name.
     public async filterTreeView(): Promise<void> {
         // If the user is not authenticated then we don't want to do anything        
-        if (!this._graphClient.isGraphClientInitialised) {
+        if (!this._dataProvider.isGraphClientInitialised) {
+            this._dataProvider.initialiseGraphClient();
             return;
         }
-
         // Prompt the user for the filter text.
         const newFilter = await window.showInputBox({
             placeHolder: "Name starts with...",
@@ -108,10 +108,10 @@ export class AppReg {
     // Creates a new application registration.
     public async addApp(): Promise<void> {
         // If the user is not authenticated then we don't want to do anything        
-        if (!this._graphClient.isGraphClientInitialised) {
+        if (!this._dataProvider.isGraphClientInitialised) {
+            this._dataProvider.initialiseGraphClient();
             return;
         }
-
         // Add a new application registration and reload the tree view if successful.
         await this._applicationService.add()
             .then((status) => {
