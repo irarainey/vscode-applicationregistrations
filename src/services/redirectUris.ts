@@ -32,7 +32,7 @@ export class RedirectUriService {
             placeHolder: "Enter redirect URI...",
             prompt: "Add a new redirect URI to the application",
             validateInput: (value) => {
-                return this.validateRedirectUri(value, item.contextValue!, existingRedirectUris);
+                return this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, false);
             }
         });
 
@@ -102,7 +102,7 @@ export class RedirectUriService {
             prompt: "Rename application with new display name",
             value: item.label!.toString(),
             validateInput: (value) => {
-                return this.validateRedirectUri(value, item.contextValue!, existingRedirectUris);
+                return this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, true);
             }
         });
 
@@ -149,10 +149,10 @@ export class RedirectUriService {
     }
 
     // Validates the redirect URI as per https://learn.microsoft.com/en-us/azure/active-directory/develop/reply-url
-    private validateRedirectUri(uri: string, context: string, existingRedirectUris: string[]): string | undefined {
+    private validateRedirectUri(uri: string, context: string, existingRedirectUris: string[], isEditing: boolean): string | undefined {
 
         // Check to see if the redirect URI already exists.
-        if (existingRedirectUris.includes(uri)) {
+        if (existingRedirectUris.includes(uri) && isEditing === false) {
             return "The redirect URI specified already exists.";
         }
 

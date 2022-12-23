@@ -1,5 +1,6 @@
 import "isomorphic-fetch";
-import { scope, propertiesToIgnoreOnUpdate, directoryObjectsUri, maximumAppRegistrations } from '../constants';
+import { workspace } from 'vscode';
+import { scope, propertiesToIgnoreOnUpdate, directoryObjectsUri } from '../constants';
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
@@ -56,9 +57,12 @@ export class GraphClient {
 
     // Returns all application registrations
     public async getApplicationsAll(filter?: string): Promise<Application[]> {
+
+        const maximumReturned = workspace.getConfiguration("applicationregistrations").get("maximumReturned") as number;
+
         const request = await this.client!.api("/applications/")
             .filter(filter === undefined ? "" : filter)
-            .top(maximumAppRegistrations)
+            .top(maximumReturned)
             .get()
             .catch((error: any) => {
                 console.log(error);

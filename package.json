@@ -28,6 +28,23 @@
     "ms-vscode.vscode-node-azure-pack"
   ],
   "contributes": {
+    "configuration": {
+      "title": "Azure Application Registrations",
+      "properties": {
+        "applicationregistrations.maximumReturned": {
+          "type": "number",
+          "description": "The maximum number of application registrations to be returned in the view.",
+          "default": 100,
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "applicationregistrations.returnAll": {
+          "type": "boolean",
+          "description": "Show all applications, including those that are not owned by the current user.",
+          "default": true
+        }
+      }
+    },
     "views": {
       "azure": [
         {
