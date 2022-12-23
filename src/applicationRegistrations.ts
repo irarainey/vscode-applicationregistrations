@@ -1,7 +1,6 @@
 import { window, env, Disposable } from 'vscode';
 import { AppRegDataProvider } from './data/applicationRegistration';
 import { AppRegItem } from './models/appRegItem';
-import { GraphClient } from './clients/graph';
 import { ApplicationService } from './services/application';
 import { AppRolesService } from './services/appRoles';
 import { KeyCredentialsService } from './services/keyCredentials';
