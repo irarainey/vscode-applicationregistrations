@@ -1,4 +1,4 @@
-import { ExtensionContext, window, ThemeIcon, env, Uri, Disposable } from 'vscode';
+import { ExtensionContext, window, env, Disposable } from 'vscode';
 import { execShellCmd } from './utils/shellUtils';
 import { GraphClient } from './clients/graph';
 import { AppRegDataProvider } from './data/applicationRegistration';
