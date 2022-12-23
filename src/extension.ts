@@ -48,7 +48,7 @@ export async function activate(context: ExtensionContext) {
 	);
 
 	// Register the commands.
-	commands.registerCommand(`${view}.signInToAzure`, () => dataProvider.cliSignIn());
+	commands.registerCommand(`${view}.signInToAzure`, () => graphClient.cliSignIn());
 	commands.registerCommand(`${view}.refreshApps`, () => appReg.populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations...")));
 	commands.registerCommand(`${view}.filterApps`, () => appReg.filterTreeView());
 	commands.registerCommand(`${view}.addApp`, () => appReg.addApp());

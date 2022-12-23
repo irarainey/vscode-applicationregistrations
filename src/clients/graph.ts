@@ -1,10 +1,11 @@
 import "isomorphic-fetch";
-import { workspace } from 'vscode';
+import { workspace, window, Disposable } from 'vscode';
 import { scope, propertiesToIgnoreOnUpdate, directoryObjectsUri } from '../constants';
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
 import { Application, User } from "@microsoft/microsoft-graph-types";
+import { execShellCmd } from "../utils/shellUtils";
 
 // This is the client for the Microsoft Graph API
 export class GraphClient {
@@ -12,16 +13,29 @@ export class GraphClient {
     // A private instance of the graph client
     private _client?: Client;
 
-    // A public function triggered to determine the authentication state
-    public authenticationStateChange: (state: boolean | undefined) => void;
+    // A private instance of the initialisation state
+    private _graphClientInitialised: boolean = false;
+
+    // A function that is called when the tree view is ready to be initialised
+    public initialiseTreeView: (type: string, statusBarMessage: Disposable | undefined, filter?: string) => void;
 
     // Constructor for the graph client
     constructor() {
-        this.authenticationStateChange = () => { };
+        this.initialiseTreeView = () => { };
+    }
+
+    // A public getter for the initialisation state
+    public get isGraphClientInitialised(): boolean {
+        return this._graphClientInitialised;
+    }
+
+    // A public setter for the initialisation state
+    public set isGraphClientInitialised(value: boolean) {
+        this._graphClientInitialised = value;
     }
 
     // Initialises the graph client
-    public initialise(): void {
+    public async initialise(): Promise<void> {
 
         // Create an Azure CLI credential
         const credential = new AzureCliCredential();
@@ -41,18 +55,49 @@ export class GraphClient {
 
         // Attempt to get an access token to determine the authentication state
         try {
-            credential.getToken(scope)
+            await credential.getToken(scope)
                 .then(() => {
                     // If the access token is returned, the user is authenticated
-                    this.authenticationStateChange(true);
+                    this._graphClientInitialised = true;
+                    this.initialiseTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading Application Registrations..."), undefined);
                 })
                 .catch(() => {
                     // If the access token is not returned, the user is not authenticated
-                    this.authenticationStateChange(false);
+                    this._graphClientInitialised = false;
+                    this.initialiseTreeView("SIGN-IN", undefined, undefined);
                 });
         } catch (error) {
-            console.log("Error: " + error);
+            console.log(error);
         }
+    }
+
+    // Invokes the Azure CLI sign-in command.
+    public async cliSignIn(): Promise<void> {
+        // Prompt the user for the tenant name or Id.
+        window.showInputBox({
+            placeHolder: "Tenant name or Id...",
+            prompt: "Enter the tenant name or Id, or leave blank for the default tenant",
+        })
+            .then((tenant) => {
+                // If the tenant is undefined then we don't want to do anything because they pressed cancel.
+                if (tenant === undefined) {
+                    return;
+                }
+
+                // Build the command to invoke the Azure CLI sign-in command.
+                let command = "az login";
+                if (tenant.length > 0) {
+                    command += ` --tenant ${tenant}`;
+                }
+
+                // Execute the command.
+                execShellCmd(command)
+                    .then(() => {
+                        this.initialise();
+                    }).catch(() => {
+                        this.initialise();
+                    });
+            });
     }
 
     // Returns all application registrations

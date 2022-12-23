@@ -4,10 +4,12 @@ import { window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, Event
 import { Application } from "@microsoft/microsoft-graph-types";
 import { GraphClient } from '../clients/graph';
 import { AppRegItem } from '../models/appRegItem';
-import { execShellCmd } from '../utils/shellUtils';
 
 // This is the application registration data provider for the tree view.
 export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
+
+    // A private instance of the GraphClient class.
+    private _graphClient: GraphClient;
 
     // Private instance of the tree data
     private _treeData: AppRegItem[] = [];
@@ -17,107 +19,21 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     // This is the event that is fired when the tree view is refreshed.
     private _onDidChangeTreeData: EventEmitter<AppRegItem | undefined | null | void> = new EventEmitter<AppRegItem | undefined | null | void>();
 
-    // A private boolean to store the authentication state.
-    private _authenticated: boolean = false;
-
-    // A public instance of the GraphClient class.
-    private _graphClient: GraphClient;
-
-    // A public function to trigger a change in the authentication state.
-    public isUserAuthenticated: (state: boolean | undefined) => void;
-
     //Defines the event that is fired when the tree view is refreshed.
     public readonly onDidChangeTreeData: Event<AppRegItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
-    // The constructor for the ApplicationRegistrations class.
+    // The constructor for the AppRegDataProvider class.
     constructor(graphClient: GraphClient) {
         this._graphClient = graphClient;
-        this.isUserAuthenticated = () => { };
-        this.registerTreeDataProvider();
-        this.authenticate();
+        window.registerTreeDataProvider(view, this);
+        this.renderTreeView("INITIALISING", undefined, undefined);
+        this._graphClient.initialiseTreeView = (type: string, statusBarMessage: Disposable | undefined, filter?: string) => { this.renderTreeView(type, statusBarMessage, filter); };
+        this._graphClient.initialise();
     }
 
     // A public get property for the graphClient.
     public get graphClient() {
         return this._graphClient;
-    }
-
-    // A public get property for the authenticated state.
-    public get authenticated() { 
-        return this._authenticated;
-    }
-
-    // Registers the tree data provider and sets the initialising state of the tree view.
-    private registerTreeDataProvider() {
-        window.registerTreeDataProvider(view, this);
-        this.renderTreeView("INITIALISING", undefined, undefined);
-    }
-
-    // Determines the authentication state and populates the tree view if authenticated.
-    // If not authenticated, the user is prompted to sign in.
-    private async authenticate(): Promise<void> {
-        // Do we think the user is authenticated?
-        if (this._authenticated === false) {
-            // If not then initialise the GraphClient.
-            this._graphClient.initialise();
-
-            // Handle the authentication state change from the graph client.
-            this._graphClient.authenticationStateChange = (state: boolean | undefined) => {
-
-                // If the user is authenticated then populate the tree view.
-                if (state === true) {
-                    this._authenticated = true;
-                    this.renderTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading Application Registrations..."), undefined);
-                } else if (state === false) {
-
-                    // If the user is not authenticated then prompt them to sign in.
-                    this.renderTreeView("SIGN-IN");
-
-                    // Handle the authentication state change from the sign-in command.
-                    this.isUserAuthenticated = (state: boolean | undefined) => {
-                        if (state === true) {
-                            // If the user has signed in then go back to determine the authentication state.
-                            this.authenticate();
-                        } else if (state === false) {
-                            window.showErrorMessage("Please sign in to Azure CLI.");
-                        }
-                    };
-                }
-            };
-        } else {
-            // If the user is authenticated then just populate the tree view.
-            this.renderTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading Application Registrations..."), undefined);
-        }
-    }
-
-    // Invokes the Azure CLI sign-in command.
-    public async cliSignIn(): Promise<void> {
-        // Prompt the user for the tenant name or Id.
-        window.showInputBox({
-            placeHolder: "Tenant name or Id...",
-            prompt: "Enter the tenant name or Id, or leave blank for the default tenant",
-        })
-            .then((tenant) => {
-                // If the tenant is undefined then we don't want to do anything because they pressed cancel.
-                if (tenant === undefined) {
-                    return;
-                }
-
-                // Build the command to invoke the Azure CLI sign-in command.
-                let command = "az login";
-                if (tenant.length > 0) {
-                    command += ` --tenant ${tenant}`;
-                }
-
-                // Execute the command.
-                execShellCmd(command)
-                    .then(() => {
-                        // If the sign-in is successful then trigger the authentication state change.
-                        this.isUserAuthenticated(true);
-                    }).catch(() => {
-                        this.isUserAuthenticated(false);
-                    });
-            });
     }
 
     // Initialises the tree view data based on the type of data to be displayed.
@@ -174,7 +90,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
         await this._graphClient!.getApplicationsAll(filter)
             .then((apps) => {
 
-                apps.sort((a, b) => {return a.displayName!.toLowerCase() < b.displayName!.toLowerCase() ? -1 : 1;});
+                apps.sort((a, b) => { return a.displayName!.toLowerCase() < b.displayName!.toLowerCase() ? -1 : 1; });
 
                 // Iterate through the applications and create the tree data
                 apps!.forEach(app => {
@@ -484,8 +400,8 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                 });
             }).catch(() => {
                 // If there is an error then determine the authentication state.
-                this._authenticated = false;
-                this.authenticate();
+                this._graphClient.isGraphClientInitialised = false;
+                this._graphClient.initialise();
             });
 
         // Clear any status bar message

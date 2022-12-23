@@ -1,6 +1,7 @@
 import { window, env, Disposable } from 'vscode';
 import { AppRegDataProvider } from './data/applicationRegistration';
 import { AppRegItem } from './models/appRegItem';
+import { GraphClient } from './clients/graph';
 import { ApplicationService } from './services/application';
 import { AppRolesService } from './services/appRoles';
 import { KeyCredentialsService } from './services/keyCredentials';
@@ -16,6 +17,9 @@ export class AppReg {
 
     // A private instance of the AppRegDataProvider class.
     private _dataProvider: AppRegDataProvider;
+
+    // A private instance of the GraphClient class.
+    private _graphClient: GraphClient;
 
     // A private string to store the filter command.
     private _filterCommand?: string = undefined;
@@ -47,6 +51,7 @@ export class AppReg {
         requiredResourceAccessService: RequiredResourceAccessService,
         signInAudienceService: SignInAudienceService) {
         this._dataProvider = dataProvider;
+        this._graphClient = dataProvider.graphClient;
         this._applicationService = applicationService;
         this._appRolesService = appRolesService;
         this._keyCredentialsService = keyCredentialsService;
@@ -70,7 +75,7 @@ export class AppReg {
     // Filters the applications by display name.
     public async filterTreeView(): Promise<void> {
         // If the user is not authenticated then we don't want to do anything        
-        if (!this._dataProvider.authenticated) {
+        if (!this._graphClient.isGraphClientInitialised) {
             return;
         }
 
@@ -103,7 +108,7 @@ export class AppReg {
     // Creates a new application registration.
     public async addApp(): Promise<void> {
         // If the user is not authenticated then we don't want to do anything        
-        if (!this._dataProvider.authenticated) {
+        if (!this._graphClient.isGraphClientInitialised) {
             return;
         }
 
