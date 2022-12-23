@@ -59,9 +59,13 @@ export class GraphClient {
     public async getApplicationsAll(filter?: string): Promise<Application[]> {
 
         const maximumReturned = workspace.getConfiguration("applicationregistrations").get("maximumReturned") as number;
+        const returnAll = workspace.getConfiguration("applicationregistrations").get("returnAll") as boolean;
 
         const request = await this.client!.api("/applications/")
             .filter(filter === undefined ? "" : filter)
+            .count(true)
+            .header("ConsistencyLevel", "eventual")
+            .orderby("displayName")
             .top(maximumReturned)
             .get()
             .catch((error: any) => {
