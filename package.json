@@ -36,12 +36,14 @@
           "description": "The maximum number of application registrations to be returned in the view.",
           "default": 100,
           "minimum": 1,
-          "maximum": 1000
+          "maximum": 1000,
+          "order": 0
         },
         "applicationregistrations.returnAll": {
           "type": "boolean",
           "description": "Show all applications, including those that are not owned by the current user.",
-          "default": true
+          "default": true,
+          "order": 1
         }
       }
     },
@@ -79,8 +81,8 @@
         "title": "Delete Application"
       },
       {
-        "command": "appRegistrations.copyAppId",
-        "title": "Copy Application Id"
+        "command": "appRegistrations.copyClientId",
+        "title": "Copy Client Id"
       },
       {
         "command": "appRegistrations.openAppInPortal",
@@ -176,7 +178,7 @@
           "group": "appRegistrations@1"
         },
         {
-          "command": "appRegistrations.copyAppId",
+          "command": "appRegistrations.copyClientId",
           "when": "view == appRegistrations && viewItem == APPLICATION",
           "group": "appRegistrations@2"
         },

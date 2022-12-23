@@ -8,15 +8,15 @@ import { AppRegItem } from '../models/appRegItem';
 export class OwnerService {
 
     // A private instance of the GraphClient class.
-    private graphClient: GraphClient;
+    private _graphClient: GraphClient;
 
     // A private instance of the AppRegDataProvider class.
-    private dataProvider: AppRegDataProvider;
+    private _dataProvider: AppRegDataProvider;
 
-    // The constructor for the ApplicationRegistrations class.
-    constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider) {
-        this.graphClient = graphClient;
-        this.dataProvider = dataProvider;
+    // The constructor for the OwnerService class.
+    constructor(dataProvider: AppRegDataProvider) {
+        this._dataProvider = dataProvider;
+        this._graphClient = dataProvider.graphClient;
     }
 
     // Adds a new owner to an application registration.
@@ -37,11 +37,11 @@ export class OwnerService {
             let identifier: string = "";
             if (newOwner.indexOf('@') > -1) {
                 // Try to find the user by email.
-                userList = await this.graphClient.findUserByEmail(newOwner);
+                userList = await this._graphClient.findUserByEmail(newOwner);
                 identifier = "email address";
             } else {
                 // Try to find the user by name.
-                userList = await this.graphClient.findUserByName(newOwner);
+                userList = await this._graphClient.findUserByName(newOwner);
                 identifier = "name";
             }
 
@@ -55,8 +55,8 @@ export class OwnerService {
                 // Sweet spot
                 added = window.setStatusBarMessage("$(loading~spin) Adding owner...");
                 item.iconPath = new ThemeIcon("loading~spin");
-                this.dataProvider.triggerOnDidChangeTreeData();
-                await this.graphClient.addApplicationOwner(item.objectId!, userList[0].id!)
+                this._dataProvider.triggerOnDidChangeTreeData();
+                await this._graphClient.addApplicationOwner(item.objectId!, userList[0].id!)
                     .catch((error) => {
                         console.error(error);
                     });
@@ -79,8 +79,8 @@ export class OwnerService {
         if (answer === "Yes") {
             removed = window.setStatusBarMessage("$(loading~spin) Removing owner...");
             item.iconPath = new ThemeIcon("loading~spin");
-            this.dataProvider.triggerOnDidChangeTreeData();
-            await this.graphClient.removeApplicationOwner(item.objectId!, item.userId!)
+            this._dataProvider.triggerOnDidChangeTreeData();
+            await this._graphClient.removeApplicationOwner(item.objectId!, item.userId!)
                 .catch((error) => {
                     console.error(error);
                 });

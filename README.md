@@ -22,7 +22,7 @@ All application properties have their own range of functionality. From the appli
 
 ![Context Menus](resources/images/context.png)
 
-By default, to improve performance, the application list is limited to 100 applications. This however is exposed as a user setting and can be changed if you wish.
+By default, to improve performance, the application list is limited to 100 applications. This however is exposed as a user setting and can be changed if you wish. The list is sorted by application name. If your application is not shown in the list you can also apply a filter on application name, which is applied before the maximum application limit.
 
 ## Authentication
 This extension uses the `AzureCliCredential` to authenticate the user and gain an access token required to manage applications. This means it does not use the Azure Account identity, but rather the Azure CLI. This is a workaround due to a [known issue](https://learn.microsoft.com/en-us/javascript/api/overview/azure/identity-readme?view=azure-node-latest#note-about-visualstudiocodecredential) with the `VisualStudioCodeCredential` and Azure Account extension >= v0.10.0.

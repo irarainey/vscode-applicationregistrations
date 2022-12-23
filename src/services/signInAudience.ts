@@ -8,15 +8,15 @@ import { convertSignInAudience } from '../utils/signInAudienceUtils';
 export class SignInAudienceService {
 
     // A private instance of the GraphClient class.
-    private graphClient: GraphClient;
+    private _graphClient: GraphClient;
 
     // A private instance of the AppRegDataProvider class.
-    private dataProvider: AppRegDataProvider;
+    private _dataProvider: AppRegDataProvider;
 
-    // The constructor for the ApplicationRegistrations class.
-    constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider) {
-        this.graphClient = graphClient;
-        this.dataProvider = dataProvider;
+    // The constructor for the SignInAudienceService class.
+    constructor(dataProvider: AppRegDataProvider) {
+        this._dataProvider = dataProvider;
+        this._graphClient = dataProvider.graphClient;
     }
 
     // Edits the application sign in audience.
@@ -37,8 +37,8 @@ export class SignInAudienceService {
             } else {
                 item.iconPath = new ThemeIcon("loading~spin");
             }
-            this.dataProvider.triggerOnDidChangeTreeData();
-            await this.graphClient.updateApplication(item.objectId!, { signInAudience: convertSignInAudience(audience) })
+            this._dataProvider.triggerOnDidChangeTreeData();
+            await this._graphClient.updateApplication(item.objectId!, { signInAudience: convertSignInAudience(audience) })
                 .catch(() => {
                     // If the application is not updated then show an error message and a link to the documentation.
                     window.showErrorMessage(

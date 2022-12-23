@@ -44,6 +44,3 @@ export const signInAudienceOptions = [
 
 // URI to the documentation for sign in audience
 export const signInAudienceDocumentation = "https://learn.microsoft.com/en-gb/azure/active-directory/develop/supported-accounts-validation";
-
-// The maximum number of application registrations to return
-export const maximumAppRegistrations = 100;

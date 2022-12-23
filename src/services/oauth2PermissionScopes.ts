@@ -4,15 +4,15 @@ import { AppRegDataProvider } from '../data/applicationRegistration';
 export class OAuth2PermissionScopeService {
 
     // A private instance of the GraphClient class.
-    private graphClient: GraphClient;
+    private _graphClient: GraphClient;
 
     // A private instance of the AppRegDataProvider class.
-    private dataProvider: AppRegDataProvider;
+    private _dataProvider: AppRegDataProvider;
 
-    // The constructor for the ApplicationRegistrations class.
-    constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider) {
-        this.graphClient = graphClient;
-        this.dataProvider = dataProvider;
+    // The constructor for the OAuth2PermissionScopeService class.
+    constructor(dataProvider: AppRegDataProvider) {
+        this._dataProvider = dataProvider;
+        this._graphClient = dataProvider.graphClient;
     }
 
 }

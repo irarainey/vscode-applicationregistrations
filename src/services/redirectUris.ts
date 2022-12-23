@@ -6,15 +6,15 @@ import { AppRegItem } from '../models/appRegItem';
 export class RedirectUriService {
 
     // A private instance of the GraphClient class.
-    private graphClient: GraphClient;
+    private _graphClient: GraphClient;
 
     // A private instance of the AppRegDataProvider class.
-    private dataProvider: AppRegDataProvider;
+    private _dataProvider: AppRegDataProvider;
 
-    // The constructor for the ApplicationRegistrations class.
-    constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider) {
-        this.graphClient = graphClient;
-        this.dataProvider = dataProvider;
+    // The constructor for the RedirectUriService class.
+    constructor(dataProvider: AppRegDataProvider) {
+        this._dataProvider = dataProvider;
+        this._graphClient = dataProvider.graphClient;
     }
 
     // Adds a new redirect URI to an application registration.
@@ -54,7 +54,7 @@ export class RedirectUriService {
         // If the answer is yes then delete the redirect URI.
         if (answer === "Yes") {
             // Get the parent application so we can read the manifest.
-            const parent = await this.dataProvider.getParentApplication(item.objectId!);
+            const parent = await this._dataProvider.getParentApplication(item.objectId!);
             let newArray: string[] = [];
             // Remove the redirect URI from the array.
             switch (item.contextValue) {
@@ -80,7 +80,7 @@ export class RedirectUriService {
     // Edits a redirect URI.   
     public async edit(item: AppRegItem): Promise<Disposable | undefined> {
 
-        const parent = await this.dataProvider.getParentApplication(item.objectId!);
+        const parent = await this._dataProvider.getParentApplication(item.objectId!);
         let existingRedirectUris: string[] = [];
 
         // Get the existing redirect URIs.
@@ -123,23 +123,23 @@ export class RedirectUriService {
         // Show progress indicator.
         let updated = window.setStatusBarMessage("$(loading~spin) Updating redirect URIs...");
         item.iconPath = new ThemeIcon("loading~spin");
-        this.dataProvider.triggerOnDidChangeTreeData();
+        this._dataProvider.triggerOnDidChangeTreeData();
 
         // Determine which section to add the redirect URI to.
         if (item.contextValue! === "WEB-REDIRECT-URI" || item.contextValue! === "WEB-REDIRECT") {
-            await this.graphClient.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } })
+            await this._graphClient.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } })
                 .catch((error) => {
                     console.error(error);
                 });
         }
         else if (item.contextValue! === "SPA-REDIRECT-URI" || item.contextValue! === "SPA-REDIRECT") {
-            await this.graphClient.updateApplication(item.objectId!, { spa: { redirectUris: redirectUris } })
+            await this._graphClient.updateApplication(item.objectId!, { spa: { redirectUris: redirectUris } })
                 .catch((error) => {
                     console.error(error);
                 });
         }
         else if (item.contextValue! === "NATIVE-REDIRECT-URI" || item.contextValue! === "NATIVE-REDIRECT") {
-            await this.graphClient.updateApplication(item.objectId!, { publicClient: { redirectUris: redirectUris } })
+            await this._graphClient.updateApplication(item.objectId!, { publicClient: { redirectUris: redirectUris } })
                 .catch((error) => {
                     console.error(error);
                 });

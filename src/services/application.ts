@@ -8,19 +8,19 @@ import { convertSignInAudience } from '../utils/signInAudienceUtils';
 export class ApplicationService {
 
     // A private instance of the GraphClient class.
-    private graphClient: GraphClient;
+    private _graphClient: GraphClient;
 
     // A private instance of the AppRegDataProvider class.
-    private dataProvider: AppRegDataProvider;
+    private _dataProvider: AppRegDataProvider;
 
     // A private array to store the subscriptions.
-    private subscriptions: Disposable[] = [];
+    private _subscriptions: Disposable[] = [];
 
-    // The constructor for the ApplicationRegistrations class.
-    constructor(graphClient: GraphClient, dataProvider: AppRegDataProvider, context: ExtensionContext) {
-        this.graphClient = graphClient;
-        this.dataProvider = dataProvider;
-        this.subscriptions = context.subscriptions;
+    // The constructor for the ApplicationService class.
+    constructor(dataProvider: AppRegDataProvider, context: ExtensionContext) {
+        this._dataProvider = dataProvider;
+        this._graphClient = dataProvider.graphClient;
+        this._subscriptions = context.subscriptions;
     }
 
     // Creates a new application registration.
@@ -48,7 +48,7 @@ export class ApplicationService {
             // If the sign in audience is not undefined then create the application.
             if (audience !== undefined) {
                 added = window.setStatusBarMessage("$(loading~spin) Creating application registration...");
-                await this.graphClient.createApplication({ displayName: newName, signInAudience: convertSignInAudience(audience) })
+                await this._graphClient.createApplication({ displayName: newName, signInAudience: convertSignInAudience(audience) })
                     .catch((error) => {
                         console.error(error);
                     });
@@ -79,8 +79,8 @@ export class ApplicationService {
         if (newName !== undefined) {
             updated = window.setStatusBarMessage("$(loading~spin) Renaming application registration...");
             app.iconPath = new ThemeIcon("loading~spin");
-            this.dataProvider.triggerOnDidChangeTreeData();
-            await this.graphClient.updateApplication(app.objectId!, { displayName: newName })
+            this._dataProvider.triggerOnDidChangeTreeData();
+            await this._graphClient.updateApplication(app.objectId!, { displayName: newName })
                 .catch((error) => {
                     console.error(error);
                 });
@@ -103,8 +103,8 @@ export class ApplicationService {
         if (answer === "Yes") {
             deleted = window.setStatusBarMessage("$(loading~spin) Deleting application registration...");
             app.iconPath = new ThemeIcon("loading~spin");
-            this.dataProvider.triggerOnDidChangeTreeData();
-            await this.graphClient.deleteApplication(app.objectId!)
+            this._dataProvider.triggerOnDidChangeTreeData();
+            await this._graphClient.deleteApplication(app.objectId!)
                 .catch((error) => {
                     console.error(error);
                 });
@@ -115,7 +115,7 @@ export class ApplicationService {
     };
 
     // Copies the application Id to the clipboard.
-    public copyId(app: AppRegItem): void {
+    public copyClientId(app: AppRegItem): void {
         env.clipboard.writeText(app.appId!);
     };
 
@@ -133,7 +133,7 @@ export class ApplicationService {
                 return JSON.stringify(app.manifest, null, 4);
             }
         };
-        this.subscriptions.push(workspace.registerTextDocumentContentProvider('manifest', newDocument));
+        this._subscriptions.push(workspace.registerTextDocumentContentProvider('manifest', newDocument));
         const uri = Uri.parse('manifest:' + app.label + ".json");
         workspace.openTextDocument(uri)
             .then(doc => window.showTextDocument(

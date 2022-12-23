@@ -10,12 +10,12 @@ import { Application, User } from "@microsoft/microsoft-graph-types";
 export class GraphClient {
 
     // A private instance of the graph client
-    private client?: Client;
+    private _client?: Client;
 
     // A public function triggered to determine the authentication state
     public authenticationStateChange: (state: boolean | undefined) => void;
 
-    // Constructor
+    // Constructor for the graph client
     constructor() {
         this.authenticationStateChange = () => { };
     }
@@ -37,7 +37,7 @@ export class GraphClient {
         };
 
         // Initialise the graph client with the defined options
-        this.client = Client.initWithMiddleware(clientOptions);
+        this._client = Client.initWithMiddleware(clientOptions);
 
         // Attempt to get an access token to determine the authentication state
         try {
@@ -61,11 +61,8 @@ export class GraphClient {
         const maximumReturned = workspace.getConfiguration("applicationregistrations").get("maximumReturned") as number;
         const returnAll = workspace.getConfiguration("applicationregistrations").get("returnAll") as boolean;
 
-        const request = await this.client!.api("/applications/")
+        const request = await this._client!.api("/applications/")
             .filter(filter === undefined ? "" : filter)
-            .count(true)
-            .header("ConsistencyLevel", "eventual")
-            .orderby("displayName")
             .top(maximumReturned)
             .get()
             .catch((error: any) => {
@@ -76,7 +73,7 @@ export class GraphClient {
 
     // Returns all owners for a specified application registration
     public async getApplicationOwners(id: string): Promise<User[]> {
-        const request = await this.client!.api(`/applications/${id}/owners`)
+        const request = await this._client!.api(`/applications/${id}/owners`)
             .get()
             .catch((error: any) => {
                 console.log(error);
@@ -86,7 +83,7 @@ export class GraphClient {
 
     // Removes an owner from an application registration
     public async removeApplicationOwner(id: string, userId: string): Promise<void> {
-        await this.client!.api(`/applications/${id}/owners/${userId}/$ref`)
+        await this._client!.api(`/applications/${id}/owners/${userId}/$ref`)
             .delete()
             .catch((error: any) => {
                 console.log(error);
@@ -95,7 +92,7 @@ export class GraphClient {
 
     // Find users by display name
     public async findUserByName(name: string): Promise<User[]> {
-        const request = await this.client!.api("/users")
+        const request = await this._client!.api("/users")
             .filter(`startswith(displayName, '${name}')`)
             .get()
             .catch((error: any) => {
@@ -106,7 +103,7 @@ export class GraphClient {
 
     // Find users by email address
     public async findUserByEmail(name: string): Promise<User[]> {
-        const request = await this.client!.api("/users")
+        const request = await this._client!.api("/users")
             .filter(`startswith(mail, '${name}')`)
             .get()
             .catch((error: any) => {
@@ -117,7 +114,7 @@ export class GraphClient {
 
     // Adds an owner to an application registration
     public async addApplicationOwner(id: string, userId: string): Promise<void> {
-        await this.client!.api(`/applications/${id}/owners/$ref`)
+        await this._client!.api(`/applications/${id}/owners/$ref`)
             .post({
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 "@odata.id": `${directoryObjectsUri}${userId}`
@@ -129,7 +126,7 @@ export class GraphClient {
 
     // Deletes an application registration
     public async deleteApplication(id: string): Promise<void> {
-        await this.client!.api(`/applications/${id}`)
+        await this._client!.api(`/applications/${id}`)
             .delete()
             .catch((error: any) => {
                 console.log(error);
@@ -138,7 +135,7 @@ export class GraphClient {
 
     // Creates a new application registration
     public async createApplication(application: Application): Promise<Application> {
-        return await this.client!.api("/applications/")
+        return await this._client!.api("/applications/")
             .post(application)
             .catch((error: any) => {
                 console.log(error);
@@ -152,7 +149,7 @@ export class GraphClient {
             delete application[property as keyof Application];
         });
 
-        return await this.client!.api(`/applications/${id}`)
+        return await this._client!.api(`/applications/${id}`)
             .update(application)
             .catch((error: any) => {
                 console.log(error);

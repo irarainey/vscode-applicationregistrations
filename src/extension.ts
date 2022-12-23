@@ -3,6 +3,15 @@ import { view } from './constants';
 import { AppRegDataProvider } from './data/applicationRegistration';
 import { GraphClient } from './clients/graph';
 import { AppReg } from './applicationRegistrations';
+import { ApplicationService } from './services/application';
+import { AppRolesService } from './services/appRoles';
+import { KeyCredentialsService } from './services/keyCredentials';
+import { OAuth2PermissionScopeService } from './services/oauth2PermissionScopes';
+import { OwnerService } from './services/owner';
+import { PasswordCredentialsService } from './services/passwordCredentials';
+import { RedirectUriService } from './services/redirectUris';
+import { RequiredResourceAccessService } from './services/requiredResourceAccess';
+import { SignInAudienceService } from './services/signInAudience';
 
 // This method is called when the extension is activated.
 export async function activate(context: ExtensionContext) {
@@ -11,19 +20,41 @@ export async function activate(context: ExtensionContext) {
 	const graphClient = new GraphClient();
 
 	// Create a new instance of the ApplicationDataProvider class.
-	const dataProvider = new AppRegDataProvider();
+	const dataProvider = new AppRegDataProvider(graphClient);
 
-	// Create a new instance of the ApplicationRegistrations class.
-	const appReg = new AppReg(graphClient, dataProvider, context);
+	// Create instances of the services.
+	const applicationService = new ApplicationService(dataProvider, context);
+	const appRolesService = new AppRolesService(dataProvider);
+	const keyCredentialsService = new KeyCredentialsService(dataProvider);
+	const oauth2PermissionScopeService = new OAuth2PermissionScopeService(dataProvider);
+	const ownerService = new OwnerService(dataProvider);
+	const passwordCredentialsService = new PasswordCredentialsService(dataProvider);
+	const redirectUriService = new RedirectUriService(dataProvider);
+	const requiredResourceAccessService = new RequiredResourceAccessService(dataProvider);
+	const signInAudienceService = new SignInAudienceService(dataProvider);
+
+	// Create a new instance of the Application Registrations class.
+	const appReg = new AppReg(
+		dataProvider,
+		applicationService,
+		appRolesService,
+		keyCredentialsService,
+		oauth2PermissionScopeService,
+		ownerService,
+		passwordCredentialsService,
+		redirectUriService,
+		requiredResourceAccessService,
+		signInAudienceService
+	);
 
 	// Register the commands.
-	commands.registerCommand(`${view}.signInToAzure`, () => appReg.cliSignIn());
-	commands.registerCommand(`${view}.refreshApps`, () => appReg.loadTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations...")));
+	commands.registerCommand(`${view}.signInToAzure`, () => dataProvider.cliSignIn());
+	commands.registerCommand(`${view}.refreshApps`, () => appReg.populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations...")));
 	commands.registerCommand(`${view}.filterApps`, () => appReg.filterTreeView());
 	commands.registerCommand(`${view}.addApp`, () => appReg.addApp());
 	commands.registerCommand(`${view}.deleteApp`, app => appReg.deleteApp(app));
 	commands.registerCommand(`${view}.renameApp`, app => appReg.renameApp(app));
-	commands.registerCommand(`${view}.copyAppId`, app => appReg.copyAppId(app));
+	commands.registerCommand(`${view}.copyClientId`, app => appReg.copyClientId(app));
 	commands.registerCommand(`${view}.openAppInPortal`, app => appReg.openAppInPortal(app));
 	commands.registerCommand(`${view}.viewAppManifest`, app => appReg.viewAppManifest(app));
 	commands.registerCommand(`${view}.editAudience`, app => appReg.editAudience(app));
@@ -34,10 +65,4 @@ export async function activate(context: ExtensionContext) {
 	commands.registerCommand(`${view}.editRedirectUri`, app => appReg.editRedirectUri(app));
 	commands.registerCommand(`${view}.deleteRedirectUri`, app => appReg.deleteRedirectUri(app));
 	commands.registerCommand(`${view}.copyValue`, app => appReg.copyValue(app));
-
-	// Register the tree view data provider.
-	window.registerTreeDataProvider(view, dataProvider);
-
-	// Set the initial state of the tree view.
-	dataProvider.initialise("LOADING", window.setStatusBarMessage("$(loading~spin) Initialising Application Registration Extension..."));
 }
