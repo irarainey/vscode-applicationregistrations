@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { signInCommandText, view } from '../constants';
-import { window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, Disposable } from 'vscode';
+import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, Disposable } from 'vscode';
 import { Application } from "@microsoft/microsoft-graph-types";
 import { GraphClient } from '../clients/graph';
 import { AppRegItem } from '../models/appRegItem';
@@ -103,7 +103,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     private async buildAppRegTree(filter?: string): Promise<void> {
 
         // Get the application registrations from the graph client.
-        await this._graphClient!.getApplicationsAll(filter)
+        await this.getApplications(filter)
             .then((apps) => {
 
                 apps.sort((a, b) => { return a.displayName!.toLowerCase() < b.displayName!.toLowerCase() ? -1 : 1; });
@@ -444,6 +444,22 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     public async getParentApplication(objectId: string): Promise<Application> {
         const app: AppRegItem = this._treeData.filter(item => item.objectId === objectId)[0];
         return app.manifest!;
+    }
+
+    // Returns all applications depending on the user setting
+    private async getApplications(filter?: string): Promise<Application[]> {
+
+        // Get the config setting
+        const returnAll = workspace.getConfiguration("applicationregistrations")
+            .get("showAllApplications") as boolean;
+
+        // If not show all then get only owned applications
+        if (returnAll === false) {
+            return await this._graphClient.getApplicationsOwned(filter);
+        } else {
+            // Otherwise get all applications
+            return await this._graphClient.getApplicationsAll(filter);
+        }
     }
 
     // Returns the owners of the application registration as an array of AppItem

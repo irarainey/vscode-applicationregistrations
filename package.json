@@ -31,18 +31,18 @@
     "configuration": {
       "title": "Azure Application Registrations",
       "properties": {
-        "applicationregistrations.maximumReturned": {
+        "applicationregistrations.maximumApplicationsReturned": {
           "type": "number",
           "description": "The maximum number of application registrations to be returned in the view.",
-          "default": 100,
+          "default": 50,
           "minimum": 1,
-          "maximum": 1000,
+          "maximum": 250,
           "order": 0
         },
-        "applicationregistrations.returnAll": {
+        "applicationregistrations.showAllApplications": {
           "type": "boolean",
           "description": "Show all applications, including those that are not owned by the current user.",
-          "default": true,
+          "default": false,
           "order": 1
         }
       }

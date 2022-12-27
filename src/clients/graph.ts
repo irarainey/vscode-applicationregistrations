@@ -104,9 +104,24 @@ export class GraphClient {
     public async getApplicationsAll(filter?: string): Promise<Application[]> {
 
         const maximumReturned = workspace.getConfiguration("applicationregistrations").get("maximumReturned") as number;
-        const returnAll = workspace.getConfiguration("applicationregistrations").get("returnAll") as boolean;
 
         const request = await this._client!.api("/applications/")
+            .filter(filter === undefined ? "" : filter)
+            .top(maximumReturned)
+            .get()
+            .catch((error: any) => {
+                console.log(error);
+            });
+        return request.value;
+    }
+
+    // Returns owned application registrations
+    public async getApplicationsOwned(filter?: string): Promise<Application[]> {
+
+        const maximumReturned = workspace.getConfiguration("applicationregistrations")
+            .get("maximumApplicationsReturned") as number;
+
+        const request = await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
             .filter(filter === undefined ? "" : filter)
             .top(maximumReturned)
             .get()
