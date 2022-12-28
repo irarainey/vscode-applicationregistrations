@@ -105,7 +105,7 @@ export class GraphClient {
 
         const maximumReturned = workspace.getConfiguration("applicationregistrations").get("maximumReturned") as number;
 
-        const request = await this._client!.api("/applications/")
+        const request = await this._client!.api("/applications/?$expand=owners")
             .filter(filter === undefined ? "" : filter)
             .top(maximumReturned)
             .get()
@@ -121,19 +121,9 @@ export class GraphClient {
         const maximumReturned = workspace.getConfiguration("applicationregistrations")
             .get("maximumApplicationsReturned") as number;
 
-        const request = await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
+        const request = await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application?$expand=owners")
             .filter(filter === undefined ? "" : filter)
             .top(maximumReturned)
-            .get()
-            .catch((error: any) => {
-                console.log(error);
-            });
-        return request.value;
-    }
-
-    // Returns all owners for a specified application registration
-    public async getApplicationOwners(id: string): Promise<User[]> {
-        const request = await this._client!.api(`/applications/${id}/owners`)
             .get()
             .catch((error: any) => {
                 console.log(error);

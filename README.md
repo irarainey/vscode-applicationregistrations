@@ -39,6 +39,3 @@ The access token used for this extension uses the scope `Directory.AccessAsUser.
 This extension was created both as a learning exercise, and to address the common annoyances of managing Application Registrations. It is not officially supported and you use it at your own risk.
 
 It has a dependency on the [Azure Tools extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack), but only because it places the application registrations view into the Azure view container.
-
-## Known Issues
-Due to the [eventual consistency](https://blogs.aaddevsup.xyz/2021/08/why-do-i-sometimes-get-a-404-when-trying-to-update-an-azure-directory-object-after-i-just-created-it/) of Azure Active Directory, when adding or removing owners they do not always show correctly when the tree view renders after the change. If this happens just wait a short time before refreshing the list again.

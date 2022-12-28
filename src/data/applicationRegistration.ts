@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { signInCommandText, view } from '../constants';
 import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, Disposable } from 'vscode';
-import { Application } from "@microsoft/microsoft-graph-types";
+import { Application, User } from "@microsoft/microsoft-graph-types";
 import { GraphClient } from '../clients/graph';
 import { AppRegItem } from '../models/appRegItem';
 
@@ -73,6 +73,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                     context: "INITIALISING",
                     icon: new ThemeIcon("loading~spin", new ThemeColor("editor.foreground"))
                 }));
+                this.triggerOnDidChangeTreeData();
                 break;
             case "SIGN-IN":
                 this._treeData.push(new AppRegItem({
@@ -84,14 +85,12 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                         title: signInCommandText,
                     }
                 }));
+                this.triggerOnDidChangeTreeData();
                 break;
             case "APPLICATIONS":
                 await this.buildAppRegTree(filter);
                 break;
         }
-
-        // Fire the event to refresh the tree view
-        this._onDidChangeTreeData.fire();
     }
 
     // Trigger the event to refresh the tree view
@@ -101,13 +100,10 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
 
     // Builds the tree view data for the application registrations.
     private async buildAppRegTree(filter?: string): Promise<void> {
-
         // Get the application registrations from the graph client.
         await this.getApplications(filter)
             .then((apps) => {
-
                 apps.sort((a, b) => { return a.displayName!.toLowerCase() < b.displayName!.toLowerCase() ? -1 : 1; });
-
                 // Iterate through the applications and create the tree data
                 apps!.forEach(app => {
                     // Create the tree view item for the application and it's children
@@ -409,21 +405,42 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                                 context: "OWNERS",
                                 icon: new ThemeIcon("organization", new ThemeColor("editor.foreground")),
                                 objectId: app.id!,
-                                children: this.getApplicationOwners(app.id!)
+                                children: app.owners!.length === 0 ? undefined : (app.owners as User[]).map(owner => {
+                                    return new AppRegItem({
+                                        label: owner.displayName!,
+                                        context: "OWNER",
+                                        icon: new ThemeIcon("person", new ThemeColor("editor.foreground")),
+                                        objectId: app.id!,
+                                        userId: owner.id!,
+                                        children: [
+                                            new AppRegItem({
+                                                label: owner.mail!,
+                                                context: "OWNER-VALUE",
+                                                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                            })
+                                        ]
+                                    });
+                                })
                             }),
                         ]
                     }));
                 });
-            }).catch(() => {
+
+            })
+            .then(() => {
+                // Clear any status bar message
+                if (this, this._statusBarMessage !== undefined) {
+                    this._statusBarMessage.dispose();
+                }
+
+                // Trigger the event to refresh the tree view
+                this.triggerOnDidChangeTreeData();
+            })
+            .catch(() => {
                 // If there is an error then determine the authentication state.
                 this._graphClient.isGraphClientInitialised = false;
                 this._graphClient.initialise();
             });
-
-        // Clear any status bar message
-        if (this, this._statusBarMessage !== undefined) {
-            await this._statusBarMessage.dispose();
-        }
     }
 
     // This is the event that is fired when the tree view is refreshed.
@@ -460,26 +477,5 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
             // Otherwise get all applications
             return await this._graphClient.getApplicationsAll(filter);
         }
-    }
-
-    // Returns the owners of the application registration as an array of AppItem
-    private getApplicationOwners(objectId: string): AppRegItem[] {
-
-        let appOwners: AppRegItem[] = [];
-
-        this._graphClient?.getApplicationOwners(objectId)
-            .then(owners => {
-                owners.forEach(owner => {
-                    appOwners.push(new AppRegItem({
-                        label: owner.displayName!,
-                        context: "OWNER",
-                        icon: new ThemeIcon("person", new ThemeColor("editor.foreground")),
-                        objectId: objectId,
-                        userId: owner.id!
-                    }));
-                });
-            });
-
-        return appOwners;
     }
 }
