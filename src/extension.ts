@@ -65,4 +65,6 @@ export async function activate(context: ExtensionContext) {
 	commands.registerCommand(`${view}.editRedirectUri`, app => appReg.editRedirectUri(app));
 	commands.registerCommand(`${view}.deleteRedirectUri`, app => appReg.deleteRedirectUri(app));
 	commands.registerCommand(`${view}.copyValue`, app => appReg.copyValue(app));
+	commands.registerCommand(`${view}.addPasswordCredential`, credential => appReg.addPasswordCredential(credential));
+	commands.registerCommand(`${view}.deletePasswordCredential`, credential => appReg.deletePasswordCredential(credential));
 }

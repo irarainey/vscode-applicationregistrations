@@ -14,5 +14,4 @@ export class KeyCredentialsService {
         this._dataProvider = dataProvider;
         this._graphClient = dataProvider.graphClient;
     }
-
 }

@@ -69,6 +69,14 @@
         "title": "Delete Redirect URI"
       },
       {
+        "command": "appRegistrations.addPasswordCredential",
+        "title": "Add Password Credential"
+      },
+      {
+        "command": "appRegistrations.deletePasswordCredential",
+        "title": "Delete Password Credential"
+      },
+      {
         "command": "appRegistrations.viewAppManifest",
         "title": "View Manifest"
       },
@@ -168,6 +176,16 @@
           "group": "appRegistrations@1"
         },
         {
+          "command": "appRegistrations.addPasswordCredential",
+          "when": "view == appRegistrations && viewItem == PASSWORD-CREDENTIALS",
+          "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.deletePasswordCredential",
+          "when": "view == appRegistrations && viewItem == PASSWORD",
+          "group": "appRegistrations@0"
+        },
+        {
           "command": "appRegistrations.renameApp",
           "when": "view == appRegistrations && viewItem == APPLICATION",
           "group": "appRegistrations@0"
@@ -246,6 +264,7 @@
   "dependencies": {
     "@azure/identity": "^3.1.2",
     "@microsoft/microsoft-graph-client": "^3.0.4",
+    "date-fns": "^2.29.3",
     "isomorphic-fetch": "^3.0.0"
   }
 }

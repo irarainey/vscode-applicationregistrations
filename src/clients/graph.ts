@@ -4,7 +4,7 @@ import { scope, propertiesToIgnoreOnUpdate, directoryObjectsUri } from '../const
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
-import { Application, User } from "@microsoft/microsoft-graph-types";
+import { Application, PasswordCredential, User } from "@microsoft/microsoft-graph-types";
 import { execShellCmd } from "../utils/shellUtils";
 
 // This is the client for the Microsoft Graph API
@@ -168,6 +168,32 @@ export class GraphClient {
             .post({
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 "@odata.id": `${directoryObjectsUri}${userId}`
+            })
+            .catch((error: any) => {
+                console.log(error);
+            });
+    }
+
+    // Deletes a password credential from an application registration
+    public async addPasswordCredential(id: string, description: string, expiry: string): Promise<PasswordCredential> {
+        const request = await this._client!.api(`/applications/${id}/addPassword`)
+            .post({
+                "passwordCredential": {
+                    "endDateTime": expiry,
+                    "displayName": description
+                }
+            })
+            .catch((error: any) => {
+                console.log(error);
+            });
+        return request;
+    }
+
+    // Deletes a password credential from an application registration
+    public async deletePasswordCredential(id: string, passwordId: string): Promise<void> {
+        await this._client!.api(`/applications/${id}/removePassword`)
+            .post({
+                "keyId": passwordId
             })
             .catch((error: any) => {
                 console.log(error);

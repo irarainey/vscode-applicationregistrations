@@ -207,7 +207,8 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                                 children: [
                                     new AppRegItem({
                                         label: "Client Secrets",
-                                        context: "PROPERTY-ARRAY",
+                                        context: "PASSWORD-CREDENTIALS",
+                                        objectId: app.id!,
                                         icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
                                         children: app.passwordCredentials!.length === 0 ? undefined : app.passwordCredentials!.map(password => {
                                             return new AppRegItem({
@@ -245,7 +246,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                                     }),
                                     new AppRegItem({
                                         label: "Certificates",
-                                        context: "PROPERTY-ARRAY",
+                                        context: "CERTIFICATE-CREDENTIALS",
                                         icon: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
                                         children: app.keyCredentials!.length === 0 ? undefined : app.keyCredentials!.map(password => {
                                             return new AppRegItem({

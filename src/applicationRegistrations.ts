@@ -241,6 +241,32 @@ export class AppReg {
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Password Credentials Commands
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Adds a password credential.
+    public async addPasswordCredential(item: AppRegItem): Promise<void> {
+        // Adds the credential and reload the tree view if successful.
+        await this._passwordCredentialsService.add(item)
+            .then((status) => {
+                if (status !== undefined) {
+                    this.populateTreeView(status);
+                }
+            });
+    };
+
+    // Deletes a password credential.
+    public async deletePasswordCredential(item: AppRegItem): Promise<void> {
+        // Delete the credential and reload the tree view if successful.
+        await this._passwordCredentialsService.delete(item)
+            .then((status) => {
+                if (status !== undefined) {
+                    this.populateTreeView(status);
+                }
+            });
+    };
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Common Commands
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
