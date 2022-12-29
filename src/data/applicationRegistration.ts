@@ -456,7 +456,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                 children: permission.resourceAccess!.map(resourceAccess => {
 
                     let scopeLabel = "";
-                    if(resourceAccess.type === "Scope") { 
+                    if (resourceAccess.type === "Scope") {
                         scopeLabel = `Scope: ${response.oauth2PermissionScopes!.find(scope => scope.id === resourceAccess.id)!.value!}`;
                     } else {
                         scopeLabel = `Role: ${response.appRoles!.find(scope => scope.id === resourceAccess.id)!.value!}`;
