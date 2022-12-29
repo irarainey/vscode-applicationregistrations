@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { signInCommandText, view } from '../constants';
 import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, Disposable } from 'vscode';
-import { Application, User } from "@microsoft/microsoft-graph-types";
+import { Application, KeyCredential, PasswordCredential, User } from "@microsoft/microsoft-graph-types";
 import { GraphClient } from '../clients/graph';
 import { AppRegItem } from '../models/appRegItem';
 
@@ -103,157 +103,183 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
 
     // Builds the tree view data for the application registrations.
     private async buildAppRegTree(filter?: string): Promise<void> {
-        // Get the application registrations from the graph client.
-        await this.getApplications(filter)
-            .then((apps) => {
-                // Iterate through the applications and create the tree data
-                apps!.forEach(app => {
-                    // Create the tree view item for the application and it's children
-                    this._treeData.push(new AppRegItem({
-                        label: app.displayName ? app.displayName : "Application",
-                        context: "APPLICATION",
-                        icon: path.join(__filename, "..", "..", "..", "resources", "icons", "app.svg"),
-                        objectId: app.id!,
-                        appId: app.appId!,
-                        manifest: app,
-                        children: [
-                            // Application (Client) Id
-                            new AppRegItem({
-                                label: "Client Id",
-                                context: "APPID-PARENT",
-                                icon: new ThemeIcon("preview"),
-                                children: [
-                                    new AppRegItem({
-                                        label: app.appId!,
-                                        value: app.appId!,
-                                        context: "COPY",
-                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
-                                    })
-                                ]
-                            }),
-                            // Sign In Audience
-                            new AppRegItem({
-                                label: "Sign In Audience",
-                                context: "AUDIENCE-PARENT",
-                                icon: new ThemeIcon("account"),
+
+        try {
+            // Get the application registrations from the graph client.
+            const applications = await this.getApplicationList(filter);
+
+            // If we have some applications then add them to the tree view.
+            if (applications !== undefined && applications.length > 0) {
+
+                let counter: number = 0;
+
+                // Re-map the application keeping the alphabetical order but changing the insertion order because ES6 only preserves the order of insertion
+                // If we don't do this then the tree view will be out of order, despite the items being in the correct order in the array
+                let remappedApplications = new Map();
+                for (let i = 0; i < applications.length; i++) {
+                    remappedApplications.set(applications[i].id, { value: applications[i].displayName, index: i });
+                }
+
+                // Now we have the map in the right order we can iterate through it to build our tree view
+                remappedApplications.forEach((item, key) => {
+                    this._graphClient.getApplicationDetails(key)
+                        .then((app: Application) => {
+                            // Create the tree view item for the application and it's children
+                            this._treeData.push(new AppRegItem({
+                                label: app.displayName ? app.displayName : "Application",
+                                context: "APPLICATION",
+                                icon: path.join(__filename, "..", "..", "..", "resources", "icons", "app.svg"),
                                 objectId: app.id!,
+                                appId: app.appId!,
+                                manifest: app,
                                 children: [
+                                    // Application (Client) Id
                                     new AppRegItem({
-                                        label: app.signInAudience! === "AzureADMyOrg"
-                                            ? "Single Tenant"
-                                            : app.signInAudience! === "AzureADMultipleOrgs"
-                                                ? "Multi Tenant"
-                                                : "Multi Tenant and Personal Accounts",
-                                        context: "AUDIENCE",
-                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-                                        objectId: app.id!,
-                                    })
-                                ]
-                            }),
-                            // Redirect URIs
-                            new AppRegItem({
-                                label: "Redirect URIs",
-                                context: "REDIRECT-PARENT",
-                                icon: new ThemeIcon("go-to-file", new ThemeColor("editor.foreground")),
-                                objectId: app.id!,
-                                children: [
-                                    new AppRegItem({
-                                        label: "Web",
-                                        context: "WEB-REDIRECT",
-                                        icon: new ThemeIcon("globe"),
-                                        objectId: app.id!,
-                                        children: app.web?.redirectUris?.length === 0 ? undefined : []
+                                        label: "Client Id",
+                                        context: "APPID-PARENT",
+                                        icon: new ThemeIcon("preview"),
+                                        children: [
+                                            new AppRegItem({
+                                                label: app.appId!,
+                                                value: app.appId!,
+                                                context: "COPY",
+                                                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                                            })
+                                        ]
                                     }),
+                                    // Sign In Audience
                                     new AppRegItem({
-                                        label: "SPA",
-                                        context: "SPA-REDIRECT",
-                                        icon: new ThemeIcon("browser"),
+                                        label: "Sign In Audience",
+                                        context: "AUDIENCE-PARENT",
+                                        icon: new ThemeIcon("account"),
                                         objectId: app.id!,
-                                        children: app.spa?.redirectUris?.length === 0 ? undefined : []
+                                        children: [
+                                            new AppRegItem({
+                                                label: app.signInAudience! === "AzureADMyOrg"
+                                                    ? "Single Tenant"
+                                                    : app.signInAudience! === "AzureADMultipleOrgs"
+                                                        ? "Multi Tenant"
+                                                        : "Multi Tenant and Personal Accounts",
+                                                context: "AUDIENCE",
+                                                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                                objectId: app.id!,
+                                            })
+                                        ]
                                     }),
+                                    // Redirect URIs
                                     new AppRegItem({
-                                        label: "Mobile and Desktop",
-                                        context: "NATIVE-REDIRECT",
-                                        icon: new ThemeIcon("editor-layout"),
+                                        label: "Redirect URIs",
+                                        context: "REDIRECT-PARENT",
+                                        icon: new ThemeIcon("go-to-file", new ThemeColor("editor.foreground")),
                                         objectId: app.id!,
-                                        children: app.publicClient?.redirectUris?.length === 0 ? undefined : []
-                                    })
-                                ]
-                            }),
-                            // Credentials
-                            new AppRegItem({
-                                label: "Credentials",
-                                context: "PROPERTY-ARRAY",
-                                icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
-                                children: [
+                                        children: [
+                                            new AppRegItem({
+                                                label: "Web",
+                                                context: "WEB-REDIRECT",
+                                                icon: new ThemeIcon("globe"),
+                                                objectId: app.id!,
+                                                children: app.web?.redirectUris?.length === 0 ? undefined : []
+                                            }),
+                                            new AppRegItem({
+                                                label: "SPA",
+                                                context: "SPA-REDIRECT",
+                                                icon: new ThemeIcon("browser"),
+                                                objectId: app.id!,
+                                                children: app.spa?.redirectUris?.length === 0 ? undefined : []
+                                            }),
+                                            new AppRegItem({
+                                                label: "Mobile and Desktop",
+                                                context: "NATIVE-REDIRECT",
+                                                icon: new ThemeIcon("editor-layout"),
+                                                objectId: app.id!,
+                                                children: app.publicClient?.redirectUris?.length === 0 ? undefined : []
+                                            })
+                                        ]
+                                    }),
+                                    // Credentials
                                     new AppRegItem({
-                                        label: "Client Secrets",
-                                        context: "PASSWORD-CREDENTIALS",
+                                        label: "Credentials",
+                                        context: "PROPERTY-ARRAY",
                                         objectId: app.id!,
                                         icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
-                                        children: app.passwordCredentials!.length === 0 ? undefined : []
+                                        children: [
+                                            new AppRegItem({
+                                                label: "Client Secrets",
+                                                context: "PASSWORD-CREDENTIALS",
+                                                objectId: app.id!,
+                                                icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
+                                                children: app.passwordCredentials!.length === 0 ? undefined : []
+                                            }),
+                                            new AppRegItem({
+                                                label: "Certificates",
+                                                context: "CERTIFICATE-CREDENTIALS",
+                                                objectId: app.id!,
+                                                icon: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
+                                                children: app.keyCredentials!.length === 0 ? undefined : []
+                                            })
+                                        ]
                                     }),
+                                    // API Permissions
                                     new AppRegItem({
-                                        label: "Certificates",
-                                        context: "CERTIFICATE-CREDENTIALS",
-                                        icon: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
-                                        children: app.keyCredentials!.length === 0 ? undefined : []
-                                    })
+                                        label: "API Permissions",
+                                        context: "PROPERTY-ARRAY",
+                                        objectId: app.id!,
+                                        icon: new ThemeIcon("checklist", new ThemeColor("editor.foreground")),
+                                        children: app.requiredResourceAccess?.length === 0 ? undefined : []
+                                    }),
+                                    // Exposed API Permissions
+                                    new AppRegItem({
+                                        label: "Exposed API Permissions",
+                                        context: "PROPERTY-ARRAY",
+                                        objectId: app.id!,
+                                        icon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
+                                        children: app.api!.oauth2PermissionScopes!.length === 0 ? undefined : []
+                                    }),
+                                    // App Roles
+                                    new AppRegItem({
+                                        label: "App Roles",
+                                        context: "PROPERTY-ARRAY",
+                                        objectId: app.id!,
+                                        icon: new ThemeIcon("note", new ThemeColor("editor.foreground")),
+                                        children: app.appRoles!.length === 0 ? undefined : []
+                                    }),
+                                    // Owners
+                                    new AppRegItem({
+                                        label: "Owners",
+                                        context: "OWNERS",
+                                        objectId: app.id!,
+                                        icon: new ThemeIcon("organization", new ThemeColor("editor.foreground")),
+                                        children: []
+                                    }),
                                 ]
-                            }),
-                            // API Permissions
-                            new AppRegItem({
-                                label: "API Permissions",
-                                context: "PROPERTY-ARRAY",
-                                icon: new ThemeIcon("checklist", new ThemeColor("editor.foreground")),
-                                children: app.requiredResourceAccess?.length === 0 ? undefined : []
-                            }),
-                            // Exposed API Permissions
-                            new AppRegItem({
-                                label: "Exposed API Permissions",
-                                context: "PROPERTY-ARRAY",
-                                icon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
-                                children: app.api!.oauth2PermissionScopes!.length === 0 ? undefined : []
-                            }),
-                            // App Roles
-                            new AppRegItem({
-                                label: "App Roles",
-                                context: "PROPERTY-ARRAY",
-                                icon: new ThemeIcon("note", new ThemeColor("editor.foreground")),
-                                children: app.appRoles!.length === 0 ? undefined : []
-                            }),
-                            // Owners
-                            new AppRegItem({
-                                label: "Owners",
-                                context: "OWNERS",
-                                icon: new ThemeIcon("organization", new ThemeColor("editor.foreground")),
-                                objectId: app.id!,
-                                children: []
-                            }),
-                        ]
-                    }));
+                            }));
+
+                            counter++;
+                        })
+                        .then(() => {
+                            // Only trigger the redraw event when all applications have been processed
+                            if (counter === applications.length) {
+                                // Clear any status bar message
+                                if (this, this._statusBarMessage !== undefined) {
+                                    this._statusBarMessage.dispose();
+                                }
+
+                                // Trigger the event to refresh the tree view
+                                this.triggerOnDidChangeTreeData();
+                            }
+                        });
                 });
-
-            })
-            .then(() => {
-                // Clear any status bar message
-                if (this, this._statusBarMessage !== undefined) {
-                    this._statusBarMessage.dispose();
-                }
-
-                // Trigger the event to refresh the tree view
-                this.triggerOnDidChangeTreeData();
-            })
-            .catch((error) => {
-                if (error.code !== undefined && error.code === "CredentialUnavailableError") {
-                    this._graphClient.isGraphClientInitialised = false;
-                    this._graphClient.initialise();
-                }
-                else {
-                    console.error(error);
-                    window.showErrorMessage(error.message);
-                }
-            });
+            }
+        } catch (error) {
+            // if (error.code !== undefined && error.code === "CredentialUnavailableError") {
+            //     this._graphClient.isGraphClientInitialised = false;
+            //     this._graphClient.initialise();
+            // }
+            // else {
+            //     console.error(error);
+            //     window.showErrorMessage(error.message);
+            // }
+        }
     }
 
     // This is the event that is fired when the tree view is refreshed.
@@ -270,8 +296,6 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
             return this._treeData;
         }
 
-        const parent = this.getParentApplication(element.objectId!);
-
         // If an element is selected then return the children for that element
         switch (element.contextValue) {
             case "OWNERS":
@@ -279,13 +303,19 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                 return this.getApplicationOwners(element);
             case "WEB-REDIRECT":
                 // Return the web redirect URIs for the application
-                return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", parent.web?.redirectUris!);
+                return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", this.getParentApplication(element.objectId!).web?.redirectUris!);
             case "SPA-REDIRECT":
                 // Return the SPA redirect URIs for the application
-                return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", parent.spa?.redirectUris!);
+                return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", this.getParentApplication(element.objectId!).spa?.redirectUris!);
             case "NATIVE-REDIRECT":
                 // Return the native redirect URIs for the application
-                return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", parent.publicClient?.redirectUris!);
+                return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", this.getParentApplication(element.objectId!).publicClient?.redirectUris!);
+            case "PASSWORD-CREDENTIALS":
+                // Return the password credentials for the application
+                return this.getApplicationPasswordCredentials(element, this.getParentApplication(element.objectId!).passwordCredentials!);
+            case "CERTIFICATE-CREDENTIALS":
+                // Return the key credentials for the application
+                return this.getApplicationKeyCredentials(element, this.getParentApplication(element.objectId!).keyCredentials!);
             default:
                 // Nothing specific so return the statically defined children
                 return element.children;
@@ -299,20 +329,20 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Returns all applications depending on the user setting
-    private async getApplications(filter?: string): Promise<Application[]> {
+    private async getApplicationList(filter?: string): Promise<Application[]> {
 
         const showAllApplications = workspace.getConfiguration("applicationregistrations").get("showAllApplications") as boolean;
 
         // If not show all then get only owned applications
         if (showAllApplications === false) {
             const totalApps = await this._graphClient.getApplicationsOwnedCount();
-            const response = await this._graphClient.getApplicationsOwned(filter);
+            const response = await this._graphClient.getApplicationNamesOwned(filter);
             this._statusBarAppCount = window.setStatusBarMessage(`$(${filter === undefined ? "filter" : "filter-filled"}) ${response.value.length} of ${totalApps["@odata.count"]} Applications`);
             return response.value;
         } else {
             // Otherwise get all applications
             const totalApps = await this._graphClient.getApplicationsAllCount();
-            const response = await this._graphClient.getApplicationsAll(filter);
+            const response = await this._graphClient.getApplicationNamesAll(filter);
             this._statusBarAppCount = window.setStatusBarMessage(`$(${filter === undefined ? "filter" : "filter-filled"}) ${response.value.length} of ${totalApps["@odata.count"]} Applications`);
             return response.value;
         }
@@ -341,6 +371,64 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                 context: context,
                 icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                 objectId: element.objectId
+            });
+        });
+    }
+
+    // Returns the password credentials for the given application
+    private async getApplicationPasswordCredentials(element: AppRegItem, passwords: PasswordCredential[]): Promise<AppRegItem[]> {
+        return passwords.map(credential => {
+            return new AppRegItem({
+                label: credential.displayName!,
+                context: "PASSWORD",
+                icon: new ThemeIcon("symbol-key", new ThemeColor("editor.foreground")),
+                objectId: element.objectId,
+                children: [
+                    new AppRegItem({
+                        label: `Created: ${credential.startDateTime!}`,
+                        context: "PASSWORD-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    }),
+                    new AppRegItem({
+                        label: `Expires: ${credential.endDateTime!}`,
+                        context: "PASSWORD-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    })
+                ]
+            });
+        });
+    }
+
+    // Returns the password credentials for the given application
+    private async getApplicationKeyCredentials(element: AppRegItem, keys: KeyCredential[]): Promise<AppRegItem[]> {
+        return keys.map(credential => {
+            return new AppRegItem({
+                label: credential.displayName!,
+                context: "CERTIFICATE",
+                icon: new ThemeIcon("symbol-key", new ThemeColor("editor.foreground")),
+                objectId: element.objectId,
+                children: [
+                    new AppRegItem({
+                        label: `Type: ${credential.type!}`,
+                        context: "CERTIFICATE-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    }),
+                    new AppRegItem({
+                        label: `Key Identifier: ${credential.customKeyIdentifier!}`,
+                        context: "CERTIFICATE-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    }),
+                    new AppRegItem({
+                        label: `Created: ${credential.startDateTime!}`,
+                        context: "CERTIFICATE-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    }),
+                    new AppRegItem({
+                        label: `Expires: ${credential.endDateTime!}`,
+                        context: "CERTIFICATE-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    })
+                ]
             });
         });
     }
