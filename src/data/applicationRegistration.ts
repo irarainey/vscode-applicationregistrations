@@ -264,7 +264,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
 
     // Returns the UI representation (AppItem) of the element that gets displayed in the view
     public getChildren(element?: AppRegItem | undefined): ProviderResult<AppRegItem[]> {
-       
+
         // No element selected so return all top level applications to render static elements
         if (element === undefined) {
             return this._treeData;
@@ -291,7 +291,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     private async getApplications(filter?: string): Promise<Application[]> {
 
         const showAllApplications = workspace.getConfiguration("applicationregistrations").get("showAllApplications") as boolean;
-        
+
         // If not show all then get only owned applications
         if (showAllApplications === false) {
             const totalApps = await this._graphClient.getApplicationsOwnedCount();
@@ -312,17 +312,15 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
         return await this._graphClient.getApplicationOwners(element.objectId!)
             .then((response) => {
                 const owners: User[] = response.value;
-                let appOwners: AppRegItem[] = [];
-                owners.forEach(owner => {
-                    appOwners.push(new AppRegItem({
+                return owners.map(owner => {
+                    return new AppRegItem({
                         label: owner.displayName!,
                         context: "OWNER",
                         icon: new ThemeIcon("person", new ThemeColor("editor.foreground")),
                         objectId: element.objectId,
                         userId: owner.id!
-                    }));
+                    });
                 });
-                return appOwners;
             });
     }
 }
