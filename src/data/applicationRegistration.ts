@@ -270,15 +270,15 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                         });
                 });
             }
-        } catch (error) {
-            // if (error.code !== undefined && error.code === "CredentialUnavailableError") {
-            //     this._graphClient.isGraphClientInitialised = false;
-            //     this._graphClient.initialise();
-            // }
-            // else {
-            //     console.error(error);
-            //     window.showErrorMessage(error.message);
-            // }
+        } catch (error: any) {
+            if (error.code !== undefined && error.code === "CredentialUnavailableError") {
+                this._graphClient.isGraphClientInitialised = false;
+                this._graphClient.initialise();
+            }
+            else {
+                console.error(error);
+                window.showErrorMessage(error.message);
+            }
         }
     }
 
@@ -457,9 +457,9 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
 
                     let scopeLabel = "";
                     if (resourceAccess.type === "Scope") {
-                        scopeLabel = `Scope: ${response.oauth2PermissionScopes!.find(scope => scope.id === resourceAccess.id)!.value!}`;
+                        scopeLabel = `Delegated: ${response.oauth2PermissionScopes!.find(scope => scope.id === resourceAccess.id)!.value!}`;
                     } else {
-                        scopeLabel = `Role: ${response.appRoles!.find(scope => scope.id === resourceAccess.id)!.value!}`;
+                        scopeLabel = `Application: ${response.appRoles!.find(scope => scope.id === resourceAccess.id)!.value!}`;
                     }
 
                     return new AppRegItem({
