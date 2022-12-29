@@ -309,18 +309,16 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
 
     // Returns the application owners for the given application
     private async getApplicationOwners(element: AppRegItem): Promise<AppRegItem[]> {
-        return await this._graphClient.getApplicationOwners(element.objectId!)
-            .then((response) => {
-                const owners: User[] = response.value;
-                return owners.map(owner => {
-                    return new AppRegItem({
-                        label: owner.displayName!,
-                        context: "OWNER",
-                        icon: new ThemeIcon("person", new ThemeColor("editor.foreground")),
-                        objectId: element.objectId,
-                        userId: owner.id!
-                    });
-                });
+        const response = await this._graphClient.getApplicationOwners(element.objectId!);
+        const owners: User[] = response.value;
+        return owners.map(owner => {
+            return new AppRegItem({
+                label: owner.displayName!,
+                context: "OWNER",
+                icon: new ThemeIcon("person", new ThemeColor("editor.foreground")),
+                objectId: element.objectId,
+                userId: owner.id!
             });
+        });
     }
 }

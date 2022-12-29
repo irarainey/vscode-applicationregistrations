@@ -69,7 +69,7 @@ export class AppReg {
             return;
         }
         await this._dataProvider.renderTreeView("APPLICATIONS", statusBar, this._filterCommand);
-    };
+    }
 
     // Filters the applications by display name.
     public async filterTreeView(): Promise<void> {
@@ -98,7 +98,7 @@ export class AppReg {
             this._filterCommand = `startsWith(displayName, \'${newFilter}\')`;
             await this.populateTreeView(window.setStatusBarMessage("$(loading~spin) Filtering Application Registrations..."));
         }
-    };
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Application Commands
@@ -112,40 +112,37 @@ export class AppReg {
             return;
         }
         // Add a new application registration and reload the tree view if successful.
-        await this._applicationService.add()
-            .then((status) => {
-                if (status !== undefined) {
-                    this.populateTreeView(status);
-                }
-            });
-    };
+        const status = await this._applicationService.add();
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
 
     // Renames an application registration.
     public async renameApp(item: AppRegItem): Promise<void> {
         // Rename the application registration and reload the tree view if successful.
-        await this._applicationService.rename(item)
-            .then((status) => {
-                if (status !== undefined) {
-                    this.populateTreeView(status);
-                }
-            });
+        const status = await this._applicationService.rename(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
     }
 
     // Deletes an application registration.
     public async deleteApp(item: AppRegItem): Promise<void> {
         // Delete the application registration and reload the tree view if successful.
-        await this._applicationService.delete(item)
-            .then((status) => {
-                if (status !== undefined) {
-                    this.populateTreeView(status);
-                }
-            });
-    };
+        const status = await this._applicationService.delete(item)
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
 
     // Copies the client Id to the clipboard.
     public copyClientId(item: AppRegItem): void {
         this._applicationService.copyClientId(item);
-    };
+    }
 
     // Opens the application registration in the Azure Portal.
     public openAppInPortal(item: AppRegItem): void {
@@ -155,7 +152,7 @@ export class AppReg {
     // Opens the application manifest in a new editor window.
     public viewAppManifest(item: AppRegItem): void {
         this._applicationService.viewManifest(item);
-    };
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Owner Commands
@@ -164,23 +161,21 @@ export class AppReg {
     // Adds a new owner to an application registration.
     public async addOwner(item: AppRegItem): Promise<void> {
         // Add a new owner and reload the tree view if successful.
-        await this._ownerService.add(item)
-            .then((status) => {
-                if (status !== undefined) {
-                    this.populateTreeView(status);
-                }
-            });
+        const status = await this._ownerService.add(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
     }
 
     // Removes an owner from an application registration.
     public async removeOwner(item: AppRegItem): Promise<void> {
         // Add a new owner and reload the tree view if successful.
-        await this._ownerService.remove(item)
-            .then((status) => {
-                if (status !== undefined) {
-                    this.populateTreeView(status);
-                }
-            });
+        const status = await this._ownerService.remove(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
     }
 
     // Opens the user in the Azure Portal.
@@ -195,12 +190,11 @@ export class AppReg {
     // Edits the application sign in audience.
     public async editAudience(item: AppRegItem): Promise<void> {
         // Edit the sign in audience and reload the tree view if successful.
-        await this._signInAudienceService.edit(item)
-            .then((status) => {
-                if (status !== undefined) {
-                    this.populateTreeView(status);
-                }
-            });
+        const status = await this._signInAudienceService.edit(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -210,35 +204,32 @@ export class AppReg {
     // Adds a new redirect URI to an application registration.
     public async addRedirectUri(item: AppRegItem): Promise<void> {
         // Add a new redirect URI and reload the tree view if successful.
-        await this._redirectUriService.add(item)
-            .then((status) => {
-                if (status !== undefined) {
-                    this.populateTreeView(status);
-                }
-            });
+        const status = await this._redirectUriService.add(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
     }
 
     // Deletes a redirect URI.
     public async deleteRedirectUri(item: AppRegItem): Promise<void> {
         // Delete the redirect URI and reload the tree view if successful.
-        await this._redirectUriService.delete(item)
-            .then((status) => {
-                if (status !== undefined) {
-                    this.populateTreeView(status);
-                }
-            });
-    };
+        const status = await this._redirectUriService.delete(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
 
     // Edits a redirect URI.   
     public async editRedirectUri(item: AppRegItem): Promise<void> {
         // Edit the redirect URI and reload the tree view if successful.
-        await this._redirectUriService.edit(item)
-            .then((status) => {
-                if (status !== undefined) {
-                    this.populateTreeView(status);
-                }
-            });
-    };
+        const status = await this._redirectUriService.edit(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Password Credentials Commands
@@ -247,24 +238,22 @@ export class AppReg {
     // Adds a password credential.
     public async addPasswordCredential(item: AppRegItem): Promise<void> {
         // Adds the credential and reload the tree view if successful.
-        await this._passwordCredentialsService.add(item)
-            .then((status) => {
-                if (status !== undefined) {
-                    this.populateTreeView(status);
-                }
-            });
-    };
+        const status = await this._passwordCredentialsService.add(item);
+        
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
 
     // Deletes a password credential.
     public async deletePasswordCredential(item: AppRegItem): Promise<void> {
         // Delete the credential and reload the tree view if successful.
-        await this._passwordCredentialsService.delete(item)
-            .then((status) => {
-                if (status !== undefined) {
-                    this.populateTreeView(status);
-                }
-            });
-    };
+        const status = await this._passwordCredentialsService.delete(item)
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Common Commands
@@ -273,5 +262,5 @@ export class AppReg {
     // Copies the selected value to the clipboard.
     public copyValue(item: AppRegItem): void {
         env.clipboard.writeText(item.contextValue === "COPY" ? item.value! : item.children![0].value!);
-    };
+    }
 }
