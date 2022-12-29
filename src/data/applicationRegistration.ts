@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { signInCommandText, view } from '../constants';
 import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, Disposable } from 'vscode';
-import { Application, KeyCredential, PasswordCredential, User } from "@microsoft/microsoft-graph-types";
+import { Application, KeyCredential, PasswordCredential, User, AppRole, RequiredResourceAccess, PermissionScope } from "@microsoft/microsoft-graph-types";
 import { GraphClient } from '../clients/graph';
 import { AppRegItem } from '../models/appRegItem';
 
@@ -222,7 +222,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                                     // API Permissions
                                     new AppRegItem({
                                         label: "API Permissions",
-                                        context: "PROPERTY-ARRAY",
+                                        context: "API-PERMISSIONS",
                                         objectId: app.id!,
                                         icon: new ThemeIcon("checklist", new ThemeColor("editor.foreground")),
                                         children: app.requiredResourceAccess?.length === 0 ? undefined : []
@@ -230,7 +230,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                                     // Exposed API Permissions
                                     new AppRegItem({
                                         label: "Exposed API Permissions",
-                                        context: "PROPERTY-ARRAY",
+                                        context: "EXPOSED-API-PERMISSIONS",
                                         objectId: app.id!,
                                         icon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
                                         children: app.api!.oauth2PermissionScopes!.length === 0 ? undefined : []
@@ -238,7 +238,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                                     // App Roles
                                     new AppRegItem({
                                         label: "App Roles",
-                                        context: "PROPERTY-ARRAY",
+                                        context: "APP-ROLES",
                                         objectId: app.id!,
                                         icon: new ThemeIcon("note", new ThemeColor("editor.foreground")),
                                         children: app.appRoles!.length === 0 ? undefined : []
@@ -316,6 +316,15 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
             case "CERTIFICATE-CREDENTIALS":
                 // Return the key credentials for the application
                 return this.getApplicationKeyCredentials(element, this.getParentApplication(element.objectId!).keyCredentials!);
+            case "API-PERMISSIONS":
+                // Return the API permissions for the application
+                return this.getApplicationApiPermissions(element, this.getParentApplication(element.objectId!).requiredResourceAccess!);
+            case "EXPOSED-API-PERMISSIONS":
+                // Return the exposed API permissions for the application
+                return this.getApplicationExposedApiPermissions(element, this.getParentApplication(element.objectId!).api?.oauth2PermissionScopes!);
+            case "APP-ROLES":
+                // Return the app roles for the application
+                return this.getApplicationAppRoles(element, this.getParentApplication(element.objectId!).appRoles!);
             default:
                 // Nothing specific so return the statically defined children
                 return element.children;
@@ -426,6 +435,94 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                     new AppRegItem({
                         label: `Expires: ${credential.endDateTime!}`,
                         context: "CERTIFICATE-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    })
+                ]
+            });
+        });
+    }
+
+    // Returns the api permissions for the given application
+    private async getApplicationApiPermissions(element: AppRegItem, permissions: RequiredResourceAccess[]): Promise<AppRegItem[]> {
+        return permissions.map(permission => {
+            return new AppRegItem({
+                label: permission.resourceAppId!,
+                context: "SCOPE",
+                icon: new ThemeIcon("checklist", new ThemeColor("editor.foreground")),
+                objectId: element.objectId,
+                children: [
+                    new AppRegItem({
+                        label: `App Id: ${permission.resourceAppId!}`,
+                        context: "SCOPE-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                     })//,
+                    // new AppRegItem({
+                    //     label: `Type: ${permission.resourceAccess!}`,
+                    //     context: "SCOPE-VALUE",
+                    //     icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    // })
+                ]
+            });
+        });
+    }
+      
+    // Returns the exposed api permissions for the given application
+    private async getApplicationExposedApiPermissions(element: AppRegItem, permissions: PermissionScope[]): Promise<AppRegItem[]> {
+        return permissions.map(permission => {
+            return new AppRegItem({
+                label: permission.adminConsentDisplayName!,
+                context: "SCOPE",
+                icon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
+                objectId: element.objectId,
+                children: [
+                    new AppRegItem({
+                        label: `Scope: ${permission.value!}`,
+                        context: "SCOPE-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    }),
+                    new AppRegItem({
+                        label: `Description: ${permission.adminConsentDescription!}`,
+                        context: "SCOPE-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    }),
+                    new AppRegItem({
+                        label: `Consent: ${permission.type! === "User" ? "Admins and Users" : "Admins Only"}`,
+                        context: "SCOPE-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    }),
+                    new AppRegItem({
+                        label: `Enabled: ${permission.isEnabled! ? "Yes" : "No"}`,
+                        context: "SCOPE-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    })
+                ]
+            });
+        });
+    }
+
+    // Returns the app roles for the given application
+    private async getApplicationAppRoles(element: AppRegItem, roles: AppRole[]): Promise<AppRegItem[]> {
+        return roles.map(role => {
+            return new AppRegItem({
+                label: role.displayName!,
+                context: "ROLE",
+                icon: new ThemeIcon("person", new ThemeColor("editor.foreground")),
+                objectId: element.objectId,
+                value: role.id!,
+                children: [
+                    new AppRegItem({
+                        label: `Value: ${role.value!}`,
+                        context: "ROLE-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    }),
+                    new AppRegItem({
+                        label: `Description: ${role.description!}`,
+                        context: "ROLE-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    }),
+                    new AppRegItem({
+                        label: `Enabled: ${role.isEnabled! ? "Yes" : "No"}`,
+                        context: "ROLE-VALUE",
                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     })
                 ]
