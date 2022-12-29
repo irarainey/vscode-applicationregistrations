@@ -155,14 +155,14 @@ export class GraphClient {
     }
 
     // Find users by display name
-    public async findUserByName(name: string): Promise<User[]> {
+    public async findUserByName(name: string): Promise<any> {
         return await this._client!.api("/users")
             .filter(`startswith(displayName, '${name}')`)
             .get();
     }
 
     // Find users by email address
-    public async findUserByEmail(name: string): Promise<User[]> {
+    public async findUserByEmail(name: string): Promise<any> {
         return await this._client!.api("/users")
             .filter(`startswith(mail, '${name}')`)
             .get();

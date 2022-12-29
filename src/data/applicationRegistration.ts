@@ -264,18 +264,21 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
 
     // Returns the UI representation (AppItem) of the element that gets displayed in the view
     public getChildren(element?: AppRegItem | undefined): ProviderResult<AppRegItem[]> {
-        // Top level so return all applications
+       
+        // No element selected so return all top level applications to render static elements
         if (element === undefined) {
             return this._treeData;
         }
 
-        // Return application owner children
-        if (element.contextValue === "OWNERS") {
-            return this.getApplicationOwners(element);
+        // If an element is selected then return the children for that element
+        switch (element.contextValue) {
+            case "OWNERS":
+                // Return the owners for the application
+                return this.getApplicationOwners(element);
+            default:
+                // Nothing specific so return the statically defined children
+                return element.children;
         }
-
-        // Nothing more specific so return static defined children
-        return element.children;
     }
 
     // Returns the application registration that is the parent of the given element

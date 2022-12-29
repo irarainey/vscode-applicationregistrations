@@ -33,7 +33,7 @@ export class OwnerService {
 
         // If the new owner name is not empty then add as an owner.
         if (newOwner !== undefined) {
-            let userList: User[] = [];
+            let userList: any;
             let identifier: string = "";
             if (newOwner.indexOf('@') > -1) {
                 // Try to find the user by email.
@@ -45,10 +45,10 @@ export class OwnerService {
                 identifier = "name";
             }
 
-            if (userList.length === 0) {
+            if (userList.value.length === 0) {
                 // User not found
                 window.showErrorMessage(`No user with the ${identifier} ${newOwner} was found in your directory.`);
-            } else if (userList.length > 1) {
+            } else if (userList.value.length > 1) {
                 // More than one user found
                 window.showErrorMessage(`More than one user with the ${identifier} ${newOwner} has been found in your directory.`);
             } else {
@@ -56,7 +56,7 @@ export class OwnerService {
                 added = window.setStatusBarMessage("$(loading~spin) Adding owner...");
                 item.iconPath = new ThemeIcon("loading~spin");
                 this._dataProvider.triggerOnDidChangeTreeData();
-                await this._graphClient.addApplicationOwner(item.objectId!, userList[0].id!)
+                await this._graphClient.addApplicationOwner(item.objectId!, userList.value[0].id)
                     .catch((error) => {
                         console.error(error);
                     });
