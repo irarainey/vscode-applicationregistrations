@@ -46,7 +46,7 @@ export class GraphClient {
         // Create the graph client options
         const clientOptions: ClientOptions = {
             defaultVersion: "v1.0",
-            debugLogging: true,
+            debugLogging: false,
             authProvider
         };
 
@@ -55,16 +55,14 @@ export class GraphClient {
 
         // Attempt to get an access token to determine the authentication state
         await credential.getToken(scope)
-            .then((response) => {
+            .then(() => {
                 // If the access token is returned, the user is authenticated
                 this._graphClientInitialised = true;
-                //console.log(response.token);
                 this.initialiseTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading Application Registrations..."), undefined);
             })
-            .catch((error) => {
+            .catch(() => {
                 // If the access token is not returned, the user is not authenticated
                 this._graphClientInitialised = false;
-                //console.error(error);
                 this.initialiseTreeView("SIGN-IN", undefined, undefined);
             });
     }
@@ -112,6 +110,7 @@ export class GraphClient {
             .get();
     }
 
+    // Gets the count of all application registrations without a filter applied
     public async getApplicationsAllCount(): Promise<any> {
         return await this._client!.api("/applications/")
             .header("ConsistencyLevel", "eventual")
@@ -134,6 +133,7 @@ export class GraphClient {
             .get();
     }
 
+    // Gets the count of owned application registrations without a filter applied
     public async getApplicationsOwnedCount(): Promise<any> {
         return await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
             .header("ConsistencyLevel", "eventual")
