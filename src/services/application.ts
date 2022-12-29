@@ -104,7 +104,7 @@ export class ApplicationService {
             deleted = window.setStatusBarMessage("$(loading~spin) Deleting application registration...");
             app.iconPath = new ThemeIcon("loading~spin");
             this._dataProvider.triggerOnDidChangeTreeData();
-            await this._graphClient.deleteApplication(app.objectId!)
+            const ret = await this._graphClient.deleteApplication(app.objectId!)
                 .catch((error) => {
                     console.error(error);
                 });

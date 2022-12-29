@@ -4,7 +4,7 @@ import { scope, propertiesToIgnoreOnUpdate, directoryObjectsUri } from '../const
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
-import { Application, PasswordCredential, User } from "@microsoft/microsoft-graph-types";
+import { Application, PasswordCredential, User, ServicePrincipal } from "@microsoft/microsoft-graph-types";
 import { execShellCmd } from "../utils/shellUtils";
 
 // This is the client for the Microsoft Graph API
@@ -99,42 +99,53 @@ export class GraphClient {
     }
 
     // Returns all application registrations
-    public async getApplicationsAll(filter?: string): Promise<Application[]> {
+    public async getApplicationsAll(filter?: string): Promise<any> {
 
-        const maximumReturned = workspace.getConfiguration("applicationregistrations")
-            .get("maximumApplicationsReturned") as number;
+        const maximumReturned = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsReturned") as number;
 
-        const request = await this._client!.api("/applications/")
+        return await this._client!.api("/applications/")
             .header("ConsistencyLevel", "eventual")
             .count(true)
             .orderby("displayName")
             .filter(filter === undefined ? "" : filter)
             .top(maximumReturned)
             .get();
-        return request.value;
+    }
+
+    public async getApplicationsAllCount(): Promise<any> {
+        return await this._client!.api("/applications/")
+            .header("ConsistencyLevel", "eventual")
+            .count(true)
+            .select("id")
+            .get();
     }
 
     // Returns owned application registrations
-    public async getApplicationsOwned(filter?: string): Promise<Application[]> {
+    public async getApplicationsOwned(filter?: string): Promise<any> {
 
-        const maximumReturned = workspace.getConfiguration("applicationregistrations")
-            .get("maximumApplicationsReturned") as number;
+        const maximumReturned = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsReturned") as number;
 
-        const request = await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
+        return await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
             .header("ConsistencyLevel", "eventual")
             .count(true)
             .orderby("displayName")
             .filter(filter === undefined ? "" : filter)
             .top(maximumReturned)
             .get();
-        return request.value;
+    }
+
+    public async getApplicationsOwnedCount(): Promise<any> {
+        return await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
+            .header("ConsistencyLevel", "eventual")
+            .count(true)
+            .select("id")
+            .get();
     }
 
     // Returns all owners for a specified application registration
-    public async getApplicationOwners(id: string): Promise<User[]> {
-        const request = await this._client!.api(`/applications/${id}/owners`)
+    public async getApplicationOwners(id: string): Promise<any> {
+        return await this._client!.api(`/applications/${id}/owners`)
             .get();
-        return request.value;
     }
 
     // Removes an owner from an application registration
@@ -145,18 +156,16 @@ export class GraphClient {
 
     // Find users by display name
     public async findUserByName(name: string): Promise<User[]> {
-        const request = await this._client!.api("/users")
+        return await this._client!.api("/users")
             .filter(`startswith(displayName, '${name}')`)
             .get();
-        return request.value;
     }
 
     // Find users by email address
     public async findUserByEmail(name: string): Promise<User[]> {
-        const request = await this._client!.api("/users")
+        return await this._client!.api("/users")
             .filter(`startswith(mail, '${name}')`)
             .get();
-        return request.value;
     }
 
     // Adds an owner to an application registration
@@ -170,14 +179,13 @@ export class GraphClient {
 
     // Deletes a password credential from an application registration
     public async addPasswordCredential(id: string, description: string, expiry: string): Promise<PasswordCredential> {
-        const request = await this._client!.api(`/applications/${id}/addPassword`)
+        return await this._client!.api(`/applications/${id}/addPassword`)
             .post({
                 "passwordCredential": {
                     "endDateTime": expiry,
                     "displayName": description
                 }
             });
-        return request;
     }
 
     // Deletes a password credential from an application registration
@@ -210,4 +218,16 @@ export class GraphClient {
         return await this._client!.api(`/applications/${id}`)
             .update(application);
     }
+
+    // Gets a service principal by application registration id
+    public async getServicePrincipalByAppId(id: string): Promise<ServicePrincipal> {
+        return await this._client!.api(`servicePrincipals(appId='${id}')`)
+            .get();
+    }
+
+    // Gets a service principal by id
+    public async getServicePrincipalById(id: string): Promise<ServicePrincipal> {
+        return await this._client!.api(`servicePrincipals/${id}`)
+            .get();
+    }    
 }

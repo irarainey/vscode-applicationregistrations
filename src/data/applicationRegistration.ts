@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { signInCommandText, view } from '../constants';
 import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, Disposable } from 'vscode';
-import { Application } from "@microsoft/microsoft-graph-types";
+import { Application, User } from "@microsoft/microsoft-graph-types";
 import { GraphClient } from '../clients/graph';
 import { AppRegItem } from '../models/appRegItem';
 
@@ -19,6 +19,9 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
 
     // This is the event that is fired when the tree view is refreshed.
     private _onDidChangeTreeData: EventEmitter<AppRegItem | undefined | null | void> = new EventEmitter<AppRegItem | undefined | null | void>();
+
+    // A private instance of the status bar app count
+    private _statusBarAppCount: Disposable | undefined;
 
     //Defines the event that is fired when the tree view is refreshed.
     public readonly onDidChangeTreeData: Event<AppRegItem | undefined | null | void> = this._onDidChangeTreeData.event;
@@ -266,18 +269,9 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
             return this._treeData;
         }
 
-        // Return owners
+        // Return application owner children
         if (element.contextValue === "OWNERS") {
-            return this.loadApplicationOwners(element);
-            // let appOwners: AppRegItem[] = [];
-            // appOwners.push(new AppRegItem({
-            //     label: "Cheese",
-            //     context: "OWNER",
-            //     icon: new ThemeIcon("person", new ThemeColor("editor.foreground")),
-            //     objectId: element.objectId//,
-            //     //userId: owner.id!
-            // }));
-            // return appOwners;
+            return this.getApplicationOwners(element);
         }
 
         // Nothing more specific so return static defined children
@@ -293,25 +287,29 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     // Returns all applications depending on the user setting
     private async getApplications(filter?: string): Promise<Application[]> {
 
-        // Get the config setting
-        const returnAll = workspace.getConfiguration("applicationregistrations")
-            .get("showAllApplications") as boolean;
-
+        const showAllApplications = workspace.getConfiguration("applicationregistrations").get("showAllApplications") as boolean;
+        
         // If not show all then get only owned applications
-        if (returnAll === false) {
-            return await this._graphClient.getApplicationsOwned(filter);
+        if (showAllApplications === false) {
+            const totalApps = await this._graphClient.getApplicationsOwnedCount();
+            const response = await this._graphClient.getApplicationsOwned(filter);
+            this._statusBarAppCount = window.setStatusBarMessage(`$(${filter === undefined ? "filter" : "filter-filled"}) ${response.value.length} of ${totalApps["@odata.count"]} Applications`);
+            return response.value;
         } else {
             // Otherwise get all applications
-            return await this._graphClient.getApplicationsAll(filter);
+            const totalApps = await this._graphClient.getApplicationsAllCount();
+            const response = await this._graphClient.getApplicationsAll(filter);
+            this._statusBarAppCount = window.setStatusBarMessage(`$(${filter === undefined ? "filter" : "filter-filled"}) ${response.value.length} of ${totalApps["@odata.count"]} Applications`);
+            return response.value;
         }
     }
 
-    private async loadApplicationOwners(element: AppRegItem): Promise<AppRegItem[]> {
-
+    // Returns the application owners for the given application
+    private async getApplicationOwners(element: AppRegItem): Promise<AppRegItem[]> {
         return await this._graphClient.getApplicationOwners(element.objectId!)
-            .then((owners)  => {
+            .then((response) => {
+                const owners: User[] = response.value;
                 let appOwners: AppRegItem[] = [];
-
                 owners.forEach(owner => {
                     appOwners.push(new AppRegItem({
                         label: owner.displayName!,
@@ -321,10 +319,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                         userId: owner.id!
                     }));
                 });
-
                 return appOwners;
-
             });
-
     }
 }

@@ -1,5 +1,3 @@
-// Description: Constants used in the application
-
 // The name of the view
 export const view = "appRegistrations";
 
