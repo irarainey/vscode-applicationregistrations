@@ -318,7 +318,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                 return this.getApplicationKeyCredentials(element, this.getParentApplication(element.objectId!).keyCredentials!);
             case "API-PERMISSIONS":
                 // Return the API permissions for the application
-                return this.getApplicationApiPermissions(element, this.getParentApplication(element.objectId!).requiredResourceAccess!);
+                return this.getApplicationApiPermissions(this.getParentApplication(element.objectId!).requiredResourceAccess!);
             case "EXPOSED-API-PERMISSIONS":
                 // Return the exposed API permissions for the application
                 return this.getApplicationExposedApiPermissions(element, this.getParentApplication(element.objectId!).api?.oauth2PermissionScopes!);
@@ -443,29 +443,37 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Returns the api permissions for the given application
-    private async getApplicationApiPermissions(element: AppRegItem, permissions: RequiredResourceAccess[]): Promise<AppRegItem[]> {
-        return permissions.map(permission => {
+    private async getApplicationApiPermissions(permissions: RequiredResourceAccess[]): Promise<AppRegItem[]> {
+
+        // Iterate through each permission and get the service principal app name
+        const applicationNames = permissions.map(async (permission) => {
+            const response = await this._graphClient.getServicePrincipalByAppId(permission.resourceAppId!);
             return new AppRegItem({
-                label: permission.resourceAppId!,
-                context: "SCOPE",
-                icon: new ThemeIcon("checklist", new ThemeColor("editor.foreground")),
-                objectId: element.objectId,
-                children: [
-                    new AppRegItem({
-                        label: `App Id: ${permission.resourceAppId!}`,
-                        context: "SCOPE-VALUE",
+                label: response.displayName!,
+                context: "API-PERMISSIONS-APP",
+                icon: new ThemeIcon("preview", new ThemeColor("editor.foreground")),
+                value: permission.resourceAppId,
+                children: permission.resourceAccess!.map(resourceAccess => {
+
+                    let scopeLabel = "";
+                    if(resourceAccess.type === "Scope") { 
+                        scopeLabel = `Scope: ${response.oauth2PermissionScopes!.find(scope => scope.id === resourceAccess.id)!.value!}`;
+                    } else {
+                        scopeLabel = `Role: ${response.appRoles!.find(scope => scope.id === resourceAccess.id)!.value!}`;
+                    }
+
+                    return new AppRegItem({
+                        label: scopeLabel,
+                        context: "API-PERMISSIONS-SCOPE",
                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
-                     })//,
-                    // new AppRegItem({
-                    //     label: `Type: ${permission.resourceAccess!}`,
-                    //     context: "SCOPE-VALUE",
-                    //     icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
-                    // })
-                ]
+                    });
+                })
             });
         });
+
+        return Promise.all(applicationNames);
     }
-      
+
     // Returns the exposed api permissions for the given application
     private async getApplicationExposedApiPermissions(element: AppRegItem, permissions: PermissionScope[]): Promise<AppRegItem[]> {
         return permissions.map(permission => {
