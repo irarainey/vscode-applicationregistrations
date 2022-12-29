@@ -270,11 +270,22 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
             return this._treeData;
         }
 
+        const parent = this.getParentApplication(element.objectId!);
+
         // If an element is selected then return the children for that element
         switch (element.contextValue) {
             case "OWNERS":
                 // Return the owners for the application
                 return this.getApplicationOwners(element);
+            case "WEB-REDIRECT":
+                // Return the web redirect URIs for the application
+                return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", parent.web?.redirectUris!);
+            case "SPA-REDIRECT":
+                // Return the SPA redirect URIs for the application
+                return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", parent.spa?.redirectUris!);
+            case "NATIVE-REDIRECT":
+                // Return the native redirect URIs for the application
+                return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", parent.publicClient?.redirectUris!);
             default:
                 // Nothing specific so return the statically defined children
                 return element.children;
@@ -318,6 +329,18 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                 icon: new ThemeIcon("person", new ThemeColor("editor.foreground")),
                 objectId: element.objectId,
                 userId: owner.id!
+            });
+        });
+    }
+
+    // Returns the web redirect URIs for the given application
+    private async getApplicationRedirectUris(element: AppRegItem, context: string, redirects: string[]): Promise<AppRegItem[]> {
+        return redirects.map(webRedirectUri => {
+            return new AppRegItem({
+                label: webRedirectUri,
+                context: context,
+                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                objectId: element.objectId
             });
         });
     }
