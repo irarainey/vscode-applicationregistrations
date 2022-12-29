@@ -46,7 +46,7 @@ export class GraphClient {
         // Create the graph client options
         const clientOptions: ClientOptions = {
             defaultVersion: "v1.0",
-            debugLogging: false,
+            debugLogging: true,
             authProvider
         };
 
@@ -54,21 +54,19 @@ export class GraphClient {
         this._client = Client.initWithMiddleware(clientOptions);
 
         // Attempt to get an access token to determine the authentication state
-        try {
-            await credential.getToken(scope)
-                .then(() => {
-                    // If the access token is returned, the user is authenticated
-                    this._graphClientInitialised = true;
-                    this.initialiseTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading Application Registrations..."), undefined);
-                })
-                .catch(() => {
-                    // If the access token is not returned, the user is not authenticated
-                    this._graphClientInitialised = false;
-                    this.initialiseTreeView("SIGN-IN", undefined, undefined);
-                });
-        } catch (error) {
-            console.log(error);
-        }
+        await credential.getToken(scope)
+            .then((response) => {
+                // If the access token is returned, the user is authenticated
+                this._graphClientInitialised = true;
+                //console.log(response.token);
+                this.initialiseTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading Application Registrations..."), undefined);
+            })
+            .catch((error) => {
+                // If the access token is not returned, the user is not authenticated
+                this._graphClientInitialised = false;
+                //console.error(error);
+                this.initialiseTreeView("SIGN-IN", undefined, undefined);
+            });
     }
 
     // Invokes the Azure CLI sign-in command.
@@ -103,15 +101,16 @@ export class GraphClient {
     // Returns all application registrations
     public async getApplicationsAll(filter?: string): Promise<Application[]> {
 
-        const maximumReturned = workspace.getConfiguration("applicationregistrations").get("maximumReturned") as number;
+        const maximumReturned = workspace.getConfiguration("applicationregistrations")
+            .get("maximumApplicationsReturned") as number;
 
-        const request = await this._client!.api("/applications/?$expand=owners")
+        const request = await this._client!.api("/applications/")
+            .header("ConsistencyLevel", "eventual")
+            .count(true)
+            .orderby("displayName")
             .filter(filter === undefined ? "" : filter)
             .top(maximumReturned)
-            .get()
-            .catch((error: any) => {
-                console.log(error);
-            });
+            .get();
         return request.value;
     }
 
@@ -121,33 +120,34 @@ export class GraphClient {
         const maximumReturned = workspace.getConfiguration("applicationregistrations")
             .get("maximumApplicationsReturned") as number;
 
-        const request = await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application?$expand=owners")
+        const request = await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
+            .header("ConsistencyLevel", "eventual")
+            .count(true)
+            .orderby("displayName")
             .filter(filter === undefined ? "" : filter)
             .top(maximumReturned)
-            .get()
-            .catch((error: any) => {
-                console.log(error);
-            });
+            .get();
+        return request.value;
+    }
+
+    // Returns all owners for a specified application registration
+    public async getApplicationOwners(id: string): Promise<User[]> {
+        const request = await this._client!.api(`/applications/${id}/owners`)
+            .get();
         return request.value;
     }
 
     // Removes an owner from an application registration
     public async removeApplicationOwner(id: string, userId: string): Promise<void> {
         await this._client!.api(`/applications/${id}/owners/${userId}/$ref`)
-            .delete()
-            .catch((error: any) => {
-                console.log(error);
-            });
+            .delete();
     }
 
     // Find users by display name
     public async findUserByName(name: string): Promise<User[]> {
         const request = await this._client!.api("/users")
             .filter(`startswith(displayName, '${name}')`)
-            .get()
-            .catch((error: any) => {
-                console.log(error);
-            });
+            .get();
         return request.value;
     }
 
@@ -155,10 +155,7 @@ export class GraphClient {
     public async findUserByEmail(name: string): Promise<User[]> {
         const request = await this._client!.api("/users")
             .filter(`startswith(mail, '${name}')`)
-            .get()
-            .catch((error: any) => {
-                console.log(error);
-            });
+            .get();
         return request.value;
     }
 
@@ -168,9 +165,6 @@ export class GraphClient {
             .post({
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 "@odata.id": `${directoryObjectsUri}${userId}`
-            })
-            .catch((error: any) => {
-                console.log(error);
             });
     }
 
@@ -182,9 +176,6 @@ export class GraphClient {
                     "endDateTime": expiry,
                     "displayName": description
                 }
-            })
-            .catch((error: any) => {
-                console.log(error);
             });
         return request;
     }
@@ -194,28 +185,19 @@ export class GraphClient {
         await this._client!.api(`/applications/${id}/removePassword`)
             .post({
                 "keyId": passwordId
-            })
-            .catch((error: any) => {
-                console.log(error);
             });
     }
 
     // Deletes an application registration
     public async deleteApplication(id: string): Promise<void> {
         await this._client!.api(`/applications/${id}`)
-            .delete()
-            .catch((error: any) => {
-                console.log(error);
-            });
+            .delete();
     }
 
     // Creates a new application registration
     public async createApplication(application: Application): Promise<Application> {
         return await this._client!.api("/applications/")
-            .post(application)
-            .catch((error: any) => {
-                console.log(error);
-            });
+            .post(application);
     }
 
     // Updates an application registration
@@ -226,9 +208,6 @@ export class GraphClient {
         });
 
         return await this._client!.api(`/applications/${id}`)
-            .update(application)
-            .catch((error: any) => {
-                console.log(error);
-            });
+            .update(application);
     }
 }
