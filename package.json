@@ -58,23 +58,27 @@
     "commands": [
       {
         "command": "appRegistrations.addRedirectUri",
-        "title": "Add Redirect URI"
+        "title": "Add"
       },
       {
         "command": "appRegistrations.editRedirectUri",
-        "title": "Edit Redirect URI"
+        "title": "Edit"
       },
       {
         "command": "appRegistrations.deleteRedirectUri",
-        "title": "Delete Redirect URI"
+        "title": "Delete"
+      },
+      {
+        "command": "appRegistrations.copyRedirectUri",
+        "title": "Copy"
       },
       {
         "command": "appRegistrations.addPasswordCredential",
-        "title": "Add Password Credential"
+        "title": "Add"
       },
       {
         "command": "appRegistrations.deletePasswordCredential",
-        "title": "Delete Password Credential"
+        "title": "Delete"
       },
       {
         "command": "appRegistrations.viewAppManifest",
@@ -82,11 +86,11 @@
       },
       {
         "command": "appRegistrations.renameApp",
-        "title": "Rename Application"
+        "title": "Rename"
       },
       {
         "command": "appRegistrations.deleteApp",
-        "title": "Delete Application"
+        "title": "Delete"
       },
       {
         "command": "appRegistrations.copyClientId",
@@ -102,7 +106,7 @@
       },
       {
         "command": "appRegistrations.copyValue",
-        "title": "Copy Value"
+        "title": "Copy"
       },
       {
         "command": "appRegistrations.openUserInPortal",
@@ -110,11 +114,11 @@
       },
       {
         "command": "appRegistrations.addOwner",
-        "title": "Add Owner"
+        "title": "Add"
       },
       {
         "command": "appRegistrations.removeOwner",
-        "title": "Remove Owner"
+        "title": "Remove"
       },
       {
         "command": "appRegistrations.refreshApps",
@@ -171,9 +175,14 @@
           "group": "appRegistrations@0"
         },
         {
-          "command": "appRegistrations.deleteRedirectUri",
+          "command": "appRegistrations.copyRedirectUri",
           "when": "view == appRegistrations && viewItem == WEB-REDIRECT-URI || viewItem == SPA-REDIRECT-URI || viewItem == NATIVE-REDIRECT-URI",
           "group": "appRegistrations@1"
+        },
+        {
+          "command": "appRegistrations.deleteRedirectUri",
+          "when": "view == appRegistrations && viewItem == WEB-REDIRECT-URI || viewItem == SPA-REDIRECT-URI || viewItem == NATIVE-REDIRECT-URI",
+          "group": "appRegistrations@2"
         },
         {
           "command": "appRegistrations.addPasswordCredential",

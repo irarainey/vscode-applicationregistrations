@@ -239,7 +239,7 @@ export class AppReg {
     public async addPasswordCredential(item: AppRegItem): Promise<void> {
         // Adds the credential and reload the tree view if successful.
         const status = await this._passwordCredentialsService.add(item);
-        
+
         if (status !== undefined) {
             this.populateTreeView(status);
         }
@@ -261,6 +261,12 @@ export class AppReg {
 
     // Copies the selected value to the clipboard.
     public copyValue(item: AppRegItem): void {
-        env.clipboard.writeText(item.contextValue === "COPY" ? item.value! : item.children![0].value!);
+        env.clipboard.writeText(
+            item.contextValue === "COPY"
+                || item.contextValue === "WEB-REDIRECT-URI"
+                || item.contextValue === "SPA-REDIRECT-URI"
+                || item.contextValue === "NATIVE-REDIRECT-URI"
+                ? item.value!
+                : item.children![0].value!);
     }
 }

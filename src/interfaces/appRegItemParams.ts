@@ -14,4 +14,5 @@ export interface AppRegItemParams {
     children?: AppRegItem[];
     command?: Command;
     icon?: string | ThemeIcon;
+    tooltip?: string;
 }
