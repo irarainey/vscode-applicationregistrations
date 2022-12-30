@@ -43,7 +43,7 @@ It has a dependency on the [Azure Tools extension pack](https://marketplace.visu
 ## Known Limitations
 Azure Active Directory stores multiple copies of data to handle large read volume and provide high availability. When data is created or updated, the change will eventually be applied to all the copies. Due to the nature of the Graph API queries used by this extension it is required to use eventual consistency when building the application list. 
 
-This means that when you add an application, you need to wait for all the copies to be updated before it will be returned in a query. This means that when adding a new application, or deleting an application, the list may not initially reflect these changes. If this happens just wait a short time and refresh the list again.
+This means that when you add or delete applications, you need to wait for all the copies to be updated before it will be returned in a query. This means that after these actions the list may not initially reflect your changes. If this happens just wait a short time and refresh the list again.
 
 Read more on [Eventual Consistency](https://blogs.aaddevsup.xyz/2021/08/why-do-i-sometimes-get-a-404-when-trying-to-update-an-azure-directory-object-after-i-just-created-it/).
 
