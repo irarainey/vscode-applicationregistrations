@@ -49,10 +49,12 @@ export class ApplicationService {
             // If the sign in audience is not undefined then create the application.
             if (audience !== undefined) {
                 added = window.setStatusBarMessage("$(loading~spin) Creating application registration...");
-                await this._graphClient.createApplication({ displayName: newName, signInAudience: convertSignInAudience(audience) })
+                const newApp = await this._graphClient.createApplication({ displayName: newName, signInAudience: convertSignInAudience(audience) })
                     .catch((error) => {
                         console.error(error);
                     });
+
+                this._dataProvider.addedApplications.push(newApp?.id!);
             }
         }
 
@@ -136,10 +138,11 @@ export class ApplicationService {
             deleted = window.setStatusBarMessage("$(loading~spin) Deleting application registration...");
             app.iconPath = new ThemeIcon("loading~spin");
             this._dataProvider.triggerOnDidChangeTreeData();
-            const ret = await this._graphClient.deleteApplication(app.objectId!)
+            await this._graphClient.deleteApplication(app.objectId!)
                 .catch((error) => {
                     console.error(error);
                 });
+            this._dataProvider.deletedApplications.push(app.objectId!);
         }
 
         // Return the state of the action to refresh the list if required.
@@ -187,7 +190,7 @@ export class ApplicationService {
         app.iconPath = new ThemeIcon("loading~spin");
         this._dataProvider.triggerOnDidChangeTreeData();
 
-        const manifest = await this._graphClient.getApplicationDetails(app.objectId!);
+        const manifest = await this._graphClient.getApplicationFull(app.objectId!);
 
         const newDocument = new class implements TextDocumentContentProvider {
             onDidChangeEmitter = new EventEmitter<Uri>();

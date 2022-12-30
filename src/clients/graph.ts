@@ -97,57 +97,48 @@ export class GraphClient {
     }
 
     // Returns details for a specified application registration
-    public async getApplicationDetails(id: string): Promise<Application> {
+    public async getApplicationFull(id: string): Promise<Application> {
         return await this._client!.api(`/applications/${id}`)
             .get();
     }
 
+    // Returns minimal details for a specified application registration
+    public async getApplicationMinimal(id: string): Promise<Application> {
+        return await this._client!.api(`/applications/${id}`)
+            .select("id")
+            .get();
+    }
+
     // Returns ids for all owned application registrations
-    public async getApplicationNamesOwned(filter?: string): Promise<any> {
+    public async getApplicationsOwned(filter?: string): Promise<Application[]> {
 
         const maximumReturned = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsReturned") as number;
-
-        return await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
+        const ownedApplications = await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
             .header("ConsistencyLevel", "eventual")
             .count(true)
             .orderby("displayName")
             .filter(filter === undefined ? "" : filter)
             .top(maximumReturned)
-            .select("id,displayName")
+            .select("id")
             .get();
+
+        return ownedApplications.value;
     }
 
     // Returns ids for all application registrations
-    public async getApplicationNamesAll(filter?: string): Promise<any> {
+    public async getApplicationsAll(filter?: string): Promise<Application[]> {
 
         const maximumReturned = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsReturned") as number;
-
-        return await this._client!.api("/applications/")
+        const allApplications = await this._client!.api("/applications/")
             .header("ConsistencyLevel", "eventual")
             .count(true)
             .orderby("displayName")
             .filter(filter === undefined ? "" : filter)
             .top(maximumReturned)
-            .select("id,displayName")
-            .get();
-    }
-
-    // Gets the count of owned application registrations without a filter applied
-    public async getApplicationsOwnedCount(): Promise<any> {
-        return await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
-            .header("ConsistencyLevel", "eventual")
-            .count(true)
             .select("id")
             .get();
-    }
 
-    // Gets the count of all application registrations without a filter applied
-    public async getApplicationsAllCount(): Promise<any> {
-        return await this._client!.api("/applications/")
-            .header("ConsistencyLevel", "eventual")
-            .count(true)
-            .select("id")
-            .get();
+        return allApplications.value;
     }
 
     // Returns all owners for a specified application registration
@@ -230,12 +221,6 @@ export class GraphClient {
     // Gets a service principal by application registration id
     public async getServicePrincipalByAppId(id: string): Promise<ServicePrincipal> {
         return await this._client!.api(`servicePrincipals(appId='${id}')`)
-            .get();
-    }
-
-    // Gets a service principal by id
-    public async getServicePrincipalById(id: string): Promise<ServicePrincipal> {
-        return await this._client!.api(`servicePrincipals/${id}`)
             .get();
     }
 }
