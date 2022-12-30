@@ -92,7 +92,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                 this.triggerOnDidChangeTreeData();
                 break;
             case "APPLICATIONS":
-                await this.buildAppRegTree(filter);
+                await this.populateAppRegTreeData(filter);
                 break;
         }
     }
@@ -102,8 +102,8 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
         this._onDidChangeTreeData.fire();
     }
 
-    // Builds the tree view data for the application registrations.
-    private async buildAppRegTree(filter?: string): Promise<void> {
+    // Populates the tree view data for the application registrations.
+    private async populateAppRegTreeData(filter?: string): Promise<void> {
 
         try {
             // Get the application registrations from the graph client.
@@ -112,339 +112,173 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
             // If we have some applications then add them to the tree view.
             if (applications !== undefined && applications.length > 0) {
 
-                let counter: number = 0;
-
-                // // Re-map the application keeping the alphabetical order but changing the insertion order because ES6 only preserves the order of insertion
-                // // If we don't do this then the tree view will be out of order, despite the items being in the correct order in the array
-                // let remappedApplications = new Map();
-                // for (let i = 0; i < applications.length; i++) {
-                //     remappedApplications.set(applications[i].id, { value: applications[i].displayName, index: i });
-                // }
-
-                //applications.sort((a, b) => { return a.displayName!.toLowerCase() < b.displayName!.toLowerCase() ? -1 : 1; });
-
-                //const newApps = sort(applications).asc(a => a.displayName);
+                let unsorted: AppRegItem[] = [];
 
                 for (let item of applications) {
                     this._graphClient.getApplicationDetails(item.id!)
-                    .then((app: Application) => {
-                        // Create the tree view item for the application and it's children
-                        this._treeData.push(new AppRegItem({
-                            label: app.displayName ? app.displayName : "Application",
-                            context: "APPLICATION",
-                            icon: path.join(__filename, "..", "..", "..", "resources", "icons", "app.svg"),
-                            objectId: app.id!,
-                            appId: app.appId!,
-                            manifest: app,
-                            children: [
-                                // Application (Client) Id
-                                new AppRegItem({
-                                    label: "Client Id",
-                                    context: "APPID-PARENT",
-                                    icon: new ThemeIcon("preview"),
-                                    children: [
-                                        new AppRegItem({
-                                            label: app.appId!,
-                                            value: app.appId!,
-                                            context: "COPY",
-                                            icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
-                                        })
-                                    ]
-                                }),
-                                // Sign In Audience
-                                new AppRegItem({
-                                    label: "Sign In Audience",
-                                    context: "AUDIENCE-PARENT",
-                                    icon: new ThemeIcon("account"),
-                                    objectId: app.id!,
-                                    children: [
-                                        new AppRegItem({
-                                            label: app.signInAudience! === "AzureADMyOrg"
-                                                ? "Single Tenant"
-                                                : app.signInAudience! === "AzureADMultipleOrgs"
-                                                    ? "Multi Tenant"
-                                                    : "Multi Tenant and Personal Accounts",
-                                            context: "AUDIENCE",
-                                            icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-                                            objectId: app.id!,
-                                        })
-                                    ]
-                                }),
-                                // Redirect URIs
-                                new AppRegItem({
-                                    label: "Redirect URIs",
-                                    context: "REDIRECT-PARENT",
-                                    icon: new ThemeIcon("go-to-file", new ThemeColor("editor.foreground")),
-                                    objectId: app.id!,
-                                    children: [
-                                        new AppRegItem({
-                                            label: "Web",
-                                            context: "WEB-REDIRECT",
-                                            icon: new ThemeIcon("globe"),
-                                            objectId: app.id!,
-                                            children: app.web?.redirectUris?.length === 0 ? undefined : []
-                                        }),
-                                        new AppRegItem({
-                                            label: "SPA",
-                                            context: "SPA-REDIRECT",
-                                            icon: new ThemeIcon("browser"),
-                                            objectId: app.id!,
-                                            children: app.spa?.redirectUris?.length === 0 ? undefined : []
-                                        }),
-                                        new AppRegItem({
-                                            label: "Mobile and Desktop",
-                                            context: "NATIVE-REDIRECT",
-                                            icon: new ThemeIcon("editor-layout"),
-                                            objectId: app.id!,
-                                            children: app.publicClient?.redirectUris?.length === 0 ? undefined : []
-                                        })
-                                    ]
-                                }),
-                                // Credentials
-                                new AppRegItem({
-                                    label: "Credentials",
-                                    context: "PROPERTY-ARRAY",
-                                    objectId: app.id!,
-                                    icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
-                                    children: [
-                                        new AppRegItem({
-                                            label: "Client Secrets",
-                                            context: "PASSWORD-CREDENTIALS",
-                                            objectId: app.id!,
-                                            icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
-                                            children: app.passwordCredentials!.length === 0 ? undefined : []
-                                        }),
-                                        new AppRegItem({
-                                            label: "Certificates",
-                                            context: "CERTIFICATE-CREDENTIALS",
-                                            objectId: app.id!,
-                                            icon: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
-                                            children: app.keyCredentials!.length === 0 ? undefined : []
-                                        })
-                                    ]
-                                }),
-                                // API Permissions
-                                new AppRegItem({
-                                    label: "API Permissions",
-                                    context: "API-PERMISSIONS",
-                                    objectId: app.id!,
-                                    icon: new ThemeIcon("checklist", new ThemeColor("editor.foreground")),
-                                    children: app.requiredResourceAccess?.length === 0 ? undefined : []
-                                }),
-                                // Exposed API Permissions
-                                new AppRegItem({
-                                    label: "Exposed API Permissions",
-                                    context: "EXPOSED-API-PERMISSIONS",
-                                    objectId: app.id!,
-                                    icon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
-                                    children: app.api!.oauth2PermissionScopes!.length === 0 ? undefined : []
-                                }),
-                                // App Roles
-                                new AppRegItem({
-                                    label: "App Roles",
-                                    context: "APP-ROLES",
-                                    objectId: app.id!,
-                                    icon: new ThemeIcon("note", new ThemeColor("editor.foreground")),
-                                    children: app.appRoles!.length === 0 ? undefined : []
-                                }),
-                                // Owners
-                                new AppRegItem({
-                                    label: "Owners",
-                                    context: "OWNERS",
-                                    objectId: app.id!,
-                                    icon: new ThemeIcon("organization", new ThemeColor("editor.foreground")),
-                                    children: []
-                                }),
-                            ]
-                        }));
+                        .then((app: Application) => {
+                            // Populate an array with tree view items for the application and it's static children
+                            unsorted.push(new AppRegItem({
+                                label: app.displayName ? app.displayName : "Application",
+                                context: "APPLICATION",
+                                icon: path.join(__filename, "..", "..", "..", "resources", "icons", "app.svg"),
+                                objectId: app.id!,
+                                appId: app.appId!,
+                                manifest: app,
+                                children: [
+                                    // Application (Client) Id
+                                    new AppRegItem({
+                                        label: "Client Id",
+                                        context: "APPID-PARENT",
+                                        icon: new ThemeIcon("preview"),
+                                        children: [
+                                            new AppRegItem({
+                                                label: app.appId!,
+                                                value: app.appId!,
+                                                context: "COPY",
+                                                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                                            })
+                                        ]
+                                    }),
+                                    // Sign In Audience
+                                    new AppRegItem({
+                                        label: "Sign In Audience",
+                                        context: "AUDIENCE-PARENT",
+                                        icon: new ThemeIcon("account"),
+                                        objectId: app.id!,
+                                        children: [
+                                            new AppRegItem({
+                                                label: app.signInAudience! === "AzureADMyOrg"
+                                                    ? "Single Tenant"
+                                                    : app.signInAudience! === "AzureADMultipleOrgs"
+                                                        ? "Multi Tenant"
+                                                        : "Multi Tenant and Personal Accounts",
+                                                context: "AUDIENCE",
+                                                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                                objectId: app.id!,
+                                            })
+                                        ]
+                                    }),
+                                    // Redirect URIs
+                                    new AppRegItem({
+                                        label: "Redirect URIs",
+                                        context: "REDIRECT-PARENT",
+                                        icon: new ThemeIcon("go-to-file", new ThemeColor("editor.foreground")),
+                                        objectId: app.id!,
+                                        children: [
+                                            new AppRegItem({
+                                                label: "Web",
+                                                context: "WEB-REDIRECT",
+                                                icon: new ThemeIcon("globe"),
+                                                objectId: app.id!,
+                                                children: app.web?.redirectUris?.length === 0 ? undefined : []
+                                            }),
+                                            new AppRegItem({
+                                                label: "SPA",
+                                                context: "SPA-REDIRECT",
+                                                icon: new ThemeIcon("browser"),
+                                                objectId: app.id!,
+                                                children: app.spa?.redirectUris?.length === 0 ? undefined : []
+                                            }),
+                                            new AppRegItem({
+                                                label: "Mobile and Desktop",
+                                                context: "NATIVE-REDIRECT",
+                                                icon: new ThemeIcon("editor-layout"),
+                                                objectId: app.id!,
+                                                children: app.publicClient?.redirectUris?.length === 0 ? undefined : []
+                                            })
+                                        ]
+                                    }),
+                                    // Credentials
+                                    new AppRegItem({
+                                        label: "Credentials",
+                                        context: "PROPERTY-ARRAY",
+                                        objectId: app.id!,
+                                        icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
+                                        children: [
+                                            new AppRegItem({
+                                                label: "Client Secrets",
+                                                context: "PASSWORD-CREDENTIALS",
+                                                objectId: app.id!,
+                                                icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
+                                                children: app.passwordCredentials!.length === 0 ? undefined : []
+                                            }),
+                                            new AppRegItem({
+                                                label: "Certificates",
+                                                context: "CERTIFICATE-CREDENTIALS",
+                                                objectId: app.id!,
+                                                icon: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
+                                                children: app.keyCredentials!.length === 0 ? undefined : []
+                                            })
+                                        ]
+                                    }),
+                                    // API Permissions
+                                    new AppRegItem({
+                                        label: "API Permissions",
+                                        context: "API-PERMISSIONS",
+                                        objectId: app.id!,
+                                        icon: new ThemeIcon("checklist", new ThemeColor("editor.foreground")),
+                                        children: app.requiredResourceAccess?.length === 0 ? undefined : []
+                                    }),
+                                    // Exposed API Permissions
+                                    new AppRegItem({
+                                        label: "Exposed API Permissions",
+                                        context: "EXPOSED-API-PERMISSIONS",
+                                        objectId: app.id!,
+                                        icon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
+                                        children: app.api!.oauth2PermissionScopes!.length === 0 ? undefined : []
+                                    }),
+                                    // App Roles
+                                    new AppRegItem({
+                                        label: "App Roles",
+                                        context: "APP-ROLES",
+                                        objectId: app.id!,
+                                        icon: new ThemeIcon("note", new ThemeColor("editor.foreground")),
+                                        children: app.appRoles!.length === 0 ? undefined : []
+                                    }),
+                                    // Owners
+                                    new AppRegItem({
+                                        label: "Owners",
+                                        context: "OWNERS",
+                                        objectId: app.id!,
+                                        icon: new ThemeIcon("organization", new ThemeColor("editor.foreground")),
+                                        children: []
+                                    }),
+                                ]
+                            }));
+                        })
+                        .then(() => {
+                            // Only trigger the redraw event when all applications have been processed
+                            if (unsorted.length === applications.length) {
 
-                        counter++;
-                        //this.triggerOnDidChangeTreeData();
-                    })
-                    .then(() => {
-                        // Only trigger the redraw event when all applications have been processed
-                        if (counter === applications.length) {
+                                // Sort the applications by name. This is required to ensure the order is maintained
+                                this._treeData = sort(unsorted).asc(a => a.label);
 
-                            this._treeData.sort((a, b) => { return a.label! < b.label! ? -1 : 1; });
+                                // Clear any status bar message
+                                if (this, this._statusBarMessage !== undefined) {
+                                    this._statusBarMessage.dispose();
+                                }
 
-                            // Clear any status bar message
-                            if (this, this._statusBarMessage !== undefined) {
-                                this._statusBarMessage.dispose();
+                                // Trigger the event to refresh the tree view
+                                this.triggerOnDidChangeTreeData();
                             }
-
-                            // Trigger the event to refresh the tree view
-                            this.triggerOnDidChangeTreeData();
-                        }
-                    });
-
+                        });
                 }
-
-                // Now we have the map in the right order we can iterate through it to build our tree view
-            //     applications
-            //         //.sort((a, b) => { return a.displayName!.toLowerCase() < b.displayName!.toLowerCase() ? -1 : 1; })
-            //         .forEach((item) => {
-            //             this._graphClient.getApplicationDetails(item.id!)
-            //                 .then((app: Application) => {
-            //                     // Create the tree view item for the application and it's children
-            //                     this._treeData.push(new AppRegItem({
-            //                         label: app.displayName ? app.displayName : "Application",
-            //                         context: "APPLICATION",
-            //                         icon: path.join(__filename, "..", "..", "..", "resources", "icons", "app.svg"),
-            //                         objectId: app.id!,
-            //                         appId: app.appId!,
-            //                         manifest: app,
-            //                         children: [
-            //                             // Application (Client) Id
-            //                             new AppRegItem({
-            //                                 label: "Client Id",
-            //                                 context: "APPID-PARENT",
-            //                                 icon: new ThemeIcon("preview"),
-            //                                 children: [
-            //                                     new AppRegItem({
-            //                                         label: app.appId!,
-            //                                         value: app.appId!,
-            //                                         context: "COPY",
-            //                                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
-            //                                     })
-            //                                 ]
-            //                             }),
-            //                             // Sign In Audience
-            //                             new AppRegItem({
-            //                                 label: "Sign In Audience",
-            //                                 context: "AUDIENCE-PARENT",
-            //                                 icon: new ThemeIcon("account"),
-            //                                 objectId: app.id!,
-            //                                 children: [
-            //                                     new AppRegItem({
-            //                                         label: app.signInAudience! === "AzureADMyOrg"
-            //                                             ? "Single Tenant"
-            //                                             : app.signInAudience! === "AzureADMultipleOrgs"
-            //                                                 ? "Multi Tenant"
-            //                                                 : "Multi Tenant and Personal Accounts",
-            //                                         context: "AUDIENCE",
-            //                                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-            //                                         objectId: app.id!,
-            //                                     })
-            //                                 ]
-            //                             }),
-            //                             // Redirect URIs
-            //                             new AppRegItem({
-            //                                 label: "Redirect URIs",
-            //                                 context: "REDIRECT-PARENT",
-            //                                 icon: new ThemeIcon("go-to-file", new ThemeColor("editor.foreground")),
-            //                                 objectId: app.id!,
-            //                                 children: [
-            //                                     new AppRegItem({
-            //                                         label: "Web",
-            //                                         context: "WEB-REDIRECT",
-            //                                         icon: new ThemeIcon("globe"),
-            //                                         objectId: app.id!,
-            //                                         children: app.web?.redirectUris?.length === 0 ? undefined : []
-            //                                     }),
-            //                                     new AppRegItem({
-            //                                         label: "SPA",
-            //                                         context: "SPA-REDIRECT",
-            //                                         icon: new ThemeIcon("browser"),
-            //                                         objectId: app.id!,
-            //                                         children: app.spa?.redirectUris?.length === 0 ? undefined : []
-            //                                     }),
-            //                                     new AppRegItem({
-            //                                         label: "Mobile and Desktop",
-            //                                         context: "NATIVE-REDIRECT",
-            //                                         icon: new ThemeIcon("editor-layout"),
-            //                                         objectId: app.id!,
-            //                                         children: app.publicClient?.redirectUris?.length === 0 ? undefined : []
-            //                                     })
-            //                                 ]
-            //                             }),
-            //                             // Credentials
-            //                             new AppRegItem({
-            //                                 label: "Credentials",
-            //                                 context: "PROPERTY-ARRAY",
-            //                                 objectId: app.id!,
-            //                                 icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
-            //                                 children: [
-            //                                     new AppRegItem({
-            //                                         label: "Client Secrets",
-            //                                         context: "PASSWORD-CREDENTIALS",
-            //                                         objectId: app.id!,
-            //                                         icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
-            //                                         children: app.passwordCredentials!.length === 0 ? undefined : []
-            //                                     }),
-            //                                     new AppRegItem({
-            //                                         label: "Certificates",
-            //                                         context: "CERTIFICATE-CREDENTIALS",
-            //                                         objectId: app.id!,
-            //                                         icon: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
-            //                                         children: app.keyCredentials!.length === 0 ? undefined : []
-            //                                     })
-            //                                 ]
-            //                             }),
-            //                             // API Permissions
-            //                             new AppRegItem({
-            //                                 label: "API Permissions",
-            //                                 context: "API-PERMISSIONS",
-            //                                 objectId: app.id!,
-            //                                 icon: new ThemeIcon("checklist", new ThemeColor("editor.foreground")),
-            //                                 children: app.requiredResourceAccess?.length === 0 ? undefined : []
-            //                             }),
-            //                             // Exposed API Permissions
-            //                             new AppRegItem({
-            //                                 label: "Exposed API Permissions",
-            //                                 context: "EXPOSED-API-PERMISSIONS",
-            //                                 objectId: app.id!,
-            //                                 icon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
-            //                                 children: app.api!.oauth2PermissionScopes!.length === 0 ? undefined : []
-            //                             }),
-            //                             // App Roles
-            //                             new AppRegItem({
-            //                                 label: "App Roles",
-            //                                 context: "APP-ROLES",
-            //                                 objectId: app.id!,
-            //                                 icon: new ThemeIcon("note", new ThemeColor("editor.foreground")),
-            //                                 children: app.appRoles!.length === 0 ? undefined : []
-            //                             }),
-            //                             // Owners
-            //                             new AppRegItem({
-            //                                 label: "Owners",
-            //                                 context: "OWNERS",
-            //                                 objectId: app.id!,
-            //                                 icon: new ThemeIcon("organization", new ThemeColor("editor.foreground")),
-            //                                 children: []
-            //                             }),
-            //                         ]
-            //                     }));
-
-            //                     counter++;
-            //                     //this.triggerOnDidChangeTreeData();
-            //                 })
-            //                 .then(() => {
-            //                     // Only trigger the redraw event when all applications have been processed
-            //                     if (counter === applications.length) {
-            //                         // Clear any status bar message
-            //                         if (this, this._statusBarMessage !== undefined) {
-            //                             this._statusBarMessage.dispose();
-            //                         }
-
-            //                         // Trigger the event to refresh the tree view
-            //                         this.triggerOnDidChangeTreeData();
-            //                     }
-            //                 });
-            //         });
-             }
+            }
         } catch (error: any) {
+            // Check to see if the user is signed in and if not then prompt them to sign in
             if (error.code !== undefined && error.code === "CredentialUnavailableError") {
                 this._graphClient.isGraphClientInitialised = false;
                 this._graphClient.initialise();
             }
             else {
+                // Otherwise just show an error message
                 console.error(error);
                 window.showErrorMessage(error.message);
             }
         }
     }
 
-    // This is the event that is fired when the tree view is refreshed.
     // Returns the children for the given element or root (if no element is passed).
     public getTreeItem(element: AppRegItem): TreeItem | Thenable<TreeItem> {
         return element;

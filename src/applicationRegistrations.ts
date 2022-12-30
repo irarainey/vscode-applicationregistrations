@@ -132,7 +132,7 @@ export class AppReg {
     // Deletes an application registration.
     public async deleteApp(item: AppRegItem): Promise<void> {
         // Delete the application registration and reload the tree view if successful.
-        const status = await this._applicationService.delete(item)
+        const status = await this._applicationService.delete(item);
 
         if (status !== undefined) {
             this.populateTreeView(status);
@@ -248,7 +248,7 @@ export class AppReg {
     // Deletes a password credential.
     public async deletePasswordCredential(item: AppRegItem): Promise<void> {
         // Delete the credential and reload the tree view if successful.
-        const status = await this._passwordCredentialsService.delete(item)
+        const status = await this._passwordCredentialsService.delete(item);
 
         if (status !== undefined) {
             this.populateTreeView(status);
