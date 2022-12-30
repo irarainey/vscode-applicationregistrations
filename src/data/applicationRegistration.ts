@@ -139,11 +139,12 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                         .then((app: Application) => {
                             // Populate an array with tree view items for the application and it's static children
                             unsorted.push(new AppRegItem({
-                                label: app.displayName ? app.displayName : "Application",
+                                label: app.displayName!,
                                 context: "APPLICATION",
                                 icon: path.join(__filename, "..", "..", "..", "resources", "icons", "app.svg"),
                                 objectId: app.id!,
                                 appId: app.appId!,
+                                tooltip: (app.notes !== null ? app.notes! : app.displayName!),
                                 manifest: app,
                                 children: [
                                     // Application (Client) Id
