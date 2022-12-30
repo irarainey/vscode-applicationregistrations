@@ -37,30 +37,30 @@ export class AppRegItem extends TreeItem {
     // Public property getter for the children
     public get children() {
         return this._children;
-    };
+    }
 
     // Public property getter for the object id
     public get objectId() {
         return this._objectId;
-    };
+    }
 
     // Public property getter for the application id
     public get appId() {
         return this._appId;
-    };
+    }
 
     // Public property getter for the user id
     public get userId() {
         return this._userId;
-    };
+    }
 
     // Public property getter for the manifest
     public get manifest() {
         return this._manifest;
-    };
+    }
 
     // Public property getter for the value
     public get value() {
         return this._value;
-    };
+    }
 }

@@ -73,6 +73,18 @@
         "title": "Copy"
       },
       {
+        "command": "appRegistrations.editAppIdUri",
+        "title": "Edit"
+      },
+      {
+        "command": "appRegistrations.copyAppIdUri",
+        "title": "Copy"
+      },
+      {
+        "command": "appRegistrations.removeAppIdUri",
+        "title": "Remove"
+      },
+      {
         "command": "appRegistrations.addPasswordCredential",
         "title": "Add"
       },
@@ -102,7 +114,7 @@
       },
       {
         "command": "appRegistrations.editAudience",
-        "title": "Edit Audience"
+        "title": "Edit"
       },
       {
         "command": "appRegistrations.copyValue",
@@ -243,6 +255,21 @@
           "command": "appRegistrations.editAudience",
           "when": "view == appRegistrations && viewItem == AUDIENCE || viewItem == AUDIENCE-PARENT",
           "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.editAppIdUri",
+          "when": "view == appRegistrations && viewItem == APPID-URI || viewItem == APPID-URI-PARENT",
+          "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.copyAppIdUri",
+          "when": "view == appRegistrations && viewItem == APPID-URI",
+          "group": "appRegistrations@1"
+        },
+        {
+          "command": "appRegistrations.removeAppIdUri",
+          "when": "view == appRegistrations && viewItem == APPID-URI",
+          "group": "appRegistrations@2"
         }
       ]
     }

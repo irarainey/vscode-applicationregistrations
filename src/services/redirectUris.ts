@@ -21,11 +21,11 @@ export class RedirectUriService {
     public async add(item: AppRegItem): Promise<Disposable | undefined> {
 
         let existingRedirectUris: string[] = [];
-        if(item.children !== undefined) {
+        if (item.children !== undefined) {
             existingRedirectUris = item.children!.map((child) => {
                 return child.label!.toString();
             });
-            }
+        }
 
         // Prompt the user for the new redirect URI.
         const redirectUri = await window.showInputBox({
@@ -75,7 +75,7 @@ export class RedirectUriService {
             // Update the application.
             return await this.update(item, newArray);
         }
-    };
+    }
 
     // Edits a redirect URI.   
     public async edit(item: AppRegItem): Promise<Disposable | undefined> {
@@ -115,7 +115,7 @@ export class RedirectUriService {
             // Update the application.
             return await this.update(item, existingRedirectUris);
         }
-    };
+    }
 
     // Updates the redirect URIs for an application.
     private async update(item: AppRegItem, redirectUris: string[]): Promise<Disposable | undefined> {

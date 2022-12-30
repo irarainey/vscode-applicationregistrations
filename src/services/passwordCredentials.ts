@@ -111,5 +111,5 @@ export class PasswordCredentialsService {
         }
 
         return undefined;
-    }        
+    }
 }

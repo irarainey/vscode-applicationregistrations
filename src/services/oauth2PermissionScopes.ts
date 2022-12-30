@@ -14,5 +14,4 @@ export class OAuth2PermissionScopeService {
         this._dataProvider = dataProvider;
         this._graphClient = dataProvider.graphClient;
     }
-
 }

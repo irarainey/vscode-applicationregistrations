@@ -1,7 +1,6 @@
 import { window, ThemeIcon, env, Uri, Disposable } from 'vscode';
 import { portalUserUri } from '../constants';
 import { GraphClient } from '../clients/graph';
-import { User } from "@microsoft/microsoft-graph-types";
 import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 

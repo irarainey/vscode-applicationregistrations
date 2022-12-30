@@ -57,7 +57,38 @@ export class ApplicationService {
 
         // Return the state of the action to refresh the list if required.
         return added;
-    };
+    }
+
+    // Edit an application id URI.
+    public async editAppIdUri(app: AppRegItem): Promise<Disposable | undefined> {
+
+        // Set the update trigger default to undefined.
+        let updated = undefined;
+
+        // Prompt the user for the new uri.
+        const newUri = await window.showInputBox({
+            placeHolder: "Application Id URI...",
+            prompt: "Set Application Id URI",
+            value: app.value! === "Not set" ? `api://${app.appId!}` : app.value!,
+            validateInput: (value) => {
+                return this.validateAppIdUri(value);
+            }
+        });
+
+        // If the new application id uri is not undefined then update the application.
+        if (newUri !== undefined) {
+            updated = window.setStatusBarMessage("$(loading~spin) Setting application id uri...");
+            app.iconPath = new ThemeIcon("loading~spin");
+            this._dataProvider.triggerOnDidChangeTreeData();
+            await this._graphClient.updateApplication(app.objectId!, { identifierUris: [newUri] })
+                .catch((error) => {
+                    console.error(error);
+                });
+        }
+
+        // Return the state of the action to refresh the list if required.
+        return updated;
+    }
 
     // Renames an application registration.
     public async rename(app: AppRegItem): Promise<Disposable | undefined> {
@@ -88,7 +119,7 @@ export class ApplicationService {
 
         // Return the state of the action to refresh the list if required.
         return updated;
-    };
+    }
 
     // Deletes an application registration.
     public async delete(app: AppRegItem): Promise<Disposable | undefined> {
@@ -112,12 +143,36 @@ export class ApplicationService {
 
         // Return the state of the action to refresh the list if required.
         return deleted;
-    };
+    }
+
+    // Deletes an application registration.
+    public async removeAppIdUri(app: AppRegItem): Promise<Disposable | undefined> {
+
+        // Set the deleted trigger default to undefined.
+        let removed = undefined;
+
+        // Prompt the user to confirm the deletion.
+        const answer = await window.showInformationMessage("Do you want to remove the application id uri?", "Yes", "No");
+
+        // If the user confirms the deletion then delete the application.
+        if (answer === "Yes") {
+            removed = window.setStatusBarMessage("$(loading~spin) Removing application id uri...");
+            app.iconPath = new ThemeIcon("loading~spin");
+            this._dataProvider.triggerOnDidChangeTreeData();
+            await this._graphClient.updateApplication(app.objectId!, { identifierUris: [] })
+                .catch((error) => {
+                    console.error(error);
+                });
+        }
+
+        // Return the state of the action to refresh the list if required.
+        return removed;
+    }
 
     // Copies the application Id to the clipboard.
     public copyClientId(app: AppRegItem): void {
         env.clipboard.writeText(app.appId!);
-    };
+    }
 
     // Opens the application registration in the Azure Portal.
     public openInPortal(app: AppRegItem): void {
@@ -139,7 +194,7 @@ export class ApplicationService {
             .then(doc => window.showTextDocument(
                 doc, { preview: false }
             ));
-    };
+    }
 
     // Validates the display name of the application.
     private validateDisplayName(displayName: string): string | undefined {
@@ -154,5 +209,23 @@ export class ApplicationService {
         }
 
         return undefined;
-    }    
+    }
+
+    // Validates the app id URI.
+    private validateAppIdUri(uri: string): string | undefined {
+
+        if (uri.includes("://") === false || uri.startsWith("://") === true) {
+            return "The application id URI is not valid. It must start with http://, https://, api://; MS-APPX://, or customScheme://";
+        }
+
+        if (uri.endsWith("/") === true) {
+            return "The Application Id URI cannot end with a trailing slash.";
+        }
+
+        if (uri.length > 120) {
+            return "The Application Id URI is not valid. A URI cannot be longer than 120 characters.";
+        }
+
+        return undefined;
+    }
 }

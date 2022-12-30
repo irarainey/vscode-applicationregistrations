@@ -256,6 +256,30 @@ export class AppReg {
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // App Id URI Commands
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Edits the app id URI.   
+    public async editAppIdUri(item: AppRegItem): Promise<void> {
+        // Edit the app id URI and reload the tree view if successful.
+        const status = await this._applicationService.editAppIdUri(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
+
+    // Removes the app id URI.   
+    public async removeAppIdUri(item: AppRegItem): Promise<void> {
+        // Removes the app id URI and reload the tree view if successful.
+        const status = await this._applicationService.removeAppIdUri(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Common Commands
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -266,6 +290,7 @@ export class AppReg {
                 || item.contextValue === "WEB-REDIRECT-URI"
                 || item.contextValue === "SPA-REDIRECT-URI"
                 || item.contextValue === "NATIVE-REDIRECT-URI"
+                || item.contextValue === "APPID-URI"
                 ? item.value!
                 : item.children![0].value!);
     }

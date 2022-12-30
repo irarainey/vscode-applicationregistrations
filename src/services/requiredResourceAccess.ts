@@ -14,5 +14,4 @@ export class RequiredResourceAccessService {
         this._dataProvider = dataProvider;
         this._graphClient = dataProvider.graphClient;
     }
-
 }

@@ -237,5 +237,5 @@ export class GraphClient {
     public async getServicePrincipalById(id: string): Promise<ServicePrincipal> {
         return await this._client!.api(`servicePrincipals/${id}`)
             .get();
-    }    
+    }
 }

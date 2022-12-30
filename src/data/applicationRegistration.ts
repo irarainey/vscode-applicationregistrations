@@ -110,7 +110,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     private async populateAppRegTreeData(filter?: string): Promise<void> {
 
         // If the tree view is already being updated then return.
-        if(this._isUpdating) {
+        if (this._isUpdating) {
             return;
         }
 
@@ -159,6 +159,27 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                                                 context: "COPY",
                                                 icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                                                 tooltip: "The Application (Client) Id is used to identify the application to Azure AD.",
+                                            })
+                                        ]
+                                    }),
+                                    // Application ID URI
+                                    new AppRegItem({
+                                        label: "Application Id URI",
+                                        context: "APPID-URI-PARENT",
+                                        objectId: app.id!,
+                                        appId: app.appId!,
+                                        value: app.identifierUris![0] === undefined ? "Not set" : app.identifierUris![0],
+                                        icon: new ThemeIcon("globe"),
+                                        tooltip: "The Application Id URI is a globally unique URI used to identify this web API. It is the prefix for scopes and in access tokens, it is the value of the audience claim. Also referred to as an identifier URI.",
+                                        children: [
+                                            new AppRegItem({
+                                                label: app.identifierUris![0] === undefined ? "Not set" : app.identifierUris![0],
+                                                value: app.identifierUris![0] === undefined ? "Not set" : app.identifierUris![0],
+                                                appId: app.appId!,
+                                                objectId: app.id!,
+                                                context: "APPID-URI",
+                                                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                                tooltip: "The Application Id URI, this is set when an application is used as a resource app. The URI acts as the prefix for the scopes you'll reference in your API's code, and must be globally unique.",
                                             })
                                         ]
                                     }),
@@ -307,7 +328,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
         } catch (error: any) {
             // Set the flag to indicate that the tree is no longer updating
             this._isUpdating = false;
-            
+
             // Check to see if the user is signed in and if not then prompt them to sign in
             if (error.code !== undefined && error.code === "CredentialUnavailableError") {
                 this._graphClient.isGraphClientInitialised = false;
