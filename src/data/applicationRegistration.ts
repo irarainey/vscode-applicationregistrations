@@ -108,23 +108,32 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     // Populates the tree view data for the application registrations.
     private async populateAppRegTreeData(filter?: string): Promise<void> {
 
+        // If the tree view is already being updated then return.
         if(this._isUpdating) {
-            console.log("Tree view is already updating");
             return;
         }
 
         try {
+            // Set the flag to indicate that the tree view is being updated.
             this._isUpdating = true;
 
             // Get the application registrations from the graph client.
+            // This method uses eventual consistency to allow us to order the applications by display name before
+            // the filter is applied and the maximum number of applications is returned. But this is problematic
+            // for the rest of the properties, so we're only going to get the ids and then get the details for each
+            // in a separate call without using eventual consistency.
             const applications = await this.getApplicationList(filter);
 
             // If we have some applications then add them to the tree view.
             if (applications !== undefined && applications.length > 0) {
 
+                // Create an empty array to hold the tree view items.
                 let unsorted: AppRegItem[] = [];
 
+                // Loop through the applications and get the details for each one.
                 for (let item of applications) {
+
+                    // Get the details for the application without using eventual consistency.
                     this._graphClient.getApplicationDetails(item.id!)
                         .then((app: Application) => {
                             // Populate an array with tree view items for the application and it's static children
@@ -261,7 +270,8 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                             // Only trigger the redraw event when all applications have been processed
                             if (unsorted.length === applications.length) {
 
-                                // Sort the applications by name. This is required to ensure the order is maintained
+                                // Sort the applications by name and assign to the class-level array used to render the tree.
+                                // This is required to ensure the order is maintained.
                                 this._treeData = sort(unsorted).asc(a => a.label);
 
                                 // Clear any status bar message
@@ -271,13 +281,17 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
 
                                 // Trigger the event to refresh the tree view
                                 this.triggerOnDidChangeTreeData();
+
+                                // Set the flag to indicate that the tree is no longer updating
                                 this._isUpdating = false;
                             }
                         });
                 }
             }
         } catch (error: any) {
+            // Set the flag to indicate that the tree is no longer updating
             this._isUpdating = false;
+            
             // Check to see if the user is signed in and if not then prompt them to sign in
             if (error.code !== undefined && error.code === "CredentialUnavailableError") {
                 this._graphClient.isGraphClientInitialised = false;
