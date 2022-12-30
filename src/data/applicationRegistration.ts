@@ -24,6 +24,9 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     // A private instance of the status bar app count
     private _statusBarAppCount: Disposable | undefined;
 
+    // A private instance of a flag to indicate if the tree view is currently being updated.
+    private _isUpdating: boolean = false;
+
     //Defines the event that is fired when the tree view is refreshed.
     public readonly onDidChangeTreeData: Event<AppRegItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
@@ -105,7 +108,14 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     // Populates the tree view data for the application registrations.
     private async populateAppRegTreeData(filter?: string): Promise<void> {
 
+        if(this._isUpdating) {
+            console.log("Tree view is already updating");
+            return;
+        }
+
         try {
+            this._isUpdating = true;
+
             // Get the application registrations from the graph client.
             const applications = await this.getApplicationList(filter);
 
@@ -261,11 +271,13 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
 
                                 // Trigger the event to refresh the tree view
                                 this.triggerOnDidChangeTreeData();
+                                this._isUpdating = false;
                             }
                         });
                 }
             }
         } catch (error: any) {
+            this._isUpdating = false;
             // Check to see if the user is signed in and if not then prompt them to sign in
             if (error.code !== undefined && error.code === "CredentialUnavailableError") {
                 this._graphClient.isGraphClientInitialised = false;
