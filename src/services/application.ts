@@ -1,3 +1,4 @@
+import * as path from 'path';
 import { window, ThemeIcon, env, Uri, TextDocumentContentProvider, EventEmitter, workspace, Disposable, ExtensionContext } from 'vscode';
 import { portalAppUri, signInAudienceOptions } from '../constants';
 import { GraphClient } from '../clients/graph';
@@ -100,7 +101,7 @@ export class ApplicationService {
         const newName = await window.showInputBox({
             placeHolder: "New application name...",
             prompt: "Rename application with new display name",
-            value: app.manifest!.displayName!,
+            value: app.label?.toString(),
             validateInput: (value) => {
                 return this.validateDisplayName(value);
             }
@@ -180,20 +181,31 @@ export class ApplicationService {
     }
 
     // Opens the application manifest in a new editor window.
-    public viewManifest(app: AppRegItem): void {
+    public async viewManifest(app: AppRegItem): Promise<void> {
+
+        const status = window.setStatusBarMessage("$(loading~spin) Loading application manifest...");
+        app.iconPath = new ThemeIcon("loading~spin");
+        this._dataProvider.triggerOnDidChangeTreeData();
+
+        const manifest = await this._graphClient.getApplicationDetails(app.objectId!);
+
         const newDocument = new class implements TextDocumentContentProvider {
             onDidChangeEmitter = new EventEmitter<Uri>();
             onDidChange = this.onDidChangeEmitter.event;
-            provideTextDocumentContent(uri: Uri): string {
-                return JSON.stringify(app.manifest, null, 4);
+            provideTextDocumentContent(): string {
+                return JSON.stringify(manifest, null, 4);
             }
         };
+
         this._subscriptions.push(workspace.registerTextDocumentContentProvider('manifest', newDocument));
         const uri = Uri.parse('manifest:' + app.label + ".json");
         workspace.openTextDocument(uri)
-            .then(doc => window.showTextDocument(
-                doc, { preview: false }
-            ));
+            .then(doc => {
+                window.showTextDocument(doc, { preview: false });
+                app.iconPath = path.join(__filename, "..", "..", "..", "resources", "icons", "app.svg");
+                this._dataProvider.triggerOnDidChangeTreeData();
+                status.dispose();
+            });
     }
 
     // Validates the display name of the application.

@@ -145,7 +145,6 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                                 objectId: app.id!,
                                 appId: app.appId!,
                                 tooltip: (app.notes !== null ? app.notes! : app.displayName!),
-                                manifest: app,
                                 children: [
                                     // Application (Client) Id
                                     new AppRegItem({
@@ -363,28 +362,52 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                 return this.getApplicationOwners(element);
             case "WEB-REDIRECT":
                 // Return the web redirect URIs for the application
-                return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", this.getParentApplication(element.objectId!).web?.redirectUris!);
+                return this.getParentApplication(element.objectId!)
+                    .then((app: Application) => {
+                        return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", app.web!.redirectUris!);
+                    });
             case "SPA-REDIRECT":
                 // Return the SPA redirect URIs for the application
-                return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", this.getParentApplication(element.objectId!).spa?.redirectUris!);
+                return this.getParentApplication(element.objectId!)
+                    .then((app: Application) => {
+                        return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", app.spa!.redirectUris!);
+                    });
             case "NATIVE-REDIRECT":
                 // Return the native redirect URIs for the application
-                return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", this.getParentApplication(element.objectId!).publicClient?.redirectUris!);
+                return this.getParentApplication(element.objectId!)
+                    .then((app: Application) => {
+                        return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", app.publicClient!.redirectUris!);
+                    });
             case "PASSWORD-CREDENTIALS":
                 // Return the password credentials for the application
-                return this.getApplicationPasswordCredentials(element, this.getParentApplication(element.objectId!).passwordCredentials!);
+                return this.getParentApplication(element.objectId!)
+                    .then((app: Application) => {
+                        return this.getApplicationPasswordCredentials(element, app.passwordCredentials!);
+                    });
             case "CERTIFICATE-CREDENTIALS":
                 // Return the key credentials for the application
-                return this.getApplicationKeyCredentials(element, this.getParentApplication(element.objectId!).keyCredentials!);
+                return this.getParentApplication(element.objectId!)
+                    .then((app: Application) => {
+                        return this.getApplicationKeyCredentials(element, app.keyCredentials!);
+                    });
             case "API-PERMISSIONS":
                 // Return the API permissions for the application
-                return this.getApplicationApiPermissions(this.getParentApplication(element.objectId!).requiredResourceAccess!);
+                return this.getParentApplication(element.objectId!)
+                    .then((app: Application) => {
+                        return this.getApplicationApiPermissions(app.requiredResourceAccess!);
+                    });
             case "EXPOSED-API-PERMISSIONS":
                 // Return the exposed API permissions for the application
-                return this.getApplicationExposedApiPermissions(element, this.getParentApplication(element.objectId!).api?.oauth2PermissionScopes!);
+                return this.getParentApplication(element.objectId!)
+                    .then((app: Application) => {
+                        return this.getApplicationExposedApiPermissions(element, app.api?.oauth2PermissionScopes!);
+                    });
             case "APP-ROLES":
                 // Return the app roles for the application
-                return this.getApplicationAppRoles(element, this.getParentApplication(element.objectId!).appRoles!);
+                return this.getParentApplication(element.objectId!)
+                    .then((app: Application) => {
+                        return this.getApplicationAppRoles(element, app.appRoles!);
+                    });
             default:
                 // Nothing specific so return the statically defined children
                 return element.children;
@@ -392,9 +415,8 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Returns the application registration that is the parent of the given element
-    public getParentApplication(objectId: string): Application {
-        const app: AppRegItem = this._treeData.filter(item => item.objectId === objectId)[0];
-        return app.manifest!;
+    public async getParentApplication(objectId: string): Promise<Application> {
+        return await this._graphClient.getApplicationDetails(objectId);
     }
 
     // Returns all applications depending on the user setting

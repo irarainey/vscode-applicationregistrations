@@ -53,7 +53,7 @@ export class RedirectUriService {
 
         // If the answer is yes then delete the redirect URI.
         if (answer === "Yes") {
-            // Get the parent application so we can read the manifest.
+            // Get the parent application so we can read the redirect uris.
             const parent = await this._dataProvider.getParentApplication(item.objectId!);
             let newArray: string[] = [];
             // Remove the redirect URI from the array.

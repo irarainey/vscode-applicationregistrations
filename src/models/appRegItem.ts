@@ -1,5 +1,4 @@
 import { TreeItem, TreeItemCollapsibleState } from 'vscode';
-import { Application } from "@microsoft/microsoft-graph-types";
 import { AppRegItemParams } from "../interfaces/appRegItemParams";
 
 // This is the data structure for the application registration tree view item
@@ -10,7 +9,6 @@ export class AppRegItem extends TreeItem {
     private _objectId?: string = "";
     private _appId?: string = "";
     private _userId?: string = "";
-    private _manifest?: Application = {};
     private _value?: string = "";
 
     // Constructor for the application registration tree view item
@@ -31,7 +29,6 @@ export class AppRegItem extends TreeItem {
         this._objectId = params.objectId;
         this._appId = params.appId;
         this._userId = params.userId;
-        this._manifest = params.manifest;
     }
 
     // Public property getter for the children
@@ -52,11 +49,6 @@ export class AppRegItem extends TreeItem {
     // Public property getter for the user id
     public get userId() {
         return this._userId;
-    }
-
-    // Public property getter for the manifest
-    public get manifest() {
-        return this._manifest;
     }
 
     // Public property getter for the value
