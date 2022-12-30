@@ -1,4 +1,4 @@
-import { window, env, Disposable } from 'vscode';
+import { window, env, Disposable, workspace } from 'vscode';
 import { AppRegDataProvider } from './data/applicationRegistration';
 import { AppRegItem } from './models/appRegItem';
 import { ApplicationService } from './services/application';
@@ -56,6 +56,12 @@ export class AppReg {
         this._redirectUriService = redirectUriService;
         this._requiredResourceAccessService = requiredResourceAccessService;
         this._signInAudienceService = signInAudienceService;
+
+        workspace.onDidChangeConfiguration(event => {
+            if (event.affectsConfiguration("applicationregistrations.showAllApplications") || event.affectsConfiguration("applicationregistrations.maximumApplicationsReturned")) {
+                this.populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations..."));
+            }
+        });
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
