@@ -5,6 +5,7 @@ import { Application, KeyCredential, PasswordCredential, User, AppRole, Required
 import { GraphClient } from '../clients/graph';
 import { AppRegItem } from '../models/appRegItem';
 import { sort } from 'fast-sort';
+import { format } from 'date-fns';
 
 // This is the application registration data provider for the tree view.
 export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
@@ -221,7 +222,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                                         label: "Credentials",
                                         context: "PROPERTY-ARRAY",
                                         objectId: app.id!,
-                                        icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
+                                        icon: new ThemeIcon("shield", new ThemeColor("editor.foreground")),
                                         tooltip: "Credentials enable confidential applications to identify themselves to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
                                         children: [
                                             new AppRegItem({
@@ -445,16 +446,23 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                 label: credential.displayName!,
                 context: "PASSWORD",
                 icon: new ThemeIcon("symbol-key", new ThemeColor("editor.foreground")),
+                value: credential.keyId!,
                 objectId: element.objectId,
                 tooltip: "A secret string that the application uses to prove its identity when requesting a token. Also can be referred to as application password.",
                 children: [
                     new AppRegItem({
-                        label: `Created: ${credential.startDateTime!}`,
+                        label: `Value: ${credential.hint!}******************`,
+                        context: "PASSWORD-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                        tooltip: "Client secret values cannot be viewed or accessed, except for immediately after creation."
+                    }),
+                    new AppRegItem({
+                        label: `Created: ${format(new Date(credential.startDateTime!), 'yyyy-MM-dd')}`,
                         context: "PASSWORD-VALUE",
                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
-                        label: `Expires: ${credential.endDateTime!}`,
+                        label: `Expires: ${format(new Date(credential.endDateTime!), 'yyyy-MM-dd')}`,
                         context: "PASSWORD-VALUE",
                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     })
@@ -469,7 +477,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
             return new AppRegItem({
                 label: credential.displayName!,
                 context: "CERTIFICATE",
-                icon: new ThemeIcon("symbol-key", new ThemeColor("editor.foreground")),
+                icon: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
                 objectId: element.objectId,
                 tooltip: "A certificate that the application uses to prove its identity when requesting a token. Also can be referred to as application certificate or public key.",
                 children: [
@@ -480,16 +488,17 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                     }),
                     new AppRegItem({
                         label: `Key Identifier: ${credential.customKeyIdentifier!}`,
+                        context: "COPY",
+                        value: credential.customKeyIdentifier!,
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    }),
+                    new AppRegItem({
+                        label: `Created: ${format(new Date(credential.startDateTime!), 'yyyy-MM-dd')}`,
                         context: "CERTIFICATE-VALUE",
                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
-                        label: `Created: ${credential.startDateTime!}`,
-                        context: "CERTIFICATE-VALUE",
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
-                    }),
-                    new AppRegItem({
-                        label: `Expires: ${credential.endDateTime!}`,
+                        label: `Expires: ${format(new Date(credential.endDateTime!), 'yyyy-MM-dd')}`,
                         context: "CERTIFICATE-VALUE",
                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     })
