@@ -16,11 +16,13 @@ It allows for easy viewing, copying, adding, and editing of most the core applic
 
 It also allows for the simple creation of new applications, quickly viewing of the full application manifest in the editor, and has the ability to open the application registration directly in the Azure Portal when you need full editing control. Once loaded, the application registration list can also be filtered by display name.
 
-![Application Registration List](resources/images/applications_list.png)
+![Application Registration List](resources/images/applications.png)
 
-All application properties have their own range of functionality. From the application itself, down to each individual property, functionality can be accessed via a range of context menus. If required functionality is not currently implemented for a particular property then you can open the application registration in the Azure portal from the context menu of the application itself.
+All application properties have their own range of functionality. From the top-level application itself, down to each individual property, functionality can be accessed via a range of context menus. If required functionality is not currently implemented for a particular property then you can open the application registration in the Azure portal from the context menu of the application itself.
 
-![Context Menus](resources/images/context_menu.png)
+![Context Menus](resources/images/context_001.png)
+
+![Context Menus](resources/images/context_002.png)
 
 By default, to improve performance, the application list is limited to 50 applications. This however is exposed as a user setting and can be changed if you wish. The list is sorted by application name. If your application is not shown in the list you can also apply a filter on application name, which is applied before the maximum application limit.
 
@@ -41,9 +43,7 @@ This extension was created both as a learning exercise, and to address the commo
 It has a dependency on the [Azure Tools extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack), but only because it places the application registrations view into the Azure view container.
 
 ## Known Limitations
-Azure Active Directory stores multiple copies of data to handle large read volume and provide high availability. When data is created or updated, the change will eventually be applied to all the copies. Due to the nature of the Graph API queries used by this extension it is required to use eventual consistency when building the application list. 
-
-This means that when you add or delete applications, you need to wait for all the copies to be updated before it will be returned in a query. This means that after these actions the list may not initially reflect your changes. If this happens just wait a short time and refresh the list again.
+Azure Active Directory stores multiple copies of data to handle large read volume and provide high availability. When data is created or updated, the change will eventually be applied to all the copies. This means that occasionally after making changes the list may not initially reflect the new state. If this happens just wait a short time and refresh the list again.
 
 Read more on [Eventual Consistency](https://blogs.aaddevsup.xyz/2021/08/why-do-i-sometimes-get-a-404-when-trying-to-update-an-azure-directory-object-after-i-just-created-it/).
 
