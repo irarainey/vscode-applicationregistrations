@@ -53,8 +53,6 @@ export class ApplicationService {
                     .catch((error) => {
                         console.error(error);
                     });
-
-                this._dataProvider.addedApplications.push(newApp?.id!);
             }
         }
 
@@ -142,7 +140,6 @@ export class ApplicationService {
                 .catch((error) => {
                     console.error(error);
                 });
-            this._dataProvider.deletedApplications.push(app.objectId!);
         }
 
         // Return the state of the action to refresh the list if required.
@@ -190,7 +187,7 @@ export class ApplicationService {
         app.iconPath = new ThemeIcon("loading~spin");
         this._dataProvider.triggerOnDidChangeTreeData();
 
-        const manifest = await this._graphClient.getApplicationFull(app.objectId!);
+        const manifest = await this._graphClient.getApplicationDetailsFull(app.objectId!);
 
         const newDocument = new class implements TextDocumentContentProvider {
             onDidChangeEmitter = new EventEmitter<Uri>();

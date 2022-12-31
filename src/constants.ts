@@ -42,3 +42,9 @@ export const signInAudienceOptions = [
 
 // URI to the documentation for sign in audience
 export const signInAudienceDocumentation = "https://learn.microsoft.com/en-gb/azure/active-directory/develop/supported-accounts-validation";
+
+// The maximum number of applications returned from a query
+export const maximumQueryApps = 200;
+
+// The properties to return when querying for applications
+export const appSelectProperties = "id,displayName,appId,notes,signInAudience,appRoles,oauth2Permissions,web,spa,api,requiredResourceAccess,publicClient,identifierUris,passwordCredentials,keyCredentials";
