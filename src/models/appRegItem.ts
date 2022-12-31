@@ -10,6 +10,7 @@ export class AppRegItem extends TreeItem {
     private _appId?: string = "";
     private _userId?: string = "";
     private _value?: string = "";
+    private _order?: number = 0;
 
     // Constructor for the application registration tree view item
     constructor(params: AppRegItemParams) {
@@ -29,6 +30,7 @@ export class AppRegItem extends TreeItem {
         this._objectId = params.objectId;
         this._appId = params.appId;
         this._userId = params.userId;
+        this._order = params.order;
     }
 
     // Public property getter for the children
@@ -54,5 +56,10 @@ export class AppRegItem extends TreeItem {
     // Public property getter for the value
     public get value() {
         return this._value;
+    }
+
+    // Public property getter for the order
+    public get order() {
+        return this._order;
     }
 }

@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { signInCommandText, view } from '../constants';
+import { signInCommandText, view, appSelectProperties } from '../constants';
 import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, Disposable } from 'vscode';
 import { Application, KeyCredential, PasswordCredential, User, AppRole, RequiredResourceAccess, PermissionScope } from "@microsoft/microsoft-graph-types";
 import { GraphClient } from '../clients/graph';
@@ -15,12 +15,6 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
 
     // Private instance of the tree data
     private _treeData: AppRegItem[] = [];
-
-    // Private instance of all applications recently added
-    private _addedApplications: string[] = [];
-
-    // Private instance of all applications recently deleted
-    private _deletedApplications: string[] = [];
 
     // A private instance of the status bar message
     private _statusBarMessage: Disposable | undefined;
@@ -61,16 +55,6 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     // A public get property for the graphClientInitialised state.
     public get isGraphClientInitialised() {
         return this._graphClient.isGraphClientInitialised;
-    }
-
-    // A public get property for recently added applications.
-    public get addedApplications() {
-        return this._addedApplications;
-    }
-
-    // A public get property for recently deleted applications.
-    public get deletedApplications() {
-        return this._deletedApplications;
     }
 
     // Initialises the tree view data based on the type of data to be displayed.
@@ -132,55 +116,24 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
             this._isUpdating = true;
 
             // Get the application registrations from the graph client.
-            // This method uses eventual consistency to allow us to order the applications by display name before
-            // the filter is applied and the maximum number of applications is returned. But this is problematic
-            // for the rest of the properties, so we're only going to get the ids and then get the details for each
-            // in a separate call without using eventual consistency.
             const applications = await this.getApplicationList(filter);
-
-            // Iterate through the newly added applications and check to see if they are now in the main list
-            for (let newAppId of this._addedApplications) {
-
-                // Try to find the new application in the main list
-                const result = applications.filter((item) => {
-                    return newAppId === item.id!;
-                });
-
-                // If the newly added application is not in the main list then add it to the main list
-                if (result.length === 0) {
-                    const newApp = await this._graphClient.getApplicationMinimal(newAppId);
-                    applications.push(newApp);
-                } else {
-                    // If the new application is in the main list then remove it from the newly added applications list
-                    this._addedApplications.splice(this._addedApplications.indexOf(newAppId), 1);
-                }
-            }
-
-            // Iterate through the deleted applications and check to see if they are still in the main list
-            for (let oldAppId of this._deletedApplications) {
-
-                // Try to find the deleted application in the main list
-                const result = applications.filter((item) => {
-                    return oldAppId === item.id!;
-                });
-
-                // If the deleted application is in the main list then remove it
-                if (result.length !== 0) {
-                    applications.splice(applications.indexOf(result[0]), 1);
-                } else {
-                    // If the deleted application is not in the main list then remove it from the deleted applications list
-                    this._deletedApplications.splice(this._deletedApplications.indexOf(oldAppId), 1);
-                }
-            }
 
             // Create an empty array to hold the tree view items.
             let unsorted: AppRegItem[] = [];
 
-            // Loop through the applications and get the details for each one.
-            for (let item of applications) {
+            // Sort the application registrations by display name.
+            let allApps: Application[] = sort(applications).asc(a => a.displayName!.replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, ""));
 
+            // Get the maximum number of applications to be returned from the configuration.
+            const maximumReturned = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsReturned") as number;
+
+            // Determine the maximum number of applications to shown in the tree view.
+            const maximumListCount = allApps.length > maximumReturned ? maximumReturned : allApps.length;
+
+            // Iterate through the application registrations up to the maximum number to be returned.
+            for (let index = 0; index < maximumListCount; index++) {
                 // Get the details for the application without using eventual consistency.
-                this._graphClient.getApplicationFull(item.id!)
+                this._graphClient.getApplicationDetailsPartial(allApps[index].id!, appSelectProperties)
                     .then((app: Application) => {
                         // Populate an array with tree view items for the application and it's static children
                         unsorted.push(new AppRegItem({
@@ -190,6 +143,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                             objectId: app.id!,
                             appId: app.appId!,
                             tooltip: (app.notes !== null ? app.notes! : app.displayName!),
+                            order: index,
                             children: [
                                 // Application (Client) Id
                                 new AppRegItem({
@@ -350,11 +304,11 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                     })
                     .then(() => {
                         // Only trigger the redraw event when all applications have been processed
-                        if (unsorted.length === applications.length) {
+                        if (unsorted.length === maximumListCount) {
 
                             // Sort the applications by name and assign to the class-level array used to render the tree.
                             // This is required to ensure the order is maintained.
-                            this._treeData = sort(unsorted).asc(a => a.label?.toString().toLowerCase());
+                            this._treeData = sort(unsorted).asc(a => a.order);
 
                             // Clear any status bar message
                             if (this, this._statusBarMessage !== undefined) {
@@ -406,49 +360,49 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                 return this.getApplicationOwners(element);
             case "WEB-REDIRECT":
                 // Return the web redirect URIs for the application
-                return this.getParentApplication(element.objectId!)
+                return this.getParentApplicationPartial(element.objectId!, "web")
                     .then((app: Application) => {
                         return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", app.web!.redirectUris!);
                     });
             case "SPA-REDIRECT":
                 // Return the SPA redirect URIs for the application
-                return this.getParentApplication(element.objectId!)
+                return this.getParentApplicationPartial(element.objectId!, "spa")
                     .then((app: Application) => {
                         return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", app.spa!.redirectUris!);
                     });
             case "NATIVE-REDIRECT":
                 // Return the native redirect URIs for the application
-                return this.getParentApplication(element.objectId!)
+                return this.getParentApplicationPartial(element.objectId!, "publicClient")
                     .then((app: Application) => {
                         return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", app.publicClient!.redirectUris!);
                     });
             case "PASSWORD-CREDENTIALS":
                 // Return the password credentials for the application
-                return this.getParentApplication(element.objectId!)
+                return this.getParentApplicationPartial(element.objectId!, "passwordCredentials")
                     .then((app: Application) => {
                         return this.getApplicationPasswordCredentials(element, app.passwordCredentials!);
                     });
             case "CERTIFICATE-CREDENTIALS":
                 // Return the key credentials for the application
-                return this.getParentApplication(element.objectId!)
+                return this.getParentApplicationPartial(element.objectId!, "keyCredentials")
                     .then((app: Application) => {
                         return this.getApplicationKeyCredentials(element, app.keyCredentials!);
                     });
             case "API-PERMISSIONS":
                 // Return the API permissions for the application
-                return this.getParentApplication(element.objectId!)
+                return this.getParentApplicationPartial(element.objectId!, "requiredResourceAccess")
                     .then((app: Application) => {
                         return this.getApplicationApiPermissions(app.requiredResourceAccess!);
                     });
             case "EXPOSED-API-PERMISSIONS":
                 // Return the exposed API permissions for the application
-                return this.getParentApplication(element.objectId!)
+                return this.getParentApplicationPartial(element.objectId!, "api")
                     .then((app: Application) => {
                         return this.getApplicationExposedApiPermissions(element, app.api?.oauth2PermissionScopes!);
                     });
             case "APP-ROLES":
                 // Return the app roles for the application
-                return this.getParentApplication(element.objectId!)
+                return this.getParentApplicationPartial(element.objectId!, "appRoles")
                     .then((app: Application) => {
                         return this.getApplicationAppRoles(element, app.appRoles!);
                     });
@@ -459,15 +413,15 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Returns the application registration that is the parent of the given element
-    public async getParentApplication(objectId: string): Promise<Application> {
-        return await this._graphClient.getApplicationFull(objectId);
+    public async getParentApplicationPartial(objectId: string, select: string): Promise<Application> {
+        return await this._graphClient.getApplicationDetailsPartial(objectId, select);
     }
 
     // Returns all applications depending on the user setting
     private async getApplicationList(filter?: string): Promise<Application[]> {
         // Get the user setting to determine whether to show all applications or just the ones owned by the user
         const showAllApplications = workspace.getConfiguration("applicationregistrations").get("showAllApplications") as boolean;
-        return showAllApplications === false ? await this._graphClient.getApplicationsOwned(filter) : await this._graphClient.getApplicationsAll(filter);
+        return showAllApplications === false ? await this._graphClient.getApplicationListOwned(filter) : await this._graphClient.getApplicationListAll(filter);
     }
 
     // Returns the application owners for the given application

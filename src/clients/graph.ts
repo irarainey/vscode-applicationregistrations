@@ -1,10 +1,10 @@
 import "isomorphic-fetch";
 import { workspace, window, Disposable } from 'vscode';
-import { scope, propertiesToIgnoreOnUpdate, directoryObjectsUri } from '../constants';
+import { scope, propertiesToIgnoreOnUpdate, directoryObjectsUri, maximumQueryApps } from '../constants';
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
-import { Application, PasswordCredential, User, ServicePrincipal } from "@microsoft/microsoft-graph-types";
+import { Application, PasswordCredential, ServicePrincipal } from "@microsoft/microsoft-graph-types";
 import { execShellCmd } from "../utils/shellUtils";
 
 // This is the client for the Microsoft Graph API
@@ -96,48 +96,38 @@ export class GraphClient {
             });
     }
 
-    // Returns details for a specified application registration
-    public async getApplicationFull(id: string): Promise<Application> {
+    // Returns full details for a specified application registration
+    public async getApplicationDetailsFull(id: string): Promise<Application> {
         return await this._client!.api(`/applications/${id}`)
+            .top(1)
             .get();
     }
 
-    // Returns minimal details for a specified application registration
-    public async getApplicationMinimal(id: string): Promise<Application> {
+    // Returns partial details for a specified application registration
+    public async getApplicationDetailsPartial(id: string, select: string): Promise<Application> {
         return await this._client!.api(`/applications/${id}`)
-            .select("id")
+            .top(1)
+            .select(select)
             .get();
     }
 
-    // Returns ids for all owned application registrations
-    public async getApplicationsOwned(filter?: string): Promise<Application[]> {
-
-        const maximumReturned = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsReturned") as number;
+    // Returns ids and names for all owned application registrations
+    public async getApplicationListOwned(filter?: string): Promise<Application[]> {
         const ownedApplications = await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
-            .header("ConsistencyLevel", "eventual")
-            .count(true)
-            .orderby("displayName")
             .filter(filter === undefined ? "" : filter)
-            .top(maximumReturned)
-            .select("id")
+            .top(maximumQueryApps)
+            .select("id,displayName")
             .get();
-
         return ownedApplications.value;
     }
 
-    // Returns ids for all application registrations
-    public async getApplicationsAll(filter?: string): Promise<Application[]> {
-
-        const maximumReturned = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsReturned") as number;
+    // Returns ids and names for all application registrations
+    public async getApplicationListAll(filter?: string): Promise<Application[]> {
         const allApplications = await this._client!.api("/applications/")
-            .header("ConsistencyLevel", "eventual")
-            .count(true)
-            .orderby("displayName")
             .filter(filter === undefined ? "" : filter)
-            .top(maximumReturned)
-            .select("id")
+            .top(maximumQueryApps)
+            .select("id,displayName")
             .get();
-
         return allApplications.value;
     }
 
@@ -213,7 +203,6 @@ export class GraphClient {
         propertiesToIgnoreOnUpdate.forEach(property => {
             delete application[property as keyof Application];
         });
-
         return await this._client!.api(`/applications/${id}`)
             .update(application);
     }

@@ -36,7 +36,7 @@
           "description": "The maximum number of application registrations to be returned in the view.",
           "default": 50,
           "minimum": 1,
-          "maximum": 250,
+          "maximum": 200,
           "order": 0
         },
         "applicationregistrations.showAllApplications": {

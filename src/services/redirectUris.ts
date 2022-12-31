@@ -54,21 +54,23 @@ export class RedirectUriService {
         // If the answer is yes then delete the redirect URI.
         if (answer === "Yes") {
             // Get the parent application so we can read the redirect uris.
-            const parent = await this._dataProvider.getParentApplication(item.objectId!);
             let newArray: string[] = [];
             // Remove the redirect URI from the array.
             switch (item.contextValue) {
                 case "WEB-REDIRECT-URI":
-                    parent.web!.redirectUris!.splice(parent.web!.redirectUris!.indexOf(item.label!.toString()), 1);
-                    newArray = parent.web!.redirectUris!;
+                    const webParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "web.redirectUris");
+                    webParent.web!.redirectUris!.splice(webParent.web!.redirectUris!.indexOf(item.label!.toString()), 1);
+                    newArray = webParent.web!.redirectUris!;
                     break;
                 case "SPA-REDIRECT-URI":
-                    parent.spa!.redirectUris!.splice(parent.spa!.redirectUris!.indexOf(item.label!.toString()), 1);
-                    newArray = parent.spa!.redirectUris!;
+                    const spaParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "spa.redirectUris");
+                    spaParent.spa!.redirectUris!.splice(spaParent.spa!.redirectUris!.indexOf(item.label!.toString()), 1);
+                    newArray = spaParent.spa!.redirectUris!;
                     break;
                 case "NATIVE-REDIRECT-URI":
-                    parent.publicClient!.redirectUris!.splice(parent.publicClient!.redirectUris!.indexOf(item.label!.toString()), 1);
-                    newArray = parent.publicClient!.redirectUris!;
+                    const publicClientParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "publicClient.redirectUris");
+                    publicClientParent.publicClient!.redirectUris!.splice(publicClientParent.publicClient!.redirectUris!.indexOf(item.label!.toString()), 1);
+                    newArray = publicClientParent.publicClient!.redirectUris!;
                     break;
             }
 
@@ -80,19 +82,21 @@ export class RedirectUriService {
     // Edits a redirect URI.   
     public async edit(item: AppRegItem): Promise<Disposable | undefined> {
 
-        const parent = await this._dataProvider.getParentApplication(item.objectId!);
         let existingRedirectUris: string[] = [];
 
         // Get the existing redirect URIs.
         switch (item.contextValue) {
             case "WEB-REDIRECT-URI":
-                existingRedirectUris = parent.web!.redirectUris!;
+                const webParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "web.redirectUris");
+                existingRedirectUris = webParent.web!.redirectUris!;
                 break;
             case "SPA-REDIRECT-URI":
-                existingRedirectUris = parent.spa!.redirectUris!;
+                const spaParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "spa.redirectUris");
+                existingRedirectUris = spaParent.spa!.redirectUris!;
                 break;
             case "NATIVE-REDIRECT-URI":
-                existingRedirectUris = parent.publicClient!.redirectUris!;
+                const publicClientParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "publicClient.redirectUris");
+                existingRedirectUris = publicClientParent.publicClient!.redirectUris!;
                 break;
         }
 
