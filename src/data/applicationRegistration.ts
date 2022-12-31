@@ -122,7 +122,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
             let unsorted: AppRegItem[] = [];
 
             // Sort the application registrations by display name.
-            let allApps: Application[] = sort(applications).asc(a => a.displayName!.toLowerCase());
+            let allApps: Application[] = sort(applications).asc(a => a.displayName!.replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, ""));
 
             // Get the maximum number of applications to be returned from the configuration.
             const maximumReturned = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsReturned") as number;
