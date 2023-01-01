@@ -58,17 +58,17 @@ export class RedirectUriService {
             // Remove the redirect URI from the array.
             switch (item.contextValue) {
                 case "WEB-REDIRECT-URI":
-                    const webParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "web.redirectUris");
+                    const webParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "web");
                     webParent.web!.redirectUris!.splice(webParent.web!.redirectUris!.indexOf(item.label!.toString()), 1);
                     newArray = webParent.web!.redirectUris!;
                     break;
                 case "SPA-REDIRECT-URI":
-                    const spaParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "spa.redirectUris");
+                    const spaParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "spa");
                     spaParent.spa!.redirectUris!.splice(spaParent.spa!.redirectUris!.indexOf(item.label!.toString()), 1);
                     newArray = spaParent.spa!.redirectUris!;
                     break;
                 case "NATIVE-REDIRECT-URI":
-                    const publicClientParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "publicClient.redirectUris");
+                    const publicClientParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "publicClient");
                     publicClientParent.publicClient!.redirectUris!.splice(publicClientParent.publicClient!.redirectUris!.indexOf(item.label!.toString()), 1);
                     newArray = publicClientParent.publicClient!.redirectUris!;
                     break;
@@ -87,15 +87,15 @@ export class RedirectUriService {
         // Get the existing redirect URIs.
         switch (item.contextValue) {
             case "WEB-REDIRECT-URI":
-                const webParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "web.redirectUris");
+                const webParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "web");
                 existingRedirectUris = webParent.web!.redirectUris!;
                 break;
             case "SPA-REDIRECT-URI":
-                const spaParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "spa.redirectUris");
+                const spaParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "spa");
                 existingRedirectUris = spaParent.spa!.redirectUris!;
                 break;
             case "NATIVE-REDIRECT-URI":
-                const publicClientParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "publicClient.redirectUris");
+                const publicClientParent = await this._dataProvider.getParentApplicationPartial(item.objectId!, "publicClient");
                 existingRedirectUris = publicClientParent.publicClient!.redirectUris!;
                 break;
         }
