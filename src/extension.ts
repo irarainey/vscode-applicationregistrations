@@ -4,12 +4,12 @@ import { AppRegDataProvider } from './data/applicationRegistration';
 import { GraphClient } from './clients/graph';
 import { AppReg } from './applicationRegistrations';
 import { ApplicationService } from './services/application';
-import { AppRolesService } from './services/appRoles';
-import { KeyCredentialsService } from './services/keyCredentials';
-import { OAuth2PermissionScopeService } from './services/oauth2PermissionScopes';
+import { AppRoleService } from './services/appRole';
+import { KeyCredentialService } from './services/keyCredential';
+import { OAuth2PermissionScopeService } from './services/oauth2PermissionScope';
 import { OwnerService } from './services/owner';
-import { PasswordCredentialsService } from './services/passwordCredentials';
-import { RedirectUriService } from './services/redirectUris';
+import { PasswordCredentialService } from './services/passwordCredential';
+import { RedirectUriService } from './services/redirectUri';
 import { RequiredResourceAccessService } from './services/requiredResourceAccess';
 import { SignInAudienceService } from './services/signInAudience';
 
@@ -24,11 +24,11 @@ export async function activate(context: ExtensionContext) {
 
 	// Create instances of the services.
 	const applicationService = new ApplicationService(dataProvider, context);
-	const appRolesService = new AppRolesService(dataProvider);
-	const keyCredentialsService = new KeyCredentialsService(dataProvider);
+	const appRoleService = new AppRoleService(dataProvider);
+	const keyCredentialService = new KeyCredentialService(dataProvider);
 	const oauth2PermissionScopeService = new OAuth2PermissionScopeService(dataProvider);
 	const ownerService = new OwnerService(dataProvider);
-	const passwordCredentialsService = new PasswordCredentialsService(dataProvider);
+	const passwordCredentialService = new PasswordCredentialService(dataProvider);
 	const redirectUriService = new RedirectUriService(dataProvider);
 	const requiredResourceAccessService = new RequiredResourceAccessService(dataProvider);
 	const signInAudienceService = new SignInAudienceService(dataProvider);
@@ -37,11 +37,11 @@ export async function activate(context: ExtensionContext) {
 	const appReg = new AppReg(
 		dataProvider,
 		applicationService,
-		appRolesService,
-		keyCredentialsService,
+		appRoleService,
+		keyCredentialService,
 		oauth2PermissionScopeService,
 		ownerService,
-		passwordCredentialsService,
+		passwordCredentialService,
 		redirectUriService,
 		requiredResourceAccessService,
 		signInAudienceService
@@ -64,6 +64,10 @@ export async function activate(context: ExtensionContext) {
 	commands.registerCommand(`${view}.addRedirectUri`, app => appReg.addRedirectUri(app));
 	commands.registerCommand(`${view}.editRedirectUri`, app => appReg.editRedirectUri(app));
 	commands.registerCommand(`${view}.deleteRedirectUri`, app => appReg.deleteRedirectUri(app));
+	commands.registerCommand(`${view}.addAppRole`, app => appReg.addAppRole(app));
+	commands.registerCommand(`${view}.editAppRole`, app => appReg.editAppRole(app));
+	commands.registerCommand(`${view}.deleteAppRole`, app => appReg.deleteAppRole(app));
+	commands.registerCommand(`${view}.changeStateAppRole`, app => appReg.changeStateAppRole(app));
 	commands.registerCommand(`${view}.editAppIdUri`, app => appReg.editAppIdUri(app));
 	commands.registerCommand(`${view}.removeAppIdUri`, app => appReg.removeAppIdUri(app));
 	commands.registerCommand(`${view}.copyAppIdUri`, app => appReg.copyValue(app));

@@ -14,4 +14,5 @@ export interface AppRegItemParams {
     icon?: string | ThemeIcon;
     tooltip?: string;
     order?: number;
+    state?: boolean;
 }

@@ -4,7 +4,7 @@ import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 import { addYears, isAfter, isBefore, isDate } from 'date-fns';
 
-export class PasswordCredentialsService {
+export class PasswordCredentialService {
 
     // A private instance of the GraphClient class.
     private _graphClient: GraphClient;

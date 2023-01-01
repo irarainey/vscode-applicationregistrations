@@ -609,12 +609,14 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     // Returns the app roles for the given application
     private async getApplicationAppRoles(element: AppRegItem, roles: AppRole[]): Promise<AppRegItem[]> {
         return roles.map(role => {
+            const icon = role.isEnabled! ? "person" : "close";
             return new AppRegItem({
                 label: role.displayName!,
                 context: "ROLE",
-                icon: new ThemeIcon("person", new ThemeColor("editor.foreground")),
+                icon: new ThemeIcon(icon, new ThemeColor("editor.foreground")),
                 objectId: element.objectId,
                 value: role.id!,
+                state: role.isEnabled!,
                 children: [
                     new AppRegItem({
                         label: `Value: ${role.value!}`,
@@ -623,6 +625,11 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                     }),
                     new AppRegItem({
                         label: `Description: ${role.description!}`,
+                        context: "ROLE-VALUE",
+                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                    }),
+                    new AppRegItem({
+                        label: `Allowed: ${role.allowedMemberTypes!.map(type => type === "Application" ? "Applications" : "Users/Groups").join(", ")}`,
                         context: "ROLE-VALUE",
                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),

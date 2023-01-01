@@ -2,12 +2,12 @@ import { window, env, Disposable, workspace } from 'vscode';
 import { AppRegDataProvider } from './data/applicationRegistration';
 import { AppRegItem } from './models/appRegItem';
 import { ApplicationService } from './services/application';
-import { AppRolesService } from './services/appRoles';
-import { KeyCredentialsService } from './services/keyCredentials';
-import { OAuth2PermissionScopeService } from './services/oauth2PermissionScopes';
+import { AppRoleService } from './services/appRole';
+import { KeyCredentialService } from './services/keyCredential';
+import { OAuth2PermissionScopeService } from './services/oauth2PermissionScope';
 import { OwnerService } from './services/owner';
-import { PasswordCredentialsService } from './services/passwordCredentials';
-import { RedirectUriService } from './services/redirectUris';
+import { PasswordCredentialService } from './services/passwordCredential';
+import { RedirectUriService } from './services/redirectUri';
 import { RequiredResourceAccessService } from './services/requiredResourceAccess';
 import { SignInAudienceService } from './services/signInAudience';
 
@@ -25,11 +25,11 @@ export class AppReg {
 
     // Private instances of our services
     private _applicationService: ApplicationService;
-    private _appRolesService: AppRolesService;
-    private _keyCredentialsService: KeyCredentialsService;
+    private _appRoleService: AppRoleService;
+    private _keyCredentialService: KeyCredentialService;
     private _oauth2PermissionScopeService: OAuth2PermissionScopeService;
     private _ownerService: OwnerService;
-    private _passwordCredentialsService: PasswordCredentialsService;
+    private _passwordCredentialService: PasswordCredentialService;
     private _redirectUriService: RedirectUriService;
     private _requiredResourceAccessService: RequiredResourceAccessService;
     private _signInAudienceService: SignInAudienceService;
@@ -38,21 +38,21 @@ export class AppReg {
     constructor(
         dataProvider: AppRegDataProvider,
         applicationService: ApplicationService,
-        appRolesService: AppRolesService,
-        keyCredentialsService: KeyCredentialsService,
+        appRolesService: AppRoleService,
+        keyCredentialsService: KeyCredentialService,
         oauth2PermissionScopeService: OAuth2PermissionScopeService,
         ownerService: OwnerService,
-        passwordCredentialsService: PasswordCredentialsService,
+        passwordCredentialsService: PasswordCredentialService,
         redirectUriService: RedirectUriService,
         requiredResourceAccessService: RequiredResourceAccessService,
         signInAudienceService: SignInAudienceService) {
         this._dataProvider = dataProvider;
         this._applicationService = applicationService;
-        this._appRolesService = appRolesService;
-        this._keyCredentialsService = keyCredentialsService;
+        this._appRoleService = appRolesService;
+        this._keyCredentialService = keyCredentialsService;
         this._oauth2PermissionScopeService = oauth2PermissionScopeService;
         this._ownerService = ownerService;
-        this._passwordCredentialsService = passwordCredentialsService;
+        this._passwordCredentialService = passwordCredentialsService;
         this._redirectUriService = redirectUriService;
         this._requiredResourceAccessService = requiredResourceAccessService;
         this._signInAudienceService = signInAudienceService;
@@ -244,7 +244,7 @@ export class AppReg {
     // Adds a password credential.
     public async addPasswordCredential(item: AppRegItem): Promise<void> {
         // Adds the credential and reload the tree view if successful.
-        const status = await this._passwordCredentialsService.add(item);
+        const status = await this._passwordCredentialService.add(item);
 
         if (status !== undefined) {
             this.populateTreeView(status);
@@ -254,7 +254,7 @@ export class AppReg {
     // Deletes a password credential.
     public async deletePasswordCredential(item: AppRegItem): Promise<void> {
         // Delete the credential and reload the tree view if successful.
-        const status = await this._passwordCredentialsService.delete(item);
+        const status = await this._passwordCredentialService.delete(item);
 
         if (status !== undefined) {
             this.populateTreeView(status);
@@ -279,6 +279,50 @@ export class AppReg {
     public async removeAppIdUri(item: AppRegItem): Promise<void> {
         // Removes the app id URI and reload the tree view if successful.
         const status = await this._applicationService.removeAppIdUri(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // App Role Commands
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Adds a new app role to an application registration.
+    public async addAppRole(item: AppRegItem): Promise<void> {
+        // Add a new app role and reload the tree view if successful.
+        const status = await this._appRoleService.add(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
+
+    // Deletes an app role.
+    public async deleteAppRole(item: AppRegItem): Promise<void> {
+        // Delete the app role and reload the tree view if successful.
+        const status = await this._appRoleService.delete(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
+
+    // Edits an app role.   
+    public async editAppRole(item: AppRegItem): Promise<void> {
+        // Edit the app role and reload the tree view if successful.
+        const status = await this._appRoleService.edit(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
+
+    // Changes the enabled state of an app role.   
+    public async changeStateAppRole(item: AppRegItem): Promise<void> {
+        // Edit the redirect URI and reload the tree view if successful.
+        const status = await this._appRoleService.changeState(item);
 
         if (status !== undefined) {
             this.populateTreeView(status);

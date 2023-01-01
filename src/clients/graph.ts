@@ -1,5 +1,5 @@
 import "isomorphic-fetch";
-import { workspace, window, Disposable } from 'vscode';
+import { window, Disposable } from 'vscode';
 import { scope, propertiesToIgnoreOnUpdate, directoryObjectsUri, maximumQueryApps } from '../constants';
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";

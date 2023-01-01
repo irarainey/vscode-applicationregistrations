@@ -57,6 +57,23 @@
     },
     "commands": [
       {
+        "command": "appRegistrations.addAppRole",
+        "title": "Add"
+      },
+      {
+        "command": "appRegistrations.editAppRole",
+        "title": "Edit"
+      },
+      {
+        "command": "appRegistrations.deleteAppRole",
+        "title": "Delete"
+      },
+      {
+        "command": "appRegistrations.changeStateAppRole",
+        "title": "Change State"
+      },
+
+      {
         "command": "appRegistrations.addRedirectUri",
         "title": "Add"
       },
@@ -176,6 +193,26 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "appRegistrations.addAppRole",
+          "when": "view == appRegistrations && viewItem == APP-ROLES",
+          "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.editAppRole",
+          "when": "view == appRegistrations && viewItem == ROLE",
+          "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.deleteAppRole",
+          "when": "view == appRegistrations && viewItem == ROLE",
+          "group": "appRegistrations@1"
+        },
+        {
+          "command": "appRegistrations.changeStateAppRole",
+          "when": "view == appRegistrations && viewItem == ROLE",
+          "group": "appRegistrations@2"
+        },
         {
           "command": "appRegistrations.addRedirectUri",
           "when": "view == appRegistrations && viewItem == WEB-REDIRECT || viewItem == SPA-REDIRECT || viewItem == NATIVE-REDIRECT",
