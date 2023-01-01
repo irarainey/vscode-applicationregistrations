@@ -360,49 +360,49 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                 return this.getApplicationOwners(element);
             case "WEB-REDIRECT":
                 // Return the web redirect URIs for the application
-                return this.getParentApplicationPartial(element.objectId!, "web")
+                return this.getApplicationPartial(element.objectId!, "web")
                     .then((app: Application) => {
                         return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", app.web!.redirectUris!);
                     });
             case "SPA-REDIRECT":
                 // Return the SPA redirect URIs for the application
-                return this.getParentApplicationPartial(element.objectId!, "spa")
+                return this.getApplicationPartial(element.objectId!, "spa")
                     .then((app: Application) => {
                         return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", app.spa!.redirectUris!);
                     });
             case "NATIVE-REDIRECT":
                 // Return the native redirect URIs for the application
-                return this.getParentApplicationPartial(element.objectId!, "publicClient")
+                return this.getApplicationPartial(element.objectId!, "publicClient")
                     .then((app: Application) => {
                         return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", app.publicClient!.redirectUris!);
                     });
             case "PASSWORD-CREDENTIALS":
                 // Return the password credentials for the application
-                return this.getParentApplicationPartial(element.objectId!, "passwordCredentials")
+                return this.getApplicationPartial(element.objectId!, "passwordCredentials")
                     .then((app: Application) => {
                         return this.getApplicationPasswordCredentials(element, app.passwordCredentials!);
                     });
             case "CERTIFICATE-CREDENTIALS":
                 // Return the key credentials for the application
-                return this.getParentApplicationPartial(element.objectId!, "keyCredentials")
+                return this.getApplicationPartial(element.objectId!, "keyCredentials")
                     .then((app: Application) => {
                         return this.getApplicationKeyCredentials(element, app.keyCredentials!);
                     });
             case "API-PERMISSIONS":
                 // Return the API permissions for the application
-                return this.getParentApplicationPartial(element.objectId!, "requiredResourceAccess")
+                return this.getApplicationPartial(element.objectId!, "requiredResourceAccess")
                     .then((app: Application) => {
                         return this.getApplicationApiPermissions(app.requiredResourceAccess!);
                     });
             case "EXPOSED-API-PERMISSIONS":
                 // Return the exposed API permissions for the application
-                return this.getParentApplicationPartial(element.objectId!, "api")
+                return this.getApplicationPartial(element.objectId!, "api")
                     .then((app: Application) => {
                         return this.getApplicationExposedApiPermissions(element, app.api?.oauth2PermissionScopes!);
                     });
             case "APP-ROLES":
                 // Return the app roles for the application
-                return this.getParentApplicationPartial(element.objectId!, "appRoles")
+                return this.getApplicationPartial(element.objectId!, "appRoles")
                     .then((app: Application) => {
                         return this.getApplicationAppRoles(element, app.appRoles!);
                     });
@@ -413,7 +413,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Returns the application registration that is the parent of the given element
-    public async getParentApplicationPartial(objectId: string, select: string): Promise<Application> {
+    public async getApplicationPartial(objectId: string, select: string): Promise<Application> {
         return await this._graphClient.getApplicationDetailsPartial(objectId, select);
     }
 
