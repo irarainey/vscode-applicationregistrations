@@ -85,7 +85,7 @@ export class AppRoleService {
             });
 
         // If escape is pressed or the new state is empty then return undefined.
-        if (newAllowedMemberTypes === undefined || newAllowedMemberTypes === "") {
+        if (newState === undefined || newState === "") {
             return undefined;
         }
 
@@ -187,7 +187,7 @@ export class AppRoleService {
             });
 
         // If escape is pressed or the new state is empty then return undefined.
-        if (newAllowedMemberTypes === undefined || newAllowedMemberTypes === "") {
+        if (newState === undefined || newState === "") {
             return undefined;
         }
 
@@ -236,7 +236,7 @@ export class AppRoleService {
     public async delete(item: AppRegItem): Promise<Disposable | undefined> {
 
         if (item.state !== false) {
-            window.showWarningMessage("Role cannot be deleted or updated unless disabled first.");
+            window.showWarningMessage("Role cannot be deleted unless disabled first.");
             return;
         }
 

@@ -68,6 +68,10 @@ export async function activate(context: ExtensionContext) {
 	commands.registerCommand(`${view}.editAppRole`, app => appReg.editAppRole(app));
 	commands.registerCommand(`${view}.deleteAppRole`, app => appReg.deleteAppRole(app));
 	commands.registerCommand(`${view}.changeStateAppRole`, app => appReg.changeStateAppRole(app));
+	commands.registerCommand(`${view}.addExposedApiScope`, app => appReg.addExposedApiScope(app));
+	commands.registerCommand(`${view}.editExposedApiScope`, app => appReg.editExposedApiScope(app));
+	commands.registerCommand(`${view}.deleteExposedApiScope`, app => appReg.deleteExposedApiScope(app));
+	commands.registerCommand(`${view}.changeStateExposedApiScope`, app => appReg.changeStateExposedApiScope(app));
 	commands.registerCommand(`${view}.editAppIdUri`, app => appReg.editAppIdUri(app));
 	commands.registerCommand(`${view}.removeAppIdUri`, app => appReg.removeAppIdUri(app));
 	commands.registerCommand(`${view}.copyAppIdUri`, app => appReg.copyValue(app));

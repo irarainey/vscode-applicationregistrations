@@ -284,6 +284,50 @@ export class AppReg {
             this.populateTreeView(status);
         }
     }
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Exposed API Scope Commands
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Adds a new exposed api scope to an application registration.
+    public async addExposedApiScope(item: AppRegItem): Promise<void> {
+        // Add a new api scope and reload the tree view if successful.
+        const status = await this._oauth2PermissionScopeService.add(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
+
+    // Deletes an exposed api scope.
+    public async deleteExposedApiScope(item: AppRegItem): Promise<void> {
+        // Delete the api scope and reload the tree view if successful.
+        const status = await this._oauth2PermissionScopeService.delete(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
+
+    // Edits an exposed api scope.   
+    public async editExposedApiScope(item: AppRegItem): Promise<void> {
+        // Edit the api scope and reload the tree view if successful.
+        const status = await this._oauth2PermissionScopeService.edit(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
+
+    // Changes the enabled state of an exposed api scope.   
+    public async changeStateExposedApiScope(item: AppRegItem): Promise<void> {
+        // Edit the api scope and reload the tree view if successful.
+        const status = await this._oauth2PermissionScopeService.changeState(item);
+
+        if (status !== undefined) {
+            this.populateTreeView(status);
+        }
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     // App Role Commands
@@ -321,7 +365,7 @@ export class AppReg {
 
     // Changes the enabled state of an app role.   
     public async changeStateAppRole(item: AppRegItem): Promise<void> {
-        // Edit the redirect URI and reload the tree view if successful.
+        // Edit the app role and reload the tree view if successful.
         const status = await this._appRoleService.changeState(item);
 
         if (status !== undefined) {

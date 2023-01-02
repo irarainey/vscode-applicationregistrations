@@ -57,6 +57,22 @@
     },
     "commands": [
       {
+        "command": "appRegistrations.addExposedApiScope",
+        "title": "Add"
+      },
+      {
+        "command": "appRegistrations.editExposedApiScope",
+        "title": "Edit"
+      },
+      {
+        "command": "appRegistrations.deleteExposedApiScope",
+        "title": "Delete"
+      },
+      {
+        "command": "appRegistrations.changeStateExposedApiScope",
+        "title": "Change State"
+      },
+      {
         "command": "appRegistrations.addAppRole",
         "title": "Add"
       },
@@ -192,6 +208,26 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "appRegistrations.addExposedApiScope",
+          "when": "view == appRegistrations && viewItem == EXPOSED-API-PERMISSIONS",
+          "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.editExposedApiScope",
+          "when": "view == appRegistrations && viewItem == SCOPE",
+          "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.deleteExposedApiScope",
+          "when": "view == appRegistrations && viewItem == SCOPE",
+          "group": "appRegistrations@1"
+        },
+        {
+          "command": "appRegistrations.changeStateExposedApiScope",
+          "when": "view == appRegistrations && viewItem == SCOPE",
+          "group": "appRegistrations@2"
+        },
         {
           "command": "appRegistrations.addAppRole",
           "when": "view == appRegistrations && viewItem == APP-ROLES",

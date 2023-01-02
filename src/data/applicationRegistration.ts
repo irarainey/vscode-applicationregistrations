@@ -573,31 +573,34 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Returns the exposed api permissions for the given application
-    private async getApplicationExposedApiPermissions(element: AppRegItem, permissions: PermissionScope[]): Promise<AppRegItem[]> {
-        return permissions.map(permission => {
+    private async getApplicationExposedApiPermissions(element: AppRegItem, scopes: PermissionScope[]): Promise<AppRegItem[]> {
+        return scopes.map(scope => {
+            const icon = scope.isEnabled! ? "list-tree" : "close";
             return new AppRegItem({
-                label: permission.adminConsentDisplayName!,
+                label: scope.adminConsentDisplayName!,
                 context: "SCOPE",
-                icon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
+                icon: new ThemeIcon(icon, new ThemeColor("editor.foreground")),
                 objectId: element.objectId,
+                value: scope.id!,
+                state: scope.isEnabled!,
                 children: [
                     new AppRegItem({
-                        label: `Scope: ${permission.value!}`,
+                        label: `Scope: ${scope.value!}`,
                         context: "SCOPE-VALUE",
                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
-                        label: `Description: ${permission.adminConsentDescription!}`,
+                        label: `Description: ${scope.adminConsentDescription!}`,
                         context: "SCOPE-VALUE",
                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
-                        label: `Consent: ${permission.type! === "User" ? "Admins and Users" : "Admins Only"}`,
+                        label: `Consent: ${scope.type! === "User" ? "Admins and Users" : "Admins Only"}`,
                         context: "SCOPE-VALUE",
                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
-                        label: `Enabled: ${permission.isEnabled! ? "Yes" : "No"}`,
+                        label: `Enabled: ${scope.isEnabled! ? "Yes" : "No"}`,
                         context: "SCOPE-VALUE",
                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     })
