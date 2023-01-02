@@ -2,7 +2,8 @@ import { window, ThemeIcon, Disposable } from 'vscode';
 import { GraphClient } from '../clients/graph';
 import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
-import { Application, AppRole } from "@microsoft/microsoft-graph-types";
+import { AppRole } from "@microsoft/microsoft-graph-types";
+import { v4 as uuidv4 } from 'uuid';
 
 export class AppRoleService {
 
@@ -24,9 +25,92 @@ export class AppRoleService {
         // Set the added trigger default to undefined.
         let added = undefined;
 
-        added = window.setStatusBarMessage("$(loading~spin) Adding app role...");
+        // Prompt the user for the new display name.
+        const newName = await window.showInputBox({
+            prompt: "Edit display name",
+            placeHolder: "Enter a display name for the new app role"
+        });
+
+        // If escape is pressed or the new name is empty then return undefined.
+        if (newName === undefined || newName === "") {
+            return undefined;
+        }
+
+        // Prompt the user for the new value.
+        const newValue = await window.showInputBox({
+            prompt: "Edit value",
+            placeHolder: "Enter a value for the new app role"
+        });
+
+        // If escape is pressed or the new value is empty then return undefined.
+        if (newValue === undefined || newValue === "") {
+            return undefined;
+        }
+
+        // Prompt the user for the new display name.
+        const newDescription = await window.showInputBox({
+            prompt: "Edit description",
+            placeHolder: "Enter a description for the new app role"
+        });
+
+        // If escape is pressed or the new description is empty then return undefined.
+        if (newDescription === undefined || newDescription === "") {
+            return undefined;
+        }
+
+        // Prompt the user for the new allowed member types.
+        const newAllowedMemberTypes = await window.showQuickPick(
+            [
+                "Users/Groups",
+                "Applications",
+                "Both (Users/Groups + Applications)",
+            ],
+            {
+                placeHolder: "Select allowed member types"
+            });
+
+        // If escape is pressed or the new allowed member types is empty then return undefined.
+        if (newAllowedMemberTypes === undefined || newAllowedMemberTypes === "") {
+            return undefined;
+        }
+
+        // Prompt the user for the new state.
+        const newState = await window.showQuickPick(
+            [
+                "Enabled",
+                "Disabled"
+            ],
+            {
+                placeHolder: "Select role state"
+            });
+
+        // If escape is pressed or the new state is empty then return undefined.
+        if (newAllowedMemberTypes === undefined || newAllowedMemberTypes === "") {
+            return undefined;
+        }
+
+        added = window.setStatusBarMessage("$(loading~spin) Adding new app role...");
         item.iconPath = new ThemeIcon("loading~spin");
         this._dataProvider.triggerOnDidChangeTreeData();
+
+        const roles = await this.getAppRoles(item.objectId!);
+
+        const newRole: AppRole = {
+            id: uuidv4(),
+            allowedMemberTypes: newAllowedMemberTypes === "Users/Groups" ? ["User"] : newAllowedMemberTypes === "Applications" ? ["Application"] : ["User", "Application"],
+            description: newDescription,
+            displayName: newName,
+            isEnabled: newState === "Enabled" ? true : false,
+            value: newValue
+        };
+
+        roles.push(newRole);
+
+        // Update the application.
+        await this._graphClient.updateApplication(item.objectId!, { appRoles: roles })
+            .catch((error) => {
+                console.error(error);
+            });
 
         return added;
     }

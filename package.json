@@ -72,7 +72,6 @@
         "command": "appRegistrations.changeStateAppRole",
         "title": "Change State"
       },
-
       {
         "command": "appRegistrations.addRedirectUri",
         "title": "Add"
@@ -323,6 +322,7 @@
     "@microsoft/microsoft-graph-types": "^2.25.0",
     "@types/glob": "^8.0.0",
     "@types/node": "16.x",
+    "@types/uuid": "^9.0.0",
     "@types/vscode": "^1.73.0",
     "@typescript-eslint/eslint-plugin": "^5.42.0",
     "@typescript-eslint/parser": "^5.42.0",
@@ -335,6 +335,7 @@
     "@microsoft/microsoft-graph-client": "^3.0.4",
     "date-fns": "^2.29.3",
     "fast-sort": "^3.2.0",
-    "isomorphic-fetch": "^3.0.0"
+    "isomorphic-fetch": "^3.0.0",
+    "uuid": "^9.0.0"
   }
 }
