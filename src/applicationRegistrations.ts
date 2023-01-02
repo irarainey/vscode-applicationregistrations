@@ -88,7 +88,8 @@ export class AppReg {
         const newFilter = await window.showInputBox({
             placeHolder: "Name starts with...",
             prompt: "Filter applications by display name",
-            value: this._filterText
+            value: this._filterText,
+            ignoreFocusOut: true
         });
 
         // Escape has been hit so we don't want to do anything.

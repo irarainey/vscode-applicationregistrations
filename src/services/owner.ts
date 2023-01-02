@@ -27,7 +27,8 @@ export class OwnerService {
         // Prompt the user for the new owner.
         const newOwner = await window.showInputBox({
             placeHolder: "Enter user name or email address...",
-            prompt: "Add new owner to application"
+            prompt: "Add new owner to application",
+            ignoreFocusOut: true
         });
 
         // If the new owner name is not empty then add as an owner.

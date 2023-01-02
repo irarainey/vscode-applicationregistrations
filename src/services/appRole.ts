@@ -28,7 +28,8 @@ export class AppRoleService {
         // Prompt the user for the new display name.
         const newName = await window.showInputBox({
             prompt: "Edit display name",
-            placeHolder: "Enter a display name for the new app role"
+            placeHolder: "Enter a display name for the new app role",
+            ignoreFocusOut: true
         });
 
         // If escape is pressed or the new name is empty then return undefined.
@@ -39,7 +40,8 @@ export class AppRoleService {
         // Prompt the user for the new value.
         const newValue = await window.showInputBox({
             prompt: "Edit value",
-            placeHolder: "Enter a value for the new app role"
+            placeHolder: "Enter a value for the new app role",
+            ignoreFocusOut: true
         });
 
         // If escape is pressed or the new value is empty then return undefined.
@@ -50,7 +52,8 @@ export class AppRoleService {
         // Prompt the user for the new display name.
         const newDescription = await window.showInputBox({
             prompt: "Edit description",
-            placeHolder: "Enter a description for the new app role"
+            placeHolder: "Enter a description for the new app role",
+            ignoreFocusOut: true
         });
 
         // If escape is pressed or the new description is empty then return undefined.
@@ -63,10 +66,11 @@ export class AppRoleService {
             [
                 "Users/Groups",
                 "Applications",
-                "Both (Users/Groups + Applications)",
+                "Both (Users/Groups + Applications)"
             ],
             {
-                placeHolder: "Select allowed member types"
+                placeHolder: "Select allowed member types",
+                ignoreFocusOut: true
             });
 
         // If escape is pressed or the new allowed member types is empty then return undefined.
@@ -81,7 +85,8 @@ export class AppRoleService {
                 "Disabled"
             ],
             {
-                placeHolder: "Select role state"
+                placeHolder: "Select role state",
+                ignoreFocusOut: true
             });
 
         // If escape is pressed or the new state is empty then return undefined.
@@ -130,7 +135,8 @@ export class AppRoleService {
         // Prompt the user for the new display name.
         const newName = await window.showInputBox({
             prompt: "Edit display name",
-            value: role.displayName!
+            value: role.displayName!,
+            ignoreFocusOut: true
         });
 
         // If escape is pressed or the new name is empty then return undefined.
@@ -141,7 +147,8 @@ export class AppRoleService {
         // Prompt the user for the new value.
         const newValue = await window.showInputBox({
             prompt: "Edit value",
-            value: role.value!
+            value: role.value!,
+            ignoreFocusOut: true
         });
 
         // If escape is pressed or the new value is empty then return undefined.
@@ -152,7 +159,8 @@ export class AppRoleService {
         // Prompt the user for the new display name.
         const newDescription = await window.showInputBox({
             prompt: "Edit description",
-            value: role.description!
+            value: role.description!,
+            ignoreFocusOut: true
         });
 
         // If escape is pressed or the new description is empty then return undefined.
@@ -165,10 +173,11 @@ export class AppRoleService {
             [
                 "Users/Groups",
                 "Applications",
-                "Both (Users/Groups + Applications)",
+                "Both (Users/Groups + Applications)"
             ],
             {
-                placeHolder: "Select allowed member types"
+                placeHolder: "Select allowed member types",
+                ignoreFocusOut: true
             });
 
         // If escape is pressed or the new allowed member types is empty then return undefined.
@@ -183,7 +192,8 @@ export class AppRoleService {
                 "Disabled"
             ],
             {
-                placeHolder: "Select role state"
+                placeHolder: "Select role state",
+                ignoreFocusOut: true
             });
 
         // If escape is pressed or the new state is empty then return undefined.

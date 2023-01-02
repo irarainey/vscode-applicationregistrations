@@ -73,6 +73,7 @@ export class GraphClient {
         window.showInputBox({
             placeHolder: "Tenant name or Id...",
             prompt: "Enter the tenant name or Id, or leave blank for the default tenant",
+            ignoreFocusOut: true
         })
             .then((tenant) => {
                 // If the tenant is undefined then we don't want to do anything because they pressed cancel.

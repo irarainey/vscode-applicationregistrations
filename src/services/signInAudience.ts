@@ -27,6 +27,7 @@ export class SignInAudienceService {
 
         const audience = await window.showQuickPick(signInAudienceOptions, {
             placeHolder: "Select the sign in audience...",
+            ignoreFocusOut: true
         });
 
         if (audience !== undefined) {

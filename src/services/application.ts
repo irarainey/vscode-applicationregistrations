@@ -34,6 +34,7 @@ export class ApplicationService {
         const newName = await window.showInputBox({
             placeHolder: "Application name...",
             prompt: "Create new application registration",
+            ignoreFocusOut: true,
             validateInput: (value) => {
                 return this.validateDisplayName(value);
             }
@@ -44,6 +45,7 @@ export class ApplicationService {
             // Prompt the user for the sign in audience.
             const audience = await window.showQuickPick(signInAudienceOptions, {
                 placeHolder: "Select the sign in audience...",
+                ignoreFocusOut: true
             });
 
             // If the sign in audience is not undefined then create the application.
@@ -71,6 +73,7 @@ export class ApplicationService {
             placeHolder: "Application Id URI...",
             prompt: "Set Application Id URI",
             value: app.value! === "Not set" ? `api://${app.appId!}` : app.value!,
+            ignoreFocusOut: true,
             validateInput: (value) => {
                 return this.validateAppIdUri(value);
             }
@@ -102,6 +105,7 @@ export class ApplicationService {
             placeHolder: "New application name...",
             prompt: "Rename application with new display name",
             value: app.label?.toString(),
+            ignoreFocusOut: true,
             validateInput: (value) => {
                 return this.validateDisplayName(value);
             }

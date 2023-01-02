@@ -27,7 +27,8 @@ export class PasswordCredentialService {
         // Prompt the user for the description.
         const description = await window.showInputBox({
             placeHolder: "Password description...",
-            prompt: "Add new password credential description"
+            prompt: "Add new password credential description",
+            ignoreFocusOut: true
         });
 
         // If the description is not undefined then add.
@@ -42,6 +43,7 @@ export class PasswordCredentialService {
                 placeHolder: "Password expiry...",
                 prompt: "Set password expiry date",
                 value: expiryDate.toISOString(),
+                ignoreFocusOut: true,
                 validateInput: (value) => {
                     return this.validateExpiryDate(value);
                 }

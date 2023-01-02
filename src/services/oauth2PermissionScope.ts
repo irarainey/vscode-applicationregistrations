@@ -134,7 +134,8 @@ export class OAuth2PermissionScopeService {
         // Prompt the user for the new value.
         const newValue = await window.showInputBox({
             prompt: "Edit scope name",
-            value: scope.value!
+            value: scope.value!,
+            ignoreFocusOut: true
         });
 
         // If escape is pressed or the new name is empty then return undefined.
@@ -145,7 +146,8 @@ export class OAuth2PermissionScopeService {
         // Prompt the user for the new admin consent display name.
         const newAdminConsentDisplayName = await window.showInputBox({
             prompt: "Edit admin consent display name",
-            value: scope.adminConsentDisplayName!
+            value: scope.adminConsentDisplayName!,
+            ignoreFocusOut: true
         });
 
         // If escape is pressed or the new value is empty then return undefined.
@@ -156,7 +158,8 @@ export class OAuth2PermissionScopeService {
         // Prompt the user for the new admin consent description.
         const newAdminConsentDescription = await window.showInputBox({
             prompt: "Edit admin consent description",
-            value: scope.adminConsentDescription!
+            value: scope.adminConsentDescription!,
+            ignoreFocusOut: true
         });
 
         // If escape is pressed or the new description is empty then return undefined.
@@ -171,7 +174,8 @@ export class OAuth2PermissionScopeService {
                 "Administrators and users"
             ],
             {
-                placeHolder: "Select who can consent"
+                placeHolder: "Select who can consent",
+                ignoreFocusOut: true
             });
 
         // If escape is pressed or the new allowed member types is empty then return undefined.
@@ -186,7 +190,8 @@ export class OAuth2PermissionScopeService {
                 "Disabled"
             ],
             {
-                placeHolder: "Select scope state"
+                placeHolder: "Select scope state",
+                ignoreFocusOut: true
             });
 
         // If escape is pressed or the new state is empty then return undefined.

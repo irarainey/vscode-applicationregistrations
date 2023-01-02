@@ -31,6 +31,7 @@ export class RedirectUriService {
         const redirectUri = await window.showInputBox({
             placeHolder: "Enter redirect URI...",
             prompt: "Add a new redirect URI to the application",
+            ignoreFocusOut: true,
             validateInput: (value) => {
                 return this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, false);
             }
@@ -105,6 +106,7 @@ export class RedirectUriService {
             placeHolder: "New application name...",
             prompt: "Rename application with new display name",
             value: item.label!.toString(),
+            ignoreFocusOut: true,
             validateInput: (value) => {
                 return this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, true);
             }
