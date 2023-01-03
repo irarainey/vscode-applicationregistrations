@@ -3,12 +3,13 @@ import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 import { addYears, isAfter, isBefore, isDate } from 'date-fns';
 import { ServiceBase } from './serviceBase';
+import { GraphClient } from '../clients/graph';
 
 export class PasswordCredentialService extends ServiceBase {
 
     // The constructor for the PasswordCredentialsService class.
-    constructor(dataProvider: AppRegDataProvider) {
-        super(dataProvider);
+    constructor(dataProvider: AppRegDataProvider, graphClient: GraphClient) {
+        super(dataProvider, graphClient);
     }
 
     // Adds a new password credential.

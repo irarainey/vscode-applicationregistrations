@@ -28,15 +28,15 @@ export async function activate(context: ExtensionContext) {
 	const dataProvider = new AppRegDataProvider(graphClient);
 
 	// Create instances of the services.
-	const applicationService = new ApplicationService(dataProvider, context);
-	const appRoleService = new AppRoleService(dataProvider);
-	const keyCredentialService = new KeyCredentialService(dataProvider);
-	const oauth2PermissionScopeService = new OAuth2PermissionScopeService(dataProvider);
-	const ownerService = new OwnerService(dataProvider);
-	const passwordCredentialService = new PasswordCredentialService(dataProvider);
-	const redirectUriService = new RedirectUriService(dataProvider);
-	const requiredResourceAccessService = new RequiredResourceAccessService(dataProvider);
-	const signInAudienceService = new SignInAudienceService(dataProvider);
+	const applicationService = new ApplicationService(dataProvider, graphClient, context);
+	const appRoleService = new AppRoleService(dataProvider, graphClient);
+	const keyCredentialService = new KeyCredentialService(dataProvider, graphClient);
+	const oauth2PermissionScopeService = new OAuth2PermissionScopeService(dataProvider, graphClient);
+	const ownerService = new OwnerService(dataProvider, graphClient);
+	const passwordCredentialService = new PasswordCredentialService(dataProvider, graphClient);
+	const redirectUriService = new RedirectUriService(dataProvider, graphClient);
+	const requiredResourceAccessService = new RequiredResourceAccessService(dataProvider, graphClient);
+	const signInAudienceService = new SignInAudienceService(dataProvider, graphClient);
 
 	workspace.onDidChangeConfiguration(event => {
 		if (event.affectsConfiguration("applicationregistrations.showAllApplications") || event.affectsConfiguration("applicationregistrations.maximumApplicationsReturned")) {

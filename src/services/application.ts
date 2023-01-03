@@ -5,6 +5,7 @@ import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 import { convertSignInAudience } from '../utils/signInAudienceUtils';
 import { ServiceBase } from './serviceBase';
+import { GraphClient } from '../clients/graph';
 
 export class ApplicationService extends ServiceBase {
 
@@ -12,8 +13,8 @@ export class ApplicationService extends ServiceBase {
     private _subscriptions: Disposable[] = [];
 
     // The constructor for the ApplicationService class.
-    constructor(dataProvider: AppRegDataProvider, context: ExtensionContext) {
-        super(dataProvider);
+    constructor(dataProvider: AppRegDataProvider, graphClient: GraphClient, context: ExtensionContext) {
+        super(dataProvider, graphClient);
         this._subscriptions = context.subscriptions;
     }
 

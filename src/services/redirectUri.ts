@@ -2,12 +2,13 @@ import { window, ThemeIcon, Disposable } from 'vscode';
 import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 import { ServiceBase } from './serviceBase';
+import { GraphClient } from '../clients/graph';
 
 export class RedirectUriService extends ServiceBase {
 
     // The constructor for the RedirectUriService class.
-    constructor(dataProvider: AppRegDataProvider) {
-        super(dataProvider);
+    constructor(dataProvider: AppRegDataProvider, graphClient: GraphClient) {
+        super(dataProvider, graphClient);
     }
 
     // Adds a new redirect URI to an application registration.

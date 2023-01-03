@@ -25,9 +25,9 @@ export class ServiceBase {
     public readonly onComplete: Event<ActivityStatus> = this._onComplete.event;
 
     // The constructor for the OwnerService class.
-    constructor(dataProvider: AppRegDataProvider) {
+    constructor(dataProvider: AppRegDataProvider, graphClient: GraphClient) {
         this._dataProvider = dataProvider;
-        this._graphClient = dataProvider.graphClient;
+        this._graphClient = graphClient;
     }
 
     // Initiates the visual change of the tree view

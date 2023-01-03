@@ -4,12 +4,13 @@ import { AppRegItem } from '../models/appRegItem';
 import { AppRole } from "@microsoft/microsoft-graph-types";
 import { v4 as uuidv4 } from 'uuid';
 import { ServiceBase } from './serviceBase';
+import { GraphClient } from '../clients/graph';
 
 export class AppRoleService extends ServiceBase {
 
     // The constructor for the AppRolesService class.
-    constructor(dataProvider: AppRegDataProvider) {
-        super(dataProvider);
+    constructor(dataProvider: AppRegDataProvider, graphClient: GraphClient) {
+        super(dataProvider, graphClient);
     }
 
     // Adds a new app role to an application registration.

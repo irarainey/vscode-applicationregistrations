@@ -4,12 +4,13 @@ import { AppRegItem } from '../models/appRegItem';
 import { PermissionScope, ApiApplication } from "@microsoft/microsoft-graph-types";
 import { v4 as uuidv4 } from 'uuid';
 import { ServiceBase } from './serviceBase';
+import { GraphClient } from '../clients/graph';
 
 export class OAuth2PermissionScopeService extends ServiceBase {
 
     // The constructor for the OAuth2PermissionScopeService class.
-    constructor(dataProvider: AppRegDataProvider) {
-        super(dataProvider);
+    constructor(dataProvider: AppRegDataProvider, graphClient: GraphClient) {
+        super(dataProvider, graphClient);
     }
 
     // Adds a new exposed api scope to an application registration.

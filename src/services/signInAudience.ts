@@ -4,12 +4,13 @@ import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 import { convertSignInAudience } from '../utils/signInAudienceUtils';
 import { ServiceBase } from './serviceBase';
+import { GraphClient } from '../clients/graph';
 
 export class SignInAudienceService extends ServiceBase {
 
     // The constructor for the SignInAudienceService class.
-    constructor(dataProvider: AppRegDataProvider) {
-        super(dataProvider);
+    constructor(dataProvider: AppRegDataProvider, graphClient: GraphClient) {
+        super(dataProvider, graphClient);
     }
 
     // Edits the application sign in audience.

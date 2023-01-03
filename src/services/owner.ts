@@ -3,6 +3,7 @@ import { portalUserUri } from '../constants';
 import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 import { ServiceBase } from './serviceBase';
+import { GraphClient } from '../clients/graph';
 
 export class OwnerService extends ServiceBase {
 
@@ -10,8 +11,8 @@ export class OwnerService extends ServiceBase {
     private _userList: any = undefined;
 
     // The constructor for the OwnerService class.
-    constructor(dataProvider: AppRegDataProvider) {
-        super(dataProvider);
+    constructor(dataProvider: AppRegDataProvider, graphClient: GraphClient) {
+        super(dataProvider, graphClient);
     }
 
     // Adds a new owner to an application registration.
