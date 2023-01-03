@@ -1,4 +1,4 @@
-import { window, env, Disposable, workspace } from 'vscode';
+import { window, env, Disposable, workspace, ThemeIcon } from 'vscode';
 import { AppRegDataProvider } from './data/applicationRegistration';
 import { AppRegItem } from './models/appRegItem';
 import { ApplicationService } from './services/application';
@@ -10,6 +10,8 @@ import { PasswordCredentialService } from './services/passwordCredential';
 import { RedirectUriService } from './services/redirectUri';
 import { RequiredResourceAccessService } from './services/requiredResourceAccess';
 import { SignInAudienceService } from './services/signInAudience';
+import { ActivityStatus } from './interfaces/activityStatus';
+import { stat } from 'fs';
 
 // This class is responsible for managing the application registrations tree view.
 export class AppReg {
@@ -57,6 +59,9 @@ export class AppReg {
         this._requiredResourceAccessService = requiredResourceAccessService;
         this._signInAudienceService = signInAudienceService;
 
+        this._appRoleService.onError((result) => this.errorHandler(result));
+        this._appRoleService.onComplete((result) => this.populateTreeView(result.statusBarHandle));
+
         workspace.onDidChangeConfiguration(event => {
             if (event.affectsConfiguration("applicationregistrations.showAllApplications") || event.affectsConfiguration("applicationregistrations.maximumApplicationsReturned")) {
                 this.populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing application registrations..."));
@@ -69,12 +74,12 @@ export class AppReg {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Populates the tree view with the applications.
-    public async populateTreeView(statusBar: Disposable | undefined = undefined): Promise<void> {
+    public async populateTreeView(statusBarHandle: Disposable | undefined = undefined): Promise<void> {
         if (!this._dataProvider.isGraphClientInitialised) {
-            this._dataProvider.initialiseGraphClient(statusBar);
+            this._dataProvider.initialiseGraphClient(statusBarHandle);
             return;
         }
-        await this._dataProvider.renderTreeView("APPLICATIONS", statusBar, this._filterCommand);
+        await this._dataProvider.renderTreeView("APPLICATIONS", statusBarHandle, this._filterCommand);
     }
 
     // Filters the applications by display name.
@@ -285,7 +290,7 @@ export class AppReg {
             this.populateTreeView(status);
         }
     }
-    
+
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Exposed API Scope Commands
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -336,42 +341,22 @@ export class AppReg {
 
     // Adds a new app role to an application registration.
     public async addAppRole(item: AppRegItem): Promise<void> {
-        // Add a new app role and reload the tree view if successful.
-        const status = await this._appRoleService.add(item);
-
-        if (status !== undefined) {
-            this.populateTreeView(status);
-        }
+        await this._appRoleService.add(item);
     }
 
     // Deletes an app role.
     public async deleteAppRole(item: AppRegItem): Promise<void> {
-        // Delete the app role and reload the tree view if successful.
-        const status = await this._appRoleService.delete(item);
-
-        if (status !== undefined) {
-            this.populateTreeView(status);
-        }
+        await this._appRoleService.delete(item);
     }
 
     // Edits an app role.   
     public async editAppRole(item: AppRegItem): Promise<void> {
-        // Edit the app role and reload the tree view if successful.
-        const status = await this._appRoleService.edit(item);
-
-        if (status !== undefined) {
-            this.populateTreeView(status);
-        }
+        await this._appRoleService.edit(item);
     }
 
     // Changes the enabled state of an app role.   
     public async changeStateAppRole(item: AppRegItem): Promise<void> {
-        // Edit the app role and reload the tree view if successful.
-        const status = await this._appRoleService.changeState(item);
-
-        if (status !== undefined) {
-            this.populateTreeView(status);
-        }
+        await this._appRoleService.changeState(item);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -388,5 +373,18 @@ export class AppReg {
                 || item.contextValue === "APPID-URI"
                 ? item.value!
                 : item.children![0].value!);
+    }
+
+    // Handles errors caught by the command handlers.
+    private errorHandler(result: ActivityStatus): void {
+        // Clear any status bar messages.
+        result.statusBarHandle!.dispose();
+
+        // Restore the original icon.
+        result.treeViewItem!.iconPath = result.previousIcon;
+        this._dataProvider.triggerOnDidChangeTreeData();
+
+        // Display an error message.
+        window.showErrorMessage(`An error occurred trying to complete your task: ${result.error!.message}.`);
     }
 }
