@@ -1,31 +1,29 @@
 import * as path from 'path';
 import { window, ThemeIcon, env, Uri, TextDocumentContentProvider, EventEmitter, workspace, Disposable, ExtensionContext } from 'vscode';
 import { portalAppUri, signInAudienceOptions } from '../constants';
-import { GraphClient } from '../clients/graph';
 import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 import { convertSignInAudience } from '../utils/signInAudienceUtils';
+import { ServiceBase } from './serviceBase';
 
-export class ApplicationService {
-
-    // A private instance of the GraphClient class.
-    private _graphClient: GraphClient;
-
-    // A private instance of the AppRegDataProvider class.
-    private _dataProvider: AppRegDataProvider;
+export class ApplicationService extends ServiceBase {
 
     // A private array to store the subscriptions.
     private _subscriptions: Disposable[] = [];
 
     // The constructor for the ApplicationService class.
     constructor(dataProvider: AppRegDataProvider, context: ExtensionContext) {
-        this._dataProvider = dataProvider;
-        this._graphClient = dataProvider.graphClient;
+        super(dataProvider);
         this._subscriptions = context.subscriptions;
     }
 
     // Creates a new application registration.
     public async add(): Promise<Disposable | undefined> {
+
+        if (!this._dataProvider.isGraphClientInitialised) {
+            this._dataProvider.initialiseGraphClient();
+            return;
+        }
 
         // Set the created trigger default to undefined.
         let added = undefined;

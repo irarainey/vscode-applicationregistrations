@@ -1,20 +1,13 @@
 import { window, ThemeIcon, Disposable } from 'vscode';
-import { GraphClient } from '../clients/graph';
 import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
+import { ServiceBase } from './serviceBase';
 
-export class RedirectUriService {
-
-    // A private instance of the GraphClient class.
-    private _graphClient: GraphClient;
-
-    // A private instance of the AppRegDataProvider class.
-    private _dataProvider: AppRegDataProvider;
+export class RedirectUriService extends ServiceBase {
 
     // The constructor for the RedirectUriService class.
     constructor(dataProvider: AppRegDataProvider) {
-        this._dataProvider = dataProvider;
-        this._graphClient = dataProvider.graphClient;
+        super(dataProvider);
     }
 
     // Adds a new redirect URI to an application registration.

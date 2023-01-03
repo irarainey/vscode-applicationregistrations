@@ -1,21 +1,14 @@
 import { env, window, ThemeIcon, Disposable } from 'vscode';
-import { GraphClient } from '../clients/graph';
 import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 import { addYears, isAfter, isBefore, isDate } from 'date-fns';
+import { ServiceBase } from './serviceBase';
 
-export class PasswordCredentialService {
-
-    // A private instance of the GraphClient class.
-    private _graphClient: GraphClient;
-
-    // A private instance of the AppRegDataProvider class.
-    private _dataProvider: AppRegDataProvider;
+export class PasswordCredentialService extends ServiceBase {
 
     // The constructor for the PasswordCredentialsService class.
     constructor(dataProvider: AppRegDataProvider) {
-        this._dataProvider = dataProvider;
-        this._graphClient = dataProvider.graphClient;
+        super(dataProvider);
     }
 
     // Adds a new password credential.

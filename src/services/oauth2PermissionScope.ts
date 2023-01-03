@@ -1,35 +1,15 @@
-import { Event, EventEmitter, window, ThemeIcon, Disposable } from 'vscode';
-import { GraphClient } from '../clients/graph';
+import { window } from 'vscode';
 import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 import { PermissionScope, ApiApplication } from "@microsoft/microsoft-graph-types";
-import { ActivityStatus } from '../interfaces/activityStatus';
 import { v4 as uuidv4 } from 'uuid';
+import { ServiceBase } from './serviceBase';
 
-export class OAuth2PermissionScopeService {
-
-    // A private instance of the GraphClient class.
-    private _graphClient: GraphClient;
-
-    // A private instance of the AppRegDataProvider class.
-    private _dataProvider: AppRegDataProvider;
-
-    // A private instance of the EventEmitter class to handle error events.
-    private _onError: EventEmitter<ActivityStatus> = new EventEmitter<ActivityStatus>();
-
-    // A private instance of the EventEmitter class to handle complete events.
-    private _onComplete: EventEmitter<ActivityStatus> = new EventEmitter<ActivityStatus>();
-
-    // A public readonly property to expose the error event.
-    public readonly onError: Event<ActivityStatus> = this._onError.event;
-
-    // A public readonly property to expose the complete event.
-    public readonly onComplete: Event<ActivityStatus> = this._onComplete.event;
+export class OAuth2PermissionScopeService extends ServiceBase {
 
     // The constructor for the OAuth2PermissionScopeService class.
     constructor(dataProvider: AppRegDataProvider) {
-        this._dataProvider = dataProvider;
-        this._graphClient = dataProvider.graphClient;
+        super(dataProvider);
     }
 
     // Adds a new exposed api scope to an application registration.
@@ -54,7 +34,7 @@ export class OAuth2PermissionScopeService {
         api.oauth2PermissionScopes!.push(scope);
 
         // Update the application.
-        await this._graphClient.updateApplication(item.objectId!, { api: api })
+        this._graphClient.updateApplication(item.objectId!, { api: api })
             .then(() => {
                 this._onComplete.fire({ success: true, statusBarHandle: status });
             })
@@ -82,7 +62,7 @@ export class OAuth2PermissionScopeService {
         const status = this.indicateChange("Updating scope...", item);
 
         // Update the application.
-        await this._graphClient.updateApplication(item.objectId!, { api: api })
+        this._graphClient.updateApplication(item.objectId!, { api: api })
             .then(() => {
                 this._onComplete.fire({ success: true, statusBarHandle: status });
             })
@@ -105,7 +85,7 @@ export class OAuth2PermissionScopeService {
         api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0].isEnabled = !item.state;
 
         // Update the application.
-        await this._graphClient.updateApplication(item.objectId!, { api: api })
+        this._graphClient.updateApplication(item.objectId!, { api: api })
             .then(() => {
                 this._onComplete.fire({ success: true, statusBarHandle: status });
             })
@@ -138,7 +118,7 @@ export class OAuth2PermissionScopeService {
             api!.oauth2PermissionScopes!.splice(api!.oauth2PermissionScopes!.findIndex(r => r.id === item.value!), 1);
 
             // Update the application.
-            await this._graphClient.updateApplication(item.objectId!, { api: api })
+            this._graphClient.updateApplication(item.objectId!, { api: api })
                 .then(() => {
                     this._onComplete.fire({ success: true, statusBarHandle: status });
                 })
@@ -151,12 +131,6 @@ export class OAuth2PermissionScopeService {
     // Gets the exposed api scopes for an application registration.
     private async getScopes(id: string): Promise<ApiApplication> {
         return (await this._dataProvider.getApplicationPartial(id, "api")).api!;
-    }
-
-    private indicateChange(statusBarMessage: string, item: AppRegItem): Disposable {
-        item.iconPath = new ThemeIcon("loading~spin");
-        this._dataProvider.triggerOnDidChangeTreeData();
-        return window.setStatusBarMessage(`$(loading~spin) ${statusBarMessage}`);
     }
 
     // Captures the details for a scope.

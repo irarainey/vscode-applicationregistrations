@@ -1,17 +1,10 @@
-import { GraphClient } from '../clients/graph';
 import { AppRegDataProvider } from '../data/applicationRegistration';
+import { ServiceBase } from './serviceBase';
 
-export class RequiredResourceAccessService {
-
-    // A private instance of the GraphClient class.
-    private _graphClient: GraphClient;
-
-    // A private instance of the AppRegDataProvider class.
-    private _dataProvider: AppRegDataProvider;
+export class RequiredResourceAccessService extends ServiceBase {
 
     // The constructor for the RequiredResourceAccessService class.
     constructor(dataProvider: AppRegDataProvider) {
-        this._dataProvider = dataProvider;
-        this._graphClient = dataProvider.graphClient;
+        super(dataProvider);
     }
 }
