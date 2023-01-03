@@ -35,9 +35,7 @@ export class ApplicationService {
             placeHolder: "Application name...",
             prompt: "Create new application registration",
             ignoreFocusOut: true,
-            validateInput: (value) => {
-                return this.validateDisplayName(value);
-            }
+            validateInput: (value) => this.validateDisplayName(value)
         });
 
         // If the application name is not undefined then prompt the user for the sign in audience.
@@ -74,9 +72,7 @@ export class ApplicationService {
             prompt: "Set Application Id URI",
             value: app.value! === "Not set" ? `api://${app.appId!}` : app.value!,
             ignoreFocusOut: true,
-            validateInput: (value) => {
-                return this.validateAppIdUri(value);
-            }
+            validateInput: (value) => this.validateAppIdUri(value)
         });
 
         // If the new application id uri is not undefined then update the application.
@@ -106,9 +102,7 @@ export class ApplicationService {
             prompt: "Rename application with new display name",
             value: app.label?.toString(),
             ignoreFocusOut: true,
-            validateInput: (value) => {
-                return this.validateDisplayName(value);
-            }
+            validateInput: (value) => this.validateDisplayName(value)
         });
 
         // If the new application name is not undefined then update the application.

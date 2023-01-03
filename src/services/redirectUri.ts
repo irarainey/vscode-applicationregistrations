@@ -32,9 +32,7 @@ export class RedirectUriService {
             placeHolder: "Enter redirect URI...",
             prompt: "Add a new redirect URI to the application",
             ignoreFocusOut: true,
-            validateInput: (value) => {
-                return this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, false);
-            }
+            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, false)
         });
 
         // If the redirect URI is not empty then add it to the application.
@@ -50,7 +48,7 @@ export class RedirectUriService {
     public async delete(item: AppRegItem): Promise<Disposable | undefined> {
 
         // Prompt the user to confirm the deletion.
-        const answer = await window.showInformationMessage(`Do you want to delete the Redirect URI ${item.label!}?`, "Yes", "No");
+        const answer = await window.showInformationMessage(`Do you want to delete the redirect uri ${item.label!}?`, "Yes", "No");
 
         // If the answer is yes then delete the redirect URI.
         if (answer === "Yes") {
@@ -107,9 +105,7 @@ export class RedirectUriService {
             prompt: "Rename application with new display name",
             value: item.label!.toString(),
             ignoreFocusOut: true,
-            validateInput: (value) => {
-                return this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, true);
-            }
+            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, true)
         });
 
         // If the new application name is not empty then update the application.
@@ -127,7 +123,7 @@ export class RedirectUriService {
     private async update(item: AppRegItem, redirectUris: string[]): Promise<Disposable | undefined> {
 
         // Show progress indicator.
-        let updated = window.setStatusBarMessage("$(loading~spin) Updating redirect URIs...");
+        let updated = window.setStatusBarMessage("$(loading~spin) Updating redirect uris...");
         item.iconPath = new ThemeIcon("loading~spin");
         this._dataProvider.triggerOnDidChangeTreeData();
 

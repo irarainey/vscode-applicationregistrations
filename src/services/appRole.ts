@@ -29,11 +29,12 @@ export class AppRoleService {
         const newName = await window.showInputBox({
             prompt: "Edit display name",
             placeHolder: "Enter a display name for the new app role",
-            ignoreFocusOut: true
+            ignoreFocusOut: true,
+            validateInput: (value) => this.validateDisplayName(value)
         });
 
-        // If escape is pressed or the new name is empty then return undefined.
-        if (newName === undefined || newName === "") {
+        // If escape is pressed then return undefined.
+        if (newName === undefined) {
             return undefined;
         }
 
@@ -41,11 +42,12 @@ export class AppRoleService {
         const newValue = await window.showInputBox({
             prompt: "Edit value",
             placeHolder: "Enter a value for the new app role",
-            ignoreFocusOut: true
+            ignoreFocusOut: true,
+            validateInput: async (value) => this.validateValue(value, item.objectId!)
         });
 
-        // If escape is pressed or the new value is empty then return undefined.
-        if (newValue === undefined || newValue === "") {
+        // If escape is pressed then return undefined.
+        if (newValue === undefined) {
             return undefined;
         }
 
@@ -53,11 +55,12 @@ export class AppRoleService {
         const newDescription = await window.showInputBox({
             prompt: "Edit description",
             placeHolder: "Enter a description for the new app role",
-            ignoreFocusOut: true
+            ignoreFocusOut: true,
+            validateInput: (value) => this.validateDescription(value)
         });
 
-        // If escape is pressed or the new description is empty then return undefined.
-        if (newDescription === undefined || newDescription === "") {
+        // If escape is pressed then return undefined.
+        if (newDescription === undefined) {
             return undefined;
         }
 
@@ -74,7 +77,7 @@ export class AppRoleService {
             });
 
         // If escape is pressed or the new allowed member types is empty then return undefined.
-        if (newAllowedMemberTypes === undefined || newAllowedMemberTypes === "") {
+        if (newAllowedMemberTypes === undefined) {
             return undefined;
         }
 
@@ -90,7 +93,7 @@ export class AppRoleService {
             });
 
         // If escape is pressed or the new state is empty then return undefined.
-        if (newState === undefined || newState === "") {
+        if (newState === undefined) {
             return undefined;
         }
 
@@ -136,11 +139,12 @@ export class AppRoleService {
         const newName = await window.showInputBox({
             prompt: "Edit display name",
             value: role.displayName!,
-            ignoreFocusOut: true
+            ignoreFocusOut: true,
+            validateInput: (value) => this.validateDisplayName(value)
         });
 
-        // If escape is pressed or the new name is empty then return undefined.
-        if (newName === undefined || newName === "") {
+        // If escape is pressed then return undefined.
+        if (newName === undefined) {
             return undefined;
         }
 
@@ -148,11 +152,12 @@ export class AppRoleService {
         const newValue = await window.showInputBox({
             prompt: "Edit value",
             value: role.value!,
-            ignoreFocusOut: true
+            ignoreFocusOut: true,
+            validateInput: async (value) => this.validateValue(value, item.objectId!)
         });
 
-        // If escape is pressed or the new value is empty then return undefined.
-        if (newValue === undefined || newValue === "") {
+        // If escape is pressed then return undefined.
+        if (newValue === undefined) {
             return undefined;
         }
 
@@ -160,11 +165,12 @@ export class AppRoleService {
         const newDescription = await window.showInputBox({
             prompt: "Edit description",
             value: role.description!,
-            ignoreFocusOut: true
+            ignoreFocusOut: true,
+            validateInput: (value) => this.validateDescription(value)
         });
 
-        // If escape is pressed or the new description is empty then return undefined.
-        if (newDescription === undefined || newDescription === "") {
+        // If escape is pressed then return undefined.
+        if (newDescription === undefined) {
             return undefined;
         }
 
@@ -180,8 +186,8 @@ export class AppRoleService {
                 ignoreFocusOut: true
             });
 
-        // If escape is pressed or the new allowed member types is empty then return undefined.
-        if (newAllowedMemberTypes === undefined || newAllowedMemberTypes === "") {
+        // If escape is pressed then return undefined.
+        if (newAllowedMemberTypes === undefined) {
             return undefined;
         }
 
@@ -196,8 +202,8 @@ export class AppRoleService {
                 ignoreFocusOut: true
             });
 
-        // If escape is pressed or the new state is empty then return undefined.
-        if (newState === undefined || newState === "") {
+        // If escape is pressed then return undefined.
+        if (newState === undefined) {
             return undefined;
         }
 
@@ -223,7 +229,7 @@ export class AppRoleService {
         // Set the state changed trigger default to undefined.
         let stateChanged = undefined;
 
-        stateChanged = window.setStatusBarMessage("$(loading~spin) Updating app role...");
+        stateChanged = window.setStatusBarMessage("$(loading~spin) Updating app role state...");
         item.iconPath = new ThemeIcon("loading~spin");
         this._dataProvider.triggerOnDidChangeTreeData();
 
@@ -290,5 +296,55 @@ export class AppRoleService {
         role.description = description;
         role.allowedMemberTypes = allowed === "Users/Groups" ? ["User"] : allowed === "Applications" ? ["Application"] : ["User", "Application"];
         role.isEnabled = state === "Enabled" ? true : false;
+    }
+
+    // Validates the display name of an app role.
+    private validateDisplayName(displayName: string): string | undefined {
+
+        // Check the length of the display name.
+        if (displayName.length > 100) {
+            return "A display name cannot be longer than 100 characters.";
+        }
+
+        // Check the length of the display name.
+        if (displayName.length < 1) {
+            return "A display name cannot be empty.";
+        }
+
+        return undefined;
+    }
+
+    // Validates the value of an app role.
+    private async validateValue(value: string, id: string): Promise<string | undefined> {
+
+        // Check the length of the display name.
+        if (value.length > 250) {
+            return "A value cannot be longer than 250 characters.";
+        }
+
+        // Check the length of the display name.
+        if (value.length < 1) {
+            return "A value cannot be empty.";
+        }
+
+        // Check to see if the value already exists.
+        const roles = await this.getAppRoles(id);
+
+        if (roles!.find(r => r.value === value) !== undefined) {
+            return "The value specified already exists.";
+        }
+
+        return undefined;
+    }
+
+    // Validates the value of an app role.
+    private validateDescription(description: string): string | undefined {
+
+        // Check the length of the display name.
+        if (description.length < 1) {
+            return "A description cannot be empty.";
+        }
+
+        return undefined;
     }
 }

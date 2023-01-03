@@ -58,7 +58,7 @@ export class GraphClient {
             .then(() => {
                 // If the access token is returned, the user is authenticated
                 this._graphClientInitialised = true;
-                this.initialiseTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading Application Registrations..."), undefined);
+                this.initialiseTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading application registrations..."), undefined);
             })
             .catch(() => {
                 // If the access token is not returned, the user is not authenticated

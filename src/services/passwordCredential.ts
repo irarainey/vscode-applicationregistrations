@@ -44,9 +44,7 @@ export class PasswordCredentialService {
                 prompt: "Set password expiry date",
                 value: expiryDate.toISOString(),
                 ignoreFocusOut: true,
-                validateInput: (value) => {
-                    return this.validateExpiryDate(value);
-                }
+                validateInput: (value) => this.validateExpiryDate(value)
             });
 
             if (expiry !== undefined) {

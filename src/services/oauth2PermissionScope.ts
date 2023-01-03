@@ -93,7 +93,7 @@ export class OAuth2PermissionScopeService {
             return undefined;
         }
 
-        added = window.setStatusBarMessage("$(loading~spin) Adding new Scope...");
+        added = window.setStatusBarMessage("$(loading~spin) Adding new scope...");
         item.iconPath = new ThemeIcon("loading~spin");
         this._dataProvider.triggerOnDidChangeTreeData();
 
@@ -199,7 +199,7 @@ export class OAuth2PermissionScopeService {
             return undefined;
         }
 
-        edited = window.setStatusBarMessage("$(loading~spin) Updating Scope...");
+        edited = window.setStatusBarMessage("$(loading~spin) Updating scope...");
         item.iconPath = new ThemeIcon("loading~spin");
         this._dataProvider.triggerOnDidChangeTreeData();
 
@@ -221,7 +221,7 @@ export class OAuth2PermissionScopeService {
         // Set the state changed trigger default to undefined.
         let stateChanged = undefined;
 
-        stateChanged = window.setStatusBarMessage("$(loading~spin) Updating Scope State...");
+        stateChanged = window.setStatusBarMessage("$(loading~spin) Updating scope state...");
         item.iconPath = new ThemeIcon("loading~spin");
         this._dataProvider.triggerOnDidChangeTreeData();
 
@@ -256,7 +256,7 @@ export class OAuth2PermissionScopeService {
 
         // If the user confirms the removal then delete the role.
         if (answer === "Yes") {
-            deleted = window.setStatusBarMessage("$(loading~spin) Deleting Scope...");
+            deleted = window.setStatusBarMessage("$(loading~spin) Deleting scope...");
             item.iconPath = new ThemeIcon("loading~spin");
             this._dataProvider.triggerOnDidChangeTreeData();
 

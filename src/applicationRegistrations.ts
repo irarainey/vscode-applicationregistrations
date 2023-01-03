@@ -59,7 +59,7 @@ export class AppReg {
 
         workspace.onDidChangeConfiguration(event => {
             if (event.affectsConfiguration("applicationregistrations.showAllApplications") || event.affectsConfiguration("applicationregistrations.maximumApplicationsReturned")) {
-                this.populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations..."));
+                this.populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing application registrations..."));
             }
         });
     }
@@ -98,12 +98,12 @@ export class AppReg {
         } else if (newFilter === '' && this._filterText !== '') {
             this._filterText = undefined;
             this._filterCommand = undefined;
-            await this.populateTreeView(window.setStatusBarMessage("$(loading~spin) Loading Application Registrations..."));
+            await this.populateTreeView(window.setStatusBarMessage("$(loading~spin) Loading application registrations..."));
         } else if (newFilter !== '' && newFilter !== this._filterText) {
             // If the filter text is not empty then set the filter command and filter text.
             this._filterText = newFilter!;
             this._filterCommand = `startsWith(displayName, \'${newFilter}\')`;
-            await this.populateTreeView(window.setStatusBarMessage("$(loading~spin) Filtering Application Registrations..."));
+            await this.populateTreeView(window.setStatusBarMessage("$(loading~spin) Filtering application registrations..."));
         }
     }
 
