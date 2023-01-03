@@ -392,7 +392,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                 // Return the API permissions for the application
                 return this.getApplicationPartial(element.objectId!, "requiredResourceAccess")
                     .then((app: Application) => {
-                        return this.getApplicationApiPermissions(app.requiredResourceAccess!);
+                        return this.getApplicationApiPermissions(element, app.requiredResourceAccess!);
                     });
             case "EXPOSED-API-PERMISSIONS":
                 // Return the exposed API permissions for the application
@@ -537,7 +537,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Returns the api permissions for the given application
-    private async getApplicationApiPermissions(permissions: RequiredResourceAccess[]): Promise<AppRegItem[]> {
+    private async getApplicationApiPermissions(element: AppRegItem, permissions: RequiredResourceAccess[]): Promise<AppRegItem[]> {
 
         // Iterate through each permission and get the service principal app name
         const applicationNames = permissions.map(async (permission) => {
@@ -546,6 +546,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                 label: response.displayName!,
                 context: "API-PERMISSIONS-APP",
                 icon: new ThemeIcon("preview", new ThemeColor("editor.foreground")),
+                objectId: element.objectId,
                 value: permission.resourceAppId,
                 children: permission.resourceAccess!.map(resourceAccess => {
 

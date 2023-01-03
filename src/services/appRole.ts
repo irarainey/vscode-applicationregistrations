@@ -168,7 +168,7 @@ export class AppRoleService {
             prompt: "Edit display name",
             placeHolder: "Enter a display name for the new app role",
             ignoreFocusOut: true,
-            value: role.displayName ?? "",
+            value: role.displayName ?? undefined,
             validateInput: (value) => this.validateDisplayName(value)
         });
 
@@ -182,7 +182,7 @@ export class AppRoleService {
             prompt: "Edit value",
             placeHolder: "Enter a value for the new app role",
             ignoreFocusOut: true,
-            value: role.value ?? "",
+            value: role.value ?? undefined,
             validateInput: async (value) => this.validateValue(value, id, isEditing, role.value ?? undefined)
         });
 
@@ -196,7 +196,7 @@ export class AppRoleService {
             prompt: "Edit description",
             placeHolder: "Enter a description for the new app role",
             ignoreFocusOut: true,
-            value: role.description ?? "",
+            value: role.description ?? undefined,
             validateInput: (value) => this.validateDescription(value)
         });
 
@@ -268,7 +268,7 @@ export class AppRoleService {
     // Validates the value of an app role.
     private async validateValue(value: string, id: string, isEditing: boolean, oldValue: string | undefined): Promise<string | undefined> {
 
-        // Check the length of the display name.
+        // Check the length of the value.
         if (value.length > 250) {
             return "A value cannot be longer than 250 characters.";
         }
@@ -292,7 +292,7 @@ export class AppRoleService {
     // Validates the value of an app role.
     private validateDescription(description: string): string | undefined {
 
-        // Check the length of the display name.
+        // Check the length of the description.
         if (description.length < 1) {
             return "A description cannot be empty.";
         }

@@ -60,7 +60,10 @@ export class AppReg {
         this._signInAudienceService = signInAudienceService;
 
         this._appRoleService.onError((result) => this.errorHandler(result));
+        this._oauth2PermissionScopeService.onError((result) => this.errorHandler(result));
+        
         this._appRoleService.onComplete((result) => this.populateTreeView(result.statusBarHandle));
+        this._oauth2PermissionScopeService.onComplete((result) => this.populateTreeView(result.statusBarHandle));
 
         workspace.onDidChangeConfiguration(event => {
             if (event.affectsConfiguration("applicationregistrations.showAllApplications") || event.affectsConfiguration("applicationregistrations.maximumApplicationsReturned")) {
@@ -297,42 +300,22 @@ export class AppReg {
 
     // Adds a new exposed api scope to an application registration.
     public async addExposedApiScope(item: AppRegItem): Promise<void> {
-        // Add a new api scope and reload the tree view if successful.
-        const status = await this._oauth2PermissionScopeService.add(item);
-
-        if (status !== undefined) {
-            this.populateTreeView(status);
-        }
+        await this._oauth2PermissionScopeService.add(item);
     }
 
     // Deletes an exposed api scope.
     public async deleteExposedApiScope(item: AppRegItem): Promise<void> {
-        // Delete the api scope and reload the tree view if successful.
-        const status = await this._oauth2PermissionScopeService.delete(item);
-
-        if (status !== undefined) {
-            this.populateTreeView(status);
-        }
+        await this._oauth2PermissionScopeService.delete(item);
     }
 
     // Edits an exposed api scope.   
     public async editExposedApiScope(item: AppRegItem): Promise<void> {
-        // Edit the api scope and reload the tree view if successful.
-        const status = await this._oauth2PermissionScopeService.edit(item);
-
-        if (status !== undefined) {
-            this.populateTreeView(status);
-        }
+        await this._oauth2PermissionScopeService.edit(item);
     }
 
     // Changes the enabled state of an exposed api scope.   
     public async changeStateExposedApiScope(item: AppRegItem): Promise<void> {
-        // Edit the api scope and reload the tree view if successful.
-        const status = await this._oauth2PermissionScopeService.changeState(item);
-
-        if (status !== undefined) {
-            this.populateTreeView(status);
-        }
+        await this._oauth2PermissionScopeService.changeState(item);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
