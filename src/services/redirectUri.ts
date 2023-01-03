@@ -20,19 +20,15 @@ export class RedirectUriService {
     // Adds a new redirect URI to an application registration.
     public async add(item: AppRegItem): Promise<Disposable | undefined> {
 
-        let existingRedirectUris: string[] = [];
-        if (item.children !== undefined) {
-            existingRedirectUris = item.children!.map((child) => {
-                return child.label!.toString();
-            });
-        }
+        // Get the existing redirect URIs.
+        let existingRedirectUris = await this.getExistingUris(item);
 
         // Prompt the user for the new redirect URI.
         const redirectUri = await window.showInputBox({
             placeHolder: "Enter redirect URI...",
             prompt: "Add a new redirect URI to the application",
             ignoreFocusOut: true,
-            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, false)
+            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, existingRedirectUris)
         });
 
         // If the redirect URI is not empty then add it to the application.
@@ -81,23 +77,8 @@ export class RedirectUriService {
     // Edits a redirect URI.   
     public async edit(item: AppRegItem): Promise<Disposable | undefined> {
 
-        let existingRedirectUris: string[] = [];
-
         // Get the existing redirect URIs.
-        switch (item.contextValue) {
-            case "WEB-REDIRECT-URI":
-                const webParent = await this._dataProvider.getApplicationPartial(item.objectId!, "web");
-                existingRedirectUris = webParent.web!.redirectUris!;
-                break;
-            case "SPA-REDIRECT-URI":
-                const spaParent = await this._dataProvider.getApplicationPartial(item.objectId!, "spa");
-                existingRedirectUris = spaParent.spa!.redirectUris!;
-                break;
-            case "NATIVE-REDIRECT-URI":
-                const publicClientParent = await this._dataProvider.getApplicationPartial(item.objectId!, "publicClient");
-                existingRedirectUris = publicClientParent.publicClient!.redirectUris!;
-                break;
-        }
+        let existingRedirectUris = await this.getExistingUris(item);
 
         // Prompt the user for the new redirect URI.
         const redirectUri = await window.showInputBox({
@@ -105,7 +86,7 @@ export class RedirectUriService {
             prompt: "Rename application with new display name",
             value: item.label!.toString(),
             ignoreFocusOut: true,
-            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, true)
+            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, existingRedirectUris)
         });
 
         // If the new application name is not empty then update the application.
@@ -117,6 +98,29 @@ export class RedirectUriService {
             // Update the application.
             return await this.update(item, existingRedirectUris);
         }
+    }
+
+    // Gets the existing redirect URIs for an application.
+    private async getExistingUris(item: AppRegItem): Promise<string[]> {
+
+        let existingRedirectUris: string[] = [];
+
+        switch (item.contextValue) {
+            case "WEB-REDIRECT" || "WEB-REDIRECT-URI":
+                const webParent = await this._dataProvider.getApplicationPartial(item.objectId!, "web");
+                existingRedirectUris = webParent.web!.redirectUris!;
+                break;
+            case "SPA-REDIRECT" || "SPA-REDIRECT-URI":
+                const spaParent = await this._dataProvider.getApplicationPartial(item.objectId!, "spa");
+                existingRedirectUris = spaParent.spa!.redirectUris!;
+                break;
+            case "NATIVE-REDIRECT" || "NATIVE-REDIRECT-URI":
+                const publicClientParent = await this._dataProvider.getApplicationPartial(item.objectId!, "publicClient");
+                existingRedirectUris = publicClientParent.publicClient!.redirectUris!;
+                break;
+        }
+
+        return existingRedirectUris;
     }
 
     // Updates the redirect URIs for an application.
@@ -151,10 +155,10 @@ export class RedirectUriService {
     }
 
     // Validates the redirect URI as per https://learn.microsoft.com/en-us/azure/active-directory/develop/reply-url
-    private validateRedirectUri(uri: string, context: string, existingRedirectUris: string[], isEditing: boolean): string | undefined {
+    private validateRedirectUri(uri: string, context: string, existingRedirectUris: string[]): string | undefined {
 
         // Check to see if the redirect URI already exists.
-        if (existingRedirectUris.includes(uri) && isEditing === false) {
+        if (existingRedirectUris.includes(uri)) {
             return "The redirect URI specified already exists.";
         }
 
