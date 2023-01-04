@@ -1,5 +1,5 @@
 import "isomorphic-fetch";
-import { window, Disposable } from 'vscode';
+import { window, Disposable, workspace } from 'vscode';
 import { scope, propertiesToIgnoreOnUpdate, directoryObjectsUri, maximumQueryApps } from '../constants';
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
@@ -122,22 +122,46 @@ export class GraphClient {
 
     // Returns ids and names for all owned application registrations
     public async getApplicationListOwned(filter?: string): Promise<Application[]> {
-        const ownedApplications = await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
-            .filter(filter === undefined ? "" : filter)
-            .top(maximumQueryApps)
-            .select("id,displayName")
-            .get();
-        return ownedApplications.value;
+        const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
+        if (useEventualConsistency === true) {
+            const ownedApplications = await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
+                .filter(filter === undefined ? "" : filter)
+                .header("ConsistencyLevel", "eventual")
+                .count(true)
+                .top(maximumQueryApps)
+                .orderby("displayName")
+                .select("id,displayName")
+                .get();
+            return ownedApplications.value;
+        } else {
+            const ownedApplications = await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
+                .top(maximumQueryApps)
+                .select("id,displayName")
+                .get();
+            return ownedApplications.value;
+        }
     }
 
     // Returns ids and names for all application registrations
     public async getApplicationListAll(filter?: string): Promise<Application[]> {
-        const allApplications = await this._client!.api("/applications/")
-            .filter(filter === undefined ? "" : filter)
-            .top(maximumQueryApps)
-            .select("id,displayName")
-            .get();
-        return allApplications.value;
+        const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
+        if (useEventualConsistency === true) {
+            const allApplications = await this._client!.api("/applications/")
+                .filter(filter === undefined ? "" : filter)
+                .header("ConsistencyLevel", "eventual")
+                .count(true)
+                .top(maximumQueryApps)
+                .orderby("displayName")
+                .select("id,displayName")
+                .get();
+            return allApplications.value;
+        } else {
+            const allApplications = await this._client!.api("/applications/")
+                .top(maximumQueryApps)
+                .select("id,displayName")
+                .get();
+            return allApplications.value;
+        }
     }
 
     // Returns all owners for a specified application registration

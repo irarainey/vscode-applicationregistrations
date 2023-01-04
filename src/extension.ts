@@ -39,7 +39,9 @@ const _signInAudienceService = new SignInAudienceService(_treeDataProvider, _gra
 export async function activate(context: ExtensionContext) {
 
 	workspace.onDidChangeConfiguration(event => {
-		if (event.affectsConfiguration("applicationregistrations.showAllApplications") || event.affectsConfiguration("applicationregistrations.maximumApplicationsReturned")) {
+		if (event.affectsConfiguration("applicationregistrations.showAllApplications")
+			|| event.affectsConfiguration("applicationregistrations.maximumApplicationsReturned")
+			|| event.affectsConfiguration("applicationregistrations.useEventualConsistency")) {
 			populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing application registrations..."));
 		}
 	});
@@ -198,7 +200,7 @@ async function filterTreeView() {
 	} else if (newFilter !== '' && newFilter !== _filterText) {
 		// If the filter text is not empty then set the filter command and filter text.
 		_filterText = newFilter!;
-		_filterCommand = _filterText; //`startsWith(displayName, \'${newFilter}\')`;
+		_filterCommand = `startsWith(displayName, \'${newFilter}\')`;
 		await populateTreeView(window.setStatusBarMessage("$(loading~spin) Filtering application registrations..."));
 	}
 };

@@ -39,11 +39,17 @@
           "maximum": 200,
           "order": 0
         },
+        "applicationregistrations.useEventualConsistency": {
+          "type": "boolean",
+          "description": "Use eventual consistency header on Graph API calls for application list.",
+          "default": true,
+          "order": 1
+        },
         "applicationregistrations.showAllApplications": {
           "type": "boolean",
           "description": "Show all applications, including those that are not owned by the current user.",
           "default": false,
-          "order": 1
+          "order": 2
         }
       }
     },
