@@ -4,6 +4,7 @@ import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 import { ServiceBase } from './serviceBase';
 import { GraphClient } from '../clients/graph';
+import { User } from "@microsoft/microsoft-graph-types";
 
 export class OwnerService extends ServiceBase {
 
@@ -18,12 +19,15 @@ export class OwnerService extends ServiceBase {
     // Adds a new owner to an application registration.
     public async add(item: AppRegItem): Promise<void> {
 
+        // Get the existing owners.
+        const existingOwners = (await this._graphClient.getApplicationOwners(item.objectId!)).value;
+
         // Prompt the user for the new owner.
         const owner = await window.showInputBox({
             placeHolder: "Enter user name or email address...",
             prompt: "Add new owner to application",
             ignoreFocusOut: true,
-            validateInput: async (value) => await this.validateOwner(value)
+            validateInput: async (value) => await this.validateOwner(value, existingOwners)
         });
 
         // If the new owner name is not empty then add as an owner.
@@ -63,12 +67,12 @@ export class OwnerService extends ServiceBase {
     }
 
     // Opens the user in the Azure Portal.
-    public openInPortal(user: AppRegItem): void {
-        env.openExternal(Uri.parse(`${portalUserUri}${user.userId}`));
+    public openInPortal(item: AppRegItem): void {
+        env.openExternal(Uri.parse(`${portalUserUri}${item.userId}`));
     }
 
     // Validates the owner name or email address.
-    private async validateOwner(owner: string): Promise<string | undefined> {
+    private async validateOwner(owner: string, existing: User[]): Promise<string | undefined> {
 
         this._userList = undefined;
         let identifier: string = "";
@@ -88,6 +92,13 @@ export class OwnerService extends ServiceBase {
         } else if (this._userList.value.length > 1) {
             // More than one user found
             return `More than one user with the ${identifier} beginning with ${owner} exists in your directory.`;
+        }
+
+        // Check if the user is already an owner.
+        for (let i = 0; i < existing.length; i++) {
+            if (existing[i].id === this._userList.value[0].id) {
+                return `${owner} is already an owner of this application.`;
+            }
         }
 
         return undefined;
