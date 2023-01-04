@@ -43,7 +43,7 @@ This extension was created both as a learning exercise, and to address the commo
 It has a dependency on the [Azure Tools extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack), but only because it places the application registrations view into the Azure view container.
 
 ## Functionality In Progress
-The following functionality has not yet been implemented, but is on the backlog for addition in future releases. If any of this functionality is required you can right-click the application and open the portal blade to manage them.
+The following functionality has not yet been implemented, but is on the backlog for addition in future releases. If any of this functionality is required you can right-click the application and open in the portal blade to manage them.
 
 * Pre-authorized applications
 * Management of certificate credentials
