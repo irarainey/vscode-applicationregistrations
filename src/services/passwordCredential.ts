@@ -4,6 +4,7 @@ import { AppRegItem } from '../models/appRegItem';
 import { addYears, isAfter, isBefore, isDate } from 'date-fns';
 import { ServiceBase } from './serviceBase';
 import { GraphClient } from '../clients/graph';
+import { format } from 'date-fns';
 
 export class PasswordCredentialService extends ServiceBase {
 
@@ -31,7 +32,7 @@ export class PasswordCredentialService extends ServiceBase {
             const expiry = await window.showInputBox({
                 placeHolder: "Password expiry...",
                 prompt: "Set password expiry date",
-                value: expiryDate.toISOString(),
+                value: format(new Date(expiryDate), 'yyyy-MM-dd'),
                 ignoreFocusOut: true,
                 validateInput: (value) => this.validateExpiryDate(value)
             });
