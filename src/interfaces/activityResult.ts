@@ -2,7 +2,7 @@ import { Disposable, Uri, ThemeIcon } from 'vscode';
 import { AppRegItem } from '../models/appRegItem';
 
 // This is the interface for the return result of service methods
-export interface ActivityStatus {
+export interface ActivityResult {
     success: boolean;
     error?: Error;
     statusBarHandle?: Disposable;

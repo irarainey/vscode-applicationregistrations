@@ -12,7 +12,7 @@ import { PasswordCredentialService } from './services/passwordCredential';
 import { RedirectUriService } from './services/redirectUri';
 import { RequiredResourceAccessService } from './services/requiredResourceAccess';
 import { SignInAudienceService } from './services/signInAudience';
-import { ActivityStatus } from './interfaces/activityStatus';
+import { ActivityResult } from './interfaces/activityResult';
 
 // Globals to deal with the list filter
 let _filterCommand: string | undefined = undefined;
@@ -150,7 +150,6 @@ export async function activate(context: ExtensionContext) {
 
 // This method is called when your extension is deactivated.
 export async function deactivate() {
-
 	_signInAudienceService.dispose();
 	_requiredResourceAccessService.dispose();
 	_redirectUriService.dispose();
@@ -162,7 +161,6 @@ export async function deactivate() {
 	_applicationService.dispose();
 	_graphClient.dispose();
 	_dataProvider.dispose();
-
 }
 
 // Define the populateTreeView function.
@@ -217,7 +215,7 @@ function copyValue(item: AppRegItem) {
 };
 
 // Define the error handler function.
-async function errorHandler(result: ActivityStatus) {
+async function errorHandler(result: ActivityResult) {
 	// Clear any status bar messages.
 	result.statusBarHandle!.dispose();
 

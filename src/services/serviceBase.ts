@@ -1,7 +1,7 @@
 import { Event, EventEmitter, Disposable, ThemeIcon, window } from 'vscode';
 import { GraphClient } from '../clients/graph';
 import { AppRegDataProvider } from '../data/applicationRegistration';
-import { ActivityStatus } from '../interfaces/activityStatus';
+import { ActivityResult } from '../interfaces/activityResult';
 import { AppRegItem } from '../models/appRegItem';
 
 export class ServiceBase {
@@ -16,17 +16,17 @@ export class ServiceBase {
     protected _dataProvider: AppRegDataProvider;
 
     // A protected instance of the EventEmitter class to handle error events.
-    protected _onError: EventEmitter<ActivityStatus> = new EventEmitter<ActivityStatus>();
+    protected _onError: EventEmitter<ActivityResult> = new EventEmitter<ActivityResult>();
 
     // A protected instance of the EventEmitter class to handle complete events.
-    protected _onComplete: EventEmitter<ActivityStatus> = new EventEmitter<ActivityStatus>();
+    protected _onComplete: EventEmitter<ActivityResult> = new EventEmitter<ActivityResult>();
 
     // A public readonly property to expose the error event.
-    public readonly onError: Event<ActivityStatus> = this._onError.event;
+    public readonly onError: Event<ActivityResult> = this._onError.event;
 
     // A public readonly property to expose the complete event.
-    public readonly onComplete: Event<ActivityStatus> = this._onComplete.event;
-    
+    public readonly onComplete: Event<ActivityResult> = this._onComplete.event;
+
     // The constructor for the OwnerService class.
     constructor(dataProvider: AppRegDataProvider, graphClient: GraphClient) {
         this._dataProvider = dataProvider;
@@ -50,5 +50,5 @@ export class ServiceBase {
                 x.dispose();
             }
         }
-    }    
+    }
 }

@@ -651,6 +651,6 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     public dispose(): void {
 
         this._onDidChangeTreeData.dispose();
-        
+
     }
 }

@@ -28,7 +28,7 @@ export class SignInAudienceService extends ServiceBase {
                 item.iconPath = new ThemeIcon("loading~spin");
             }
             this._dataProvider.triggerOnDidChangeTreeData();
-            const status = window.setStatusBarMessage(`$(loading~spin) Updating sign in audience...`)
+            const status = window.setStatusBarMessage(`$(loading~spin) Updating sign in audience...`);
 
             this._graphClient.updateApplication(item.objectId!, { signInAudience: convertSignInAudience(audience) })
                 .then(() => {
@@ -42,7 +42,7 @@ export class SignInAudienceService extends ServiceBase {
                     }
                     this._dataProvider.triggerOnDidChangeTreeData();
                     status.dispose();
-            
+
                     window.showErrorMessage(
                         `An error occurred while attempting to change the sign in audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at ${signInAudienceDocumentation}.`,
                         ...["OK", "Open Documentation"]
