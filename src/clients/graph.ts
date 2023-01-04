@@ -105,11 +105,19 @@ export class GraphClient {
     }
 
     // Returns partial details for a specified application registration
-    public async getApplicationDetailsPartial(id: string, select: string): Promise<Application> {
-        return await this._client!.api(`/applications/${id}`)
-            .top(1)
-            .select(select)
-            .get();
+    public async getApplicationDetailsPartial(id: string, select: string, expandOwners: boolean = false): Promise<Application> {
+        if (expandOwners !== true) {
+            return await this._client!.api(`/applications/${id}`)
+                .top(1)
+                .select(select)
+                .get();
+        } else {
+            return await this._client!.api(`/applications/${id}`)
+                .top(1)
+                .select(select)
+                .expand("owners")
+                .get();
+        }
     }
 
     // Returns ids and names for all owned application registrations

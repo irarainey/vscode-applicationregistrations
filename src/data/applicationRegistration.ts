@@ -133,7 +133,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
             // Iterate through the application registrations up to the maximum number to be returned.
             for (let index = 0; index < maximumListCount; index++) {
                 // Get the details for the application without using eventual consistency.
-                this._graphClient.getApplicationDetailsPartial(allApps[index].id!, appSelectProperties)
+                this._graphClient.getApplicationDetailsPartial(allApps[index].id!, appSelectProperties, true)
                     .then((app: Application) => {
                         // Populate an array with tree view items for the application and it's static children
                         unsorted.push(new AppRegItem({
@@ -297,7 +297,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                                     objectId: app.id!,
                                     icon: new ThemeIcon("organization", new ThemeColor("editor.foreground")),
                                     tooltip: "Owners are users who can manage the application.",
-                                    children: []
+                                    children: app.owners!.length === 0 ? undefined : []
                                 }),
                             ]
                         }));
@@ -649,8 +649,6 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
 
     // Dispose of the event listener
     public dispose(): void {
-
         this._onDidChangeTreeData.dispose();
-
     }
 }
