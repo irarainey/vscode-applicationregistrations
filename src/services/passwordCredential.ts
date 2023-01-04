@@ -43,7 +43,7 @@ export class PasswordCredentialService extends ServiceBase {
                 this.graphClient.addPasswordCredential(item.objectId!, description, expiry)
                     .then((response) => {
                         env.clipboard.writeText(response.secretText!);
-                        window.showInformationMessage("New password copied to clipboard.");
+                        window.showInformationMessage("New password copied to clipboard.", "OK");
                         this.triggerOnComplete({ success: true, statusBarHandle: status });
                     })
                     .catch((error) => {

@@ -335,7 +335,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             else {
                 // Otherwise just show an error message
                 console.error(error);
-                window.showErrorMessage(error.message);
+                window.showErrorMessage(error.message, "OK");
             }
         }
     }

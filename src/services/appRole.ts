@@ -100,7 +100,7 @@ export class AppRoleService extends ServiceBase {
     public async delete(item: AppRegItem): Promise<void> {
 
         if (item.state !== false) {
-            window.showWarningMessage("Role cannot be deleted unless disabled first.");
+            window.showWarningMessage("Role cannot be deleted unless disabled first.", "OK");
             return;
         }
 

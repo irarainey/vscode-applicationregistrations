@@ -232,5 +232,5 @@ async function errorHandler(result: ActivityResult) {
 	console.error(result.error);
 
 	// Display an error message.
-	window.showErrorMessage(`An error occurred trying to complete your task: ${result.error!.message}.`);
+	window.showErrorMessage(`An error occurred trying to complete your task: ${result.error!.message}.`, "OK");
 };

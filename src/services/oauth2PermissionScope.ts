@@ -17,6 +17,13 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     // Adds a new exposed api scope to an application registration.
     public async add(item: AppRegItem): Promise<void> {
 
+        // Check to see if the application has an appIdURI. If it doesn't then we don't want to add a scope.
+        const appIdUri = (await this.graphClient.getApplicationDetailsPartial(item.objectId!, "identifierUris")).identifierUris;
+        if(appIdUri === undefined || appIdUri.length === 0) {
+            window.showWarningMessage("This application does not have an Application Id URI. Please add one before adding a scope.", "OK");
+            return;
+        }
+
         // Capture the new scope details by passing in an empty scope.
         const scope = await this.inputScopeDetails({}, item.objectId!, false);
 
@@ -100,7 +107,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     public async delete(item: AppRegItem): Promise<void> {
 
         if (item.state !== false) {
-            window.showWarningMessage("Scopes cannot be deleted unless disabled first.");
+            window.showWarningMessage("Scopes cannot be deleted unless disabled first.", "OK");
             return;
         }
 
