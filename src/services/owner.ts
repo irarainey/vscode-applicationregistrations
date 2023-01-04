@@ -5,6 +5,7 @@ import { AppRegItem } from '../models/appRegItem';
 import { ServiceBase } from './serviceBase';
 import { GraphClient } from '../clients/graph';
 import { User } from "@microsoft/microsoft-graph-types";
+import { debounce } from "ts-debounce";
 
 export class OwnerService extends ServiceBase {
 
@@ -22,12 +23,16 @@ export class OwnerService extends ServiceBase {
         // Get the existing owners.
         const existingOwners = (await this.graphClient.getApplicationOwners(item.objectId!)).value;
 
+        // Debounce the validation function to prevent multiple calls to the Graph API.
+        const validation = async (value: string) => this.validateOwner(value, existingOwners);
+        const debouncedValidation = debounce(validation, 500);
+
         // Prompt the user for the new owner.
         const owner = await window.showInputBox({
             placeHolder: "Enter user name or email address...",
             prompt: "Add new owner to application",
             ignoreFocusOut: true,
-            validateInput: async (value) => await this.validateOwner(value, existingOwners)
+            validateInput: async (value) => await debouncedValidation(value)
         });
 
         // If the new owner name is not empty then add as an owner.

@@ -5,6 +5,7 @@ import { AppRole } from "@microsoft/microsoft-graph-types";
 import { v4 as uuidv4 } from 'uuid';
 import { ServiceBase } from './serviceBase';
 import { GraphClient } from '../clients/graph';
+import { debounce } from "ts-debounce";
 
 export class AppRoleService extends ServiceBase {
 
@@ -151,13 +152,17 @@ export class AppRoleService extends ServiceBase {
             return undefined;
         }
 
+        // Debounce the validation function to prevent multiple calls to the Graph API.
+        const validation = async (value: string, id: string, isEditing: boolean, oldValue: string | undefined) => this.validateValue(value, id, isEditing, role.value ?? undefined);
+        const debouncedValidation = debounce(validation, 500);
+
         // Prompt the user for the new value.
         const value = await window.showInputBox({
             prompt: "Edit value",
             placeHolder: "Enter a value for the new app role",
             ignoreFocusOut: true,
             value: role.value ?? undefined,
-            validateInput: async (value) => this.validateValue(value, id, isEditing, role.value ?? undefined)
+            validateInput: async (value) => debouncedValidation(value, id, isEditing, role.value ?? undefined)
         });
 
         // If escape is pressed then return undefined.

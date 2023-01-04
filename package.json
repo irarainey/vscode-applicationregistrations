@@ -372,6 +372,7 @@
     "date-fns": "^2.29.3",
     "fast-sort": "^3.2.0",
     "isomorphic-fetch": "^3.0.0",
+    "ts-debounce": "^4.0.0",
     "uuid": "^9.0.0"
   }
 }

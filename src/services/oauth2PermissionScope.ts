@@ -5,6 +5,7 @@ import { PermissionScope, ApiApplication } from "@microsoft/microsoft-graph-type
 import { v4 as uuidv4 } from 'uuid';
 import { ServiceBase } from './serviceBase';
 import { GraphClient } from '../clients/graph';
+import { debounce } from "ts-debounce";
 
 export class OAuth2PermissionScopeService extends ServiceBase {
 
@@ -137,13 +138,17 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     // Captures the details for a scope.
     private async inputScopeDetails(scope: PermissionScope, id: string, isEditing: boolean): Promise<PermissionScope | undefined> {
 
+        // Debounce the validation function to prevent multiple calls to the Graph API.
+        const validation = async (value: string, id: string, isEditing: boolean, oldValue: string | undefined) => this.validateValue(value, id, isEditing, scope.value ?? undefined);
+        const debouncedValidation = debounce(validation, 500);
+
         // Prompt the user for the new value.
         const value = await window.showInputBox({
             prompt: "Edit scope name",
             placeHolder: "Enter a new scope name (e.g. Files.Read)",
             ignoreFocusOut: true,
             value: scope.value ?? undefined,
-            validateInput: async (value) => this.validateValue(value, id, isEditing, scope.value ?? undefined)
+            validateInput: async (value) => debouncedValidation(value, id, isEditing, scope.value ?? undefined)
         });
 
         // If escape is pressed or the new name is empty then return undefined.
