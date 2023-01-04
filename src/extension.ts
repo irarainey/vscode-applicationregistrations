@@ -45,6 +45,7 @@ export async function activate(context: ExtensionContext) {
 	});
 
 	// Hook up the error handlers.
+	_treeDataProvider.onError((result) => errorHandler(result));
 	_applicationService.onError((result) => errorHandler(result));
 	_appRoleService.onError((result) => errorHandler(result));
 	_keyCredentialService.onError((result) => errorHandler(result));
@@ -197,7 +198,7 @@ async function filterTreeView() {
 	} else if (newFilter !== '' && newFilter !== _filterText) {
 		// If the filter text is not empty then set the filter command and filter text.
 		_filterText = newFilter!;
-		_filterCommand = `startsWith(displayName, \'${newFilter}\')`;
+		_filterCommand = _filterText; //`startsWith(displayName, \'${newFilter}\')`;
 		await populateTreeView(window.setStatusBarMessage("$(loading~spin) Filtering application registrations..."));
 	}
 };

@@ -4,6 +4,7 @@ import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, E
 import { Application, KeyCredential, PasswordCredential, User, AppRole, RequiredResourceAccess, PermissionScope } from "@microsoft/microsoft-graph-types";
 import { GraphClient } from '../clients/graph';
 import { AppRegItem } from '../models/appRegItem';
+import { ActivityResult } from '../interfaces/activityResult';
 import { sort } from 'fast-sort';
 import { format } from 'date-fns';
 
@@ -16,8 +17,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     // Private instance of the tree data
     private _treeData: AppRegItem[] = [];
 
-    // A private instance of the status bar message
-    private _statusBarMessage: Disposable | undefined;
+    // A private instance of the status bar message handle.
+    private _statusBarHandle: Disposable | undefined;
 
     // A private instance of a flag to indicate if the tree view is currently being updated.
     private _isUpdating: boolean = false;
@@ -25,8 +26,14 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     // This is the event that is fired when the tree view is refreshed.
     private _onDidChangeTreeData: EventEmitter<AppRegItem | undefined | null | void> = new EventEmitter<AppRegItem | undefined | null | void>();
 
+    // A protected instance of the EventEmitter class to handle error events.
+    private _onError: EventEmitter<ActivityResult> = new EventEmitter<ActivityResult>();
+
     //Defines the event that is fired when the tree view is refreshed.
     public readonly onDidChangeTreeData: Event<AppRegItem | undefined | null | void> = this._onDidChangeTreeData.event;
+
+    // A public readonly property to expose the error event.
+    public readonly onError: Event<ActivityResult> = this._onError.event;
 
     // The constructor for the AppRegDataProvider class.
     constructor(graphClient: GraphClient) {
@@ -34,6 +41,11 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
         window.registerTreeDataProvider(view, this);
         this.renderTreeView("INITIALISING", undefined, undefined);
         this.initialiseGraphClient(undefined);
+    }
+
+    // Trigger the event to indicate an error
+    private triggerOnError(item: ActivityResult) {
+        this._onError.fire(item);
     }
 
     // A public method to initialise the graph client.
@@ -66,11 +78,11 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     public async renderTreeView(type: string, statusBarMessage: Disposable | undefined = undefined, filter?: string): Promise<void> {
 
         // Clear any existing status bar message
-        if (this._statusBarMessage !== undefined) {
-            await this._statusBarMessage.dispose();
+        if (this._statusBarHandle !== undefined) {
+            await this._statusBarHandle.dispose();
         }
 
-        this._statusBarMessage = statusBarMessage;
+        this._statusBarHandle = statusBarMessage;
 
         // Clear the tree data
         this._treeData = [];
@@ -311,8 +323,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                             this._treeData = sort(unsorted).asc(a => a.order);
 
                             // Clear any status bar message
-                            if (this, this._statusBarMessage !== undefined) {
-                                this._statusBarMessage.dispose();
+                            if (this, this._statusBarHandle !== undefined) {
+                                this._statusBarHandle.dispose();
                             }
 
                             // Trigger the event to refresh the tree view
@@ -333,9 +345,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 this._graphClient.initialise();
             }
             else {
-                // Otherwise just show an error message
-                console.error(error);
-                window.showErrorMessage(error.message, "OK");
+                this.triggerOnError({ success: false, statusBarHandle: this._statusBarHandle, error: error });
             }
         }
     }
