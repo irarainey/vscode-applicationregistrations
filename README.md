@@ -42,6 +42,17 @@ This extension was created both as a learning exercise, and to address the commo
 
 It has a dependency on the [Azure Tools extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack), but only because it places the application registrations view into the Azure view container.
 
+## Functionality In Progress
+The following functionality has not yet been implemented, but is on the backlog for addition in future releases. If any of this functionality is required you can right-click the application and open the portal blade to manage them.
+
+* Pre-authorized applications
+* Management of certificate credentials
+* Android / iOS Redirect URIs
+* Public flow settings
+* Implicit flow settings
+* Optional token claims
+* Federation credentials
+* Deleted applications
+
 ## Known Limitations
 Azure Active Directory stores multiple copies of data to handle large read volume and provide high availability. When data is created or updated, the change will eventually be applied to all the copies. This means that occasionally after making changes the list may not initially reflect the new state. If this happens just wait a short time and refresh the list again. Read more on [Eventual Consistency](https://blogs.aaddevsup.xyz/2021/08/why-do-i-sometimes-get-a-404-when-trying-to-update-an-azure-directory-object-after-i-just-created-it/).
-
