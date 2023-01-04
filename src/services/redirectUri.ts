@@ -1,4 +1,4 @@
-import { window, ThemeIcon, Disposable } from 'vscode';
+import { window, Disposable } from 'vscode';
 import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 import { ServiceBase } from './serviceBase';
@@ -12,7 +12,7 @@ export class RedirectUriService extends ServiceBase {
     }
 
     // Adds a new redirect URI to an application registration.
-    public async add(item: AppRegItem): Promise<Disposable | undefined> {
+    public async add(item: AppRegItem): Promise<void> {
 
         // Get the existing redirect URIs.
         let existingRedirectUris = await this.getExistingUris(item);
@@ -22,20 +22,18 @@ export class RedirectUriService extends ServiceBase {
             placeHolder: "Enter redirect URI...",
             prompt: "Add a new redirect URI to the application",
             ignoreFocusOut: true,
-            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, existingRedirectUris)
+            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, false, undefined)
         });
 
         // If the redirect URI is not empty then add it to the application.
         if (redirectUri !== undefined && redirectUri.length > 0) {
             existingRedirectUris.push(redirectUri);
-            return await this.update(item, existingRedirectUris);
-        } else {
-            return undefined;
+            await this.update(item, existingRedirectUris);
         }
     }
 
     // Deletes a redirect URI.
-    public async delete(item: AppRegItem): Promise<Disposable | undefined> {
+    public async delete(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the deletion.
         const answer = await window.showInformationMessage(`Do you want to delete the redirect uri ${item.label!}?`, "Yes", "No");
@@ -64,12 +62,12 @@ export class RedirectUriService extends ServiceBase {
             }
 
             // Update the application.
-            return await this.update(item, newArray);
+            await this.update(item, newArray);
         }
     }
 
     // Edits a redirect URI.   
-    public async edit(item: AppRegItem): Promise<Disposable | undefined> {
+    public async edit(item: AppRegItem): Promise<void> {
 
         // Get the existing redirect URIs.
         let existingRedirectUris = await this.getExistingUris(item);
@@ -80,7 +78,7 @@ export class RedirectUriService extends ServiceBase {
             prompt: "Rename application with new display name",
             value: item.label!.toString(),
             ignoreFocusOut: true,
-            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, existingRedirectUris)
+            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, true, item.label!.toString())
         });
 
         // If the new application name is not empty then update the application.
@@ -90,7 +88,7 @@ export class RedirectUriService extends ServiceBase {
             existingRedirectUris.push(redirectUri);
 
             // Update the application.
-            return await this.update(item, existingRedirectUris);
+            await this.update(item, existingRedirectUris);
         }
     }
 
@@ -100,15 +98,18 @@ export class RedirectUriService extends ServiceBase {
         let existingRedirectUris: string[] = [];
 
         switch (item.contextValue) {
-            case "WEB-REDIRECT" || "WEB-REDIRECT-URI":
+            case "WEB-REDIRECT":
+            case "WEB-REDIRECT-URI":
                 const webParent = await this._dataProvider.getApplicationPartial(item.objectId!, "web");
                 existingRedirectUris = webParent.web!.redirectUris!;
                 break;
-            case "SPA-REDIRECT" || "SPA-REDIRECT-URI":
+            case "SPA-REDIRECT":
+            case "SPA-REDIRECT-URI":
                 const spaParent = await this._dataProvider.getApplicationPartial(item.objectId!, "spa");
                 existingRedirectUris = spaParent.spa!.redirectUris!;
                 break;
-            case "NATIVE-REDIRECT" || "NATIVE-REDIRECT-URI":
+            case "NATIVE-REDIRECT":
+            case "NATIVE-REDIRECT-URI":
                 const publicClientParent = await this._dataProvider.getApplicationPartial(item.objectId!, "publicClient");
                 existingRedirectUris = publicClientParent.publicClient!.redirectUris!;
                 break;
@@ -118,42 +119,50 @@ export class RedirectUriService extends ServiceBase {
     }
 
     // Updates the redirect URIs for an application.
-    private async update(item: AppRegItem, redirectUris: string[]): Promise<Disposable | undefined> {
+    private async update(item: AppRegItem, redirectUris: string[]): Promise<void> {
 
         // Show progress indicator.
-        let updated = window.setStatusBarMessage("$(loading~spin) Updating redirect uris...");
-        item.iconPath = new ThemeIcon("loading~spin");
-        this._dataProvider.triggerOnDidChangeTreeData();
+        const previousIcon = item.iconPath;
+        const status = this.indicateChange("Updating redirect uris...", item);
 
         // Determine which section to add the redirect URI to.
         if (item.contextValue! === "WEB-REDIRECT-URI" || item.contextValue! === "WEB-REDIRECT") {
-            await this._graphClient.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } })
+            this._graphClient.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } })
+                .then(() => {
+                    this._onComplete.fire({ success: true, statusBarHandle: status });
+                })
                 .catch((error) => {
-                    console.error(error);
+                    this._onError.fire({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
                 });
         }
         else if (item.contextValue! === "SPA-REDIRECT-URI" || item.contextValue! === "SPA-REDIRECT") {
-            await this._graphClient.updateApplication(item.objectId!, { spa: { redirectUris: redirectUris } })
+            this._graphClient.updateApplication(item.objectId!, { spa: { redirectUris: redirectUris } })
+                .then(() => {
+                    this._onComplete.fire({ success: true, statusBarHandle: status });
+                })
                 .catch((error) => {
-                    console.error(error);
+                    this._onError.fire({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
                 });
         }
         else if (item.contextValue! === "NATIVE-REDIRECT-URI" || item.contextValue! === "NATIVE-REDIRECT") {
-            await this._graphClient.updateApplication(item.objectId!, { publicClient: { redirectUris: redirectUris } })
+            this._graphClient.updateApplication(item.objectId!, { publicClient: { redirectUris: redirectUris } })
+                .then(() => {
+                    this._onComplete.fire({ success: true, statusBarHandle: status });
+                })
                 .catch((error) => {
-                    console.error(error);
+                    this._onError.fire({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
                 });
         }
-
-        return updated;
     }
 
     // Validates the redirect URI as per https://learn.microsoft.com/en-us/azure/active-directory/develop/reply-url
-    private validateRedirectUri(uri: string, context: string, existingRedirectUris: string[]): string | undefined {
+    private validateRedirectUri(uri: string, context: string, existingRedirectUris: string[], isEditing: boolean, oldValue: string | undefined): string | undefined {
 
-        // Check to see if the redirect URI already exists.
-        if (existingRedirectUris.includes(uri)) {
-            return "The redirect URI specified already exists.";
+        // Check to see if the uri already exists.
+        if ((isEditing === true && oldValue !== uri) || isEditing === false) {
+            if (existingRedirectUris.includes(uri)) {
+                return "The redirect URI specified already exists.";
+            }
         }
 
         if (context === "WEB-REDIRECT-URI" || context === "WEB-REDIRECT") {

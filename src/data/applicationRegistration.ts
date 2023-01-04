@@ -19,11 +19,11 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
     // A private instance of the status bar message
     private _statusBarMessage: Disposable | undefined;
 
-    // This is the event that is fired when the tree view is refreshed.
-    private _onDidChangeTreeData: EventEmitter<AppRegItem | undefined | null | void> = new EventEmitter<AppRegItem | undefined | null | void>();
-
     // A private instance of a flag to indicate if the tree view is currently being updated.
     private _isUpdating: boolean = false;
+
+    // This is the event that is fired when the tree view is refreshed.
+    private _onDidChangeTreeData: EventEmitter<AppRegItem | undefined | null | void> = new EventEmitter<AppRegItem | undefined | null | void>();
 
     //Defines the event that is fired when the tree view is refreshed.
     public readonly onDidChangeTreeData: Event<AppRegItem | undefined | null | void> = this._onDidChangeTreeData.event;
@@ -645,5 +645,12 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                 ]
             });
         });
+    }
+
+    // Dispose of the event listener
+    public dispose(): void {
+
+        this._onDidChangeTreeData.dispose();
+        
     }
 }

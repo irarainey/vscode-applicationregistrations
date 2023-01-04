@@ -213,4 +213,10 @@ export class GraphClient {
         return await this._client!.api(`servicePrincipals(appId='${id}')`)
             .get();
     }
+
+    // Disposes the client
+    public dispose(): void {
+        this._client = undefined;
+        this._graphClientInitialised = false;
+    }
 }

@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { window, ThemeIcon, env, Uri, TextDocumentContentProvider, EventEmitter, workspace, Disposable, ExtensionContext } from 'vscode';
+import { window, ThemeIcon, env, Uri, TextDocumentContentProvider, EventEmitter, workspace, Disposable } from 'vscode';
 import { portalAppUri, signInAudienceOptions } from '../constants';
 import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
@@ -9,13 +9,9 @@ import { GraphClient } from '../clients/graph';
 
 export class ApplicationService extends ServiceBase {
 
-    // A private array to store the subscriptions.
-    private _subscriptions: Disposable[] = [];
-
     // The constructor for the ApplicationService class.
-    constructor(dataProvider: AppRegDataProvider, graphClient: GraphClient, context: ExtensionContext) {
+    constructor(dataProvider: AppRegDataProvider, graphClient: GraphClient) {
         super(dataProvider, graphClient);
-        this._subscriptions = context.subscriptions;
     }
 
     // Creates a new application registration.
@@ -194,7 +190,7 @@ export class ApplicationService extends ServiceBase {
             }
         };
 
-        this._subscriptions.push(workspace.registerTextDocumentContentProvider('manifest', newDocument));
+        this._disposable.push(workspace.registerTextDocumentContentProvider('manifest', newDocument));
         const uri = Uri.parse('manifest:' + app.label + ".json");
         workspace.openTextDocument(uri)
             .then(doc => {

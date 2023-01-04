@@ -1,4 +1,4 @@
-import { env, window, ThemeIcon, Disposable } from 'vscode';
+import { env, window } from 'vscode';
 import { AppRegDataProvider } from '../data/applicationRegistration';
 import { AppRegItem } from '../models/appRegItem';
 import { addYears, isAfter, isBefore, isDate } from 'date-fns';
@@ -13,22 +13,17 @@ export class PasswordCredentialService extends ServiceBase {
     }
 
     // Adds a new password credential.
-    public async add(item: AppRegItem): Promise<Disposable | undefined> {
-
-        // Set the created trigger default to undefined.
-        let added = undefined;
+    public async add(item: AppRegItem): Promise<void> {
 
         // Prompt the user for the description.
         const description = await window.showInputBox({
             placeHolder: "Password description...",
-            prompt: "Add new password credential description",
+            prompt: "Set new password credential description",
             ignoreFocusOut: true
         });
 
         // If the description is not undefined then add.
         if (description !== undefined) {
-            added = window.setStatusBarMessage("$(loading~spin) Adding password credential...");
-
             const expiryDate = new Date();
             expiryDate.setDate(expiryDate.getDate() + 90);
 
@@ -42,44 +37,41 @@ export class PasswordCredentialService extends ServiceBase {
             });
 
             if (expiry !== undefined) {
-                item.iconPath = new ThemeIcon("loading~spin");
-                this._dataProvider.triggerOnDidChangeTreeData();
-                await this._graphClient.addPasswordCredential(item.objectId!, description, expiry)
+                // Set the added trigger to the status bar message.
+                const previousIcon = item.iconPath;
+                const status = this.indicateChange("Adding password credential...", item);
+                this._graphClient.addPasswordCredential(item.objectId!, description, expiry)
                     .then((response) => {
                         env.clipboard.writeText(response.secretText!);
                         window.showInformationMessage("New password copied to clipboard.");
+                        this._onComplete.fire({ success: true, statusBarHandle: status });
                     })
                     .catch((error) => {
-                        console.error(error);
+                        this._onError.fire({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
                     });
             }
         }
-
-        // Return the state of the action to refresh the list if required.
-        return added;
     };
 
     // Deletes a password credential from an application registration.
-    public async delete(item: AppRegItem): Promise<Disposable | undefined> {
-
-        // Set the removed trigger default to undefined.
-        let deleted = undefined;
+    public async delete(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the removal.
         const answer = await window.showInformationMessage(`Do you want to delete this credential?`, "Yes", "No");
 
         // If the user confirms the removal then remove the user.
         if (answer === "Yes") {
-            deleted = window.setStatusBarMessage("$(loading~spin) Removing credential...");
-            item.iconPath = new ThemeIcon("loading~spin");
-            this._dataProvider.triggerOnDidChangeTreeData();
-            await this._graphClient.deletePasswordCredential(item.objectId!, item.value!)
+            // Set the added trigger to the status bar message.
+            const previousIcon = item.iconPath;
+            const status = this.indicateChange("Deleting password credential...", item);
+            this._graphClient.deletePasswordCredential(item.objectId!, item.value!)
+                .then(() => {
+                    this._onComplete.fire({ success: true, statusBarHandle: status });
+                })
                 .catch((error) => {
-                    console.error(error);
+                    this._onError.fire({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
                 });
         }
-
-        return deleted;
     }
 
     // Validates the expiry date.

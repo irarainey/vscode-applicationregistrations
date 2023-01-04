@@ -292,7 +292,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         }
 
         // Check to see if the value already exists.
-        if (isEditing !== true && oldValue !== value) {
+        if ((isEditing === true && oldValue !== value) || isEditing === false) {
             const scopes = await this.getScopes(id);
             if (scopes.oauth2PermissionScopes!.find(r => r.value === value) !== undefined) {
                 return "The value specified already exists.";
