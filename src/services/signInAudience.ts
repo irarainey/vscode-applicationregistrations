@@ -1,6 +1,6 @@
 import { window, ThemeIcon, env, Uri, ThemeColor } from 'vscode';
 import { signInAudienceOptions, signInAudienceDocumentation } from '../constants';
-import { AppRegDataProvider } from '../data/applicationRegistration';
+import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
 import { AppRegItem } from '../models/appRegItem';
 import { convertSignInAudience } from '../utils/signInAudienceUtils';
 import { ServiceBase } from './serviceBase';
@@ -9,8 +9,8 @@ import { GraphClient } from '../clients/graph';
 export class SignInAudienceService extends ServiceBase {
 
     // The constructor for the SignInAudienceService class.
-    constructor(dataProvider: AppRegDataProvider, graphClient: GraphClient) {
-        super(dataProvider, graphClient);
+    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
+        super(treeDataProvider, graphClient);
     }
 
     // Edits the application sign in audience.
@@ -27,12 +27,12 @@ export class SignInAudienceService extends ServiceBase {
             } else {
                 item.iconPath = new ThemeIcon("loading~spin");
             }
-            this._dataProvider.triggerOnDidChangeTreeData();
+            this.dataProvider.triggerOnDidChangeTreeData(item);
             const status = window.setStatusBarMessage(`$(loading~spin) Updating sign in audience...`);
 
-            this._graphClient.updateApplication(item.objectId!, { signInAudience: convertSignInAudience(audience) })
+            this.graphClient.updateApplication(item.objectId!, { signInAudience: convertSignInAudience(audience) })
                 .then(() => {
-                    this._onComplete.fire({ success: true, statusBarHandle: status });
+                    this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
                 .catch(() => {
                     if (item.contextValue! === "AUDIENCE-PARENT") {
@@ -40,7 +40,7 @@ export class SignInAudienceService extends ServiceBase {
                     } else {
                         item.iconPath = new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"));
                     }
-                    this._dataProvider.triggerOnDidChangeTreeData();
+                    this.dataProvider.triggerOnDidChangeTreeData(item);
                     status.dispose();
 
                     window.showErrorMessage(

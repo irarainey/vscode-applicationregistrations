@@ -1,6 +1,6 @@
 import { commands, window, workspace, env, Disposable, ExtensionContext } from 'vscode';
 import { view } from './constants';
-import { AppRegDataProvider } from './data/applicationRegistration';
+import { AppRegTreeDataProvider } from './data/appRegTreeDataProvider';
 import { AppRegItem } from './models/appRegItem';
 import { GraphClient } from './clients/graph';
 import { ApplicationService } from './services/application';
@@ -21,19 +21,19 @@ let _filterText: string | undefined = undefined;
 // Create a new instance of the GraphClient class.
 const _graphClient = new GraphClient();
 
-// Create a new instance of the ApplicationDataProvider class.
-const _dataProvider = new AppRegDataProvider(_graphClient);
+// Create a new instance of the ApplicationTreeDataProvider class.
+const _treeDataProvider = new AppRegTreeDataProvider(_graphClient);
 
 // Create instances of the services.
-const _applicationService = new ApplicationService(_dataProvider, _graphClient);
-const _appRoleService = new AppRoleService(_dataProvider, _graphClient);
-const _keyCredentialService = new KeyCredentialService(_dataProvider, _graphClient);
-const _oauth2PermissionScopeService = new OAuth2PermissionScopeService(_dataProvider, _graphClient);
-const _ownerService = new OwnerService(_dataProvider, _graphClient);
-const _passwordCredentialService = new PasswordCredentialService(_dataProvider, _graphClient);
-const _redirectUriService = new RedirectUriService(_dataProvider, _graphClient);
-const _requiredResourceAccessService = new RequiredResourceAccessService(_dataProvider, _graphClient);
-const _signInAudienceService = new SignInAudienceService(_dataProvider, _graphClient);
+const _applicationService = new ApplicationService(_treeDataProvider, _graphClient);
+const _appRoleService = new AppRoleService(_treeDataProvider, _graphClient);
+const _keyCredentialService = new KeyCredentialService(_treeDataProvider, _graphClient);
+const _oauth2PermissionScopeService = new OAuth2PermissionScopeService(_treeDataProvider, _graphClient);
+const _ownerService = new OwnerService(_treeDataProvider, _graphClient);
+const _passwordCredentialService = new PasswordCredentialService(_treeDataProvider, _graphClient);
+const _redirectUriService = new RedirectUriService(_treeDataProvider, _graphClient);
+const _requiredResourceAccessService = new RequiredResourceAccessService(_treeDataProvider, _graphClient);
+const _signInAudienceService = new SignInAudienceService(_treeDataProvider, _graphClient);
 
 // This method is called when the extension is activated.
 export async function activate(context: ExtensionContext) {
@@ -160,23 +160,23 @@ export async function deactivate() {
 	_appRoleService.dispose();
 	_applicationService.dispose();
 	_graphClient.dispose();
-	_dataProvider.dispose();
+	_treeDataProvider.dispose();
 }
 
 // Define the populateTreeView function.
 async function populateTreeView(statusBarHandle: Disposable | undefined = undefined) {
-	if (!_dataProvider.isGraphClientInitialised) {
-		_dataProvider.initialiseGraphClient(statusBarHandle);
+	if (!_treeDataProvider.isGraphClientInitialised) {
+		_treeDataProvider.initialiseGraphClient(statusBarHandle);
 		return;
 	}
-	await _dataProvider.renderTreeView("APPLICATIONS", statusBarHandle, _filterCommand);
+	await _treeDataProvider.renderTreeView("APPLICATIONS", statusBarHandle, _filterCommand);
 };
 
 // Define the filterTreeView function.
 async function filterTreeView() {
 	// If the user is not authenticated then we don't want to do anything        
-	if (!_dataProvider.isGraphClientInitialised) {
-		_dataProvider.initialiseGraphClient();
+	if (!_treeDataProvider.isGraphClientInitialised) {
+		_treeDataProvider.initialiseGraphClient();
 		return;
 	}
 	// Prompt the user for the filter text.
@@ -216,12 +216,17 @@ function copyValue(item: AppRegItem) {
 
 // Define the error handler function.
 async function errorHandler(result: ActivityResult) {
-	// Clear any status bar messages.
-	result.statusBarHandle!.dispose();
 
-	// Restore the original icon.
-	result.treeViewItem!.iconPath = result.previousIcon;
-	_dataProvider.triggerOnDidChangeTreeData();
+	if (result.statusBarHandle !== undefined) {
+		// Clear any status bar messages.
+		result.statusBarHandle!.dispose();
+	}
+
+	if (result.treeViewItem !== undefined) {
+		// Restore the original icon.
+		result.treeViewItem!.iconPath = result.previousIcon;
+		_treeDataProvider.triggerOnDidChangeTreeData(result.treeViewItem);
+	}
 
 	// Log the error.
 	console.error(result.error);

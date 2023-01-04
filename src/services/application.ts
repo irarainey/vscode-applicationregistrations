@@ -1,7 +1,7 @@
 import * as path from 'path';
-import { window, ThemeIcon, env, Uri, TextDocumentContentProvider, EventEmitter, workspace, Disposable } from 'vscode';
+import { window, env, Uri, TextDocumentContentProvider, EventEmitter, workspace } from 'vscode';
 import { portalAppUri, signInAudienceOptions } from '../constants';
-import { AppRegDataProvider } from '../data/applicationRegistration';
+import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
 import { AppRegItem } from '../models/appRegItem';
 import { convertSignInAudience } from '../utils/signInAudienceUtils';
 import { ServiceBase } from './serviceBase';
@@ -10,23 +10,20 @@ import { GraphClient } from '../clients/graph';
 export class ApplicationService extends ServiceBase {
 
     // The constructor for the ApplicationService class.
-    constructor(dataProvider: AppRegDataProvider, graphClient: GraphClient) {
-        super(dataProvider, graphClient);
+    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
+        super(treeDataProvider, graphClient);
     }
 
     // Creates a new application registration.
-    public async add(): Promise<Disposable | undefined> {
+    public async add(): Promise<void> {
 
-        if (!this._dataProvider.isGraphClientInitialised) {
-            this._dataProvider.initialiseGraphClient();
+        if (!this.dataProvider.isGraphClientInitialised) {
+            this.dataProvider.initialiseGraphClient();
             return;
         }
 
-        // Set the created trigger default to undefined.
-        let added = undefined;
-
         // Prompt the user for the application name.
-        const newName = await window.showInputBox({
+        const displayName = await window.showInputBox({
             placeHolder: "Application name...",
             prompt: "Create new application registration",
             ignoreFocusOut: true,
@@ -34,153 +31,135 @@ export class ApplicationService extends ServiceBase {
         });
 
         // If the application name is not undefined then prompt the user for the sign in audience.
-        if (newName !== undefined) {
+        if (displayName !== undefined) {
             // Prompt the user for the sign in audience.
-            const audience = await window.showQuickPick(signInAudienceOptions, {
+            const signInAudience = await window.showQuickPick(signInAudienceOptions, {
                 placeHolder: "Select the sign in audience...",
                 ignoreFocusOut: true
             });
 
             // If the sign in audience is not undefined then create the application.
-            if (audience !== undefined) {
-                added = window.setStatusBarMessage("$(loading~spin) Creating application registration...");
-                const newApp = await this._graphClient.createApplication({ displayName: newName, signInAudience: convertSignInAudience(audience) })
+            if (signInAudience !== undefined) {
+                // Set the added trigger to the status bar message.
+                const status = this.triggerTreeChange("Creating application registration...");
+                await this.graphClient.createApplication({ displayName: displayName, signInAudience: convertSignInAudience(signInAudience) })
+                    .then(() => {
+                        this.triggerOnComplete({ success: true, statusBarHandle: status });
+                    })
                     .catch((error) => {
-                        console.error(error);
+                        this.triggerOnError({ success: false, statusBarHandle: status, error: error });
                     });
             }
         }
-
-        // Return the state of the action to refresh the list if required.
-        return added;
     }
 
     // Edit an application id URI.
-    public async editAppIdUri(app: AppRegItem): Promise<Disposable | undefined> {
-
-        // Set the update trigger default to undefined.
-        let updated = undefined;
+    public async editAppIdUri(item: AppRegItem): Promise<void> {
 
         // Prompt the user for the new uri.
-        const newUri = await window.showInputBox({
+        const uri = await window.showInputBox({
             placeHolder: "Application Id URI...",
             prompt: "Set Application Id URI",
-            value: app.value! === "Not set" ? `api://${app.appId!}` : app.value!,
+            value: item.value! === "Not set" ? `api://${item.appId!}` : item.value!,
             ignoreFocusOut: true,
             validateInput: (value) => this.validateAppIdUri(value)
         });
 
         // If the new application id uri is not undefined then update the application.
-        if (newUri !== undefined) {
-            updated = window.setStatusBarMessage("$(loading~spin) Setting application id uri...");
-            app.iconPath = new ThemeIcon("loading~spin");
-            this._dataProvider.triggerOnDidChangeTreeData();
-            await this._graphClient.updateApplication(app.objectId!, { identifierUris: [newUri] })
+        if (uri !== undefined) {
+            const previousIcon = item.iconPath;
+            const status = this.triggerTreeChange("Setting application id uri...", item);
+            this.graphClient.updateApplication(item.objectId!, { identifierUris: [uri] })
+                .then(() => {
+                    this.triggerOnComplete({ success: true, statusBarHandle: status });
+                })
                 .catch((error) => {
-                    console.error(error);
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
                 });
         }
-
-        // Return the state of the action to refresh the list if required.
-        return updated;
     }
 
     // Renames an application registration.
-    public async rename(app: AppRegItem): Promise<Disposable | undefined> {
-
-        // Set the update trigger default to undefined.
-        let updated = undefined;
+    public async rename(item: AppRegItem): Promise<void> {
 
         // Prompt the user for the new application name.
-        const newName = await window.showInputBox({
+        const displayName = await window.showInputBox({
             placeHolder: "New application name...",
             prompt: "Rename application with new display name",
-            value: app.label?.toString(),
+            value: item.label?.toString(),
             ignoreFocusOut: true,
             validateInput: (value) => this.validateDisplayName(value)
         });
 
         // If the new application name is not undefined then update the application.
-        if (newName !== undefined) {
-            updated = window.setStatusBarMessage("$(loading~spin) Renaming application registration...");
-            app.iconPath = new ThemeIcon("loading~spin");
-            this._dataProvider.triggerOnDidChangeTreeData();
-            await this._graphClient.updateApplication(app.objectId!, { displayName: newName })
+        if (displayName !== undefined) {
+            const previousIcon = item.iconPath;
+            const status = this.triggerTreeChange("Renaming application registration...", item);
+            this.graphClient.updateApplication(item.objectId!, { displayName: displayName })
+                .then(() => {
+                    this.triggerOnComplete({ success: true, statusBarHandle: status });
+                })
                 .catch((error) => {
-                    console.error(error);
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
                 });
         }
-
-        // Return the state of the action to refresh the list if required.
-        return updated;
     }
 
     // Deletes an application registration.
-    public async delete(app: AppRegItem): Promise<Disposable | undefined> {
-
-        // Set the deleted trigger default to undefined.
-        let deleted = undefined;
+    public async delete(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the deletion.
-        const answer = await window.showInformationMessage(`Do you want to delete the application ${app.label}?`, "Yes", "No");
+        const answer = await window.showInformationMessage(`Do you want to delete the application ${item.label}?`, "Yes", "No");
 
         // If the user confirms the deletion then delete the application.
         if (answer === "Yes") {
-            deleted = window.setStatusBarMessage("$(loading~spin) Deleting application registration...");
-            app.iconPath = new ThemeIcon("loading~spin");
-            this._dataProvider.triggerOnDidChangeTreeData();
-            await this._graphClient.deleteApplication(app.objectId!)
+            const previousIcon = item.iconPath;
+            const status = this.triggerTreeChange("Deleting application registration...", item);
+            this.graphClient.deleteApplication(item.objectId!)
+                .then(() => {
+                    this.triggerOnComplete({ success: true, statusBarHandle: status });
+                })
                 .catch((error) => {
-                    console.error(error);
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
                 });
         }
-
-        // Return the state of the action to refresh the list if required.
-        return deleted;
     }
 
     // Deletes an application registration.
-    public async removeAppIdUri(app: AppRegItem): Promise<Disposable | undefined> {
-
-        // Set the deleted trigger default to undefined.
-        let removed = undefined;
+    public async removeAppIdUri(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the deletion.
         const answer = await window.showInformationMessage("Do you want to remove the application id uri?", "Yes", "No");
 
         // If the user confirms the deletion then delete the application.
         if (answer === "Yes") {
-            removed = window.setStatusBarMessage("$(loading~spin) Removing application id uri...");
-            app.iconPath = new ThemeIcon("loading~spin");
-            this._dataProvider.triggerOnDidChangeTreeData();
-            await this._graphClient.updateApplication(app.objectId!, { identifierUris: [] })
+            const previousIcon = item.iconPath;
+            const status = this.triggerTreeChange("Removing application id uri...", item);
+            this.graphClient.updateApplication(item.objectId!, { identifierUris: [] })
+                .then(() => {
+                    this.triggerOnComplete({ success: true, statusBarHandle: status });
+                })
                 .catch((error) => {
-                    console.error(error);
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
                 });
         }
-
-        // Return the state of the action to refresh the list if required.
-        return removed;
     }
 
     // Copies the application Id to the clipboard.
-    public copyClientId(app: AppRegItem): void {
-        env.clipboard.writeText(app.appId!);
+    public copyClientId(item: AppRegItem): void {
+        env.clipboard.writeText(item.appId!);
     }
 
     // Opens the application registration in the Azure Portal.
-    public openInPortal(app: AppRegItem): void {
-        env.openExternal(Uri.parse(`${portalAppUri}${app.appId}`));
+    public openInPortal(item: AppRegItem): void {
+        env.openExternal(Uri.parse(`${portalAppUri}${item.appId}`));
     }
 
     // Opens the application manifest in a new editor window.
-    public async viewManifest(app: AppRegItem): Promise<void> {
+    public async viewManifest(item: AppRegItem): Promise<void> {
 
-        const status = window.setStatusBarMessage("$(loading~spin) Loading application manifest...");
-        app.iconPath = new ThemeIcon("loading~spin");
-        this._dataProvider.triggerOnDidChangeTreeData();
-
-        const manifest = await this._graphClient.getApplicationDetailsFull(app.objectId!);
+        const status = this.triggerTreeChange("Loading application manifest...", item);
+        const manifest = await this.graphClient.getApplicationDetailsFull(item.objectId!);
 
         const newDocument = new class implements TextDocumentContentProvider {
             onDidChangeEmitter = new EventEmitter<Uri>();
@@ -190,13 +169,13 @@ export class ApplicationService extends ServiceBase {
             }
         };
 
-        this._disposable.push(workspace.registerTextDocumentContentProvider('manifest', newDocument));
-        const uri = Uri.parse('manifest:' + app.label + ".json");
+        this.disposable.push(workspace.registerTextDocumentContentProvider('manifest', newDocument));
+        const uri = Uri.parse('manifest:' + item.label + ".json");
         workspace.openTextDocument(uri)
             .then(doc => {
                 window.showTextDocument(doc, { preview: false });
-                app.iconPath = path.join(__filename, "..", "..", "..", "resources", "icons", "app.svg");
-                this._dataProvider.triggerOnDidChangeTreeData();
+                item.iconPath = path.join(__filename, "..", "..", "..", "resources", "icons", "app.svg");
+                this.dataProvider.triggerOnDidChangeTreeData(item);
                 status.dispose();
             });
     }

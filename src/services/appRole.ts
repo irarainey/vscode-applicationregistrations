@@ -1,5 +1,5 @@
 import { window } from 'vscode';
-import { AppRegDataProvider } from '../data/applicationRegistration';
+import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
 import { AppRegItem } from '../models/appRegItem';
 import { AppRole } from "@microsoft/microsoft-graph-types";
 import { v4 as uuidv4 } from 'uuid';
@@ -9,8 +9,8 @@ import { GraphClient } from '../clients/graph';
 export class AppRoleService extends ServiceBase {
 
     // The constructor for the AppRolesService class.
-    constructor(dataProvider: AppRegDataProvider, graphClient: GraphClient) {
-        super(dataProvider, graphClient);
+    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
+        super(treeDataProvider, graphClient);
     }
 
     // Adds a new app role to an application registration.
@@ -26,7 +26,7 @@ export class AppRoleService extends ServiceBase {
 
         // Set the added trigger to the status bar message.
         const previousIcon = item.iconPath;
-        const status = this.indicateChange("Adding new app role...", item);
+        const status = this.triggerTreeChange("Adding new app role...", item);
 
         // Get the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
@@ -35,12 +35,12 @@ export class AppRoleService extends ServiceBase {
         roles.push(role);
 
         // Update the application.
-        this._graphClient.updateApplication(item.objectId!, { appRoles: roles })
+        this.graphClient.updateApplication(item.objectId!, { appRoles: roles })
             .then(() => {
-                this._onComplete.fire({ success: true, statusBarHandle: status });
+                this.triggerOnComplete({ success: true, statusBarHandle: status });
             })
             .catch((error) => {
-                this._onError.fire({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
+                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
             });
     }
 
@@ -60,15 +60,15 @@ export class AppRoleService extends ServiceBase {
 
         // Set the added trigger to the status bar message.
         const previousIcon = item.iconPath;
-        const status = this.indicateChange("Updating app role...", item);
+        const status = this.triggerTreeChange("Updating app role...", item);
 
         // Update the application.
-        this._graphClient.updateApplication(item.objectId!, { appRoles: roles })
+        this.graphClient.updateApplication(item.objectId!, { appRoles: roles })
             .then(() => {
-                this._onComplete.fire({ success: true, statusBarHandle: status });
+                this.triggerOnComplete({ success: true, statusBarHandle: status });
             })
             .catch((error) => {
-                this._onError.fire({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
+                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
             });
     }
 
@@ -77,7 +77,7 @@ export class AppRoleService extends ServiceBase {
 
         // Set the added trigger to the status bar message.
         const previousIcon = item.iconPath;
-        const status = this.indicateChange("Updating app role state...", item);
+        const status = this.triggerTreeChange("Updating app role state...", item);
 
         // Get the parent application so we can read the app roles.
         const roles = await this.getAppRoles(item.objectId!);
@@ -86,12 +86,12 @@ export class AppRoleService extends ServiceBase {
         roles.filter(r => r.id === item.value!)[0].isEnabled = !item.state;
 
         // Update the application.
-        this._graphClient.updateApplication(item.objectId!, { appRoles: roles })
+        this.graphClient.updateApplication(item.objectId!, { appRoles: roles })
             .then(() => {
-                this._onComplete.fire({ success: true, statusBarHandle: status });
+                this.triggerOnComplete({ success: true, statusBarHandle: status });
             })
             .catch((error) => {
-                this._onError.fire({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
+                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
             });
     }
 
@@ -110,7 +110,7 @@ export class AppRoleService extends ServiceBase {
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
             const previousIcon = item.iconPath;
-            const status = this.indicateChange("Deleting app role...", item);
+            const status = this.triggerTreeChange("Deleting app role...", item);
 
             // Get the parent application so we can read the app roles.
             const roles = await this.getAppRoles(item.objectId!);
@@ -119,19 +119,19 @@ export class AppRoleService extends ServiceBase {
             roles.splice(roles.findIndex(r => r.id === item.value!), 1);
 
             // Update the application.
-            this._graphClient.updateApplication(item.objectId!, { appRoles: roles })
+            this.graphClient.updateApplication(item.objectId!, { appRoles: roles })
                 .then(() => {
-                    this._onComplete.fire({ success: true, statusBarHandle: status });
+                    this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
                 .catch((error) => {
-                    this._onError.fire({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
                 });
         }
     }
 
     // Gets the app roles for an application registration.
     private async getAppRoles(id: string): Promise<AppRole[]> {
-        return (await this._dataProvider.getApplicationPartial(id, "appRoles")).appRoles!;
+        return (await this.dataProvider.getApplicationPartial(id, "appRoles")).appRoles!;
     }
 
     // Captures the details for an app role.

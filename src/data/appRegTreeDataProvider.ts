@@ -7,8 +7,8 @@ import { AppRegItem } from '../models/appRegItem';
 import { sort } from 'fast-sort';
 import { format } from 'date-fns';
 
-// This is the application registration data provider for the tree view.
-export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
+// This is the application registration tree data provider for the tree view.
+export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
     // A private instance of the GraphClient class.
     private _graphClient: GraphClient;
@@ -57,6 +57,11 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
         return this._graphClient.isGraphClientInitialised;
     }
 
+    // Trigger the event to refresh the tree view
+    public triggerOnDidChangeTreeData(item?: AppRegItem) {
+        this._onDidChangeTreeData.fire(item);
+    }
+
     // Initialises the tree view data based on the type of data to be displayed.
     public async renderTreeView(type: string, statusBarMessage: Disposable | undefined = undefined, filter?: string): Promise<void> {
 
@@ -78,7 +83,7 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                     context: "INITIALISING",
                     icon: new ThemeIcon("loading~spin", new ThemeColor("editor.foreground"))
                 }));
-                this.triggerOnDidChangeTreeData();
+                this._onDidChangeTreeData.fire(undefined);
                 break;
             case "SIGN-IN":
                 this._treeData.push(new AppRegItem({
@@ -90,17 +95,12 @@ export class AppRegDataProvider implements TreeDataProvider<AppRegItem> {
                         title: signInCommandText,
                     }
                 }));
-                this.triggerOnDidChangeTreeData();
+                this._onDidChangeTreeData.fire(undefined);
                 break;
             case "APPLICATIONS":
                 await this.populateAppRegTreeData(filter);
                 break;
         }
-    }
-
-    // Trigger the event to refresh the tree view
-    public triggerOnDidChangeTreeData() {
-        this._onDidChangeTreeData.fire();
     }
 
     // Populates the tree view data for the application registrations.

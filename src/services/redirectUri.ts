@@ -1,5 +1,5 @@
-import { window, Disposable } from 'vscode';
-import { AppRegDataProvider } from '../data/applicationRegistration';
+import { window } from 'vscode';
+import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
 import { AppRegItem } from '../models/appRegItem';
 import { ServiceBase } from './serviceBase';
 import { GraphClient } from '../clients/graph';
@@ -7,8 +7,8 @@ import { GraphClient } from '../clients/graph';
 export class RedirectUriService extends ServiceBase {
 
     // The constructor for the RedirectUriService class.
-    constructor(dataProvider: AppRegDataProvider, graphClient: GraphClient) {
-        super(dataProvider, graphClient);
+    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
+        super(treeDataProvider, graphClient);
     }
 
     // Adds a new redirect URI to an application registration.
@@ -45,17 +45,17 @@ export class RedirectUriService extends ServiceBase {
             // Remove the redirect URI from the array.
             switch (item.contextValue) {
                 case "WEB-REDIRECT-URI":
-                    const webParent = await this._dataProvider.getApplicationPartial(item.objectId!, "web");
+                    const webParent = await this.dataProvider.getApplicationPartial(item.objectId!, "web");
                     webParent.web!.redirectUris!.splice(webParent.web!.redirectUris!.indexOf(item.label!.toString()), 1);
                     newArray = webParent.web!.redirectUris!;
                     break;
                 case "SPA-REDIRECT-URI":
-                    const spaParent = await this._dataProvider.getApplicationPartial(item.objectId!, "spa");
+                    const spaParent = await this.dataProvider.getApplicationPartial(item.objectId!, "spa");
                     spaParent.spa!.redirectUris!.splice(spaParent.spa!.redirectUris!.indexOf(item.label!.toString()), 1);
                     newArray = spaParent.spa!.redirectUris!;
                     break;
                 case "NATIVE-REDIRECT-URI":
-                    const publicClientParent = await this._dataProvider.getApplicationPartial(item.objectId!, "publicClient");
+                    const publicClientParent = await this.dataProvider.getApplicationPartial(item.objectId!, "publicClient");
                     publicClientParent.publicClient!.redirectUris!.splice(publicClientParent.publicClient!.redirectUris!.indexOf(item.label!.toString()), 1);
                     newArray = publicClientParent.publicClient!.redirectUris!;
                     break;
@@ -100,17 +100,17 @@ export class RedirectUriService extends ServiceBase {
         switch (item.contextValue) {
             case "WEB-REDIRECT":
             case "WEB-REDIRECT-URI":
-                const webParent = await this._dataProvider.getApplicationPartial(item.objectId!, "web");
+                const webParent = await this.dataProvider.getApplicationPartial(item.objectId!, "web");
                 existingRedirectUris = webParent.web!.redirectUris!;
                 break;
             case "SPA-REDIRECT":
             case "SPA-REDIRECT-URI":
-                const spaParent = await this._dataProvider.getApplicationPartial(item.objectId!, "spa");
+                const spaParent = await this.dataProvider.getApplicationPartial(item.objectId!, "spa");
                 existingRedirectUris = spaParent.spa!.redirectUris!;
                 break;
             case "NATIVE-REDIRECT":
             case "NATIVE-REDIRECT-URI":
-                const publicClientParent = await this._dataProvider.getApplicationPartial(item.objectId!, "publicClient");
+                const publicClientParent = await this.dataProvider.getApplicationPartial(item.objectId!, "publicClient");
                 existingRedirectUris = publicClientParent.publicClient!.redirectUris!;
                 break;
         }
@@ -123,34 +123,34 @@ export class RedirectUriService extends ServiceBase {
 
         // Show progress indicator.
         const previousIcon = item.iconPath;
-        const status = this.indicateChange("Updating redirect uris...", item);
+        const status = this.triggerTreeChange("Updating redirect uris...", item);
 
         // Determine which section to add the redirect URI to.
         if (item.contextValue! === "WEB-REDIRECT-URI" || item.contextValue! === "WEB-REDIRECT") {
-            this._graphClient.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } })
+            this.graphClient.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } })
                 .then(() => {
-                    this._onComplete.fire({ success: true, statusBarHandle: status });
+                    this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
                 .catch((error) => {
-                    this._onError.fire({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
                 });
         }
         else if (item.contextValue! === "SPA-REDIRECT-URI" || item.contextValue! === "SPA-REDIRECT") {
-            this._graphClient.updateApplication(item.objectId!, { spa: { redirectUris: redirectUris } })
+            this.graphClient.updateApplication(item.objectId!, { spa: { redirectUris: redirectUris } })
                 .then(() => {
-                    this._onComplete.fire({ success: true, statusBarHandle: status });
+                    this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
                 .catch((error) => {
-                    this._onError.fire({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
                 });
         }
         else if (item.contextValue! === "NATIVE-REDIRECT-URI" || item.contextValue! === "NATIVE-REDIRECT") {
-            this._graphClient.updateApplication(item.objectId!, { publicClient: { redirectUris: redirectUris } })
+            this.graphClient.updateApplication(item.objectId!, { publicClient: { redirectUris: redirectUris } })
                 .then(() => {
-                    this._onComplete.fire({ success: true, statusBarHandle: status });
+                    this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
                 .catch((error) => {
-                    this._onError.fire({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
                 });
         }
     }
