@@ -132,15 +132,21 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
             // Create an empty array to hold the tree view items.
             let unsorted: AppRegItem[] = [];
+            let allApps: Application[] = [];
 
-            // Sort the application registrations by display name.
-            let allApps: Application[] = sort(applications).asc(a => a.displayName!.replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, ""));
+            // If we're not using eventual consistency then we need to sort the application registrations by display name.
+            const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
+            if (useEventualConsistency === false) {
+                allApps = sort(applications).asc(a => a.displayName!.replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, ""));
+            } else {
+                allApps = applications;
+            }
 
             // Get the maximum number of applications to be returned from the configuration.
-            const maximumReturned = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsReturned") as number;
+            const maximumApplicationsShown = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsShown") as number;
 
             // Determine the maximum number of applications to shown in the tree view.
-            const maximumListCount = allApps.length > maximumReturned ? maximumReturned : allApps.length;
+            const maximumListCount = allApps.length > maximumApplicationsShown ? maximumApplicationsShown : allApps.length;
 
             // Iterate through the application registrations up to the maximum number to be returned.
             for (let index = 0; index < maximumListCount; index++) {
@@ -334,6 +340,9 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                             this._isUpdating = false;
                         }
                     });
+                // .catch((error: any) => {
+
+                // });
             }
         } catch (error: any) {
             // Set the flag to indicate that the tree is no longer updating
@@ -427,11 +436,11 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
         return await this._graphClient.getApplicationDetailsPartial(objectId, select);
     }
 
-    // Returns all applications depending on the user setting
+    // Returns application list depending on the user setting
     private async getApplicationList(filter?: string): Promise<Application[]> {
         // Get the user setting to determine whether to show all applications or just the ones owned by the user
-        const showAllApplications = workspace.getConfiguration("applicationregistrations").get("showAllApplications") as boolean;
-        return showAllApplications === false ? await this._graphClient.getApplicationListOwned(filter) : await this._graphClient.getApplicationListAll(filter);
+        const showOwnedApplicationsOnly = workspace.getConfiguration("applicationregistrations").get("showOwnedApplicationsOnly") as boolean;
+        return showOwnedApplicationsOnly === true ? await this._graphClient.getApplicationListOwned(filter) : await this._graphClient.getApplicationListAll(filter);
     }
 
     // Returns the application owners for the given application

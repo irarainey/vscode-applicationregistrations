@@ -31,25 +31,33 @@
     "configuration": {
       "title": "Azure Application Registrations",
       "properties": {
-        "applicationregistrations.maximumApplicationsReturned": {
+        "applicationregistrations.maximumApplicationsShown": {
           "type": "number",
-          "description": "The maximum number of application registrations to be returned in the view.",
+          "description": "The maximum number of application registrations to be shown in the view.",
           "default": 50,
           "minimum": 1,
           "maximum": 200,
           "order": 0
         },
-        "applicationregistrations.useEventualConsistency": {
+        "applicationregistrations.showOwnedApplicationsOnly": {
           "type": "boolean",
-          "description": "Use eventual consistency header on Graph API calls for application list.",
+          "description": "Show only applications owned by the current user.",
           "default": true,
           "order": 1
         },
-        "applicationregistrations.showAllApplications": {
+        "applicationregistrations.useEventualConsistency": {
           "type": "boolean",
-          "description": "Show all applications, including those that are not owned by the current user.",
-          "default": false,
+          "description": "Use the eventual consistency header on Graph API calls for generating the application list. Enable this if you are working with a large number of applications.",
+          "default": true,
           "order": 2
+        },
+        "applicationregistrations.maximumQueryApps": {
+          "type": "number",
+          "description": "Maximum Graph API query size when not working with eventual consistency. Lower this number to improve performance when you don't have a large number of applications, but bear in mind that without eventual consistency Graph API results are not sorted so setting this below your total applications means you might not see all expected applications.",
+          "default": 200,
+          "minimum": 1,
+          "maximum": 200,
+          "order": 3
         }
       }
     },

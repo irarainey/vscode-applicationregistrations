@@ -39,9 +39,10 @@ const _signInAudienceService = new SignInAudienceService(_treeDataProvider, _gra
 export async function activate(context: ExtensionContext) {
 
 	workspace.onDidChangeConfiguration(event => {
-		if (event.affectsConfiguration("applicationregistrations.showAllApplications")
-			|| event.affectsConfiguration("applicationregistrations.maximumApplicationsReturned")
-			|| event.affectsConfiguration("applicationregistrations.useEventualConsistency")) {
+		if (event.affectsConfiguration("applicationregistrations.showOwnedApplicationsOnly")
+		|| event.affectsConfiguration("applicationregistrations.maximumQueryApps")
+		|| event.affectsConfiguration("applicationregistrations.maximumApplicationsShown")
+		|| event.affectsConfiguration("applicationregistrations.useEventualConsistency")) {
 			populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing application registrations..."));
 		}
 	});
@@ -182,6 +183,16 @@ async function filterTreeView() {
 		_treeDataProvider.initialiseGraphClient();
 		return;
 	}
+
+	// Determine if eventual consistency is enabled.
+	const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
+
+	// If eventual consistency is disabled then we cannot apply the filter
+	if(useEventualConsistency === false) {
+		window.showInformationMessage("The application list cannot be filtered when not using eventual consistency. Please enable this in user settings first.", "OK");
+		return;
+	}
+
 	// Prompt the user for the filter text.
 	const newFilter = await window.showInputBox({
 		placeHolder: "Name starts with...",

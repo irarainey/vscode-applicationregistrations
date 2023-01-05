@@ -1,6 +1,6 @@
 import "isomorphic-fetch";
 import { window, Disposable, workspace } from 'vscode';
-import { scope, propertiesToIgnoreOnUpdate, directoryObjectsUri, maximumQueryApps } from '../constants';
+import { scope, propertiesToIgnoreOnUpdate, directoryObjectsUri } from '../constants';
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
@@ -97,6 +97,20 @@ export class GraphClient {
             });
     }
 
+    // Returns a count of all owned application registrations
+    public async getApplicationCountOwned(): Promise<number> {
+        return await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application/$count")
+            .header("ConsistencyLevel", "eventual")
+            .get();
+    }
+
+    // Returns a count of all application registrations
+    public async getApplicationCountAll(): Promise<number> {
+        return await this._client!.api("/applications/$count")
+            .header("ConsistencyLevel", "eventual")
+            .get();
+    }
+
     // Returns full details for a specified application registration
     public async getApplicationDetailsFull(id: string): Promise<Application> {
         return await this._client!.api(`/applications/${id}`)
@@ -124,16 +138,18 @@ export class GraphClient {
     public async getApplicationListOwned(filter?: string): Promise<Application[]> {
         const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
         if (useEventualConsistency === true) {
+            const maximumApplicationsShown = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsShown") as number;
             const ownedApplications = await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
                 .filter(filter === undefined ? "" : filter)
                 .header("ConsistencyLevel", "eventual")
                 .count(true)
-                .top(maximumQueryApps)
+                .top(maximumApplicationsShown)
                 .orderby("displayName")
                 .select("id,displayName")
                 .get();
             return ownedApplications.value;
         } else {
+            const maximumQueryApps = workspace.getConfiguration("applicationregistrations").get("maximumQueryApps") as number;
             const ownedApplications = await this._client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
                 .top(maximumQueryApps)
                 .select("id,displayName")
@@ -146,16 +162,18 @@ export class GraphClient {
     public async getApplicationListAll(filter?: string): Promise<Application[]> {
         const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
         if (useEventualConsistency === true) {
+            const maximumApplicationsShown = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsShown") as number;
             const allApplications = await this._client!.api("/applications/")
                 .filter(filter === undefined ? "" : filter)
                 .header("ConsistencyLevel", "eventual")
                 .count(true)
-                .top(maximumQueryApps)
+                .top(maximumApplicationsShown)
                 .orderby("displayName")
                 .select("id,displayName")
                 .get();
             return allApplications.value;
         } else {
+            const maximumQueryApps = workspace.getConfiguration("applicationregistrations").get("maximumQueryApps") as number;
             const allApplications = await this._client!.api("/applications/")
                 .top(maximumQueryApps)
                 .select("id,displayName")
