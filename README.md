@@ -38,7 +38,7 @@ Please ensure your Azure CLI is authenticated to the correct tenant using `az lo
 The access token used for this extension uses the scope `Directory.AccessAsUser.All`. This means that it will use the Azure RBAC directory roles assigned to the authenticated user, and hence requires a role that allows for application management. More details on this scope can be found on this [Microsoft Graph Permission Explorer](https://graphpermissions.merill.net/permission/Directory.AccessAsUser.All).
 
 ## Eventual Consistency
-Azure Active Directory stores multiple copies of data to handle large read volume and provide high availability. When data is created or updated, the change will eventually be applied to all the copies. This means that occasionally after making changes they may not initially be reflected in the application list.
+Azure Active Directory stores multiple copies of data to handle large read volume and provide high availability. When data is created or updated, the change will eventually be applied to all the copies. This means that occasionally after making changes they may not initially be reflected in the application list. It can take anything from a few seconds to a few minutes for all copies to be updated, hence the term **Eventual**.
 
 Microsoft Graph API manages this with the use of an eventual consistency header in API requests. Adding this header means the API will only return the results of objects where all copies have been updated. This can sometimes lead to confusing results.
 
