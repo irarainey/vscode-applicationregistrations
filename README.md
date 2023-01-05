@@ -61,7 +61,7 @@ There are a number of user settings to control the behaviour of this extension. 
 * **Use Eventual Consistency**
     * When selected the `ConsistencyLevel: eventual` header is added to Graph API calls. This opens up the opportunity for advanced query functionality such as server-side ordering and filtering. However enabling this setting results in applications and properties only being shown in the list when all copies have been updated. This can lead to a delay in recent changes being shown. If you are working with a large number of applications (more than 200) it is recommended to enable this.
 * **Maximum Query Apps**
-    * This controls how many applications Graph API requests in the initial query when **Use Eventual Consistency** is _not_ enabled. There is a limit to how many results a single request will return before it paginates the results and if working with a small number of applications reducing this number can improve performance.
+    * This controls how many applications Graph API requests in the initial query when **Use Eventual Consistency** is _not_ enabled. There is a limit to how many results a single request will return before it paginates the results and if working with a small number of applications reducing this number can improve performance. Be aware though that due to the nature of Graph API and client-side ordering, reducing this to below **Maximum Applications Shown** could result in not seeing the applications you expect in the right order.
 
 ![User Settings](resources/images/user_settings.png)
 
