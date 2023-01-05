@@ -265,6 +265,13 @@ export class GraphClient {
             .get();
     }
 
+    // Gets a list of service principals by display name
+    public async getServicePrincipalByDisplayName(name: string): Promise<ServicePrincipal[]> {
+        return await this._client!.api("servicePrincipals")
+            .filter(`startswith(displayName, '${name}')`)
+            .get();
+    }
+
     // Disposes the client
     public dispose(): void {
         this._client = undefined;

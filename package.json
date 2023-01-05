@@ -77,6 +77,14 @@
     },
     "commands": [
       {
+        "command": "appRegistrations.addSingleScopeToExisting",
+        "title": "Add"
+      },
+      {
+        "command": "appRegistrations.addSingleScope",
+        "title": "Add"
+      },
+      {
         "command": "appRegistrations.removeSingleScope",
         "title": "Remove"
       },
@@ -250,9 +258,19 @@
           "group": "appRegistrations@0"
         },
         {
-          "command": "appRegistrations.removeApiScopes",
+          "command": "appRegistrations.addSingleScopeToExisting",
           "when": "view == appRegistrations && viewItem == API-PERMISSIONS-APP",
           "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.addSingleScope",
+          "when": "view == appRegistrations && viewItem == API-PERMISSIONS",
+          "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.removeApiScopes",
+          "when": "view == appRegistrations && viewItem == API-PERMISSIONS-APP",
+          "group": "appRegistrations@1"
         },
         {
           "command": "appRegistrations.addExposedApiScope",

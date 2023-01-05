@@ -103,6 +103,8 @@ export async function activate(context: ExtensionContext) {
 	// API Permission Commands
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	context.subscriptions.push(commands.registerCommand(`${view}.addSingleScopeToExisting`, async item => await _requiredResourceAccessService.addToExisting(item)));
+	context.subscriptions.push(commands.registerCommand(`${view}.addSingleScope`, async item => await _requiredResourceAccessService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${view}.removeSingleScope`, async item => await _requiredResourceAccessService.remove(item)));
 	context.subscriptions.push(commands.registerCommand(`${view}.removeApiScopes`, async item => await _requiredResourceAccessService.removeApi(item)));
 
