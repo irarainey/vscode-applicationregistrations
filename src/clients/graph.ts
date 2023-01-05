@@ -1,11 +1,11 @@
 import "isomorphic-fetch";
+import * as ChildProcess from "child_process";
 import { window, Disposable, workspace } from 'vscode';
 import { scope, propertiesToIgnoreOnUpdate, directoryObjectsUri } from '../constants';
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
 import { Application, PasswordCredential, ServicePrincipal } from "@microsoft/microsoft-graph-types";
-import { execShellCmd } from "../utils/shellUtils";
 
 // This is the client for the Microsoft Graph API
 export class GraphClient {
@@ -88,7 +88,7 @@ export class GraphClient {
                 }
 
                 // Execute the command.
-                execShellCmd(command)
+                this.execShellCmd(command)
                     .then(() => {
                         this.initialiseTreeView("INITIALISING", undefined, undefined);
                         this.initialise();
@@ -276,5 +276,16 @@ export class GraphClient {
     public dispose(): void {
         this._client = undefined;
         this._graphClientInitialised = false;
+    }
+
+    private execShellCmd(cmd: string): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            ChildProcess.exec(cmd, (error: any, response: any) => {
+                if (error) {
+                    return reject(error);
+                }
+                return resolve(response);
+            });
+        });
     }
 }
