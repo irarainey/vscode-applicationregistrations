@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { signInCommandText, view, appSelectProperties } from '../constants';
-import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, Disposable } from 'vscode';
+import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, Disposable, ConfigurationTarget } from 'vscode';
 import { Application, KeyCredential, PasswordCredential, User, AppRole, RequiredResourceAccess, PermissionScope } from "@microsoft/microsoft-graph-types";
 import { GraphClient } from '../clients/graph';
 import { AppRegItem } from '../models/appRegItem';
@@ -127,6 +127,40 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             // Set the flag to indicate that the tree view is being updated.
             this._isUpdating = true;
 
+            const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
+            const showApplicationCountWarning = workspace.getConfiguration("applicationregistrations").get("showApplicationCountWarning") as boolean;
+
+            if (showApplicationCountWarning === true) {
+                let totalApplicationCount: number = 0;
+                const showOwnedApplicationsOnly = workspace.getConfiguration("applicationregistrations").get("showOwnedApplicationsOnly") as boolean;
+
+                if (showOwnedApplicationsOnly) {
+                    totalApplicationCount = await this.graphClient.getApplicationCountOwned();
+                } else {
+                    totalApplicationCount = await this.graphClient.getApplicationCountAll();
+                }
+
+                if (totalApplicationCount <= 200 && useEventualConsistency === true) {
+                    window.showWarningMessage(`You have enabled eventual consistency for Graph API calls but only have ${totalApplicationCount} applications in your tenant. You would likely benefit from disabling eventual consistency in user settings. Would you like to do this now?`, "Yes", "No", "Disable Warning")
+                        .then((result) => {
+                            if (result === "Disable Warning") {
+                                workspace.getConfiguration("applicationregistrations").update("showApplicationCountWarning", false, ConfigurationTarget.Global);
+                            } else if (result === "Yes") {
+                                workspace.getConfiguration("applicationregistrations").update("useEventualConsistency", false, ConfigurationTarget.Global);
+                            }
+                        });
+                } else if (totalApplicationCount > 200 && useEventualConsistency === false) {
+                    window.showWarningMessage(`You do not have enabled eventual consistency enabled for Graph API calls and have ${totalApplicationCount} applications in your tenant. You would likely benefit from enabling eventual consistency in user settings. Would you like to do this now?`, "Yes", "No", "Disable Warning")
+                        .then((result) => {
+                            if (result === "Disable Warning") {
+                                workspace.getConfiguration("applicationregistrations").update("showApplicationCountWarning", false, ConfigurationTarget.Global);
+                            } else if (result === "Yes") {
+                                workspace.getConfiguration("applicationregistrations").update("useEventualConsistency", true, ConfigurationTarget.Global);
+                            }
+                        });
+                }
+            }
+
             // Get the application registrations from the graph client.
             const applications = await this.getApplicationList(filter);
 
@@ -135,7 +169,6 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             let allApps: Application[] = [];
 
             // If we're not using eventual consistency then we need to sort the application registrations by display name.
-            const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
             if (useEventualConsistency === false) {
                 allApps = sort(applications).asc(a => a.displayName!.replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, ""));
             } else {

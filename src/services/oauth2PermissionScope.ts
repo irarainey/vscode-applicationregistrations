@@ -19,7 +19,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
         // Check to see if the application has an appIdURI. If it doesn't then we don't want to add a scope.
         const appIdUri = (await this.graphClient.getApplicationDetailsPartial(item.objectId!, "identifierUris")).identifierUris;
-        if(appIdUri === undefined || appIdUri.length === 0) {
+        if (appIdUri === undefined || appIdUri.length === 0) {
             window.showWarningMessage("This application does not have an Application Id URI. Please add one before adding a scope.", "OK");
             return;
         }

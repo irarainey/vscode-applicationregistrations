@@ -40,9 +40,9 @@ export async function activate(context: ExtensionContext) {
 
 	workspace.onDidChangeConfiguration(event => {
 		if (event.affectsConfiguration("applicationregistrations.showOwnedApplicationsOnly")
-		|| event.affectsConfiguration("applicationregistrations.maximumQueryApps")
-		|| event.affectsConfiguration("applicationregistrations.maximumApplicationsShown")
-		|| event.affectsConfiguration("applicationregistrations.useEventualConsistency")) {
+			|| event.affectsConfiguration("applicationregistrations.maximumQueryApps")
+			|| event.affectsConfiguration("applicationregistrations.maximumApplicationsShown")
+			|| event.affectsConfiguration("applicationregistrations.useEventualConsistency")) {
 			populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing application registrations..."));
 		}
 	});
@@ -152,6 +152,8 @@ export async function activate(context: ExtensionContext) {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	context.subscriptions.push(commands.registerCommand(`${view}.copyValue`, item => copyValue(item)));
+
+
 }
 
 // This method is called when your extension is deactivated.
@@ -190,7 +192,7 @@ async function filterTreeView() {
 	const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
 
 	// If eventual consistency is disabled then we cannot apply the filter
-	if(useEventualConsistency === false) {
+	if (useEventualConsistency === false) {
 		window.showInformationMessage("The application list cannot be filtered when not using eventual consistency. Please enable this in user settings first.", "OK");
 		return;
 	}

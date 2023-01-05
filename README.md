@@ -55,15 +55,17 @@ If you have enabled the use of the eventual consistency header experience and so
 There are a number of user settings to control the behaviour of this extension. These are:
 
 * **Maximum Applications Shown**
-    * This controls how many applications to show in the list. When **Use Eventual Consistency** is enabled this will be ordered by display name on by the Graph API. If it is not enabled then applications are ordered client-side from the total list defined in **Maximum Query Apps**.
+    * This controls how many applications to show in the list. When **Use Eventual Consistency** is enabled this will be ordered by display name on by the Graph API. If it is not enabled then applications are ordered client-side from the total list defined in **Maximum Query Apps**. Default value is `50`.
 * **Show Owned Applications Only**
-    * When selected the list of applications shown will only be where the current logged in user has been added as an owner. Uncheck this option to show all applications in the current tenant.
+    * When selected the list of applications shown will only be where the current logged in user has been added as an owner. Uncheck this option to show all applications in the current tenant. Default value is `true`.
 * **Use Eventual Consistency**
-    * When selected the `ConsistencyLevel: eventual` header is added to Graph API calls. This opens up the opportunity for advanced query functionality such as server-side ordering and filtering. However enabling this setting results in applications and properties only being shown in the list when all copies have been updated. This can lead to a delay in recent changes being shown. If you are working with a large number of applications (more than 200) it is recommended to enable this.
+    * When selected the `ConsistencyLevel: eventual` header is added to Graph API calls. This opens up the opportunity for advanced query functionality such as server-side ordering and filtering. However enabling this setting results in applications and properties only being shown in the list when all copies have been updated. This can lead to a delay in recent changes being shown. If you are working with a large number of applications (more than 200) it is recommended to enable this. Default value is `enabled`.
+* **Show Application Count Warning**
+    * With this enabled the total number of applications you have in your tenant will be counted and a warning will be displayed if it is determined your **Use Eventual Consistency** setting is not set to the optimal value for you. Default value is `true`.
 * **Maximum Query Apps**
-    * This controls how many applications Graph API requests in the initial query when **Use Eventual Consistency** is _not_ enabled. There is a limit to how many results a single request will return before it paginates the results and if working with a small number of applications reducing this number can improve performance. Be aware though that due to the nature of Graph API and client-side ordering, reducing this to below **Maximum Applications Shown** could result in not seeing the applications you expect in the right order.
+    * This controls how many applications Graph API requests in the initial query when **Use Eventual Consistency** is _not_ enabled. There is a limit to how many results a single request will return before it paginates the results and if working with a small number of applications reducing this number can improve performance. Be aware though that due to the nature of Graph API and client-side ordering, reducing this to below **Maximum Applications Shown** could result in not seeing the applications you expect in the right order. Default value is `200`.
 
-![User Settings](resources/images/user_settings.png)
+![User Settings](resources/images/settings.png)
 
 ## Functionality In Progress
 The following functionality has not yet been implemented, but is on the backlog for addition in future releases. If any of this functionality is required you can right-click the application and open in the portal blade to manage them. If you have any suggestions for useful functionality please get in touch.
