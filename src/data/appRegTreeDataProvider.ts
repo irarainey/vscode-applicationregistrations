@@ -127,33 +127,42 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             // Set the flag to indicate that the tree view is being updated.
             this._isUpdating = true;
 
+            // Get the configuration settings.
             const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
             const showApplicationCountWarning = workspace.getConfiguration("applicationregistrations").get("showApplicationCountWarning") as boolean;
 
+            // Determine if the warning message should be displayed.
             if (showApplicationCountWarning === true) {
                 let totalApplicationCount: number = 0;
                 const showOwnedApplicationsOnly = workspace.getConfiguration("applicationregistrations").get("showOwnedApplicationsOnly") as boolean;
 
+                // Get the total number of applications in the tenant based on the filter settings.
                 if (showOwnedApplicationsOnly) {
                     totalApplicationCount = await this.graphClient.getApplicationCountOwned();
                 } else {
                     totalApplicationCount = await this.graphClient.getApplicationCountAll();
                 }
 
+                // If the total number of applications is less than 200 and eventual consistency is enabled then display a warning message.
                 if (totalApplicationCount <= 200 && useEventualConsistency === true) {
                     window.showWarningMessage(`You have enabled eventual consistency for Graph API calls but only have ${totalApplicationCount} applications in your tenant. You would likely benefit from disabling eventual consistency in user settings. Would you like to do this now?`, "Yes", "No", "Disable Warning")
                         .then((result) => {
+                            // If the user selects "Disable Warning" then disable the warning message.
                             if (result === "Disable Warning") {
                                 workspace.getConfiguration("applicationregistrations").update("showApplicationCountWarning", false, ConfigurationTarget.Global);
+                                // If the user selects "Yes" then disable eventual consistency.
                             } else if (result === "Yes") {
                                 workspace.getConfiguration("applicationregistrations").update("useEventualConsistency", false, ConfigurationTarget.Global);
                             }
                         });
+                    // If the total number of applications is greater than 200 and eventual consistency is disabled then display a warning message.                        
                 } else if (totalApplicationCount > 200 && useEventualConsistency === false) {
                     window.showWarningMessage(`You do not have enabled eventual consistency enabled for Graph API calls and have ${totalApplicationCount} applications in your tenant. You would likely benefit from enabling eventual consistency in user settings. Would you like to do this now?`, "Yes", "No", "Disable Warning")
                         .then((result) => {
+                            // If the user selects "Disable Warning" then disable the warning message.
                             if (result === "Disable Warning") {
                                 workspace.getConfiguration("applicationregistrations").update("showApplicationCountWarning", false, ConfigurationTarget.Global);
+                                // If the user selects "Yes" then enable eventual consistency.
                             } else if (result === "Yes") {
                                 workspace.getConfiguration("applicationregistrations").update("useEventualConsistency", true, ConfigurationTarget.Global);
                             }
@@ -168,14 +177,17 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
             // If we're not using eventual consistency then we need to sort the application registrations by display name.
             if (useEventualConsistency === false) {
-                allApplications = sort(applicationList).asc(a => a.displayName!.replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, ""));
+                allApplications = sort(applicationList).asc(a => a.displayName!.toLowerCase().replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, ""));
             } else {
                 allApplications = applicationList;
             }
 
+            // Iterate through the application registrations and create the tree view items.
             const unsorted = allApplications.map(async (application, index) => {
                 try {
+                    // Get the application details.
                     const app = await this._graphClient.getApplicationDetailsPartial(application.id!, appSelectProperties, true);
+                    // Create the tree view item.
                     return (new AppRegItem({
                         label: app.displayName!,
                         context: "APPLICATION",
@@ -346,6 +358,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     if (error.code !== undefined && error.code === "Request_ResourceNotFound") {
                         console.log("Application no longer exists.");
                     }
+                    // Return undefined which we will filter out later
                     return undefined;
                 }
             });
