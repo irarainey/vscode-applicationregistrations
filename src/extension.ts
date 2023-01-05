@@ -246,9 +246,11 @@ async function errorHandler(result: ActivityResult) {
 		_treeDataProvider.triggerOnDidChangeTreeData(result.treeViewItem);
 	}
 
-	// Log the error.
-	console.error(result.error);
+	if (result.error !== undefined) {
+		// Log the error.
+		console.error(result.error);
 
-	// Display an error message.
-	window.showErrorMessage(`An error occurred trying to complete your task: ${result.error!.message}.`, "OK");
+		// Display an error message.
+		window.showErrorMessage(`An error occurred trying to complete your task: ${result.error!.message}.`, "OK");
+	}
 };

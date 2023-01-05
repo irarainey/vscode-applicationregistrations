@@ -167,6 +167,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             // Create an empty array to hold the tree view items.
             let unsorted: AppRegItem[] = [];
             let allApps: Application[] = [];
+            let eventualDeletedAppCount: number = 0;
 
             // If we're not using eventual consistency then we need to sort the application registrations by display name.
             if (useEventualConsistency === false) {
@@ -355,7 +356,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     })
                     .then(() => {
                         // Only trigger the redraw event when all applications have been processed
-                        if (unsorted.length === maximumListCount) {
+                        if ((unsorted.length + eventualDeletedAppCount) === maximumListCount) {
 
                             // Sort the applications by name and assign to the class-level array used to render the tree.
                             // This is required to ensure the order is maintained.
@@ -372,10 +373,14 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                             // Set the flag to indicate that the tree is no longer updating
                             this._isUpdating = false;
                         }
+                    })
+                    .catch((error: any) => {
+                        // Need to catch here any attempt to get an application that does not exist due to eventual consistency
+                        if (error.code === "Request_ResourceNotFound") {
+                            console.log("Application does not exist.");
+                            eventualDeletedAppCount++;
+                        }
                     });
-                // .catch((error: any) => {
-
-                // });
             }
         } catch (error: any) {
             // Set the flag to indicate that the tree is no longer updating
