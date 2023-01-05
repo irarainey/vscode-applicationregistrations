@@ -177,7 +177,7 @@ export class ApplicationService extends ServiceBase {
                 window.showTextDocument(doc, { preview: false });
                 item.iconPath = path.join(__filename, "..", "..", "..", "resources", "icons", "app.svg");
                 this.dataProvider.triggerOnDidChangeTreeData(item);
-                status.dispose();
+                status!.dispose();
             });
     }
 

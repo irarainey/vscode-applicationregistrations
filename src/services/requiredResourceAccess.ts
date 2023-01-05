@@ -104,6 +104,12 @@ export class RequiredResourceAccessService extends ServiceBase {
             return;
         }
 
+        // Get the previous icon so we can revert if the update fails.
+        const previousIcon = item.iconPath;
+
+        // Update the tree item icon to show the loading animation.
+        const status = this.triggerTreeChange("Loading api permissions...", item);
+
         // Get the service principal for the application so we can get the scopes.
         const servicePrincipals = await this.graphClient.getServicePrincipalByAppId(item.resourceAppId!);
 
@@ -113,10 +119,29 @@ export class RequiredResourceAccessService extends ServiceBase {
         // Find the api app in the collection.
         const apiAppScopes = allAssignedScopes.filter(r => r.resourceAppId === item.resourceAppId!)[0];
 
+        // Define a variable to hold the selected scope item.
         let scopeItem: any;
 
         // Prompt the user for the scope or role to add from those available.
         if (type.value === "Scope") {
+
+            // Remove any scopes that are already assigned.
+            apiAppScopes.resourceAccess!.forEach(r => {
+                servicePrincipals.oauth2PermissionScopes = servicePrincipals.oauth2PermissionScopes!.filter(s => s.id !== r.id);
+            });
+
+            // If there are no scopes available then drop out.
+            if (servicePrincipals.oauth2PermissionScopes === undefined || servicePrincipals.oauth2PermissionScopes!.length === 0) {
+                status?.dispose();
+                this.setTreeItemIcon(item, previousIcon, false);
+                window.showInformationMessage("There are no unassigned user delegated permissions available to add to this application registration.", "OK");
+                return;
+            }
+
+            status?.dispose();
+            this.setTreeItemIcon(item, previousIcon, false);
+
+            // Prompt the user for the scope to add.
             const permissions = sort(servicePrincipals.oauth2PermissionScopes!)
                 .asc(r => r.value!)
                 .map(r => {
@@ -138,6 +163,24 @@ export class RequiredResourceAccessService extends ServiceBase {
                 return;
             }
         } else {
+
+            // Remove any scopes that are already assigned.
+            apiAppScopes.resourceAccess!.forEach(r => {
+                servicePrincipals.appRoles = servicePrincipals.appRoles!.filter(s => s.id !== r.id);
+            });
+
+            // If there are no scopes available then drop out.
+            if (servicePrincipals.appRoles === undefined || servicePrincipals.appRoles!.length === 0) {
+                status?.dispose();
+                this.setTreeItemIcon(item, previousIcon, false);
+                window.showInformationMessage("There are no unassigned application permissions available to add to this application registration.", "OK");
+                return;
+            }
+
+            status?.dispose();
+            this.setTreeItemIcon(item, previousIcon, false);
+
+            // Prompt the user for the scope to add.
             const permissions = sort(servicePrincipals.appRoles!)
                 .asc(r => r.value!)
                 .map(r => {
@@ -160,11 +203,8 @@ export class RequiredResourceAccessService extends ServiceBase {
             }
         }
 
-        // Get the previous icon so we can revert if the update fails.
-        const previousIcon = item.iconPath;
-
         // Set the added trigger to the status bar message.
-        const status = this.triggerTreeChange("Adding api permission...", item);
+        const statusAdd = this.triggerTreeChange("Adding api permission...", item);
 
         // Add the new scope to the existing app.
         apiAppScopes.resourceAccess!.push({
@@ -175,10 +215,10 @@ export class RequiredResourceAccessService extends ServiceBase {
         //Update the application.
         this.graphClient.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes })
             .then(() => {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
+                this.triggerOnComplete({ success: true, statusBarHandle: statusAdd });
             })
             .catch((error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
+                this.triggerOnError({ success: false, statusBarHandle: statusAdd, error: error, treeViewItem: item, previousIcon: previousIcon });
             });
     }
 

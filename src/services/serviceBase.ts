@@ -1,4 +1,4 @@
-import { Event, EventEmitter, Disposable, ThemeIcon, window } from 'vscode';
+import { Event, EventEmitter, Disposable, ThemeIcon, window, Uri } from 'vscode';
 import { GraphClient } from '../clients/graph';
 import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
 import { ActivityResult } from '../interfaces/activityResult';
@@ -59,12 +59,28 @@ export class ServiceBase {
     }
 
     // Initiates the visual change of the tree view
-    protected triggerTreeChange(statusBarMessage: string, item?: AppRegItem): Disposable {
+    protected triggerTreeChange(statusBarMessage?: string, item?: AppRegItem): Disposable | undefined {
         if (item !== undefined) {
             item.iconPath = new ThemeIcon("loading~spin");
             this._treeDataProvider.triggerOnDidChangeTreeData(item);
         }
-        return window.setStatusBarMessage(`$(loading~spin) ${statusBarMessage}`);
+
+        if (statusBarMessage !== undefined) {
+            return window.setStatusBarMessage(`$(loading~spin) ${statusBarMessage}`);
+        }
+    }
+
+    // Sets the icon for a tree item
+    protected setTreeItemIcon(item: AppRegItem, icon?: string | Uri | {
+        light: string | Uri;
+        dark: string | Uri;
+    } | ThemeIcon | undefined, spinner?: boolean) {
+
+        if (spinner) {
+            icon = new ThemeIcon("loading~spin");
+        }
+        item.iconPath = icon;
+        this._treeDataProvider.triggerOnDidChangeTreeData(item);
     }
 
     // Dispose of anything that needs to be disposed of.
