@@ -35,6 +35,28 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     // A public readonly property to expose the error event.
     public readonly onError: Event<ActivityResult> = this._onError.event;
 
+    // A public get property to get the updating state
+    public get isUpdating(): boolean {
+        return this._isUpdating;
+    }
+
+    // A public get property to return if the tree is empty.
+    public get isTreeEmpty(): boolean {
+
+        // If the tree data is empty then return true.
+        if (this._treeData.length === 0) {
+            return true;
+        }
+
+        // If the tree data contains a single item with the context value of "EMPTY" then return true.
+        if (this._treeData.length === 1 && this._treeData[0].contextValue === "EMPTY") {
+            return true;
+        }
+
+        // Otherwise return false.
+        return false;
+    }
+
     // The constructor for the AppRegDataProvider class.
     constructor(graphClient: GraphClient) {
         this._graphClient = graphClient;
@@ -97,6 +119,14 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 }));
                 this._onDidChangeTreeData.fire(undefined);
                 break;
+            case "EMPTY":
+                this._treeData.push(new AppRegItem({
+                    label: "No applications found",
+                    context: "EMPTY",
+                    icon: new ThemeIcon("info", new ThemeColor("editor.foreground"))
+                }));
+                this._onDidChangeTreeData.fire(undefined);
+                break;
             case "SIGN-IN":
                 this._treeData.push(new AppRegItem({
                     label: signInCommandText,
@@ -144,7 +174,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 }
 
                 // If the total number of applications is less than 200 and eventual consistency is enabled then display a warning message.
-                if (totalApplicationCount <= 200 && useEventualConsistency === true) {
+                if (totalApplicationCount > 0 && totalApplicationCount <= 200 && useEventualConsistency === true) {
                     window.showWarningMessage(`You have enabled eventual consistency for Graph API calls but only have ${totalApplicationCount} applications in your tenant. You would likely benefit from disabling eventual consistency in user settings. Would you like to do this now?`, "Yes", "No", "Disable Warning")
                         .then((result) => {
                             // If the user selects "Disable Warning" then disable the warning message.
@@ -173,6 +203,14 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             // Get the application registrations from the graph client.
             const applicationList = await this.getApplicationList(filter);
 
+            // If there are no application registrations then display an empty tree view.
+            if (applicationList.length === 0) {
+                this.renderTreeView("EMPTY");
+                this._isUpdating = false;
+                return;
+            }
+
+            // Create an array to store the application registrations.
             let allApplications: Application[] = [];
 
             // If we're not using eventual consistency then we need to sort the application registrations by display name.

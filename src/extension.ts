@@ -188,6 +188,16 @@ async function filterTreeView() {
 		return;
 	}
 
+	// If the tree is currently updating then we don't want to do anything.
+	if (_treeDataProvider.isUpdating) {
+		return;
+	}
+
+	// If the tree is currently empty then we don't want to do anything.
+	if (_treeDataProvider.isTreeEmpty) {
+		return;
+	}
+
 	// Determine if eventual consistency is enabled.
 	const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
 
