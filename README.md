@@ -42,13 +42,28 @@ Azure Active Directory stores multiple copies of data to handle large read volum
 
 Microsoft Graph API manages this with the use of an eventual consistency header in API requests. Adding this header means the API will only return the results of objects where all copies have been updated. This can sometimes lead to confusing results.
 
-Furthermore, some [advanced query functionality of Graph API](https://learn.microsoft.com/en-us/graph/aad-advanced-queries?tabs=javascript) such as server-side sorting and filtering only works when explicitly telling the API to use eventual consistency. To deliver a better user experience this extension offers the ability to make Graph API calls with or without the eventual consistency header required for advanced queries. This can be enabled or disabled in the user settings.
+Furthermore, some [advanced query functionality of Graph API](https://learn.microsoft.com/en-us/graph/aad-advanced-queries?tabs=javascript) such as server-side sorting and filtering only works when explicitly telling the API to use eventual consistency. To deliver a better user experience this extension offers the ability to make Graph API calls with or without the eventual consistency header required for advanced queries. This can be enabled or disabled in the user settings _(see section below)_.
 
 As a rule of thumb, if you are working with a small list of applications (less than 200 in total) it is recommended to disable the use of the eventual consistency header _(this is the default)_. The application list will then be sorted client-side, although the filter option will be unavailable.
 
 If you are working with a large list of applications (more than 200 in total) then it is recommended to enable the use of the eventual consistency header. This will allow the list of applications to be filter server-side and enforce the application of the filter command before results are returned.
 
 If you have enabled the use of the eventual consistency header experience and some applications or properties are not initially showing correctly after creation or editing then simply wait a short time and refresh the list again. Read more on [Eventual Consistency](https://blogs.aaddevsup.xyz/2021/08/why-do-i-sometimes-get-a-404-when-trying-to-update-an-azure-directory-object-after-i-just-created-it/).
+
+## User Settings
+
+There are a number of user settings to control the behaviour of this extension. These are:
+
+* **Maximum Applications Shown**
+    * This controls how many applications to show in the list. When **Use Eventual Consistency** is enabled this will be ordered by display name on by the Graph API. If it is not enabled then applications are ordered client-side from the total list defined in **Maximum Query Apps**.
+* **Show Owned Applications Only**
+    * When selected the list of applications shown will only be where the current logged in user has been added as an owner. Uncheck this option to show all applications in the current tenant.
+* **Use Eventual Consistency**
+    * When selected the `ConsistencyLevel: eventual` header is added to Graph API calls. This opens up the opportunity for advanced query functionality such as server-side ordering and filtering. However enabling this setting results in applications and properties only being shown in the list when all copies have been updated. This can lead to a delay in recent changes being shown. If you are working with a large number of applications (more than 200) it is recommended to enable this.
+* **Maximum Query Apps**
+    * This controls how many applications Graph API requests in the initial query when **Use Eventual Consistency** is _not_ enabled. There is a limit to how many results a single request will return before it paginates the results and if working with a small number of applications reducing this number can improve performance.
+
+![User Settings](resources/images/user_settings.png)
 
 ## Functionality In Progress
 The following functionality has not yet been implemented, but is on the backlog for addition in future releases. If any of this functionality is required you can right-click the application and open in the portal blade to manage them. If you have any suggestions for useful functionality please get in touch.
