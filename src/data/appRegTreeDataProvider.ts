@@ -598,7 +598,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             const icon = scope.isEnabled! ? "list-tree" : "close";
             return new AppRegItem({
                 label: scope.adminConsentDisplayName!,
-                context: "SCOPE",
+                context: `SCOPE-${scope.isEnabled! === true ? "ENABLED" : "DISABLED"}`,
                 icon: new ThemeIcon(icon, new ThemeColor("editor.foreground")),
                 objectId: element.objectId,
                 value: scope.id!,
@@ -635,7 +635,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             const icon = role.isEnabled! ? "person" : "close";
             return new AppRegItem({
                 label: role.displayName!,
-                context: "ROLE",
+                context: `ROLE-${role.isEnabled! === true ? "ENABLED" : "DISABLED"}`,
                 icon: new ThemeIcon(icon, new ThemeColor("editor.foreground")),
                 objectId: element.objectId,
                 value: role.id!,

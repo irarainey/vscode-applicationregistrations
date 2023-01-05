@@ -96,7 +96,8 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${view}.addAppRole`, async item => await _appRoleService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${view}.editAppRole`, async item => await _appRoleService.edit(item)));
 	context.subscriptions.push(commands.registerCommand(`${view}.deleteAppRole`, async item => await _appRoleService.delete(item)));
-	context.subscriptions.push(commands.registerCommand(`${view}.changeStateAppRole`, async item => await _appRoleService.changeState(item)));
+	context.subscriptions.push(commands.registerCommand(`${view}.enableAppRole`, async item => await _appRoleService.changeState(item, true)));
+	context.subscriptions.push(commands.registerCommand(`${view}.disableAppRole`, async item => await _appRoleService.changeState(item, false)));
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Exposed API Scope Commands
@@ -105,7 +106,8 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${view}.addExposedApiScope`, async item => await _oauth2PermissionScopeService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${view}.editExposedApiScope`, async item => await _oauth2PermissionScopeService.edit(item)));
 	context.subscriptions.push(commands.registerCommand(`${view}.deleteExposedApiScope`, async item => await _oauth2PermissionScopeService.delete(item)));
-	context.subscriptions.push(commands.registerCommand(`${view}.changeStateExposedApiScope`, async item => await _oauth2PermissionScopeService.changeState(item)));
+	context.subscriptions.push(commands.registerCommand(`${view}.enableExposedApiScope`, async item => await _oauth2PermissionScopeService.changeState(item, true)));
+	context.subscriptions.push(commands.registerCommand(`${view}.disableExposedApiScope`, async item => await _oauth2PermissionScopeService.changeState(item, false)));
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// App Id URI Commands

@@ -83,8 +83,12 @@
         "title": "Delete"
       },
       {
-        "command": "appRegistrations.changeStateExposedApiScope",
-        "title": "Change State"
+        "command": "appRegistrations.enableExposedApiScope",
+        "title": "Enable"
+      },
+      {
+        "command": "appRegistrations.disableExposedApiScope",
+        "title": "Disable"
       },
       {
         "command": "appRegistrations.addAppRole",
@@ -99,8 +103,12 @@
         "title": "Delete"
       },
       {
-        "command": "appRegistrations.changeStateAppRole",
-        "title": "Change State"
+        "command": "appRegistrations.enableAppRole",
+        "title": "Enable"
+      },
+      {
+        "command": "appRegistrations.disableAppRole",
+        "title": "Disable"
       },
       {
         "command": "appRegistrations.addRedirectUri",
@@ -229,17 +237,22 @@
         },
         {
           "command": "appRegistrations.editExposedApiScope",
-          "when": "view == appRegistrations && viewItem == SCOPE",
+          "when": "view == appRegistrations && viewItem == SCOPE-DISABLED || viewItem == SCOPE-ENABLED",
           "group": "appRegistrations@0"
         },
         {
           "command": "appRegistrations.deleteExposedApiScope",
-          "when": "view == appRegistrations && viewItem == SCOPE",
+          "when": "view == appRegistrations && viewItem == SCOPE-DISABLED || viewItem == SCOPE-ENABLED",
           "group": "appRegistrations@1"
         },
         {
-          "command": "appRegistrations.changeStateExposedApiScope",
-          "when": "view == appRegistrations && viewItem == SCOPE",
+          "command": "appRegistrations.enableExposedApiScope",
+          "when": "view == appRegistrations && viewItem == SCOPE-DISABLED",
+          "group": "appRegistrations@2"
+        },
+        {
+          "command": "appRegistrations.disableExposedApiScope",
+          "when": "view == appRegistrations && viewItem == SCOPE-ENABLED",
           "group": "appRegistrations@2"
         },
         {
@@ -249,17 +262,22 @@
         },
         {
           "command": "appRegistrations.editAppRole",
-          "when": "view == appRegistrations && viewItem == ROLE",
+          "when": "view == appRegistrations && viewItem == ROLE-DISABLED || viewItem == ROLE-ENABLED",
           "group": "appRegistrations@0"
         },
         {
           "command": "appRegistrations.deleteAppRole",
-          "when": "view == appRegistrations && viewItem == ROLE",
+          "when": "view == appRegistrations && viewItem == ROLE-DISABLED || viewItem == ROLE-ENABLED",
           "group": "appRegistrations@1"
         },
         {
-          "command": "appRegistrations.changeStateAppRole",
-          "when": "view == appRegistrations && viewItem == ROLE",
+          "command": "appRegistrations.enableAppRole",
+          "when": "view == appRegistrations && viewItem == ROLE-DISABLED",
+          "group": "appRegistrations@2"
+        },
+        {
+          "command": "appRegistrations.disableAppRole",
+          "when": "view == appRegistrations && viewItem == ROLE-ENABLED",
           "group": "appRegistrations@2"
         },
         {

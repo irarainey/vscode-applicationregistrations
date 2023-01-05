@@ -81,17 +81,17 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     }
 
     // Changes the enabled state of an exposed api scope for an application registration.
-    public async changeState(item: AppRegItem): Promise<void> {
+    public async changeState(item: AppRegItem, state: boolean): Promise<void> {
 
         // Set the added trigger to the status bar message.
         const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Updating scope state...", item);
+        const status = this.triggerTreeChange(state === true ? "Enabling scope..." : "Disabling scope...", item);
 
         // Get the parent application so we can read the scopes.
         const api = await this.getScopes(item.objectId!);
 
         // Toggle the state of the app role.
-        api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0].isEnabled = !item.state;
+        api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0].isEnabled = state;
 
         // Update the application.
         this.graphClient.updateApplication(item.objectId!, { api: api })

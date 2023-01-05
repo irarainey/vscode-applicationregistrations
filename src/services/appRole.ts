@@ -74,17 +74,17 @@ export class AppRoleService extends ServiceBase {
     }
 
     // Changes the enabled state of an app role from an application registration.
-    public async changeState(item: AppRegItem): Promise<void> {
+    public async changeState(item: AppRegItem, state: boolean): Promise<void> {
 
         // Set the added trigger to the status bar message.
         const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Updating app role state...", item);
+        const status = this.triggerTreeChange(state === true ? "Enabling app role..." : "Disabling app role...", item);
 
         // Get the parent application so we can read the app roles.
         const roles = await this.getAppRoles(item.objectId!);
 
         // Toggle the state of the app role.
-        roles.filter(r => r.id === item.value!)[0].isEnabled = !item.state;
+        roles.filter(r => r.id === item.value!)[0].isEnabled = state;
 
         // Update the application.
         this.graphClient.updateApplication(item.objectId!, { appRoles: roles })
