@@ -24,7 +24,7 @@ All application properties have their own range of functionality. From the top-l
 
 ![Context Menus](resources/images/context_002.png)
 
-By default, to improve performance, the application list is limited to 50 applications. This however is exposed as a user setting and can be changed if you wish. The list is sorted by application name. If your application is not shown in the list you can also apply a filter on application name, which is applied before the maximum application limit.
+By default, to improve performance, the application list is limited to show 50 applications. This however is exposed as a user setting and can be changed if you wish. The list is sorted by application name. If your application is not shown in the list you can also apply a filter on application name, which is applied before the maximum application limit _(although only when eventual consistency is applied - see section below)_.
 
 The default view only shows applications where the signed in user is an owner. This default behaviour can be changed in user settings to show all applications if required.
 
@@ -36,6 +36,19 @@ Please ensure your Azure CLI is authenticated to the correct tenant using `az lo
 ![VS Code Sign In](resources/images/sign_in.png)
 
 The access token used for this extension uses the scope `Directory.AccessAsUser.All`. This means that it will use the Azure RBAC directory roles assigned to the authenticated user, and hence requires a role that allows for application management. More details on this scope can be found on this [Microsoft Graph Permission Explorer](https://graphpermissions.merill.net/permission/Directory.AccessAsUser.All).
+
+## Eventual Consistency
+Azure Active Directory stores multiple copies of data to handle large read volume and provide high availability. When data is created or updated, the change will eventually be applied to all the copies. This means that occasionally after making changes they may not initially be reflected in the application list.
+
+Microsoft Graph API manages this with the use of an eventual consistency header in API requests. Adding this header means the API will only return the results of objects where all copies have been updated. This can sometimes lead to confusing results.
+
+Furthermore, some advanced functionality of Graph API such as server-side sorting and filtering only works when explicitly telling the API to use eventual consistency. To deliver a better user experience this extension offers the ability to make Graph API calls with or without the eventual consistency header required for advanced queries. This can be enabled or disabled in the user settings.
+
+As a rule of thumb, if you are working with a small list of applications (less than 200 in total) it is recommended to disable the use of the eventual consistency header _(this is the default)_. The application list will then be sorted client-side, although the filter option will be unavailable.
+
+If you are working with a large list of applications (more than 200 in total) then it is recommended to enable the use of the eventual consistency header. This will allow the list of applications to be filter server-side and enforce the application of the filter command before results are returned.
+
+If you have enabled the use of the eventual consistency header experience and some applications or properties are not initially showing correctly after creation or editing then simply wait a short time and refresh the list again. Read more on [Eventual Consistency](https://blogs.aaddevsup.xyz/2021/08/why-do-i-sometimes-get-a-404-when-trying-to-update-an-azure-directory-object-after-i-just-created-it/).
 
 ## Functionality In Progress
 The following functionality has not yet been implemented, but is on the backlog for addition in future releases. If any of this functionality is required you can right-click the application and open in the portal blade to manage them. If you have any suggestions for useful functionality please get in touch.
@@ -53,6 +66,3 @@ The following functionality has not yet been implemented, but is on the backlog 
 This extension was created both as a learning exercise, and to address the common annoyances of managing Application Registrations. It is not officially supported and you use it at your own risk.
 
 It has a dependency on the [Azure Tools extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack), but only because it places the application registrations view into the Azure view container.
-
-## Known Limitations
-Azure Active Directory stores multiple copies of data to handle large read volume and provide high availability. When data is created or updated, the change will eventually be applied to all the copies. This means that occasionally after making changes the list may not initially reflect the new state. If this happens just wait a short time and refresh the list again. Read more on [Eventual Consistency](https://blogs.aaddevsup.xyz/2021/08/why-do-i-sometimes-get-a-404-when-trying-to-update-an-azure-directory-object-after-i-just-created-it/).
