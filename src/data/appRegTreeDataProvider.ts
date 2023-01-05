@@ -162,232 +162,214 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             }
 
             // Get the application registrations from the graph client.
-            const applications = await this.getApplicationList(filter);
+            const applicationList = await this.getApplicationList(filter);
 
-            // Create an empty array to hold the tree view items.
-            let unsorted: AppRegItem[] = [];
-            let allApps: Application[] = [];
-            let eventualDeletedAppCount: number = 0;
+            let allApplications: Application[] = [];
 
             // If we're not using eventual consistency then we need to sort the application registrations by display name.
             if (useEventualConsistency === false) {
-                allApps = sort(applications).asc(a => a.displayName!.replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, ""));
+                allApplications = sort(applicationList).asc(a => a.displayName!.replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, ""));
             } else {
-                allApps = applications;
+                allApplications = applicationList;
             }
 
-            // Get the maximum number of applications to be returned from the configuration.
-            const maximumApplicationsShown = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsShown") as number;
+            const unsorted = allApplications.map(async (application, index) => {
+                try {
+                    const app = await this._graphClient.getApplicationDetailsPartial(application.id!, appSelectProperties, true);
+                    return (new AppRegItem({
+                        label: app.displayName!,
+                        context: "APPLICATION",
+                        icon: path.join(__filename, "..", "..", "..", "resources", "icons", "app.svg"),
+                        objectId: app.id!,
+                        appId: app.appId!,
+                        tooltip: (app.notes !== null ? app.notes! : app.displayName!),
+                        order: index,
+                        children: [
+                            // Application (Client) Id
+                            new AppRegItem({
+                                label: "Client Id",
+                                context: "APPID-PARENT",
+                                icon: new ThemeIcon("preview"),
+                                tooltip: "The Application (Client) Id is used to identify the application to Azure AD.",
+                                children: [
+                                    new AppRegItem({
+                                        label: app.appId!,
+                                        value: app.appId!,
+                                        context: "COPY",
+                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                        tooltip: "The Application (Client) Id is used to identify the application to Azure AD.",
+                                    })
+                                ]
+                            }),
+                            // Application ID URI
+                            new AppRegItem({
+                                label: "Application Id URI",
+                                context: "APPID-URI-PARENT",
+                                objectId: app.id!,
+                                appId: app.appId!,
+                                value: app.identifierUris![0] === undefined ? "Not set" : app.identifierUris![0],
+                                icon: new ThemeIcon("globe"),
+                                tooltip: "The Application Id URI is a globally unique URI used to identify this web API. It is the prefix for scopes and in access tokens, it is the value of the audience claim. Also referred to as an identifier URI.",
+                                children: [
+                                    new AppRegItem({
+                                        label: app.identifierUris![0] === undefined ? "Not set" : app.identifierUris![0],
+                                        value: app.identifierUris![0] === undefined ? "Not set" : app.identifierUris![0],
+                                        appId: app.appId!,
+                                        objectId: app.id!,
+                                        context: "APPID-URI",
+                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                        tooltip: "The Application Id URI, this is set when an application is used as a resource app. The URI acts as the prefix for the scopes you'll reference in your API's code, and must be globally unique.",
+                                    })
+                                ]
+                            }),
+                            // Sign In Audience
+                            new AppRegItem({
+                                label: "Sign In Audience",
+                                context: "AUDIENCE-PARENT",
+                                icon: new ThemeIcon("account"),
+                                objectId: app.id!,
+                                tooltip: "The Sign In Audience determines whether the application can be used by accounts in the same Azure AD tenant or accounts in any Azure AD tenant.",
+                                children: [
+                                    new AppRegItem({
+                                        label: app.signInAudience! === "AzureADMyOrg"
+                                            ? "Single Tenant"
+                                            : app.signInAudience! === "AzureADMultipleOrgs"
+                                                ? "Multi Tenant"
+                                                : "Multi Tenant and Personal Accounts",
+                                        context: "AUDIENCE",
+                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                        objectId: app.id!,
+                                        tooltip: "The Sign In Audience determines whether the application can be used by accounts in the same Azure AD tenant or accounts in any Azure AD tenant.",
+                                    })
+                                ]
+                            }),
+                            // Redirect URIs
+                            new AppRegItem({
+                                label: "Redirect URIs",
+                                context: "REDIRECT-PARENT",
+                                icon: new ThemeIcon("go-to-file", new ThemeColor("editor.foreground")),
+                                objectId: app.id!,
+                                tooltip: "The Redirect URIs are the endpoints where Azure AD will return responses containing tokens or errors.",
+                                children: [
+                                    new AppRegItem({
+                                        label: "Web",
+                                        context: "WEB-REDIRECT",
+                                        icon: new ThemeIcon("globe"),
+                                        objectId: app.id!,
+                                        tooltip: "Redirect URIs for web applications.",
+                                        children: app.web?.redirectUris?.length === 0 ? undefined : []
+                                    }),
+                                    new AppRegItem({
+                                        label: "SPA",
+                                        context: "SPA-REDIRECT",
+                                        icon: new ThemeIcon("browser"),
+                                        objectId: app.id!,
+                                        tooltip: "Redirect URIs for single page applications.",
+                                        children: app.spa?.redirectUris?.length === 0 ? undefined : []
+                                    }),
+                                    new AppRegItem({
+                                        label: "Mobile and Desktop",
+                                        context: "NATIVE-REDIRECT",
+                                        icon: new ThemeIcon("editor-layout"),
+                                        objectId: app.id!,
+                                        tooltip: "Redirect URIs for mobile and desktop applications.",
+                                        children: app.publicClient?.redirectUris?.length === 0 ? undefined : []
+                                    })
+                                ]
+                            }),
+                            // Credentials
+                            new AppRegItem({
+                                label: "Credentials",
+                                context: "PROPERTY-ARRAY",
+                                objectId: app.id!,
+                                icon: new ThemeIcon("shield", new ThemeColor("editor.foreground")),
+                                tooltip: "Credentials enable confidential applications to identify themselves to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
+                                children: [
+                                    new AppRegItem({
+                                        label: "Client Secrets",
+                                        context: "PASSWORD-CREDENTIALS",
+                                        objectId: app.id!,
+                                        icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
+                                        tooltip: "Client secrets are used to authenticate confidential applications to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
+                                        children: app.passwordCredentials!.length === 0 ? undefined : []
+                                    }),
+                                    new AppRegItem({
+                                        label: "Certificates",
+                                        context: "CERTIFICATE-CREDENTIALS",
+                                        objectId: app.id!,
+                                        icon: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
+                                        tooltip: "Certificates are used to authenticate confidential applications to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
+                                        children: app.keyCredentials!.length === 0 ? undefined : []
+                                    })
+                                ]
+                            }),
+                            // API Permissions
+                            new AppRegItem({
+                                label: "API Permissions",
+                                context: "API-PERMISSIONS",
+                                objectId: app.id!,
+                                icon: new ThemeIcon("checklist", new ThemeColor("editor.foreground")),
+                                tooltip: "API permissions define the access that an application has to an API.",
+                                children: app.requiredResourceAccess?.length === 0 ? undefined : []
+                            }),
+                            // Exposed API Permissions
+                            new AppRegItem({
+                                label: "Exposed API Permissions",
+                                context: "EXPOSED-API-PERMISSIONS",
+                                objectId: app.id!,
+                                icon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
+                                tooltip: "Exposed API permissions define custom scopes to restrict access to data and functionality protected by this API.",
+                                children: app.api!.oauth2PermissionScopes!.length === 0 ? undefined : []
+                            }),
+                            // App Roles
+                            new AppRegItem({
+                                label: "App Roles",
+                                context: "APP-ROLES",
+                                objectId: app.id!,
+                                icon: new ThemeIcon("note", new ThemeColor("editor.foreground")),
+                                tooltip: "App roles define custom roles that can be assigned to users and groups, or assigned as application-only scopes to a client application.",
+                                children: app.appRoles!.length === 0 ? undefined : []
+                            }),
+                            // Owners
+                            new AppRegItem({
+                                label: "Owners",
+                                context: "OWNERS",
+                                objectId: app.id!,
+                                icon: new ThemeIcon("organization", new ThemeColor("editor.foreground")),
+                                tooltip: "Owners are users who can manage the application.",
+                                children: app.owners!.length === 0 ? undefined : []
+                            }),
+                        ]
+                    }));
+                } catch (error: any) {
+                    // Need to catch here any attempt to get an application that has been deleted but eventual consistency is still listing it
+                    if (error.code !== undefined && error.code === "Request_ResourceNotFound") {
+                        console.log("Application no longer exists.");
+                    }
+                    return undefined;
+                }
+            });
 
-            // Determine the maximum number of applications to shown in the tree view.
-            const maximumListCount = allApps.length > maximumApplicationsShown ? maximumApplicationsShown : allApps.length;
+            // Sort the applications by name and assign to the class-level array used to render the tree.
+            this._treeData = sort(await Promise.all(unsorted.filter(a => a !== undefined)) as AppRegItem[]).asc(async a => a.order);
 
-            // Iterate through the application registrations up to the maximum number to be returned.
-            for (let index = 0; index < maximumListCount; index++) {
-                // Get the details for the application without using eventual consistency.
-                this._graphClient.getApplicationDetailsPartial(allApps[index].id!, appSelectProperties, true)
-                    .then((app: Application) => {
-                        // Populate an array with tree view items for the application and it's static children
-                        unsorted.push(new AppRegItem({
-                            label: app.displayName!,
-                            context: "APPLICATION",
-                            icon: path.join(__filename, "..", "..", "..", "resources", "icons", "app.svg"),
-                            objectId: app.id!,
-                            appId: app.appId!,
-                            tooltip: (app.notes !== null ? app.notes! : app.displayName!),
-                            order: index,
-                            children: [
-                                // Application (Client) Id
-                                new AppRegItem({
-                                    label: "Client Id",
-                                    context: "APPID-PARENT",
-                                    icon: new ThemeIcon("preview"),
-                                    tooltip: "The Application (Client) Id is used to identify the application to Azure AD.",
-                                    children: [
-                                        new AppRegItem({
-                                            label: app.appId!,
-                                            value: app.appId!,
-                                            context: "COPY",
-                                            icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-                                            tooltip: "The Application (Client) Id is used to identify the application to Azure AD.",
-                                        })
-                                    ]
-                                }),
-                                // Application ID URI
-                                new AppRegItem({
-                                    label: "Application Id URI",
-                                    context: "APPID-URI-PARENT",
-                                    objectId: app.id!,
-                                    appId: app.appId!,
-                                    value: app.identifierUris![0] === undefined ? "Not set" : app.identifierUris![0],
-                                    icon: new ThemeIcon("globe"),
-                                    tooltip: "The Application Id URI is a globally unique URI used to identify this web API. It is the prefix for scopes and in access tokens, it is the value of the audience claim. Also referred to as an identifier URI.",
-                                    children: [
-                                        new AppRegItem({
-                                            label: app.identifierUris![0] === undefined ? "Not set" : app.identifierUris![0],
-                                            value: app.identifierUris![0] === undefined ? "Not set" : app.identifierUris![0],
-                                            appId: app.appId!,
-                                            objectId: app.id!,
-                                            context: "APPID-URI",
-                                            icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-                                            tooltip: "The Application Id URI, this is set when an application is used as a resource app. The URI acts as the prefix for the scopes you'll reference in your API's code, and must be globally unique.",
-                                        })
-                                    ]
-                                }),
-                                // Sign In Audience
-                                new AppRegItem({
-                                    label: "Sign In Audience",
-                                    context: "AUDIENCE-PARENT",
-                                    icon: new ThemeIcon("account"),
-                                    objectId: app.id!,
-                                    tooltip: "The Sign In Audience determines whether the application can be used by accounts in the same Azure AD tenant or accounts in any Azure AD tenant.",
-                                    children: [
-                                        new AppRegItem({
-                                            label: app.signInAudience! === "AzureADMyOrg"
-                                                ? "Single Tenant"
-                                                : app.signInAudience! === "AzureADMultipleOrgs"
-                                                    ? "Multi Tenant"
-                                                    : "Multi Tenant and Personal Accounts",
-                                            context: "AUDIENCE",
-                                            icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-                                            objectId: app.id!,
-                                            tooltip: "The Sign In Audience determines whether the application can be used by accounts in the same Azure AD tenant or accounts in any Azure AD tenant.",
-                                        })
-                                    ]
-                                }),
-                                // Redirect URIs
-                                new AppRegItem({
-                                    label: "Redirect URIs",
-                                    context: "REDIRECT-PARENT",
-                                    icon: new ThemeIcon("go-to-file", new ThemeColor("editor.foreground")),
-                                    objectId: app.id!,
-                                    tooltip: "The Redirect URIs are the endpoints where Azure AD will return responses containing tokens or errors.",
-                                    children: [
-                                        new AppRegItem({
-                                            label: "Web",
-                                            context: "WEB-REDIRECT",
-                                            icon: new ThemeIcon("globe"),
-                                            objectId: app.id!,
-                                            tooltip: "Redirect URIs for web applications.",
-                                            children: app.web?.redirectUris?.length === 0 ? undefined : []
-                                        }),
-                                        new AppRegItem({
-                                            label: "SPA",
-                                            context: "SPA-REDIRECT",
-                                            icon: new ThemeIcon("browser"),
-                                            objectId: app.id!,
-                                            tooltip: "Redirect URIs for single page applications.",
-                                            children: app.spa?.redirectUris?.length === 0 ? undefined : []
-                                        }),
-                                        new AppRegItem({
-                                            label: "Mobile and Desktop",
-                                            context: "NATIVE-REDIRECT",
-                                            icon: new ThemeIcon("editor-layout"),
-                                            objectId: app.id!,
-                                            tooltip: "Redirect URIs for mobile and desktop applications.",
-                                            children: app.publicClient?.redirectUris?.length === 0 ? undefined : []
-                                        })
-                                    ]
-                                }),
-                                // Credentials
-                                new AppRegItem({
-                                    label: "Credentials",
-                                    context: "PROPERTY-ARRAY",
-                                    objectId: app.id!,
-                                    icon: new ThemeIcon("shield", new ThemeColor("editor.foreground")),
-                                    tooltip: "Credentials enable confidential applications to identify themselves to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
-                                    children: [
-                                        new AppRegItem({
-                                            label: "Client Secrets",
-                                            context: "PASSWORD-CREDENTIALS",
-                                            objectId: app.id!,
-                                            icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
-                                            tooltip: "Client secrets are used to authenticate confidential applications to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
-                                            children: app.passwordCredentials!.length === 0 ? undefined : []
-                                        }),
-                                        new AppRegItem({
-                                            label: "Certificates",
-                                            context: "CERTIFICATE-CREDENTIALS",
-                                            objectId: app.id!,
-                                            icon: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
-                                            tooltip: "Certificates are used to authenticate confidential applications to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
-                                            children: app.keyCredentials!.length === 0 ? undefined : []
-                                        })
-                                    ]
-                                }),
-                                // API Permissions
-                                new AppRegItem({
-                                    label: "API Permissions",
-                                    context: "API-PERMISSIONS",
-                                    objectId: app.id!,
-                                    icon: new ThemeIcon("checklist", new ThemeColor("editor.foreground")),
-                                    tooltip: "API permissions define the access that an application has to an API.",
-                                    children: app.requiredResourceAccess?.length === 0 ? undefined : []
-                                }),
-                                // Exposed API Permissions
-                                new AppRegItem({
-                                    label: "Exposed API Permissions",
-                                    context: "EXPOSED-API-PERMISSIONS",
-                                    objectId: app.id!,
-                                    icon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
-                                    tooltip: "Exposed API permissions define custom scopes to restrict access to data and functionality protected by this API.",
-                                    children: app.api!.oauth2PermissionScopes!.length === 0 ? undefined : []
-                                }),
-                                // App Roles
-                                new AppRegItem({
-                                    label: "App Roles",
-                                    context: "APP-ROLES",
-                                    objectId: app.id!,
-                                    icon: new ThemeIcon("note", new ThemeColor("editor.foreground")),
-                                    tooltip: "App roles define custom roles that can be assigned to users and groups, or assigned as application-only scopes to a client application.",
-                                    children: app.appRoles!.length === 0 ? undefined : []
-                                }),
-                                // Owners
-                                new AppRegItem({
-                                    label: "Owners",
-                                    context: "OWNERS",
-                                    objectId: app.id!,
-                                    icon: new ThemeIcon("organization", new ThemeColor("editor.foreground")),
-                                    tooltip: "Owners are users who can manage the application.",
-                                    children: app.owners!.length === 0 ? undefined : []
-                                }),
-                            ]
-                        }));
-                    })
-                    .then(() => {
-                        // Only trigger the redraw event when all applications have been processed
-                        if ((unsorted.length + eventualDeletedAppCount) === maximumListCount) {
-
-                            // Sort the applications by name and assign to the class-level array used to render the tree.
-                            // This is required to ensure the order is maintained.
-                            this._treeData = sort(unsorted).asc(a => a.order);
-
-                            // Clear any status bar message
-                            if (this, this._statusBarHandle !== undefined) {
-                                this._statusBarHandle.dispose();
-                            }
-
-                            // Trigger the event to refresh the tree view
-                            this.triggerOnDidChangeTreeData();
-
-                            // Set the flag to indicate that the tree is no longer updating
-                            this._isUpdating = false;
-                        }
-                    })
-                    .catch((error: any) => {
-                        // Need to catch here any attempt to get an application that does not exist due to eventual consistency
-                        if (error.code === "Request_ResourceNotFound") {
-                            console.log("Application does not exist.");
-                            eventualDeletedAppCount++;
-                        }
-                    });
+            // Clear any status bar message
+            if (this, this._statusBarHandle !== undefined) {
+                this._statusBarHandle.dispose();
             }
+
+            // Trigger the event to refresh the tree view
+            this.triggerOnDidChangeTreeData();
+
+            // Set the flag to indicate that the tree is no longer updating
+            this._isUpdating = false;
+
         } catch (error: any) {
             // Set the flag to indicate that the tree is no longer updating
             this._isUpdating = false;
 
-            // Check to see if the user is signed in and if not then prompt them to sign in
             if (error.code !== undefined && error.code === "CredentialUnavailableError") {
+                // Check to see if the user is signed in and if not then prompt them to sign in
                 this._graphClient.isGraphClientInitialised = false;
                 this._graphClient.initialise();
             }
