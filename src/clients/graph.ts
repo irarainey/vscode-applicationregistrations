@@ -90,6 +90,7 @@ export class GraphClient {
                 // Execute the command.
                 execShellCmd(command)
                     .then(() => {
+                        this.initialiseTreeView("INITIALISING", undefined, undefined);
                         this.initialise();
                     }).catch(() => {
                         this.initialise();
