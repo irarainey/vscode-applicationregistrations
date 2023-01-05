@@ -224,7 +224,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             const unsorted = allApplications.map(async (application, index) => {
                 try {
                     // Get the application details.
-                    const app = await this._graphClient.getApplicationDetailsPartial(application.id!, appSelectProperties, true);
+                    const app: Application = await this._graphClient.getApplicationDetailsPartial(application.id!, appSelectProperties, true);
                     // Create the tree view item.
                     return (new AppRegItem({
                         label: app.displayName!,
@@ -637,22 +637,29 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 context: "API-PERMISSIONS-APP",
                 icon: new ThemeIcon("preview", new ThemeColor("editor.foreground")),
                 objectId: element.objectId,
-                value: permission.resourceAppId,
+                resourceAppId: permission.resourceAppId,
                 children: permission.resourceAccess!.map(resourceAccess => {
 
                     let scopeLabel = "";
                     let tooltip = undefined;
+                    let scope = undefined;
                     if (resourceAccess.type === "Scope") {
-                        scopeLabel = `Delegated: ${response.oauth2PermissionScopes!.find(scope => scope.id === resourceAccess.id)!.value!}`;
+                        scope = response.oauth2PermissionScopes!.find(scope => scope.id === resourceAccess.id)!.value!;
+                        scopeLabel = `Delegated: ${scope}`;
                         tooltip = response.oauth2PermissionScopes!.find(scope => scope.id === resourceAccess.id)!.adminConsentDescription;
                     } else {
-                        scopeLabel = `Application: ${response.appRoles!.find(scope => scope.id === resourceAccess.id)!.value!}`;
+                        scope = response.appRoles!.find(scope => scope.id === resourceAccess.id)!.value!;
+                        scopeLabel = `Application: ${scope}`;
                         tooltip = response.appRoles!.find(scope => scope.id === resourceAccess.id)!.description;
                     }
 
                     return new AppRegItem({
                         label: scopeLabel,
                         context: "API-PERMISSIONS-SCOPE",
+                        objectId: element.objectId,
+                        resourceAppId: permission.resourceAppId,
+                        resourceScopeId: resourceAccess.id,
+                        value: scope,
                         icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                         tooltip: tooltip!
                     });

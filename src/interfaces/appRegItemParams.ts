@@ -8,6 +8,8 @@ export interface AppRegItemParams {
     value?: string;
     objectId?: string;
     appId?: string;
+    resourceAppId?: string;
+    resourceScopeId?: string;
     userId?: string;
     children?: AppRegItem[];
     command?: Command;

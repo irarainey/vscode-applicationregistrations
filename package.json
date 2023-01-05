@@ -77,6 +77,14 @@
     },
     "commands": [
       {
+        "command": "appRegistrations.removeSingleScope",
+        "title": "Remove"
+      },
+      {
+        "command": "appRegistrations.removeApiScopes",
+        "title": "Remove"
+      },
+      {
         "command": "appRegistrations.addExposedApiScope",
         "title": "Add"
       },
@@ -236,6 +244,16 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "appRegistrations.removeSingleScope",
+          "when": "view == appRegistrations && viewItem == API-PERMISSIONS-SCOPE",
+          "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.removeApiScopes",
+          "when": "view == appRegistrations && viewItem == API-PERMISSIONS-APP",
+          "group": "appRegistrations@0"
+        },
         {
           "command": "appRegistrations.addExposedApiScope",
           "when": "view == appRegistrations && viewItem == EXPOSED-API-PERMISSIONS",

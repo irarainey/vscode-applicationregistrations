@@ -12,6 +12,8 @@ export class AppRegItem extends TreeItem {
     private _value?: string = "";
     private _order?: number = 0;
     private _state?: boolean = false;
+    private _resourceAppId?: string = "";
+    private _resourceScopeId?: string = "";
 
     // Constructor for the application registration tree view item
     constructor(params: AppRegItemParams) {
@@ -33,6 +35,8 @@ export class AppRegItem extends TreeItem {
         this._userId = params.userId;
         this._order = params.order;
         this._state = params.state;
+        this._resourceAppId = params.resourceAppId;
+        this._resourceScopeId = params.resourceScopeId;
     }
 
     // Public property getter for the children
@@ -68,5 +72,15 @@ export class AppRegItem extends TreeItem {
     // Public property getter for the state
     public get state() {
         return this._state;
+    }
+
+    // Public property getter for the resource api application id
+    public get resourceAppId() {
+        return this._resourceAppId;
+    }
+
+    // Public property getter for the resource api id
+    public get resourceScopeId() {
+        return this._resourceScopeId;
     }
 }
