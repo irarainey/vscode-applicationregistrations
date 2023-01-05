@@ -34,10 +34,26 @@ export const propertiesToIgnoreOnUpdate = [
 
 // A list of sign in audience options
 export const signInAudienceOptions = [
-    "Single Tenant",
-    "Multiple Tenants",
-    "Multiple Tenants and Personal Accounts",
-    "Personal Accounts"
+    {
+        label: "Single Tenant",
+        description: "Accounts in this organizational directory only.",
+        value: "AzureADMyOrg"
+    },
+    {
+        label: "Multiple Tenants",
+        description: "Accounts in any organizational directory.",
+        value: "AzureADMultipleOrgs"
+    },
+    {
+        label: "Multiple Tenants and Personal Accounts",
+        description: "Azure AD and personal Microsoft accounts (e.g. Skype, Xbox).",
+        value: "AzureADandPersonalMicrosoftAccount"
+    },
+    {
+        label: "Personal Accounts",
+        description: "Personal Microsoft accounts only.",
+        value: "PersonalMicrosoftAccount"
+    }
 ];
 
 // URI to the documentation for sign in audience

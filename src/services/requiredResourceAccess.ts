@@ -1,4 +1,4 @@
-import { window } from 'vscode';
+import { window, QuickPickItem } from 'vscode';
 import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
 import { AppRegItem } from '../models/appRegItem';
 import { ServiceBase } from './serviceBase';
@@ -83,11 +83,19 @@ export class RequiredResourceAccessService extends ServiceBase {
         // Determine the type of permission.
         const type = await window.showQuickPick(
             [
-                "Delegated permission",
-                "Application permission",
+                {
+                    label: "Delegated permissions",
+                    detail: "Your application needs to access the API as the signed-in user.",
+                    value: "Scope"
+                },
+                {
+                    label: "Application permissions",
+                    detail: "Your application runs as a background service or daemon without a signed-in user.",
+                    value: "Role"
+                }
             ],
             {
-                placeHolder: "Select a permission type",
+                placeHolder: "What type of permissions does your application require?",
                 ignoreFocusOut: true
             });
 
@@ -105,13 +113,20 @@ export class RequiredResourceAccessService extends ServiceBase {
         // Find the api app in the collection.
         const apiAppScopes = allAssignedScopes.filter(r => r.resourceAppId === item.resourceAppId!)[0];
 
-        let scopeId: string;
-        let scopeValue: string | undefined = undefined;
+        let scopeItem: any;
 
         // Prompt the user for the scope or role to add from those available.
-        if (type === "Delegated permission") {
-            const permissions = sort(servicePrincipals.oauth2PermissionScopes!).asc(r => r.value!).map(r => r.value!);
-            scopeValue = await window.showQuickPick(
+        if (type.value === "Scope") {
+            const permissions = sort(servicePrincipals.oauth2PermissionScopes!)
+                .asc(r => r.value!)
+                .map(r => {
+                    return {
+                        label: r.value!,
+                        description: r.adminConsentDescription!,
+                        value: r.id!
+                    } as QuickPickItem;
+                });
+            scopeItem = await window.showQuickPick(
                 permissions,
                 {
                     placeHolder: "Select a user delegated permission",
@@ -119,16 +134,20 @@ export class RequiredResourceAccessService extends ServiceBase {
                 });
 
             // If the user cancels the input then drop out.
-            if (scopeValue === undefined) {
+            if (scopeItem === undefined) {
                 return;
             }
-
-            // Find the id of the scope selected
-            scopeId = servicePrincipals.oauth2PermissionScopes!.filter(r => r.value === scopeValue)[0].id!;
-
         } else {
-            const permissions = sort(servicePrincipals.appRoles!).asc(r => r.value!).map(r => r.value!);
-            scopeValue = await window.showQuickPick(
+            const permissions = sort(servicePrincipals.appRoles!)
+                .asc(r => r.value!)
+                .map(r => {
+                    return {
+                        label: r.value!,
+                        description: r.description!,
+                        value: r.id!
+                    } as QuickPickItem;
+                });
+            scopeItem = await window.showQuickPick(
                 permissions,
                 {
                     placeHolder: "Select an application permission",
@@ -136,12 +155,9 @@ export class RequiredResourceAccessService extends ServiceBase {
                 });
 
             // If the user cancels the input then drop out.
-            if (scopeValue === undefined) {
+            if (scopeItem === undefined) {
                 return;
             }
-
-            // Find the id of the role selected
-            scopeId = servicePrincipals.appRoles!.filter(r => r.value === scopeValue)[0].id!;
         }
 
         // Get the previous icon so we can revert if the update fails.
@@ -152,8 +168,8 @@ export class RequiredResourceAccessService extends ServiceBase {
 
         // Add the new scope to the existing app.
         apiAppScopes.resourceAccess!.push({
-            id: scopeId,
-            type: type === "Delegated permissions" ? "Scope" : "Role"
+            id: scopeItem.value,
+            type: type.value
         });
 
         //Update the application.

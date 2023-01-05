@@ -1,8 +1,7 @@
 import { window, ThemeIcon, env, Uri, ThemeColor } from 'vscode';
-import { signInAudienceOptions, signInAudienceDocumentation } from '../constants';
+import { signInAudienceDocumentation, signInAudienceOptions } from '../constants';
 import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
 import { AppRegItem } from '../models/appRegItem';
-import { convertSignInAudience } from '../utils/signInAudienceUtils';
 import { ServiceBase } from './serviceBase';
 import { GraphClient } from '../clients/graph';
 
@@ -16,10 +15,12 @@ export class SignInAudienceService extends ServiceBase {
     // Edits the application sign in audience.
     public async edit(item: AppRegItem): Promise<void> {
 
-        const audience = await window.showQuickPick(signInAudienceOptions, {
-            placeHolder: "Select the sign in audience...",
-            ignoreFocusOut: true
-        });
+        const audience = await window.showQuickPick(
+            signInAudienceOptions,
+            {
+                placeHolder: "Select the sign in audience...",
+                ignoreFocusOut: true
+            });
 
         if (audience !== undefined) {
             if (item.contextValue! === "AUDIENCE-PARENT") {
@@ -30,7 +31,7 @@ export class SignInAudienceService extends ServiceBase {
             this.dataProvider.triggerOnDidChangeTreeData(item);
             const status = window.setStatusBarMessage(`$(loading~spin) Updating sign in audience...`);
 
-            this.graphClient.updateApplication(item.objectId!, { signInAudience: convertSignInAudience(audience) })
+            this.graphClient.updateApplication(item.objectId!, { signInAudience: audience.value })
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })

@@ -187,9 +187,21 @@ export class AppRoleService extends ServiceBase {
         // Prompt the user for the new allowed member types.
         const allowed = await window.showQuickPick(
             [
-                "Users/Groups",
-                "Applications",
-                "Both (Users/Groups + Applications)"
+                {
+                    label: "Users/Groups",
+                    description: "Users and groups can be assigned this role.",
+                    value: ["User"]
+                },
+                {
+                    label: "Applications",
+                    description: "Only applications can be assigned this role.",
+                    value: ["Application"]
+                },
+                {
+                    label: "Both (Users/Groups + Applications)",
+                    description: "Users, groups and applications can be assigned this role.",
+                    value: ["User", "Application"]
+                }
             ],
             {
                 placeHolder: "Select allowed member types",
@@ -204,8 +216,14 @@ export class AppRoleService extends ServiceBase {
         // Prompt the user for the new state.
         const state = await window.showQuickPick(
             [
-                "Enabled",
-                "Disabled"
+                {
+                    label: "Enabled",
+                    value: true
+                },
+                {
+                    label: "Disabled",
+                    value: false
+                }
             ],
             {
                 placeHolder: "Select role state",
@@ -222,8 +240,8 @@ export class AppRoleService extends ServiceBase {
         role.displayName = displayName;
         role.value = value;
         role.description = description;
-        role.allowedMemberTypes = allowed === "Users/Groups" ? ["User"] : allowed === "Applications" ? ["Application"] : ["User", "Application"];
-        role.isEnabled = state === "Enabled" ? true : false;
+        role.allowedMemberTypes = allowed.value;
+        role.isEnabled = state.value;
 
         return role;
     }

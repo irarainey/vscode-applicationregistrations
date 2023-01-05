@@ -3,7 +3,6 @@ import { window, env, Uri, TextDocumentContentProvider, EventEmitter, workspace 
 import { portalAppUri, signInAudienceOptions } from '../constants';
 import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
 import { AppRegItem } from '../models/appRegItem';
-import { convertSignInAudience } from '../utils/signInAudienceUtils';
 import { ServiceBase } from './serviceBase';
 import { GraphClient } from '../clients/graph';
 
@@ -33,16 +32,18 @@ export class ApplicationService extends ServiceBase {
         // If the application name is not undefined then prompt the user for the sign in audience.
         if (displayName !== undefined) {
             // Prompt the user for the sign in audience.
-            const signInAudience = await window.showQuickPick(signInAudienceOptions, {
-                placeHolder: "Select the sign in audience...",
-                ignoreFocusOut: true
-            });
+            const signInAudience = await window.showQuickPick(
+                signInAudienceOptions,
+                {
+                    placeHolder: "Select the sign in audience...",
+                    ignoreFocusOut: true
+                });
 
             // If the sign in audience is not undefined then create the application.
             if (signInAudience !== undefined) {
                 // Set the added trigger to the status bar message.
                 const status = this.triggerTreeChange("Creating application registration...");
-                await this.graphClient.createApplication({ displayName: displayName, signInAudience: convertSignInAudience(signInAudience) })
+                await this.graphClient.createApplication({ displayName: displayName, signInAudience: signInAudience.value })
                     .then(() => {
                         this.triggerOnComplete({ success: true, statusBarHandle: status });
                     })

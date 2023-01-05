@@ -166,8 +166,16 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         // Prompt the user for the new allowed member types.
         const consentType = await window.showQuickPick(
             [
-                "Administrators only",
-                "Administrators and users"
+                {
+                    label: "Administrators only",
+                    description: "Only administrators can consent to the scope",
+                    value: "Admin"
+                },
+                {
+                    label: "Administrators and users",
+                    description: "Administrators and users can consent to the scope",
+                    value: "User"
+                }
             ],
             {
                 placeHolder: "Select who can consent to the scope",
@@ -237,8 +245,14 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         // Prompt the user for the new state.
         const state = await window.showQuickPick(
             [
-                "Enabled",
-                "Disabled"
+                {
+                    label: "Enabled",
+                    value: true
+                },
+                {
+                    label: "Disabled",
+                    value: false
+                }
             ],
             {
                 placeHolder: "Select scope state",
@@ -254,8 +268,8 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         scope.adminConsentDescription = adminConsentDescription;
         scope.adminConsentDisplayName = adminConsentDisplayName;
         scope.id = scope.id ?? uuidv4();
-        scope.isEnabled = state === "Enabled" ? true : false;
-        scope.type = consentType === "Administrators only" ? "Admin" : "User";
+        scope.isEnabled = state.value;
+        scope.type = consentType.value;
         scope.userConsentDisplayName = userConsentDisplayName;
         scope.userConsentDescription = userConsentDescription;
         scope.value = value;
