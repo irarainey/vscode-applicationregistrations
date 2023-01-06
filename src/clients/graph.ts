@@ -266,19 +266,12 @@ export class GraphClient {
     }
 
     // Gets a list of service principals by display name
-    public async getServicePrincipalByDisplayName(name?: string): Promise<ServicePrincipal[]> {
-        if (name === undefined || name === "") {
-            const sp = await this._client!.api("servicePrincipals")
-                .select("appId,appDisplayName,appDescription")
-                .get();
-            return sp.value;
-        } else {
-            const sp = await this._client!.api("servicePrincipals")
-                .filter(`startswith(displayName, '${name}')`)
-                .select("appId,appDisplayName,appDescription")
-                .get();
-            return sp.value;
-        }
+    public async getServicePrincipalByDisplayName(name: string): Promise<ServicePrincipal[]> {
+        const servicePrincipals = await this._client!.api("servicePrincipals")
+            .filter(`startswith(displayName, '${name}')`)
+            .select("appId,appDisplayName,appDescription")
+            .get();
+        return servicePrincipals.value;
     }
 
     // Disposes the client

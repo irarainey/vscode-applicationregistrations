@@ -3,7 +3,7 @@ import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
 import { AppRegItem } from '../models/appRegItem';
 import { ServiceBase } from './serviceBase';
 import { GraphClient } from '../clients/graph';
-import { RequiredResourceAccess } from '@microsoft/microsoft-graph-types';
+import { RequiredResourceAccess, NullableOption } from '@microsoft/microsoft-graph-types';
 import { sort } from 'fast-sort';
 
 export class RequiredResourceAccessService extends ServiceBase {
@@ -16,34 +16,38 @@ export class RequiredResourceAccessService extends ServiceBase {
     // Adds the selected scope to an application registration.
     public async add(item: AppRegItem): Promise<void> {
 
-        // Debounce the validation function to prevent multiple calls to the Graph API.
-        // const validation = async (value: string) => this.validateValue(value);
-        // const debouncedValidation = debounce(validation, 500);
+        // Prompt the user for the new value.
+        const apiAppSearch = await window.showInputBox({
+            prompt: "Search for API Application",
+            placeHolder: "Enter the starting characters of the API application name to build a list of matching applications.",
+            ignoreFocusOut: true,
+            validateInput: (value) => {
+                if (value.length < 3) {
+                    return "You must enter at least partial name of the API application to filter the list. A minimum of 3 characters is required.";
+                }
+                return;
+            }
+        });
 
-        // // Prompt the user for the new value.
-        // const scope = await window.showInputBox({
-        //     prompt: "Edit scope",
-        //     placeHolder: "Enter a scope to add to the application registration",
-        //     ignoreFocusOut: true,
-        //     validateInput: async (value) => debouncedValidation(value)
-        // });
+        // If the user cancels the input then return undefined.
+        if (apiAppSearch === undefined) {
+            return;
+        }
 
-        // // If the user cancels the input then return undefined.
-        // if (scope === undefined) {
-        //     return;
-        // }
+        const servicePrincipals = await this.graphClient.getServicePrincipalByDisplayName(apiAppSearch);
 
-
-        const servicePrincipals = await this.graphClient.getServicePrincipalByDisplayName("bert");
+        if(servicePrincipals.length === 0) {
+            window.showInformationMessage("No API applications were found that match the search criteria.", "OK");
+            return;
+        }
 
         const newList = sort(servicePrincipals).asc(x => x.appDisplayName).map(r => {
             return {
                 label: r.appDisplayName!,
                 description: r.appDescription!,
                 value: r.appId
-            } as QuickPickItem;
+            };
         });
-
 
         // Prompt the user for the new allowed member types.
         const allowed = await window.showQuickPick(
@@ -53,44 +57,17 @@ export class RequiredResourceAccessService extends ServiceBase {
                 ignoreFocusOut: true
             });
 
+        // If the user cancels the input then return undefined.
+        if (allowed === undefined) {
+            return;
+        }
 
-
-
-        // Get the previous icon so we can revert if the update fails.
-        const previousIcon = item.iconPath;
-
-        // Set the added trigger to the status bar message.
-        const statusAdd = this.triggerTreeChange("Adding new api permission...", item);
-
-        // Get the existing scopes.
-        const allAssignedScopes = await this.getApiPermissions(item.objectId!);
-
-        //Check to see if the api app is already in the collection.
-        const apiAppScopes = allAssignedScopes.filter(r => r.resourceAppId === item.resourceAppId!)[0];
-
-        // if (apiAppScopes !== undefined) {
-        //     // Add the new scope to the existing app.
-        //     apiAppScopes.resourceAccess!.push(scope);
-        // } else {
-        //     // Add the new scope to a new api app.
-        //     allAssignedScopes.push({
-        //         resourceAppId: item.resourceAppId!,
-        //         resourceAccess: [scope]
-        //     });
-        // }
-
-        // // Update the application.
-        // this.graphClient.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes })
-        //     .then(() => {
-        //         this.triggerOnComplete({ success: true, statusBarHandle: statusAdd });
-        //     })
-        //     .catch((error) => {
-        //         this.triggerOnError({ success: false, statusBarHandle: statusAdd, error: error, treeViewItem: item, previousIcon: previousIcon });
-        //     });
+        //Now we have the API application ID we can call the addToExisting method.
+        this.addToExisting(item, allowed.value);
     }
 
     // Adds the selected scope from an existing API to an application registration.
-    public async addToExisting(item: AppRegItem): Promise<void> {
+    public async addToExisting(item: AppRegItem, existingApiId?: NullableOption<string> | undefined): Promise<void> {
 
         // Determine the type of permission.
         const type = await window.showQuickPick(
@@ -122,32 +99,35 @@ export class RequiredResourceAccessService extends ServiceBase {
         // Update the tree item icon to show the loading animation.
         const status = this.triggerTreeChange("Loading api permissions...", item);
 
+        const apiIdToUse = existingApiId === undefined ? item.resourceAppId : existingApiId;
+
         // Get the service principal for the application so we can get the scopes.
-        const servicePrincipals = await this.graphClient.getServicePrincipalByAppId(item.resourceAppId!);
+        const servicePrincipals = await this.graphClient.getServicePrincipalByAppId(apiIdToUse!);
 
         // Get all the existing scopes for the application.
         const allAssignedScopes = await this.getApiPermissions(item.objectId!);
 
         // Find the api app in the collection.
-        const apiAppScopes = allAssignedScopes.filter(r => r.resourceAppId === item.resourceAppId!)[0];
+        const apiAppScopes = allAssignedScopes.filter(r => r.resourceAppId === apiIdToUse!)[0];
 
         // Define a variable to hold the selected scope item.
         let scopeItem: any;
 
         // Prompt the user for the scope or role to add from those available.
         if (type.value === "Scope") {
+            if (apiAppScopes !== undefined) {
+                // Remove any scopes that are already assigned.
+                apiAppScopes.resourceAccess!.forEach(r => {
+                    servicePrincipals.oauth2PermissionScopes = servicePrincipals.oauth2PermissionScopes!.filter(s => s.id !== r.id);
+                });
 
-            // Remove any scopes that are already assigned.
-            apiAppScopes.resourceAccess!.forEach(r => {
-                servicePrincipals.oauth2PermissionScopes = servicePrincipals.oauth2PermissionScopes!.filter(s => s.id !== r.id);
-            });
-
-            // If there are no scopes available then drop out.
-            if (servicePrincipals.oauth2PermissionScopes === undefined || servicePrincipals.oauth2PermissionScopes!.length === 0) {
-                status?.dispose();
-                this.setTreeItemIcon(item, previousIcon, false);
-                window.showInformationMessage("There are no unassigned user delegated permissions available to add to this application registration.", "OK");
-                return;
+                // If there are no scopes available then drop out.
+                if (servicePrincipals.oauth2PermissionScopes === undefined || servicePrincipals.oauth2PermissionScopes!.length === 0) {
+                    status?.dispose();
+                    this.setTreeItemIcon(item, previousIcon, false);
+                    window.showInformationMessage("There are no unassigned user delegated permissions available to add to this application registration.", "OK");
+                    return;
+                }
             }
 
             status?.dispose();
@@ -175,18 +155,19 @@ export class RequiredResourceAccessService extends ServiceBase {
                 return;
             }
         } else {
+            if (apiAppScopes !== undefined) {
+                // Remove any scopes that are already assigned.
+                apiAppScopes.resourceAccess!.forEach(r => {
+                    servicePrincipals.appRoles = servicePrincipals.appRoles!.filter(s => s.id !== r.id);
+                });
 
-            // Remove any scopes that are already assigned.
-            apiAppScopes.resourceAccess!.forEach(r => {
-                servicePrincipals.appRoles = servicePrincipals.appRoles!.filter(s => s.id !== r.id);
-            });
-
-            // If there are no scopes available then drop out.
-            if (servicePrincipals.appRoles === undefined || servicePrincipals.appRoles!.length === 0) {
-                status?.dispose();
-                this.setTreeItemIcon(item, previousIcon, false);
-                window.showInformationMessage("There are no unassigned application permissions available to add to this application registration.", "OK");
-                return;
+                // If there are no scopes available then drop out.
+                if (servicePrincipals.appRoles === undefined || servicePrincipals.appRoles!.length === 0) {
+                    status?.dispose();
+                    this.setTreeItemIcon(item, previousIcon, false);
+                    window.showInformationMessage("There are no unassigned application permissions available to add to this application registration.", "OK");
+                    return;
+                }
             }
 
             status?.dispose();
@@ -218,11 +199,22 @@ export class RequiredResourceAccessService extends ServiceBase {
         // Set the added trigger to the status bar message.
         const statusAdd = this.triggerTreeChange("Adding api permission...", item);
 
-        // Add the new scope to the existing app.
-        apiAppScopes.resourceAccess!.push({
-            id: scopeItem.value,
-            type: type.value
-        });
+        if (apiAppScopes !== undefined) {
+            // Add the new scope to the existing app.
+            apiAppScopes.resourceAccess!.push({
+                id: scopeItem.value,
+                type: type.value
+            });
+        } else {
+            // Add the new scope to a new api app.
+            allAssignedScopes.push({
+                resourceAppId: apiIdToUse!,
+                resourceAccess: [{
+                    id: scopeItem.value,
+                    type: type.value
+                }]
+            });
+        }
 
         //Update the application.
         this.graphClient.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes })
