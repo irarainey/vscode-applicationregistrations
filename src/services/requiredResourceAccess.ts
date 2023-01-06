@@ -16,20 +16,7 @@ export class RequiredResourceAccessService extends ServiceBase {
     // Adds the selected scope to an application registration.
     public async add(item: AppRegItem): Promise<void> {
 
-        console.log("addScope");
-
-        // const servicePrincipals = (await this.graphClient.getServicePrincipalByDisplayName("")).map(r => r.displayName!);
-
-        // // Prompt the user for the new allowed member types.
-        // const allowed = await window.showQuickPick(
-        //     servicePrincipals,
-        //     {
-        //         placeHolder: "Select an API application",
-        //         ignoreFocusOut: true
-        //     });
-
-
-        // // Debounce the validation function to prevent multiple calls to the Graph API.
+        // Debounce the validation function to prevent multiple calls to the Graph API.
         // const validation = async (value: string) => this.validateValue(value);
         // const debouncedValidation = debounce(validation, 500);
 
@@ -46,17 +33,42 @@ export class RequiredResourceAccessService extends ServiceBase {
         //     return;
         // }
 
-        // // Set the added trigger to the status bar message.
-        // const previousIcon = item.iconPath;
-        // const status = this.triggerTreeChange("Adding new api permission...", item);
 
-        // // Get the existing scopes.
-        // const allAssignedScopes = await this.getApiPermissions(item.objectId!);
+        const servicePrincipals = await this.graphClient.getServicePrincipalByDisplayName("bert");
 
-        // Check to see if the api app is already in the collection.
-        //const apiAppScopes = allAssignedScopes.filter(r => r.resourceAppId === item.resourceAppId!)[0];
+        const newList = sort(servicePrincipals).asc(x => x.appDisplayName).map(r => {
+            return {
+                label: r.appDisplayName!,
+                description: r.appDescription!,
+                value: r.appId
+            } as QuickPickItem;
+        });
 
-        // if(apiAppScopes !== undefined) {
+
+        // Prompt the user for the new allowed member types.
+        const allowed = await window.showQuickPick(
+            newList,
+            {
+                placeHolder: "Select an API application",
+                ignoreFocusOut: true
+            });
+
+
+
+
+        // Get the previous icon so we can revert if the update fails.
+        const previousIcon = item.iconPath;
+
+        // Set the added trigger to the status bar message.
+        const statusAdd = this.triggerTreeChange("Adding new api permission...", item);
+
+        // Get the existing scopes.
+        const allAssignedScopes = await this.getApiPermissions(item.objectId!);
+
+        //Check to see if the api app is already in the collection.
+        const apiAppScopes = allAssignedScopes.filter(r => r.resourceAppId === item.resourceAppId!)[0];
+
+        // if (apiAppScopes !== undefined) {
         //     // Add the new scope to the existing app.
         //     apiAppScopes.resourceAccess!.push(scope);
         // } else {
@@ -70,11 +82,11 @@ export class RequiredResourceAccessService extends ServiceBase {
         // // Update the application.
         // this.graphClient.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes })
         //     .then(() => {
-        //         this.triggerOnComplete({ success: true, statusBarHandle: status });
+        //         this.triggerOnComplete({ success: true, statusBarHandle: statusAdd });
         //     })
         //     .catch((error) => {
-        //         this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
-        //     });        
+        //         this.triggerOnError({ success: false, statusBarHandle: statusAdd, error: error, treeViewItem: item, previousIcon: previousIcon });
+        //     });
     }
 
     // Adds the selected scope from an existing API to an application registration.
@@ -291,26 +303,5 @@ export class RequiredResourceAccessService extends ServiceBase {
     // Gets the api permissions for an application registration.
     private async getApiPermissions(id: string): Promise<RequiredResourceAccess[]> {
         return (await this.dataProvider.getApplicationPartial(id, "requiredResourceAccess")).requiredResourceAccess!;
-    }
-
-    // Validates scope.
-    private async validateValue(value: string): Promise<string | undefined> {
-
-        // // Check the length of the value.
-        // if (value.length > 250) {
-        //     return "A value cannot be longer than 250 characters.";
-        // }
-
-        // Check the length of the display name.
-        if (value.length < 1) {
-            return "A value cannot be empty.";
-        }
-
-        // const roles = await this.getAppRoles(id);
-        // if (roles!.find(r => r.value === value) !== undefined) {
-        //     return "The value specified already exists.";
-        // }
-
-        return undefined;
     }
 }
