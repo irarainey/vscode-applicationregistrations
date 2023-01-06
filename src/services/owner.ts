@@ -31,6 +31,7 @@ export class OwnerService extends ServiceBase {
         const owner = await window.showInputBox({
             placeHolder: "Enter user name or email address...",
             prompt: "Add new owner to application",
+            title: "Add Owner",
             ignoreFocusOut: true,
             validateInput: async (value) => await debouncedValidation(value)
         });

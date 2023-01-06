@@ -21,6 +21,7 @@ export class RequiredResourceAccessService extends ServiceBase {
             prompt: "Search for API Application",
             placeHolder: "Enter the starting characters of the API application name to build a list of matching applications.",
             ignoreFocusOut: true,
+            title: "Add API Permission (1/4)",
             validateInput: (value) => {
                 if (value.length < 3) {
                     return "You must enter at least partial name of the API application to filter the list. A minimum of 3 characters is required.";
@@ -34,13 +35,24 @@ export class RequiredResourceAccessService extends ServiceBase {
             return;
         }
 
+        // Get the previous icon so we can revert if the update fails.
+        const previousIcon = item.iconPath;
+
+        // Update the tree item icon to show the loading animation.
+        const status = this.triggerTreeChange("Loading api applications...", item);
+
+        // Get the service principals that match the search criteria.
         const servicePrincipals = await this.graphClient.getServicePrincipalByDisplayName(apiAppSearch);
 
-        if(servicePrincipals.length === 0) {
+        // If there are no service principals found then drop out.
+        if (servicePrincipals.length === 0) {
             window.showInformationMessage("No API applications were found that match the search criteria.", "OK");
+            status?.dispose();
+            this.setTreeItemIcon(item, previousIcon, false);
             return;
         }
 
+        // Sort the list of service principals by display name.
         const newList = sort(servicePrincipals).asc(x => x.appDisplayName).map(r => {
             return {
                 label: r.appDisplayName!,
@@ -49,11 +61,15 @@ export class RequiredResourceAccessService extends ServiceBase {
             };
         });
 
+        status?.dispose();
+        this.setTreeItemIcon(item, previousIcon, false);
+
         // Prompt the user for the new allowed member types.
         const allowed = await window.showQuickPick(
             newList,
             {
                 placeHolder: "Select an API application",
+                title: "Add API Permission (2/4)",
                 ignoreFocusOut: true
             });
 
@@ -68,6 +84,9 @@ export class RequiredResourceAccessService extends ServiceBase {
 
     // Adds the selected scope from an existing API to an application registration.
     public async addToExisting(item: AppRegItem, existingApiId?: NullableOption<string> | undefined): Promise<void> {
+
+        let startStep = existingApiId === undefined ? 1 : 3;
+        let numberOfSteps = existingApiId === undefined ? 2 : 4;
 
         // Determine the type of permission.
         const type = await window.showQuickPick(
@@ -85,6 +104,7 @@ export class RequiredResourceAccessService extends ServiceBase {
             ],
             {
                 placeHolder: "What type of permissions does your application require?",
+                title: `Add API Permission (${startStep}/${numberOfSteps})`,
                 ignoreFocusOut: true
             });
 
@@ -99,6 +119,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         // Update the tree item icon to show the loading animation.
         const status = this.triggerTreeChange("Loading api permissions...", item);
 
+        // Determine the API application ID to use.
         const apiIdToUse = existingApiId === undefined ? item.resourceAppId : existingApiId;
 
         // Get the service principal for the application so we can get the scopes.
@@ -147,6 +168,7 @@ export class RequiredResourceAccessService extends ServiceBase {
                 permissions,
                 {
                     placeHolder: "Select a user delegated permission",
+                    title: `Add API Permission (${startStep+1}/${numberOfSteps})`,
                     ignoreFocusOut: true,
                 });
 
@@ -187,6 +209,7 @@ export class RequiredResourceAccessService extends ServiceBase {
                 permissions,
                 {
                     placeHolder: "Select an application permission",
+                    title: `Add API Permission (${startStep+1}/${numberOfSteps})`,
                     ignoreFocusOut: true
                 });
 

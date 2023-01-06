@@ -20,6 +20,7 @@ export class PasswordCredentialService extends ServiceBase {
         const description = await window.showInputBox({
             placeHolder: "Password description...",
             prompt: "Set new password credential description",
+            title: "Add Password Credential (1/2)",
             ignoreFocusOut: true
         });
 
@@ -33,6 +34,7 @@ export class PasswordCredentialService extends ServiceBase {
                 placeHolder: "Password expiry...",
                 prompt: "Set password expiry date",
                 value: format(new Date(expiryDate), 'yyyy-MM-dd'),
+                title: "Add Password Credential (2/2)",
                 ignoreFocusOut: true,
                 validateInput: (value) => this.validateExpiryDate(value)
             });

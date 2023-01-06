@@ -143,6 +143,7 @@ export class AppRoleService extends ServiceBase {
             prompt: "Edit display name",
             placeHolder: "Enter a display name for the new app role",
             ignoreFocusOut: true,
+            title: isEditing === true ? "Edit App Role (1/5)" : "Add App Role (1/5)",
             value: role.displayName ?? undefined,
             validateInput: (value) => this.validateDisplayName(value)
         });
@@ -160,6 +161,7 @@ export class AppRoleService extends ServiceBase {
         const value = await window.showInputBox({
             prompt: "Edit value",
             placeHolder: "Enter a value for the new app role",
+            title: isEditing === true ? "Edit App Role (2/5)" : "Add App Role (2/5)",
             ignoreFocusOut: true,
             value: role.value ?? undefined,
             validateInput: async (value) => debouncedValidation(value, id, isEditing, role.value ?? undefined)
@@ -174,6 +176,7 @@ export class AppRoleService extends ServiceBase {
         const description = await window.showInputBox({
             prompt: "Edit description",
             placeHolder: "Enter a description for the new app role",
+            title: isEditing === true ? "Edit App Role (3/5)" : "Add App Role (3/5)",
             ignoreFocusOut: true,
             value: role.description ?? undefined,
             validateInput: (value) => this.validateDescription(value)
@@ -205,6 +208,7 @@ export class AppRoleService extends ServiceBase {
             ],
             {
                 placeHolder: "Select allowed member types",
+                title: isEditing === true ? "Edit App Role (4/5)" : "Add App Role (4/5)",
                 ignoreFocusOut: true
             });
 
@@ -227,6 +231,7 @@ export class AppRoleService extends ServiceBase {
             ],
             {
                 placeHolder: "Select role state",
+                title: isEditing === true ? "Edit App Role (5/5)" : "Add App Role (5/5)",
                 ignoreFocusOut: true
             });
 

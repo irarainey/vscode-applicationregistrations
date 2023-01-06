@@ -19,6 +19,7 @@ export class SignInAudienceService extends ServiceBase {
             signInAudienceOptions,
             {
                 placeHolder: "Select the sign in audience...",
+                title: "Edit Sign In Audience",
                 ignoreFocusOut: true
             });
 

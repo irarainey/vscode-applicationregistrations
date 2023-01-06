@@ -21,6 +21,7 @@ export class RedirectUriService extends ServiceBase {
         const redirectUri = await window.showInputBox({
             placeHolder: "Enter redirect URI...",
             prompt: "Add a new redirect URI to the application",
+            title: "Add Redirect URI",
             ignoreFocusOut: true,
             validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, false, undefined)
         });
@@ -77,6 +78,7 @@ export class RedirectUriService extends ServiceBase {
             placeHolder: "New application name...",
             prompt: "Rename application with new display name",
             value: item.label!.toString(),
+            title: "Edit Redirect URI",
             ignoreFocusOut: true,
             validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, true, item.label!.toString())
         });

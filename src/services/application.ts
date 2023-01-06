@@ -25,6 +25,7 @@ export class ApplicationService extends ServiceBase {
         const displayName = await window.showInputBox({
             placeHolder: "Application name...",
             prompt: "Create new application registration",
+            title: "Add New Application (1/2)",
             ignoreFocusOut: true,
             validateInput: (value) => this.validateDisplayName(value)
         });
@@ -36,6 +37,7 @@ export class ApplicationService extends ServiceBase {
                 signInAudienceOptions,
                 {
                     placeHolder: "Select the sign in audience...",
+                    title: "Add New Application (2/2)",
                     ignoreFocusOut: true
                 });
 
@@ -59,9 +61,10 @@ export class ApplicationService extends ServiceBase {
 
         // Prompt the user for the new uri.
         const uri = await window.showInputBox({
-            placeHolder: "Application Id URI...",
-            prompt: "Set Application Id URI",
+            placeHolder: "Application ID URI...",
+            prompt: "Set Application ID URI",
             value: item.value! === "Not set" ? `api://${item.appId!}` : item.value!,
+            title: "Edit Application ID URI",
             ignoreFocusOut: true,
             validateInput: (value) => this.validateAppIdUri(value)
         });
@@ -88,6 +91,7 @@ export class ApplicationService extends ServiceBase {
             placeHolder: "New application name...",
             prompt: "Rename application with new display name",
             value: item.label?.toString(),
+            title: "Rename Application",
             ignoreFocusOut: true,
             validateInput: (value) => this.validateDisplayName(value)
         });

@@ -153,6 +153,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         const value = await window.showInputBox({
             prompt: "Edit scope name",
             placeHolder: "Enter a new scope name (e.g. Files.Read)",
+            title: isEditing === true ? "Edit Exposed API Permission (1/7)" : "Add API Exposed Permission (1/7)",
             ignoreFocusOut: true,
             value: scope.value ?? undefined,
             validateInput: async (value) => debouncedValidation(value, id, isEditing, scope.value ?? undefined)
@@ -179,6 +180,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
             ],
             {
                 placeHolder: "Select who can consent to the scope",
+                title: isEditing === true ? "Edit Exposed API Permission (2/7)" : "Add API Exposed Permission (2/7)",
                 ignoreFocusOut: true
             });
 
@@ -191,6 +193,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         const adminConsentDisplayName = await window.showInputBox({
             prompt: "Edit admin consent display name",
             placeHolder: "Enter a new admin consent display name (e.g. Read files)",
+            title: isEditing === true ? "Edit Exposed API Permission (3/7)" : "Add API Exposed Permission (3/7)",
             ignoreFocusOut: true,
             value: scope.adminConsentDisplayName ?? undefined,
             validateInput: async (value) => this.validateAdminDisplayName(value)
@@ -205,6 +208,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         const adminConsentDescription = await window.showInputBox({
             prompt: "Edit admin consent description",
             placeHolder: "Enter a new admin consent description (e.g. Allows the app to read files on your behalf.)",
+            title: isEditing === true ? "Edit Exposed API Permission (4/7)" : "Add API Exposed Permission (4/7)",
             ignoreFocusOut: true,
             value: scope.adminConsentDescription ?? undefined,
             validateInput: async (value) => this.validateAdminDescription(value)
@@ -219,6 +223,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         const userConsentDisplayName = await window.showInputBox({
             prompt: "Edit user consent display name",
             placeHolder: "Enter a new user consent display name (e.g. Read your files)",
+            title: isEditing === true ? "Edit Exposed API Permission (5/7)" : "Add API Exposed Permission (5/7)",
             ignoreFocusOut: true,
             value: scope.userConsentDisplayName ?? undefined,
             validateInput: async (value) => this.validateUserDisplayName(value)
@@ -233,6 +238,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         const userConsentDescription = await window.showInputBox({
             prompt: "Edit user consent description",
             placeHolder: "Enter a new admin consent description (e.g. Allows the app to read your files.)",
+            title: isEditing === true ? "Edit Exposed API Permission (6/7)" : "Add API Exposed Permission (6/7)",
             ignoreFocusOut: true,
             value: scope.userConsentDescription ?? undefined
         });
@@ -256,6 +262,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
             ],
             {
                 placeHolder: "Select scope state",
+                title: isEditing === true ? "Edit Exposed API Permission (7/7)" : "Add API Exposed Permission (7/7)",
                 ignoreFocusOut: true
             });
 
