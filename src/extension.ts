@@ -2,7 +2,7 @@ import { commands, window, workspace, env, Disposable, ExtensionContext } from '
 import { view } from './constants';
 import { AppRegTreeDataProvider } from './data/appRegTreeDataProvider';
 import { AppRegItem } from './models/appRegItem';
-import { GraphClient } from './clients/graph';
+import { GraphClient, escapeSingleQuotes } from './clients/graph';
 import { ApplicationService } from './services/application';
 import { AppRoleService } from './services/appRole';
 import { KeyCredentialService } from './services/keyCredential';
@@ -234,7 +234,7 @@ async function filterTreeView() {
 	} else if (newFilter !== '' && newFilter !== _filterText) {
 		// If the filter text is not empty then set the filter command and filter text.
 		_filterText = newFilter!;
-		_filterCommand = `startsWith(displayName, \'${newFilter}\')`;
+		_filterCommand = `startswith(displayName, \'${escapeSingleQuotes(newFilter)}\')`;
 		await populateTreeView(window.setStatusBarMessage("$(loading~spin) Filtering application registrations..."));
 	}
 };

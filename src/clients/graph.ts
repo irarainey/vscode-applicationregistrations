@@ -46,7 +46,7 @@ export class GraphClient {
         // Create the graph client options
         const clientOptions: ClientOptions = {
             defaultVersion: "v1.0",
-            debugLogging: false,
+            debugLogging: true,
             authProvider
         };
 
@@ -198,14 +198,14 @@ export class GraphClient {
     // Find users by display name
     public async findUserByName(name: string): Promise<any> {
         return await this._client!.api("/users")
-            .filter(`startswith(displayName, '${name}')`)
+            .filter(`startswith(displayName, '${escapeSingleQuotes(name)}')`)
             .get();
     }
 
     // Find users by email address
     public async findUserByEmail(name: string): Promise<any> {
         return await this._client!.api("/users")
-            .filter(`startswith(mail, '${name}')`)
+            .filter(`startswith(mail, '${escapeSingleQuotes(name)}')`)
             .get();
     }
 
@@ -268,7 +268,7 @@ export class GraphClient {
     // Gets a list of service principals by display name
     public async getServicePrincipalByDisplayName(name: string): Promise<ServicePrincipal[]> {
         const servicePrincipals = await this._client!.api("servicePrincipals")
-            .filter(`startswith(displayName, '${name}')`)
+            .filter(`startswith(displayName, '${escapeSingleQuotes(name)}')`)
             .select("appId,appDisplayName,appDescription")
             .get();
         return servicePrincipals.value;
@@ -291,3 +291,7 @@ export class GraphClient {
         });
     }
 }
+
+export const escapeSingleQuotes = (str: string) => {
+    return str.replace(/'/g, "''");
+};
