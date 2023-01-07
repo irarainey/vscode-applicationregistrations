@@ -1,6 +1,6 @@
-import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
-import { ServiceBase } from './serviceBase';
-import { GraphClient } from '../clients/graph';
+import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
+import { ServiceBase } from "./service-base";
+import { GraphClient } from "../clients/graph-client";
 
 export class KeyCredentialService extends ServiceBase {
 

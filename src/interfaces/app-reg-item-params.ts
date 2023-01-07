@@ -1,5 +1,5 @@
-import { ThemeIcon, Command } from 'vscode';
-import { AppRegItem } from "../models/appRegItem";
+import { ThemeIcon, Command } from "vscode";
+import { AppRegItem } from "../models/app-reg-item";
 
 // This is the interface for the application registration tree view item parameters
 export interface AppRegItemParams {

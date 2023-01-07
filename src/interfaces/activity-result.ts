@@ -1,5 +1,5 @@
-import { Disposable, Uri, ThemeIcon } from 'vscode';
-import { AppRegItem } from '../models/appRegItem';
+import { Disposable, Uri, ThemeIcon } from "vscode";
+import { AppRegItem } from "../models/app-reg-item";
 
 // This is the interface for the return result of service methods
 export interface ActivityResult {

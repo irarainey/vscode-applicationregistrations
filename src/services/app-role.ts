@@ -1,10 +1,10 @@
-import { window } from 'vscode';
-import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
-import { AppRegItem } from '../models/appRegItem';
+import { window } from "vscode";
+import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
+import { AppRegItem } from "../models/app-reg-item";
 import { AppRole } from "@microsoft/microsoft-graph-types";
-import { v4 as uuidv4 } from 'uuid';
-import { ServiceBase } from './serviceBase';
-import { GraphClient } from '../clients/graph';
+import { v4 as uuidv4 } from "uuid";
+import { ServiceBase } from "./service-base";
+import { GraphClient } from "../clients/graph-client";
 import { debounce } from "ts-debounce";
 
 export class AppRoleService extends ServiceBase {
@@ -15,7 +15,7 @@ export class AppRoleService extends ServiceBase {
     }
 
     // Adds a new app role to an application registration.
-    public async add(item: AppRegItem): Promise<void> {
+    async add(item: AppRegItem): Promise<void> {
 
         // Capture the new app role details by passing in an empty app role.
         const role = await this.inputRoleDetails({}, item.objectId!, false);
@@ -27,7 +27,7 @@ export class AppRoleService extends ServiceBase {
 
         // Set the added trigger to the status bar message.
         const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Adding new app role...", item);
+        const status = this.triggerTreeChange("Adding App Role", item);
 
         // Get the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
@@ -46,7 +46,7 @@ export class AppRoleService extends ServiceBase {
     }
 
     // Edits an app role from an application registration.
-    public async edit(item: AppRegItem): Promise<void> {
+    async edit(item: AppRegItem): Promise<void> {
 
         // Get the parent application so we can read the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
@@ -61,7 +61,7 @@ export class AppRoleService extends ServiceBase {
 
         // Set the added trigger to the status bar message.
         const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Updating app role...", item);
+        const status = this.triggerTreeChange("Updating App Role", item);
 
         // Update the application.
         this.graphClient.updateApplication(item.objectId!, { appRoles: roles })
@@ -74,11 +74,11 @@ export class AppRoleService extends ServiceBase {
     }
 
     // Changes the enabled state of an app role from an application registration.
-    public async changeState(item: AppRegItem, state: boolean): Promise<void> {
+    async changeState(item: AppRegItem, state: boolean): Promise<void> {
 
         // Set the added trigger to the status bar message.
         const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange(state === true ? "Enabling app role..." : "Disabling app role...", item);
+        const status = this.triggerTreeChange(state === true ? "Enabling App Role" : "Disabling App Role", item);
 
         // Get the parent application so we can read the app roles.
         const roles = await this.getAppRoles(item.objectId!);
@@ -97,7 +97,7 @@ export class AppRoleService extends ServiceBase {
     }
 
     // Deletes an app role from an application registration.
-    public async delete(item: AppRegItem): Promise<void> {
+    async delete(item: AppRegItem): Promise<void> {
 
         if (item.state !== false) {
             window.showWarningMessage("Role cannot be deleted unless disabled first.", "OK");
@@ -105,13 +105,13 @@ export class AppRoleService extends ServiceBase {
         }
 
         // Prompt the user to confirm the removal.
-        const answer = await window.showInformationMessage(`Do you want to delete the app role ${item.label}?`, "Yes", "No");
+        const answer = await window.showInformationMessage(`Do you want to delete the App Role ${item.label}?`, "Yes", "No");
 
         // If the user confirms the removal then delete the role.
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
             const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Deleting app role...", item);
+            const status = this.triggerTreeChange("Deleting App Role", item);
 
             // Get the parent application so we can read the app roles.
             const roles = await this.getAppRoles(item.objectId!);
@@ -132,7 +132,7 @@ export class AppRoleService extends ServiceBase {
 
     // Gets the app roles for an application registration.
     private async getAppRoles(id: string): Promise<AppRole[]> {
-        return (await this.dataProvider.getApplicationPartial(id, "appRoles")).appRoles!;
+        return (await this.treeDataProvider.getApplicationPartial(id, "appRoles")).appRoles!;
     }
 
     // Captures the details for an app role.
@@ -140,8 +140,8 @@ export class AppRoleService extends ServiceBase {
 
         // Prompt the user for the new display name.
         const displayName = await window.showInputBox({
-            prompt: "Edit display name",
-            placeHolder: "Enter a display name for the new app role",
+            prompt: "App Role Display Name",
+            placeHolder: "Enter a display name for the App Role",
             ignoreFocusOut: true,
             title: isEditing === true ? "Edit App Role (1/5)" : "Add App Role (1/5)",
             value: role.displayName ?? undefined,
@@ -159,8 +159,8 @@ export class AppRoleService extends ServiceBase {
 
         // Prompt the user for the new value.
         const value = await window.showInputBox({
-            prompt: "Edit value",
-            placeHolder: "Enter a value for the new app role",
+            prompt: "App Role Value",
+            placeHolder: "Enter a value for the App Role",
             title: isEditing === true ? "Edit App Role (2/5)" : "Add App Role (2/5)",
             ignoreFocusOut: true,
             value: role.value ?? undefined,
@@ -174,8 +174,8 @@ export class AppRoleService extends ServiceBase {
 
         // Prompt the user for the new display name.
         const description = await window.showInputBox({
-            prompt: "Edit description",
-            placeHolder: "Enter a description for the new app role",
+            prompt: "App Role Description",
+            placeHolder: "Enter a description for the App Role",
             title: isEditing === true ? "Edit App Role (3/5)" : "Add App Role (3/5)",
             ignoreFocusOut: true,
             value: role.description ?? undefined,

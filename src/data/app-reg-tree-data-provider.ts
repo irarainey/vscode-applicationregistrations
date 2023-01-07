@@ -1,55 +1,50 @@
-import * as path from 'path';
-import { signInCommandText, view, appSelectProperties } from '../constants';
-import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, Disposable, ConfigurationTarget } from 'vscode';
+import * as path from "path";
+import { SIGNIN_COMMAND_TEXT, VIEW_NAME, APPLICATION_SELECT_PROPERTIES } from "../constants";
+import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, Disposable, ConfigurationTarget } from "vscode";
 import { Application, KeyCredential, PasswordCredential, User, AppRole, RequiredResourceAccess, PermissionScope } from "@microsoft/microsoft-graph-types";
-import { GraphClient } from '../clients/graph';
-import { AppRegItem } from '../models/appRegItem';
-import { ActivityResult } from '../interfaces/activityResult';
-import { sort } from 'fast-sort';
-import { format } from 'date-fns';
+import { GraphClient } from "../clients/graph-client";
+import { AppRegItem } from "../models/app-reg-item";
+import { ActivityResult } from "../interfaces/activity-result";
+import { sort } from "fast-sort";
+import { format } from "date-fns";
 
 // This is the application registration tree data provider for the tree view.
 export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
-    // A private instance of the GraphClient class.
-    private _graphClient: GraphClient;
-
     // Private instance of the tree data
-    private _treeData: AppRegItem[] = [];
+    private treeData: AppRegItem[] = [];
 
     // A private instance of the status bar message handle.
-    private _statusBarHandle: Disposable | undefined;
-
-    // A private instance of a flag to indicate if the tree view is currently being updated.
-    private _isUpdating: boolean = false;
+    private statusBarHandle: Disposable | undefined;
 
     // This is the event that is fired when the tree view is refreshed.
-    private _onDidChangeTreeData: EventEmitter<AppRegItem | undefined | null | void> = new EventEmitter<AppRegItem | undefined | null | void>();
+    private onDidChangeTreeDataEvent: EventEmitter<AppRegItem | undefined | null | void> = new EventEmitter<AppRegItem | undefined | null | void>();
 
     // A protected instance of the EventEmitter class to handle error events.
-    private _onError: EventEmitter<ActivityResult> = new EventEmitter<ActivityResult>();
+    private onErrorEvent: EventEmitter<ActivityResult> = new EventEmitter<ActivityResult>();
 
     //Defines the event that is fired when the tree view is refreshed.
-    public readonly onDidChangeTreeData: Event<AppRegItem | undefined | null | void> = this._onDidChangeTreeData.event;
+    public readonly onDidChangeTreeData: Event<AppRegItem | undefined | null | void> = this.onDidChangeTreeDataEvent.event;
 
     // A public readonly property to expose the error event.
-    public readonly onError: Event<ActivityResult> = this._onError.event;
+    public readonly onError: Event<ActivityResult> = this.onErrorEvent.event;
+
+    // A public property for the Graph Client.
+    public graphClient: GraphClient;
 
     // A public get property to get the updating state
-    public get isUpdating(): boolean {
-        return this._isUpdating;
-    }
+    public isUpdating: boolean = false;
 
     // A public get property to return if the tree is empty.
     public get isTreeEmpty(): boolean {
 
         // If the tree data is empty then return true.
-        if (this._treeData.length === 0) {
+        if (this.treeData.length === 0) {
             return true;
         }
 
         // If the tree data contains a single item with the context value of "EMPTY" then return true.
-        if (this._treeData.length === 1 && this._treeData[0].contextValue === "EMPTY") {
+        if (this.treeData.length === 1 && this.treeData[0].contextValue === "EMPTY") {
             return true;
         }
 
@@ -57,91 +52,161 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
         return false;
     }
 
-    // The constructor for the AppRegDataProvider class.
-    constructor(graphClient: GraphClient) {
-        this._graphClient = graphClient;
-        window.registerTreeDataProvider(view, this);
-        this.renderTreeView("INITIALISING", undefined, undefined);
-        this.initialiseGraphClient(undefined);
+    // A public get property for the graphClientInitialised state.
+    public get isGraphClientInitialised() {
+        return this.graphClient.isGraphClientInitialised;
     }
 
-    // Trigger the event to indicate an error
-    private triggerOnError(item: ActivityResult) {
-        this._onError.fire(item);
+    // The constructor for the AppRegTreeDataProvider class.
+    constructor(graphClient: GraphClient) {
+        this.graphClient = graphClient;
+        window.registerTreeDataProvider(VIEW_NAME, this);
+        this.renderTreeView("INITIALISING");
+        Promise.resolve(this.initialiseGraphClient());
     }
 
     // A public method to initialise the graph client.
-    public initialiseGraphClient(statusBar: Disposable | undefined = undefined): void {
-
+    async initialiseGraphClient(statusBar?: Disposable | undefined): Promise<void> {
         if (statusBar !== undefined) {
             statusBar.dispose();
         }
-
-        this._graphClient.initialiseTreeView = (type: string, statusBarMessage: Disposable | undefined, filter?: string) => { this.renderTreeView(type, statusBarMessage, filter); };
-        this._graphClient.initialise();
-    }
-
-    // A public get property for the graphClient.
-    public get graphClient() {
-        return this._graphClient;
-    }
-
-    // A public get property for the graphClientInitialised state.
-    public get isGraphClientInitialised() {
-        return this._graphClient.isGraphClientInitialised;
-    }
-
-    // Trigger the event to refresh the tree view
-    public triggerOnDidChangeTreeData(item?: AppRegItem) {
-        this._onDidChangeTreeData.fire(item);
+        this.graphClient.initialiseTreeView = async (type: string, statusBarMessage?: Disposable | undefined, filter?: string) => {
+            await this.renderTreeView(type, statusBarMessage, filter);
+        };
+        await this.graphClient.initialise();
     }
 
     // Initialises the tree view data based on the type of data to be displayed.
-    public async renderTreeView(type: string, statusBarMessage: Disposable | undefined = undefined, filter?: string): Promise<void> {
+    async renderTreeView(type: string, statusBarMessage: Disposable | undefined = undefined, filter?: string): Promise<void> {
 
         // Clear any existing status bar message
-        if (this._statusBarHandle !== undefined) {
-            await this._statusBarHandle.dispose();
+        if (this.statusBarHandle !== undefined) {
+            await this.statusBarHandle.dispose();
         }
 
-        this._statusBarHandle = statusBarMessage;
+        this.statusBarHandle = statusBarMessage;
 
         // Clear the tree data
-        this._treeData = [];
+        this.treeData = [];
 
         // Add the appropriate tree view item based on the type of data to be displayed.
         switch (type) {
             case "INITIALISING":
-                this._treeData.push(new AppRegItem({
-                    label: "Initialising extension...",
+                this.treeData.push(new AppRegItem({
+                    label: "Initialising extension",
                     context: "INITIALISING",
                     icon: new ThemeIcon("loading~spin", new ThemeColor("editor.foreground"))
                 }));
-                this._onDidChangeTreeData.fire(undefined);
+                this.onDidChangeTreeDataEvent.fire(undefined);
                 break;
             case "EMPTY":
-                this._treeData.push(new AppRegItem({
+                this.treeData.push(new AppRegItem({
                     label: "No applications found",
                     context: "EMPTY",
                     icon: new ThemeIcon("info", new ThemeColor("editor.foreground"))
                 }));
-                this._onDidChangeTreeData.fire(undefined);
+                this.onDidChangeTreeDataEvent.fire(undefined);
                 break;
             case "SIGN-IN":
-                this._treeData.push(new AppRegItem({
-                    label: signInCommandText,
+                this.treeData.push(new AppRegItem({
+                    label: SIGNIN_COMMAND_TEXT,
                     context: "SIGN-IN",
                     icon: new ThemeIcon("sign-in", new ThemeColor("editor.foreground")),
                     command: {
                         command: "appRegistrations.signInToAzure",
-                        title: signInCommandText,
+                        title: SIGNIN_COMMAND_TEXT,
                     }
                 }));
-                this._onDidChangeTreeData.fire(undefined);
+                this.onDidChangeTreeDataEvent.fire(undefined);
                 break;
             case "APPLICATIONS":
                 await this.populateAppRegTreeData(filter);
                 break;
+            default:
+                // Do nothing.
+                break;
+        }
+    }
+
+    // Returns the application registration that is the parent of the given element
+    async getApplicationPartial(objectId: string, select: string): Promise<Application> {
+        return await this.graphClient.getApplicationDetailsPartial(objectId, select);
+    }
+
+    // Trigger the event to refresh the tree view
+    triggerOnDidChangeTreeData(item?: AppRegItem) {
+        this.onDidChangeTreeDataEvent.fire(item);
+    }
+
+    // Returns the children for the given element or root (if no element is passed).
+    getTreeItem(element: AppRegItem): TreeItem | Thenable<TreeItem> {
+        return element;
+    }
+
+    // Returns the UI representation (AppItem) of the element that gets displayed in the view
+    getChildren(element?: AppRegItem | undefined): ProviderResult<AppRegItem[]> {
+
+        // No element selected so return all top level applications to render static elements
+        if (element === undefined) {
+            return this.treeData;
+        }
+
+        // If an element is selected then return the children for that element
+        switch (element.contextValue) {
+            case "OWNERS":
+                // Return the owners for the application
+                return this.getApplicationOwners(element);
+            case "WEB-REDIRECT":
+                // Return the web redirect URIs for the application
+                return this.getApplicationPartial(element.objectId!, "web")
+                    .then((app: Application) => {
+                        return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", app.web!.redirectUris!);
+                    });
+            case "SPA-REDIRECT":
+                // Return the SPA redirect URIs for the application
+                return this.getApplicationPartial(element.objectId!, "spa")
+                    .then((app: Application) => {
+                        return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", app.spa!.redirectUris!);
+                    });
+            case "NATIVE-REDIRECT":
+                // Return the native redirect URIs for the application
+                return this.getApplicationPartial(element.objectId!, "publicClient")
+                    .then((app: Application) => {
+                        return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", app.publicClient!.redirectUris!);
+                    });
+            case "PASSWORD-CREDENTIALS":
+                // Return the password credentials for the application
+                return this.getApplicationPartial(element.objectId!, "passwordCredentials")
+                    .then((app: Application) => {
+                        return this.getApplicationPasswordCredentials(element, app.passwordCredentials!);
+                    });
+            case "CERTIFICATE-CREDENTIALS":
+                // Return the key credentials for the application
+                return this.getApplicationPartial(element.objectId!, "keyCredentials")
+                    .then((app: Application) => {
+                        return this.getApplicationKeyCredentials(element, app.keyCredentials!);
+                    });
+            case "API-PERMISSIONS":
+                // Return the API permissions for the application
+                return this.getApplicationPartial(element.objectId!, "requiredResourceAccess")
+                    .then((app: Application) => {
+                        return this.getApplicationApiPermissions(element, app.requiredResourceAccess!);
+                    });
+            case "EXPOSED-API-PERMISSIONS":
+                // Return the exposed API permissions for the application
+                return this.getApplicationPartial(element.objectId!, "api")
+                    .then((app: Application) => {
+                        return this.getApplicationExposedApiPermissions(element, app.api?.oauth2PermissionScopes!);
+                    });
+            case "APP-ROLES":
+                // Return the app roles for the application
+                return this.getApplicationPartial(element.objectId!, "appRoles")
+                    .then((app: Application) => {
+                        return this.getApplicationAppRoles(element, app.appRoles!);
+                    });
+            default:
+                // Nothing specific so return the statically defined children
+                return element.children;
         }
     }
 
@@ -149,13 +214,13 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     private async populateAppRegTreeData(filter?: string): Promise<void> {
 
         // If the tree view is already being updated then return.
-        if (this._isUpdating) {
+        if (this.isUpdating) {
             return;
         }
 
         try {
             // Set the flag to indicate that the tree view is being updated.
-            this._isUpdating = true;
+            this.isUpdating = true;
 
             // Get the configuration settings.
             const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
@@ -206,7 +271,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             // If there are no application registrations then display an empty tree view.
             if (applicationList.length === 0) {
                 this.renderTreeView("EMPTY");
-                this._isUpdating = false;
+                this.isUpdating = false;
                 return;
             }
 
@@ -224,7 +289,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             const unsorted = allApplications.map(async (application, index) => {
                 try {
                     // Get the application details.
-                    const app: Application = await this._graphClient.getApplicationDetailsPartial(application.id!, appSelectProperties, true);
+                    const app: Application = await this.graphClient.getApplicationDetailsPartial(application.id!, APPLICATION_SELECT_PROPERTIES, true);
                     // Create the tree view item.
                     return (new AppRegItem({
                         label: app.displayName!,
@@ -402,121 +467,44 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             });
 
             // Sort the applications by name and assign to the class-level array used to render the tree.
-            this._treeData = sort(await Promise.all(unsorted.filter(a => a !== undefined)) as AppRegItem[]).asc(async a => a.order);
+            this.treeData = sort(await Promise.all(unsorted.filter(a => a !== undefined)) as AppRegItem[]).asc(async a => a.order);
 
             // Clear any status bar message
-            if (this, this._statusBarHandle !== undefined) {
-                this._statusBarHandle.dispose();
+            if (this, this.statusBarHandle !== undefined) {
+                this.statusBarHandle.dispose();
             }
 
             // Trigger the event to refresh the tree view
             this.triggerOnDidChangeTreeData();
 
             // Set the flag to indicate that the tree is no longer updating
-            this._isUpdating = false;
+            this.isUpdating = false;
 
         } catch (error: any) {
             // Set the flag to indicate that the tree is no longer updating
-            this._isUpdating = false;
+            this.isUpdating = false;
 
             if (error.code !== undefined && error.code === "CredentialUnavailableError") {
                 // Check to see if the user is signed in and if not then prompt them to sign in
-                this._graphClient.isGraphClientInitialised = false;
-                this._graphClient.initialise();
+                this.graphClient.isGraphClientInitialised = false;
+                this.graphClient.initialise();
             }
             else {
-                this.triggerOnError({ success: false, statusBarHandle: this._statusBarHandle, error: error });
+                this.triggerOnError({ success: false, statusBarHandle: this.statusBarHandle, error: error });
             }
         }
-    }
-
-    // Returns the children for the given element or root (if no element is passed).
-    public getTreeItem(element: AppRegItem): TreeItem | Thenable<TreeItem> {
-        return element;
-    }
-
-    // Returns the UI representation (AppItem) of the element that gets displayed in the view
-    public getChildren(element?: AppRegItem | undefined): ProviderResult<AppRegItem[]> {
-
-        // No element selected so return all top level applications to render static elements
-        if (element === undefined) {
-            return this._treeData;
-        }
-
-        // If an element is selected then return the children for that element
-        switch (element.contextValue) {
-            case "OWNERS":
-                // Return the owners for the application
-                return this.getApplicationOwners(element);
-            case "WEB-REDIRECT":
-                // Return the web redirect URIs for the application
-                return this.getApplicationPartial(element.objectId!, "web")
-                    .then((app: Application) => {
-                        return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", app.web!.redirectUris!);
-                    });
-            case "SPA-REDIRECT":
-                // Return the SPA redirect URIs for the application
-                return this.getApplicationPartial(element.objectId!, "spa")
-                    .then((app: Application) => {
-                        return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", app.spa!.redirectUris!);
-                    });
-            case "NATIVE-REDIRECT":
-                // Return the native redirect URIs for the application
-                return this.getApplicationPartial(element.objectId!, "publicClient")
-                    .then((app: Application) => {
-                        return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", app.publicClient!.redirectUris!);
-                    });
-            case "PASSWORD-CREDENTIALS":
-                // Return the password credentials for the application
-                return this.getApplicationPartial(element.objectId!, "passwordCredentials")
-                    .then((app: Application) => {
-                        return this.getApplicationPasswordCredentials(element, app.passwordCredentials!);
-                    });
-            case "CERTIFICATE-CREDENTIALS":
-                // Return the key credentials for the application
-                return this.getApplicationPartial(element.objectId!, "keyCredentials")
-                    .then((app: Application) => {
-                        return this.getApplicationKeyCredentials(element, app.keyCredentials!);
-                    });
-            case "API-PERMISSIONS":
-                // Return the API permissions for the application
-                return this.getApplicationPartial(element.objectId!, "requiredResourceAccess")
-                    .then((app: Application) => {
-                        return this.getApplicationApiPermissions(element, app.requiredResourceAccess!);
-                    });
-            case "EXPOSED-API-PERMISSIONS":
-                // Return the exposed API permissions for the application
-                return this.getApplicationPartial(element.objectId!, "api")
-                    .then((app: Application) => {
-                        return this.getApplicationExposedApiPermissions(element, app.api?.oauth2PermissionScopes!);
-                    });
-            case "APP-ROLES":
-                // Return the app roles for the application
-                return this.getApplicationPartial(element.objectId!, "appRoles")
-                    .then((app: Application) => {
-                        return this.getApplicationAppRoles(element, app.appRoles!);
-                    });
-            default:
-                // Nothing specific so return the statically defined children
-                return element.children;
-        }
-    }
-
-    // Returns the application registration that is the parent of the given element
-    public async getApplicationPartial(objectId: string, select: string): Promise<Application> {
-        return await this._graphClient.getApplicationDetailsPartial(objectId, select);
     }
 
     // Returns application list depending on the user setting
     private async getApplicationList(filter?: string): Promise<Application[]> {
         // Get the user setting to determine whether to show all applications or just the ones owned by the user
         const showOwnedApplicationsOnly = workspace.getConfiguration("applicationregistrations").get("showOwnedApplicationsOnly") as boolean;
-        return showOwnedApplicationsOnly === true ? await this._graphClient.getApplicationListOwned(filter) : await this._graphClient.getApplicationListAll(filter);
+        return showOwnedApplicationsOnly === true ? await this.graphClient.getApplicationListOwned(filter) : await this.graphClient.getApplicationListAll(filter);
     }
 
     // Returns the application owners for the given application
     private async getApplicationOwners(element: AppRegItem): Promise<AppRegItem[]> {
-        const response = await this._graphClient.getApplicationOwners(element.objectId!);
+        const response = await this.graphClient.getApplicationOwners(element.objectId!);
         const owners: User[] = response.value;
         return owners.map(owner => {
             return new AppRegItem({
@@ -631,7 +619,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
         // Iterate through each permission and get the service principal app name
         const applicationNames = permissions.map(async (permission) => {
-            const response = await this._graphClient.getServicePrincipalByAppId(permission.resourceAppId!);
+            const response = await this.graphClient.findServicePrincipalByAppId(permission.resourceAppId!);
             return new AppRegItem({
                 label: response.displayName!,
                 context: "API-PERMISSIONS-APP",
@@ -744,8 +732,13 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
         });
     }
 
+    // Trigger the event to indicate an error
+    private triggerOnError(item: ActivityResult) {
+        this.onErrorEvent.fire(item);
+    }
+
     // Dispose of the event listener
-    public dispose(): void {
-        this._onDidChangeTreeData.dispose();
+    dispose(): void {
+        this.onDidChangeTreeDataEvent.dispose();
     }
 }

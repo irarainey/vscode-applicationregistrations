@@ -1,9 +1,9 @@
-import { window, ThemeIcon, env, Uri, ThemeColor } from 'vscode';
-import { signInAudienceDocumentation, signInAudienceOptions } from '../constants';
-import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
-import { AppRegItem } from '../models/appRegItem';
-import { ServiceBase } from './serviceBase';
-import { GraphClient } from '../clients/graph';
+import { window, ThemeIcon, env, Uri, ThemeColor } from "vscode";
+import { SIGNIN_AUDIENCE_DOCUMENTATION_URI, SIGNIN_AUDIENCE_OPTIONS } from "../constants";
+import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
+import { AppRegItem } from "../models/app-reg-item";
+import { ServiceBase } from "./service-base";
+import { GraphClient } from "../clients/graph-client";
 
 export class SignInAudienceService extends ServiceBase {
 
@@ -13,12 +13,12 @@ export class SignInAudienceService extends ServiceBase {
     }
 
     // Edits the application sign in audience.
-    public async edit(item: AppRegItem): Promise<void> {
+    async edit(item: AppRegItem): Promise<void> {
 
         const audience = await window.showQuickPick(
-            signInAudienceOptions,
+            SIGNIN_AUDIENCE_OPTIONS,
             {
-                placeHolder: "Select the sign in audience...",
+                placeHolder: "Select the Sign In Audience",
                 title: "Edit Sign In Audience",
                 ignoreFocusOut: true
             });
@@ -29,8 +29,8 @@ export class SignInAudienceService extends ServiceBase {
             } else {
                 item.iconPath = new ThemeIcon("loading~spin");
             }
-            this.dataProvider.triggerOnDidChangeTreeData(item);
-            const status = window.setStatusBarMessage(`$(loading~spin) Updating sign in audience...`);
+            this.treeDataProvider.triggerOnDidChangeTreeData(item);
+            const status = window.setStatusBarMessage(`$(loading~spin) Updating Sign In Audience`);
 
             this.graphClient.updateApplication(item.objectId!, { signInAudience: audience.value })
                 .then(() => {
@@ -42,16 +42,16 @@ export class SignInAudienceService extends ServiceBase {
                     } else {
                         item.iconPath = new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"));
                     }
-                    this.dataProvider.triggerOnDidChangeTreeData(item);
+                    this.treeDataProvider.triggerOnDidChangeTreeData(item);
                     status.dispose();
 
                     window.showErrorMessage(
-                        `An error occurred while attempting to change the sign in audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at ${signInAudienceDocumentation}.`,
+                        `An error occurred while attempting to change the Sign In Audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at ${SIGNIN_AUDIENCE_DOCUMENTATION_URI}.`,
                         ...["OK", "Open Documentation"]
                     )
                         .then((answer) => {
                             if (answer === "Open Documentation") {
-                                env.openExternal(Uri.parse(signInAudienceDocumentation));
+                                env.openExternal(Uri.parse(SIGNIN_AUDIENCE_DOCUMENTATION_URI));
                             }
                         });
                 });

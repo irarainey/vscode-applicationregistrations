@@ -1,10 +1,10 @@
-import { env, window } from 'vscode';
-import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
-import { AppRegItem } from '../models/appRegItem';
-import { addYears, isAfter, isBefore, isDate } from 'date-fns';
-import { ServiceBase } from './serviceBase';
-import { GraphClient } from '../clients/graph';
-import { format } from 'date-fns';
+import { env, window } from "vscode";
+import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
+import { AppRegItem } from "../models/app-reg-item";
+import { addYears, isAfter, isBefore, isDate } from "date-fns";
+import { ServiceBase } from "./service-base";
+import { GraphClient } from "../clients/graph-client";
+import { format } from "date-fns";
 
 export class PasswordCredentialService extends ServiceBase {
 
@@ -14,11 +14,11 @@ export class PasswordCredentialService extends ServiceBase {
     }
 
     // Adds a new password credential.
-    public async add(item: AppRegItem): Promise<void> {
+    async add(item: AppRegItem): Promise<void> {
 
         // Prompt the user for the description.
         const description = await window.showInputBox({
-            placeHolder: "Password description...",
+            placeHolder: "Password description",
             prompt: "Set new password credential description",
             title: "Add Password Credential (1/2)",
             ignoreFocusOut: true
@@ -31,7 +31,7 @@ export class PasswordCredentialService extends ServiceBase {
 
             // Prompt the user for the description.
             const expiry = await window.showInputBox({
-                placeHolder: "Password expiry...",
+                placeHolder: "Password expiry",
                 prompt: "Set password expiry date",
                 value: format(new Date(expiryDate), 'yyyy-MM-dd'),
                 title: "Add Password Credential (2/2)",
@@ -42,12 +42,12 @@ export class PasswordCredentialService extends ServiceBase {
             if (expiry !== undefined) {
                 // Set the added trigger to the status bar message.
                 const previousIcon = item.iconPath;
-                const status = this.triggerTreeChange("Adding password credential...", item);
+                const status = this.triggerTreeChange("Adding Password Credential", item);
                 this.graphClient.addPasswordCredential(item.objectId!, description, expiry)
                     .then((response) => {
                         env.clipboard.writeText(response.secretText!);
-                        window.showInformationMessage("New password copied to clipboard.", "OK");
                         this.triggerOnComplete({ success: true, statusBarHandle: status });
+                        window.showInformationMessage("New password copied to clipboard.", "OK");
                     })
                     .catch((error) => {
                         this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
@@ -57,16 +57,16 @@ export class PasswordCredentialService extends ServiceBase {
     };
 
     // Deletes a password credential from an application registration.
-    public async delete(item: AppRegItem): Promise<void> {
+    async delete(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the removal.
-        const answer = await window.showInformationMessage(`Do you want to delete this credential?`, "Yes", "No");
+        const answer = await window.showInformationMessage("Do you want to delete this password credential?", "Yes", "No");
 
         // If the user confirms the removal then remove the user.
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
             const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Deleting password credential...", item);
+            const status = this.triggerTreeChange("Deleting Password Credential", item);
             this.graphClient.deletePasswordCredential(item.objectId!, item.value!)
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });

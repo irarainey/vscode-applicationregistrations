@@ -1,10 +1,10 @@
-import { window } from 'vscode';
-import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
-import { AppRegItem } from '../models/appRegItem';
+import { window } from "vscode";
+import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
+import { AppRegItem } from "../models/app-reg-item";
 import { PermissionScope, ApiApplication } from "@microsoft/microsoft-graph-types";
-import { v4 as uuidv4 } from 'uuid';
-import { ServiceBase } from './serviceBase';
-import { GraphClient } from '../clients/graph';
+import { v4 as uuidv4 } from "uuid";
+import { ServiceBase } from "./service-base";
+import { GraphClient } from "../clients/graph-client";
 import { debounce } from "ts-debounce";
 
 export class OAuth2PermissionScopeService extends ServiceBase {
@@ -15,12 +15,12 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     }
 
     // Adds a new exposed api scope to an application registration.
-    public async add(item: AppRegItem): Promise<void> {
+    async add(item: AppRegItem): Promise<void> {
 
         // Check to see if the application has an appIdURI. If it doesn't then we don't want to add a scope.
         const appIdUri = (await this.graphClient.getApplicationDetailsPartial(item.objectId!, "identifierUris")).identifierUris;
         if (appIdUri === undefined || appIdUri.length === 0) {
-            window.showWarningMessage("This application does not have an Application Id URI. Please add one before adding a scope.", "OK");
+            window.showWarningMessage("This application does not have an Application II URI. Please add one before adding a scope.", "OK");
             return;
         }
 
@@ -34,7 +34,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
         // Set the added trigger to the status bar message.
         const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Adding new scope...", item);
+        const status = this.triggerTreeChange("Adding Scope", item);
 
         // Get the existing scopes
         const api = await this.getScopes(item.objectId!);
@@ -53,7 +53,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     }
 
     // Edits an exposed api scope from an application registration.
-    public async edit(item: AppRegItem): Promise<void> {
+    async edit(item: AppRegItem): Promise<void> {
 
         // Get the parent application so we can read the app roles.
         const api = await this.getScopes(item.objectId!);
@@ -68,7 +68,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
         // Set the added trigger to the status bar message.
         const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Updating scope...", item);
+        const status = this.triggerTreeChange("Updating Scope", item);
 
         // Update the application.
         this.graphClient.updateApplication(item.objectId!, { api: api })
@@ -81,11 +81,11 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     }
 
     // Changes the enabled state of an exposed api scope for an application registration.
-    public async changeState(item: AppRegItem, state: boolean): Promise<void> {
+    async changeState(item: AppRegItem, state: boolean): Promise<void> {
 
         // Set the added trigger to the status bar message.
         const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange(state === true ? "Enabling scope..." : "Disabling scope...", item);
+        const status = this.triggerTreeChange(state === true ? "Enabling Scope" : "Disabling Scope", item);
 
         // Get the parent application so we can read the scopes.
         const api = await this.getScopes(item.objectId!);
@@ -104,7 +104,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     }
 
     // Deletes an exposed api scope from an application registration.
-    public async delete(item: AppRegItem): Promise<void> {
+    async delete(item: AppRegItem): Promise<void> {
 
         if (item.state !== false) {
             window.showWarningMessage("Scopes cannot be deleted unless disabled first.", "OK");
@@ -112,13 +112,13 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         }
 
         // Prompt the user to confirm the removal.
-        const answer = await window.showInformationMessage(`Do you want to delete the scope ${item.label}?`, "Yes", "No");
+        const answer = await window.showInformationMessage(`Do you want to delete the Scope ${item.label}?`, "Yes", "No");
 
         // If the user confirms the removal then delete the role.
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
             const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Deleting scope...", item);
+            const status = this.triggerTreeChange("Deleting Scope", item);
 
             // Get the parent application so we can read the app roles.
             const api = await this.getScopes(item.objectId!);
@@ -139,7 +139,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
     // Gets the exposed api scopes for an application registration.
     private async getScopes(id: string): Promise<ApiApplication> {
-        return (await this.dataProvider.getApplicationPartial(id, "api")).api!;
+        return (await this.treeDataProvider.getApplicationPartial(id, "api")).api!;
     }
 
     // Captures the details for a scope.
@@ -151,8 +151,8 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
         // Prompt the user for the new value.
         const value = await window.showInputBox({
-            prompt: "Edit scope name",
-            placeHolder: "Enter a new scope name (e.g. Files.Read)",
+            prompt: "Scope name",
+            placeHolder: "Enter a scope name (e.g. Files.Read)",
             title: isEditing === true ? "Edit Exposed API Permission (1/7)" : "Add API Exposed Permission (1/7)",
             ignoreFocusOut: true,
             value: scope.value ?? undefined,
@@ -191,8 +191,8 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
         // Prompt the user for the new admin consent display name.
         const adminConsentDisplayName = await window.showInputBox({
-            prompt: "Edit admin consent display name",
-            placeHolder: "Enter a new admin consent display name (e.g. Read files)",
+            prompt: "Admin consent display name",
+            placeHolder: "Enter an admin consent display name (e.g. Read files)",
             title: isEditing === true ? "Edit Exposed API Permission (3/7)" : "Add API Exposed Permission (3/7)",
             ignoreFocusOut: true,
             value: scope.adminConsentDisplayName ?? undefined,
@@ -206,8 +206,8 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
         // Prompt the user for the new admin consent description.
         const adminConsentDescription = await window.showInputBox({
-            prompt: "Edit admin consent description",
-            placeHolder: "Enter a new admin consent description (e.g. Allows the app to read files on your behalf.)",
+            prompt: "Admin consent description",
+            placeHolder: "Enter an admin consent description (e.g. Allows the app to read files on your behalf.)",
             title: isEditing === true ? "Edit Exposed API Permission (4/7)" : "Add API Exposed Permission (4/7)",
             ignoreFocusOut: true,
             value: scope.adminConsentDescription ?? undefined,
@@ -221,8 +221,8 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
         // Prompt the user for the new user consent display name.
         const userConsentDisplayName = await window.showInputBox({
-            prompt: "Edit user consent display name",
-            placeHolder: "Enter a new user consent display name (e.g. Read your files)",
+            prompt: "User consent display name",
+            placeHolder: "Enter an optional user consent display name (e.g. Read your files)",
             title: isEditing === true ? "Edit Exposed API Permission (5/7)" : "Add API Exposed Permission (5/7)",
             ignoreFocusOut: true,
             value: scope.userConsentDisplayName ?? undefined,
@@ -236,8 +236,8 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
         // Prompt the user for the new user consent description.
         const userConsentDescription = await window.showInputBox({
-            prompt: "Edit user consent description",
-            placeHolder: "Enter a new admin consent description (e.g. Allows the app to read your files.)",
+            prompt: "User consent description",
+            placeHolder: "Enter an optional user consent description (e.g. Allows the app to read your files.)",
             title: isEditing === true ? "Edit Exposed API Permission (6/7)" : "Add API Exposed Permission (6/7)",
             ignoreFocusOut: true,
             value: scope.userConsentDescription ?? undefined
@@ -345,5 +345,4 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
         return undefined;
     }
-
 }

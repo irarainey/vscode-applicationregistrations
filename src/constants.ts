@@ -1,23 +1,23 @@
 // The name of the view
-export const view = "appRegistrations";
+export const VIEW_NAME = "appRegistrations";
 
 // The sign in command text
-export const signInCommandText = "Sign in to Azure CLI...";
+export const SIGNIN_COMMAND_TEXT = "Sign in to Azure CLI";
 
 // The scope required when authenticating with Azure CLI
-export const scope = "https://graph.microsoft.com/.default";
+export const SCOPE = "https://graph.microsoft.com/.default";
 
 // The URI to the Application Registration blade in the Azure Portal
-export const portalAppUri = "https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/";
+export const PORTAL_APP_URI = "https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/";
 
 // The URI to the User blade in the Azure Portal
-export const portalUserUri = "https://portal.azure.com/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/";
+export const PORTAL_USER_URI = "https://portal.azure.com/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/";
 
 // The URI to access directory objects in the Microsoft Graph API
-export const directoryObjectsUri = "https://graph.microsoft.com/v1.0/directoryObjects/";
+export const DIRECTORY_OBJECTS_URI = "https://graph.microsoft.com/v1.0/directoryObjects/";
 
 // A list of properties to ignore when updating an application registration
-export const propertiesToIgnoreOnUpdate = [
+export const PROPERTIES_TO_IGNORE_ON_UPDATE = [
     "appId",
     "publisherDomain",
     "passwordCredentials",
@@ -33,7 +33,7 @@ export const propertiesToIgnoreOnUpdate = [
 ];
 
 // A list of sign in audience options
-export const signInAudienceOptions = [
+export const SIGNIN_AUDIENCE_OPTIONS = [
     {
         label: "Single Tenant",
         description: "Accounts in this organizational directory only.",
@@ -57,7 +57,7 @@ export const signInAudienceOptions = [
 ];
 
 // URI to the documentation for sign in audience
-export const signInAudienceDocumentation = "https://learn.microsoft.com/en-gb/azure/active-directory/develop/supported-accounts-validation";
+export const SIGNIN_AUDIENCE_DOCUMENTATION_URI = "https://learn.microsoft.com/en-gb/azure/active-directory/develop/supported-accounts-validation";
 
 // The properties to return when querying for applications
-export const appSelectProperties = "id,displayName,appId,notes,signInAudience,appRoles,oauth2Permissions,web,spa,api,requiredResourceAccess,publicClient,identifierUris,passwordCredentials,keyCredentials";
+export const APPLICATION_SELECT_PROPERTIES = "id,displayName,appId,notes,signInAudience,appRoles,oauth2Permissions,web,spa,api,requiredResourceAccess,publicClient,identifierUris,passwordCredentials,keyCredentials";

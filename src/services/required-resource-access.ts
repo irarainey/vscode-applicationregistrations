@@ -1,10 +1,10 @@
-import { window, QuickPickItem } from 'vscode';
-import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
-import { AppRegItem } from '../models/appRegItem';
-import { ServiceBase } from './serviceBase';
-import { GraphClient } from '../clients/graph';
-import { RequiredResourceAccess, NullableOption } from '@microsoft/microsoft-graph-types';
-import { sort } from 'fast-sort';
+import { window, QuickPickItem } from "vscode";
+import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
+import { AppRegItem } from "../models/app-reg-item";
+import { ServiceBase } from "./service-base";
+import { GraphClient } from "../clients/graph-client";
+import { RequiredResourceAccess, NullableOption } from "@microsoft/microsoft-graph-types";
+import { sort } from "fast-sort";
 
 export class RequiredResourceAccessService extends ServiceBase {
 
@@ -14,17 +14,17 @@ export class RequiredResourceAccessService extends ServiceBase {
     }
 
     // Adds the selected scope to an application registration.
-    public async add(item: AppRegItem): Promise<void> {
+    async add(item: AppRegItem): Promise<void> {
 
         // Prompt the user for the new value.
         const apiAppSearch = await window.showInputBox({
             prompt: "Search for API Application",
-            placeHolder: "Enter the starting characters of the API application name to build a list of matching applications.",
+            placeHolder: "Enter the starting characters of the API Application name to build a list of matching applications.",
             ignoreFocusOut: true,
             title: "Add API Permission (1/4)",
             validateInput: (value) => {
                 if (value.length < 3) {
-                    return "You must enter at least partial name of the API application to filter the list. A minimum of 3 characters is required.";
+                    return "You must enter at least partial name of the API Application to filter the list. A minimum of 3 characters is required.";
                 }
                 return;
             }
@@ -39,14 +39,14 @@ export class RequiredResourceAccessService extends ServiceBase {
         const previousIcon = item.iconPath;
 
         // Update the tree item icon to show the loading animation.
-        const status = this.triggerTreeChange("Loading api applications...", item);
+        const status = this.triggerTreeChange("Loading API Applications", item);
 
         // Get the service principals that match the search criteria.
-        const servicePrincipals = await this.graphClient.getServicePrincipalByDisplayName(apiAppSearch);
+        const servicePrincipals = await this.graphClient.findServicePrincipalsByDisplayName(apiAppSearch);
 
         // If there are no service principals found then drop out.
         if (servicePrincipals.length === 0) {
-            window.showInformationMessage("No API applications were found that match the search criteria.", "OK");
+            window.showInformationMessage("No API Applications were found that match the search criteria.", "OK");
             status?.dispose();
             this.setTreeItemIcon(item, previousIcon, false);
             return;
@@ -68,7 +68,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         const allowed = await window.showQuickPick(
             newList,
             {
-                placeHolder: "Select an API application",
+                placeHolder: "Select an API Application",
                 title: "Add API Permission (2/4)",
                 ignoreFocusOut: true
             });
@@ -83,7 +83,7 @@ export class RequiredResourceAccessService extends ServiceBase {
     }
 
     // Adds the selected scope from an existing API to an application registration.
-    public async addToExisting(item: AppRegItem, existingApiId?: NullableOption<string> | undefined): Promise<void> {
+    async addToExisting(item: AppRegItem, existingApiId?: NullableOption<string> | undefined): Promise<void> {
 
         let startStep = existingApiId === undefined ? 1 : 3;
         let numberOfSteps = existingApiId === undefined ? 2 : 4;
@@ -117,13 +117,13 @@ export class RequiredResourceAccessService extends ServiceBase {
         const previousIcon = item.iconPath;
 
         // Update the tree item icon to show the loading animation.
-        const status = this.triggerTreeChange("Loading api permissions...", item);
+        const status = this.triggerTreeChange("Loading API Permissions", item);
 
         // Determine the API application ID to use.
         const apiIdToUse = existingApiId === undefined ? item.resourceAppId : existingApiId;
 
         // Get the service principal for the application so we can get the scopes.
-        const servicePrincipals = await this.graphClient.getServicePrincipalByAppId(apiIdToUse!);
+        const servicePrincipals = await this.graphClient.findServicePrincipalByAppId(apiIdToUse!);
 
         // Get all the existing scopes for the application.
         const allAssignedScopes = await this.getApiPermissions(item.objectId!);
@@ -168,7 +168,7 @@ export class RequiredResourceAccessService extends ServiceBase {
                 permissions,
                 {
                     placeHolder: "Select a user delegated permission",
-                    title: `Add API Permission (${startStep+1}/${numberOfSteps})`,
+                    title: `Add API Permission (${startStep + 1}/${numberOfSteps})`,
                     ignoreFocusOut: true,
                 });
 
@@ -208,8 +208,8 @@ export class RequiredResourceAccessService extends ServiceBase {
             scopeItem = await window.showQuickPick(
                 permissions,
                 {
-                    placeHolder: "Select an application permission",
-                    title: `Add API Permission (${startStep+1}/${numberOfSteps})`,
+                    placeHolder: "Select an API Permission",
+                    title: `Add API Permission (${startStep + 1}/${numberOfSteps})`,
                     ignoreFocusOut: true
                 });
 
@@ -220,7 +220,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         }
 
         // Set the added trigger to the status bar message.
-        const statusAdd = this.triggerTreeChange("Adding api permission...", item);
+        const statusAdd = this.triggerTreeChange("Adding API Permission", item);
 
         if (apiAppScopes !== undefined) {
             // Add the new scope to the existing app.
@@ -250,16 +250,16 @@ export class RequiredResourceAccessService extends ServiceBase {
     }
 
     // Removes the selected scope from an application registration.
-    public async remove(item: AppRegItem): Promise<void> {
+    async remove(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the removal.
-        const answer = await window.showInformationMessage(`Do you want to remove the api permission ${item.value}?`, "Yes", "No");
+        const answer = await window.showInformationMessage(`Do you want to remove the API Permission ${item.value}?`, "Yes", "No");
 
         // If the user confirms the removal then delete the role.
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
             const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Removing api permission...", item);
+            const status = this.triggerTreeChange("Removing API Permission", item);
 
             // Get all the scopes for the application.
             const allAssignedScopes = await this.getApiPermissions(item.objectId!);
@@ -287,16 +287,16 @@ export class RequiredResourceAccessService extends ServiceBase {
     }
 
     // Removes all scopes for an api app from an application registration.
-    public async removeApi(item: AppRegItem): Promise<void> {
+    async removeApi(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the removal.
-        const answer = await window.showInformationMessage(`Do you want to remove all api permissions for ${item.label}?`, "Yes", "No");
+        const answer = await window.showInformationMessage(`Do you want to remove all API Permissions for ${item.label}?`, "Yes", "No");
 
         // If the user confirms the removal then remove the scopes.
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
             const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Removing api permissions...", item);
+            const status = this.triggerTreeChange("Removing API Permissions", item);
 
             // Get all the scopes for the application.
             const allAssignedScopes = await this.getApiPermissions(item.objectId!);
@@ -317,6 +317,6 @@ export class RequiredResourceAccessService extends ServiceBase {
 
     // Gets the api permissions for an application registration.
     private async getApiPermissions(id: string): Promise<RequiredResourceAccess[]> {
-        return (await this.dataProvider.getApplicationPartial(id, "requiredResourceAccess")).requiredResourceAccess!;
+        return (await this.treeDataProvider.getApplicationPartial(id, "requiredResourceAccess")).requiredResourceAccess!;
     }
 }

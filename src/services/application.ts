@@ -1,10 +1,10 @@
-import * as path from 'path';
-import { window, env, Uri, TextDocumentContentProvider, EventEmitter, workspace } from 'vscode';
-import { portalAppUri, signInAudienceOptions } from '../constants';
-import { AppRegTreeDataProvider } from '../data/appRegTreeDataProvider';
-import { AppRegItem } from '../models/appRegItem';
-import { ServiceBase } from './serviceBase';
-import { GraphClient } from '../clients/graph';
+import * as path from "path";
+import { PORTAL_APP_URI, SIGNIN_AUDIENCE_OPTIONS } from "../constants";
+import { window, env, Uri, TextDocumentContentProvider, EventEmitter, workspace } from "vscode";
+import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
+import { AppRegItem } from "../models/app-reg-item";
+import { ServiceBase } from "./service-base";
+import { GraphClient } from "../clients/graph-client";
 
 export class ApplicationService extends ServiceBase {
 
@@ -14,17 +14,17 @@ export class ApplicationService extends ServiceBase {
     }
 
     // Creates a new application registration.
-    public async add(): Promise<void> {
+    async add(): Promise<void> {
 
-        if (!this.dataProvider.isGraphClientInitialised) {
-            this.dataProvider.initialiseGraphClient();
+        if (!this.treeDataProvider.isGraphClientInitialised) {
+            await this.treeDataProvider.initialiseGraphClient();
             return;
         }
 
         // Prompt the user for the application name.
         const displayName = await window.showInputBox({
-            placeHolder: "Application name...",
-            prompt: "Create new application registration",
+            placeHolder: "Application name",
+            prompt: "Create new Application Registration",
             title: "Add New Application (1/2)",
             ignoreFocusOut: true,
             validateInput: (value) => this.validateDisplayName(value)
@@ -34,9 +34,9 @@ export class ApplicationService extends ServiceBase {
         if (displayName !== undefined) {
             // Prompt the user for the sign in audience.
             const signInAudience = await window.showQuickPick(
-                signInAudienceOptions,
+                SIGNIN_AUDIENCE_OPTIONS,
                 {
-                    placeHolder: "Select the sign in audience...",
+                    placeHolder: "Select the sign in audience",
                     title: "Add New Application (2/2)",
                     ignoreFocusOut: true
                 });
@@ -44,7 +44,7 @@ export class ApplicationService extends ServiceBase {
             // If the sign in audience is not undefined then create the application.
             if (signInAudience !== undefined) {
                 // Set the added trigger to the status bar message.
-                const status = this.triggerTreeChange("Creating application registration...");
+                const status = this.triggerTreeChange("Creating Application Registration");
                 await this.graphClient.createApplication({ displayName: displayName, signInAudience: signInAudience.value })
                     .then(() => {
                         this.triggerOnComplete({ success: true, statusBarHandle: status });
@@ -57,11 +57,11 @@ export class ApplicationService extends ServiceBase {
     }
 
     // Edit an application id URI.
-    public async editAppIdUri(item: AppRegItem): Promise<void> {
+    async editAppIdUri(item: AppRegItem): Promise<void> {
 
         // Prompt the user for the new uri.
         const uri = await window.showInputBox({
-            placeHolder: "Application ID URI...",
+            placeHolder: "Application ID URI",
             prompt: "Set Application ID URI",
             value: item.value! === "Not set" ? `api://${item.appId!}` : item.value!,
             title: "Edit Application ID URI",
@@ -72,7 +72,7 @@ export class ApplicationService extends ServiceBase {
         // If the new application id uri is not undefined then update the application.
         if (uri !== undefined) {
             const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Setting application id uri...", item);
+            const status = this.triggerTreeChange("Setting Application ID URI", item);
             this.graphClient.updateApplication(item.objectId!, { identifierUris: [uri] })
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
@@ -84,11 +84,11 @@ export class ApplicationService extends ServiceBase {
     }
 
     // Renames an application registration.
-    public async rename(item: AppRegItem): Promise<void> {
+    async rename(item: AppRegItem): Promise<void> {
 
         // Prompt the user for the new application name.
         const displayName = await window.showInputBox({
-            placeHolder: "New application name...",
+            placeHolder: "Application name",
             prompt: "Rename application with new display name",
             value: item.label?.toString(),
             title: "Rename Application",
@@ -99,7 +99,7 @@ export class ApplicationService extends ServiceBase {
         // If the new application name is not undefined then update the application.
         if (displayName !== undefined) {
             const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Renaming application registration...", item);
+            const status = this.triggerTreeChange("Renaming Application Registration", item);
             this.graphClient.updateApplication(item.objectId!, { displayName: displayName })
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
@@ -111,15 +111,15 @@ export class ApplicationService extends ServiceBase {
     }
 
     // Deletes an application registration.
-    public async delete(item: AppRegItem): Promise<void> {
+    async delete(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the deletion.
-        const answer = await window.showInformationMessage(`Do you want to delete the application ${item.label}?`, "Yes", "No");
+        const answer = await window.showInformationMessage(`Do you want to delete the Application ${item.label}?`, "Yes", "No");
 
         // If the user confirms the deletion then delete the application.
         if (answer === "Yes") {
             const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Deleting application registration...", item);
+            const status = this.triggerTreeChange("Deleting Application Registration", item);
             this.graphClient.deleteApplication(item.objectId!)
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
@@ -131,15 +131,15 @@ export class ApplicationService extends ServiceBase {
     }
 
     // Deletes an application registration.
-    public async removeAppIdUri(item: AppRegItem): Promise<void> {
+    async removeAppIdUri(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the deletion.
-        const answer = await window.showInformationMessage("Do you want to remove the application id uri?", "Yes", "No");
+        const answer = await window.showInformationMessage("Do you want to remove the Application ID URI?", "Yes", "No");
 
         // If the user confirms the deletion then delete the application.
         if (answer === "Yes") {
             const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Removing application id uri...", item);
+            const status = this.triggerTreeChange("Removing Application ID URI", item);
             this.graphClient.updateApplication(item.objectId!, { identifierUris: [] })
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
@@ -150,20 +150,10 @@ export class ApplicationService extends ServiceBase {
         }
     }
 
-    // Copies the application Id to the clipboard.
-    public copyClientId(item: AppRegItem): void {
-        env.clipboard.writeText(item.appId!);
-    }
-
-    // Opens the application registration in the Azure Portal.
-    public openInPortal(item: AppRegItem): void {
-        env.openExternal(Uri.parse(`${portalAppUri}${item.appId}`));
-    }
-
     // Opens the application manifest in a new editor window.
-    public async viewManifest(item: AppRegItem): Promise<void> {
+    async viewManifest(item: AppRegItem): Promise<void> {
 
-        const status = this.triggerTreeChange("Loading application manifest...", item);
+        const status = this.triggerTreeChange("Loading Application Manifest", item);
         const manifest = await this.graphClient.getApplicationDetailsFull(item.objectId!);
 
         const newDocument = new class implements TextDocumentContentProvider {
@@ -180,7 +170,7 @@ export class ApplicationService extends ServiceBase {
             .then(doc => {
                 window.showTextDocument(doc, { preview: false });
                 item.iconPath = path.join(__filename, "..", "..", "..", "resources", "icons", "app.svg");
-                this.dataProvider.triggerOnDidChangeTreeData(item);
+                this.treeDataProvider.triggerOnDidChangeTreeData(item);
                 status!.dispose();
             });
     }
@@ -204,17 +194,27 @@ export class ApplicationService extends ServiceBase {
     private validateAppIdUri(uri: string): string | undefined {
 
         if (uri.includes("://") === false || uri.startsWith("://") === true) {
-            return "The application id URI is not valid. It must start with http://, https://, api://; MS-APPX://, or customScheme://";
+            return "The Application ID URI is not valid. It must start with http://, https://, api://; MS-APPX://, or customScheme://";
         }
 
         if (uri.endsWith("/") === true) {
-            return "The Application Id URI cannot end with a trailing slash.";
+            return "The Application ID URI cannot end with a trailing slash.";
         }
 
         if (uri.length > 120) {
-            return "The Application Id URI is not valid. A URI cannot be longer than 120 characters.";
+            return "The Application ID URI is not valid. A URI cannot be longer than 120 characters.";
         }
 
         return undefined;
+    }
+
+    // Copies the application Id to the clipboard.
+    copyClientId(item: AppRegItem): void {
+        env.clipboard.writeText(item.appId!);
+    }
+
+    // Opens the application registration in the Azure Portal.
+    openInPortal(item: AppRegItem): void {
+        env.openExternal(Uri.parse(`${PORTAL_APP_URI}${item.appId}`));
     }
 }
