@@ -5,6 +5,7 @@ import { ServiceBase } from "./service-base";
 import { GraphClient } from "../clients/graph-client";
 import { RequiredResourceAccess, NullableOption } from "@microsoft/microsoft-graph-types";
 import { sort } from "fast-sort";
+import { debounce } from "ts-debounce";
 
 export class RequiredResourceAccessService extends ServiceBase {
 
@@ -16,18 +17,22 @@ export class RequiredResourceAccessService extends ServiceBase {
     // Adds the selected scope to an application registration.
     async add(item: AppRegItem): Promise<void> {
 
+        // Debounce the validation function to prevent multiple calls to the Graph API.
+        const validation = (value: string) => {
+            if (value.length < 3) {
+                return "You must enter at least partial name of the API Application to filter the list. A minimum of 3 characters is required.";
+            }
+            return;
+        };
+        const debouncedValidation = debounce(validation, 500);
+
         // Prompt the user for the new value.
         const apiAppSearch = await window.showInputBox({
             prompt: "Search for API Application",
             placeHolder: "Enter the starting characters of the API Application name to build a list of matching applications.",
             ignoreFocusOut: true,
             title: "Add API Permission (1/4)",
-            validateInput: (value) => {
-                if (value.length < 3) {
-                    return "You must enter at least partial name of the API Application to filter the list. A minimum of 3 characters is required.";
-                }
-                return;
-            }
+            validateInput: (value) => debouncedValidation(value)
         });
 
         // If the user cancels the input then return undefined.
@@ -79,14 +84,15 @@ export class RequiredResourceAccessService extends ServiceBase {
         }
 
         //Now we have the API application ID we can call the addToExisting method.
-        this.addToExisting(item, allowed.value);
+        this.addToExisting(item, allowed.value, allowed.label);
     }
 
     // Adds the selected scope from an existing API to an application registration.
-    async addToExisting(item: AppRegItem, existingApiId?: NullableOption<string> | undefined): Promise<void> {
+    async addToExisting(item: AppRegItem, existingApiId?: NullableOption<string> | undefined, existingApiAppName?: string): Promise<void> {
 
-        let startStep = existingApiId === undefined ? 1 : 3;
-        let numberOfSteps = existingApiId === undefined ? 2 : 4;
+        const startStep = existingApiId === undefined ? 1 : 3;
+        const numberOfSteps = existingApiId === undefined ? 2 : 4;
+        const apiAppName = existingApiId === undefined ? item.label : existingApiAppName;
 
         // Determine the type of permission.
         const type = await window.showQuickPick(
@@ -117,7 +123,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         const previousIcon = item.iconPath;
 
         // Update the tree item icon to show the loading animation.
-        const status = this.triggerTreeChange("Loading API Permissions", item);
+        const status = this.triggerTreeChange(`Loading API Permissions for ${apiAppName}`, item);
 
         // Determine the API application ID to use.
         const apiIdToUse = existingApiId === undefined ? item.resourceAppId : existingApiId;
