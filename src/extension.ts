@@ -2,7 +2,7 @@ import { commands, window, workspace, env, Disposable, ExtensionContext } from "
 import { VIEW_NAME } from "./constants";
 import { AppRegTreeDataProvider } from "./data/app-reg-tree-data-provider";
 import { AppRegItem } from "./models/app-reg-item";
-import { GraphClient, escapeSingleQuotes } from "./clients/graph-client";
+import { GraphClient, escapeSingleQuotesForFilter } from "./clients/graph-client";
 import { ApplicationService } from "./services/application";
 import { AppRoleService } from "./services/app-role";
 import { KeyCredentialService } from "./services/key-credential";
@@ -15,8 +15,8 @@ import { SignInAudienceService } from "./services/sign-in-audience";
 import { ActivityResult } from "./interfaces/activity-result";
 
 // Values to hold the list filter
-let filterCommand: string | undefined = undefined;
-let filterText: string | undefined = undefined;
+export let filterCommand: string | undefined = undefined;
+export let filterText: string | undefined = undefined;
 
 // Create a new instance of the GraphClient class.
 const graphClient = new GraphClient();
@@ -232,7 +232,7 @@ const filterTreeView = async () => {
 	} else if (newFilter !== '' && newFilter !== filterText) {
 		// If the filter text is not empty then set the filter command and filter text.
 		filterText = newFilter!;
-		filterCommand = `startswith(displayName, \'${escapeSingleQuotes(newFilter)}\')`;
+		filterCommand = `startswith(displayName, \'${escapeSingleQuotesForFilter(newFilter)}\')`;
 		await populateTreeView(window.setStatusBarMessage("$(loading~spin) Filtering Application Registrations"));
 	}
 };

@@ -36,7 +36,7 @@ export class GraphClient {
         // Create the graph client options
         const clientOptions: ClientOptions = {
             defaultVersion: "v1.0",
-            debugLogging: true,
+            debugLogging: false,
             authProvider
         };
 
@@ -188,14 +188,14 @@ export class GraphClient {
     // Find users by display name
     async findUsersByName(name: string): Promise<any> {
         return await this.client!.api("/users")
-            .filter(`startswith(displayName, '${escapeSingleQuotes(name)}')`)
+            .filter(`startswith(displayName, '${escapeSingleQuotesForFilter(name)}')`)
             .get();
     }
 
     // Find users by email address
     async findUsersByEmail(name: string): Promise<any> {
         return await this.client!.api("/users")
-            .filter(`startswith(mail, '${escapeSingleQuotes(name)}')`)
+            .filter(`startswith(mail, '${escapeSingleQuotesForFilter(name)}')`)
             .get();
     }
 
@@ -258,7 +258,10 @@ export class GraphClient {
     // Gets a list of service principals by display name
     async findServicePrincipalsByDisplayName(name: string): Promise<ServicePrincipal[]> {
         const servicePrincipals = await this.client!.api("servicePrincipals")
-            .filter(`startswith(displayName, '${escapeSingleQuotes(name)}')`)
+            //.filter(`startswith(displayName, '${escapeSingleQuotes(name)}')`)
+            .header("ConsistencyLevel", "eventual")
+            .count(true)
+            .search(`"displayName:${escapeSingleQuotesForSearch(name)}"`)
             .select("appId,appDisplayName,appDescription")
             .get();
         return servicePrincipals.value;
@@ -271,8 +274,12 @@ export class GraphClient {
     }
 }
 
-export const escapeSingleQuotes = (str: string) => {
+export const escapeSingleQuotesForFilter = (str: string) => {
     return str.replace(/'/g, "''");
+};
+
+export const escapeSingleQuotesForSearch = (str: string) => {
+    return str.replace(/'/g, "\'");
 };
 
 const execShellCmd = (cmd: string) => {

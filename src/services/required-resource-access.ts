@@ -29,7 +29,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         // Prompt the user for the new value.
         const apiAppSearch = await window.showInputBox({
             prompt: "Search for API Application",
-            placeHolder: "Enter the starting characters of the API Application name to build a list of matching applications.",
+            placeHolder: "Enter part of an API Application name to build a list of matching applications.",
             ignoreFocusOut: true,
             title: "Add API Permission (1/4)",
             validateInput: (value) => debouncedValidation(value)
@@ -142,19 +142,19 @@ export class RequiredResourceAccessService extends ServiceBase {
 
         // Prompt the user for the scope or role to add from those available.
         if (type.value === "Scope") {
+            // Remove any scopes that are already assigned.
             if (apiAppScopes !== undefined) {
-                // Remove any scopes that are already assigned.
                 apiAppScopes.resourceAccess!.forEach(r => {
                     servicePrincipals.oauth2PermissionScopes = servicePrincipals.oauth2PermissionScopes!.filter(s => s.id !== r.id);
                 });
+            }
 
-                // If there are no scopes available then drop out.
-                if (servicePrincipals.oauth2PermissionScopes === undefined || servicePrincipals.oauth2PermissionScopes!.length === 0) {
-                    status?.dispose();
-                    this.setTreeItemIcon(item, previousIcon, false);
-                    window.showInformationMessage("There are no unassigned user delegated permissions available to add to this application registration.", "OK");
-                    return;
-                }
+            // If there are no scopes available then drop out.
+            if (servicePrincipals.oauth2PermissionScopes === undefined || servicePrincipals.oauth2PermissionScopes!.length === 0) {
+                status?.dispose();
+                this.setTreeItemIcon(item, previousIcon, false);
+                window.showInformationMessage("There are no user delegated permissions available to add to this application registration.", "OK");
+                return;
             }
 
             status?.dispose();
@@ -183,19 +183,19 @@ export class RequiredResourceAccessService extends ServiceBase {
                 return;
             }
         } else {
+            // Remove any scopes that are already assigned.
             if (apiAppScopes !== undefined) {
-                // Remove any scopes that are already assigned.
                 apiAppScopes.resourceAccess!.forEach(r => {
                     servicePrincipals.appRoles = servicePrincipals.appRoles!.filter(s => s.id !== r.id);
                 });
+            }
 
-                // If there are no scopes available then drop out.
-                if (servicePrincipals.appRoles === undefined || servicePrincipals.appRoles!.length === 0) {
-                    status?.dispose();
-                    this.setTreeItemIcon(item, previousIcon, false);
-                    window.showInformationMessage("There are no unassigned application permissions available to add to this application registration.", "OK");
-                    return;
-                }
+            // If there are no scopes available then drop out.
+            if (servicePrincipals.appRoles === undefined || servicePrincipals.appRoles!.length === 0) {
+                status?.dispose();
+                this.setTreeItemIcon(item, previousIcon, false);
+                window.showInformationMessage("There are no application permissions available to add to this application registration.", "OK");
+                return;
             }
 
             status?.dispose();
