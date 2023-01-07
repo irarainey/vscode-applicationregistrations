@@ -48,6 +48,10 @@ As a rule of thumb, if you are working with a small list of applications (less t
 
 If you are working with a large list of applications (more than 200 in total) then it is recommended to enable the use of the eventual consistency header. This will allow the list of applications to be filter server-side and enforce the application of the filter command before results are returned.
 
+By default a consistency setting check and warning is enabled. When the application list is refreshed the total applications are counted and if it is considered that the consistency setting is set incorrectly then a warning will be shown. This warning can be disabled in the user settings.
+
+![Consistency Warning](resources/images/consistency_warning.png)
+
 If you have enabled the use of the eventual consistency header experience and some applications or properties are not initially showing correctly after creation or editing then simply wait a short time and refresh the list again. Read more on [Eventual Consistency](https://blogs.aaddevsup.xyz/2021/08/why-do-i-sometimes-get-a-404-when-trying-to-update-an-azure-directory-object-after-i-just-created-it/).
 
 ## User Settings
@@ -55,7 +59,7 @@ If you have enabled the use of the eventual consistency header experience and so
 There are a number of user settings to control the behaviour of this extension. These are:
 
 * **Maximum Applications Shown**
-    * This controls how many applications to show in the list. When **Use Eventual Consistency** is enabled this will be ordered by display name on by the Graph API. If it is not enabled then applications are ordered client-side from the total list defined in **Maximum Query Apps**. Default value is `50`.
+    * This controls how many applications to show in the list. When **Use Eventual Consistency** is enabled this will be ordered by display name on by the Graph API. If it is not enabled then applications are ordered client-side from the total list defined in **Maximum Query Apps**. Default value is `40`.
 * **Show Owned Applications Only**
     * When selected the list of applications shown will only be where the current logged in user has been added as an owner. Uncheck this option to show all applications in the current tenant. Default value is `true`.
 * **Use Eventual Consistency**
@@ -63,7 +67,7 @@ There are a number of user settings to control the behaviour of this extension. 
 * **Show Application Count Warning**
     * With this enabled the total number of applications you have in your tenant will be counted and a warning will be displayed if it is determined your **Use Eventual Consistency** setting is not set to the optimal value for you. Default value is `true`.
 * **Maximum Query Apps**
-    * This controls how many applications Graph API requests in the initial query when **Use Eventual Consistency** is _not_ enabled. There is a limit to how many results a single request will return before it paginates the results and if working with a small number of applications reducing this number can improve performance. Be aware though that due to the nature of Graph API and client-side ordering, reducing this to below **Maximum Applications Shown** could result in not seeing the applications you expect in the right order. Default value is `200`.
+    * This controls how many applications Graph API requests in the initial query when **Use Eventual Consistency** is _not_ enabled. There is a limit to how many results a single request will return before it paginates the results and if working with a small number of applications reducing this number can improve performance. Be aware though that due to the nature of Graph API and client-side ordering, reducing this to below **Maximum Applications Shown** could result in not seeing the applications you expect in the right order. Default value is `100`.
 
 ![User Settings](resources/images/settings.png)
 
