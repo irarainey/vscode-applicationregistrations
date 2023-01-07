@@ -24,7 +24,7 @@ export class AppRegItem extends TreeItem {
         // Set other base properties
         this.contextValue = params.context;
         this.command = params.command;
-        this.iconPath = params.icon;
+        this.iconPath = params.iconPath;
         this.tooltip = params.tooltip;
 
         // Set the remaining properties

@@ -95,7 +95,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 this.treeData.push(new AppRegItem({
                     label: "Initialising extension",
                     context: "INITIALISING",
-                    icon: new ThemeIcon("loading~spin", new ThemeColor("editor.foreground"))
+                    iconPath: new ThemeIcon("loading~spin", new ThemeColor("editor.foreground"))
                 }));
                 this.onDidChangeTreeDataEvent.fire(undefined);
                 break;
@@ -103,7 +103,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 this.treeData.push(new AppRegItem({
                     label: "No applications found",
                     context: "EMPTY",
-                    icon: new ThemeIcon("info", new ThemeColor("editor.foreground"))
+                    iconPath: new ThemeIcon("info", new ThemeColor("editor.foreground"))
                 }));
                 this.onDidChangeTreeDataEvent.fire(undefined);
                 break;
@@ -111,7 +111,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 this.treeData.push(new AppRegItem({
                     label: SIGNIN_COMMAND_TEXT,
                     context: "SIGN-IN",
-                    icon: new ThemeIcon("sign-in", new ThemeColor("editor.foreground")),
+                    iconPath: new ThemeIcon("sign-in", new ThemeColor("editor.foreground")),
                     command: {
                         command: "appRegistrations.signInToAzure",
                         title: SIGNIN_COMMAND_TEXT,
@@ -294,7 +294,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     return (new AppRegItem({
                         label: app.displayName!,
                         context: "APPLICATION",
-                        icon: path.join(__filename, "..", "..", "..", "resources", "icons", "app.svg"),
+                        iconPath: path.join(__filename, "..", "..", "resources", "icons", "app.svg"),
                         objectId: app.id!,
                         appId: app.appId!,
                         tooltip: (app.notes !== null ? app.notes! : app.displayName!),
@@ -304,14 +304,14 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                             new AppRegItem({
                                 label: "Client Id",
                                 context: "APPID-PARENT",
-                                icon: new ThemeIcon("preview"),
+                                iconPath: new ThemeIcon("preview"),
                                 tooltip: "The Application (Client) Id is used to identify the application to Azure AD.",
                                 children: [
                                     new AppRegItem({
                                         label: app.appId!,
                                         value: app.appId!,
                                         context: "COPY",
-                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                                         tooltip: "The Application (Client) Id is used to identify the application to Azure AD.",
                                     })
                                 ]
@@ -323,7 +323,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                 objectId: app.id!,
                                 appId: app.appId!,
                                 value: app.identifierUris![0] === undefined ? "Not set" : app.identifierUris![0],
-                                icon: new ThemeIcon("globe"),
+                                iconPath: new ThemeIcon("globe"),
                                 tooltip: "The Application Id URI is a globally unique URI used to identify this web API. It is the prefix for scopes and in access tokens, it is the value of the audience claim. Also referred to as an identifier URI.",
                                 children: [
                                     new AppRegItem({
@@ -332,7 +332,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                         appId: app.appId!,
                                         objectId: app.id!,
                                         context: "APPID-URI",
-                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                                         tooltip: "The Application Id URI, this is set when an application is used as a resource app. The URI acts as the prefix for the scopes you'll reference in your API's code, and must be globally unique.",
                                     })
                                 ]
@@ -341,7 +341,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                             new AppRegItem({
                                 label: "Sign In Audience",
                                 context: "AUDIENCE-PARENT",
-                                icon: new ThemeIcon("account"),
+                                iconPath: new ThemeIcon("account"),
                                 objectId: app.id!,
                                 tooltip: "The Sign In Audience determines whether the application can be used by accounts in the same Azure AD tenant or accounts in any Azure AD tenant.",
                                 children: [
@@ -352,7 +352,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                                 ? "Multi Tenant"
                                                 : "Multi Tenant and Personal Accounts",
                                         context: "AUDIENCE",
-                                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                                         objectId: app.id!,
                                         tooltip: "The Sign In Audience determines whether the application can be used by accounts in the same Azure AD tenant or accounts in any Azure AD tenant.",
                                     })
@@ -362,14 +362,14 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                             new AppRegItem({
                                 label: "Redirect URIs",
                                 context: "REDIRECT-PARENT",
-                                icon: new ThemeIcon("go-to-file", new ThemeColor("editor.foreground")),
+                                iconPath: new ThemeIcon("go-to-file", new ThemeColor("editor.foreground")),
                                 objectId: app.id!,
                                 tooltip: "The Redirect URIs are the endpoints where Azure AD will return responses containing tokens or errors.",
                                 children: [
                                     new AppRegItem({
                                         label: "Web",
                                         context: "WEB-REDIRECT",
-                                        icon: new ThemeIcon("globe"),
+                                        iconPath: new ThemeIcon("globe"),
                                         objectId: app.id!,
                                         tooltip: "Redirect URIs for web applications.",
                                         children: app.web?.redirectUris?.length === 0 ? undefined : []
@@ -377,7 +377,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                     new AppRegItem({
                                         label: "SPA",
                                         context: "SPA-REDIRECT",
-                                        icon: new ThemeIcon("browser"),
+                                        iconPath: new ThemeIcon("browser"),
                                         objectId: app.id!,
                                         tooltip: "Redirect URIs for single page applications.",
                                         children: app.spa?.redirectUris?.length === 0 ? undefined : []
@@ -385,7 +385,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                     new AppRegItem({
                                         label: "Mobile and Desktop",
                                         context: "NATIVE-REDIRECT",
-                                        icon: new ThemeIcon("editor-layout"),
+                                        iconPath: new ThemeIcon("editor-layout"),
                                         objectId: app.id!,
                                         tooltip: "Redirect URIs for mobile and desktop applications.",
                                         children: app.publicClient?.redirectUris?.length === 0 ? undefined : []
@@ -397,14 +397,14 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                 label: "Credentials",
                                 context: "PROPERTY-ARRAY",
                                 objectId: app.id!,
-                                icon: new ThemeIcon("shield", new ThemeColor("editor.foreground")),
+                                iconPath: new ThemeIcon("shield", new ThemeColor("editor.foreground")),
                                 tooltip: "Credentials enable confidential applications to identify themselves to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
                                 children: [
                                     new AppRegItem({
                                         label: "Client Secrets",
                                         context: "PASSWORD-CREDENTIALS",
                                         objectId: app.id!,
-                                        icon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
+                                        iconPath: new ThemeIcon("key", new ThemeColor("editor.foreground")),
                                         tooltip: "Client secrets are used to authenticate confidential applications to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
                                         children: app.passwordCredentials!.length === 0 ? undefined : []
                                     }),
@@ -412,7 +412,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                         label: "Certificates",
                                         context: "CERTIFICATE-CREDENTIALS",
                                         objectId: app.id!,
-                                        icon: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
+                                        iconPath: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
                                         tooltip: "Certificates are used to authenticate confidential applications to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
                                         children: app.keyCredentials!.length === 0 ? undefined : []
                                     })
@@ -423,7 +423,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                 label: "API Permissions",
                                 context: "API-PERMISSIONS",
                                 objectId: app.id!,
-                                icon: new ThemeIcon("checklist", new ThemeColor("editor.foreground")),
+                                iconPath: new ThemeIcon("checklist", new ThemeColor("editor.foreground")),
                                 tooltip: "API permissions define the access that an application has to an API.",
                                 children: app.requiredResourceAccess?.length === 0 ? undefined : []
                             }),
@@ -432,7 +432,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                 label: "Exposed API Permissions",
                                 context: "EXPOSED-API-PERMISSIONS",
                                 objectId: app.id!,
-                                icon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
+                                iconPath: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
                                 tooltip: "Exposed API permissions define custom scopes to restrict access to data and functionality protected by this API.",
                                 children: app.api!.oauth2PermissionScopes!.length === 0 ? undefined : []
                             }),
@@ -441,7 +441,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                 label: "App Roles",
                                 context: "APP-ROLES",
                                 objectId: app.id!,
-                                icon: new ThemeIcon("note", new ThemeColor("editor.foreground")),
+                                iconPath: new ThemeIcon("note", new ThemeColor("editor.foreground")),
                                 tooltip: "App roles define custom roles that can be assigned to users and groups, or assigned as application-only scopes to a client application.",
                                 children: app.appRoles!.length === 0 ? undefined : []
                             }),
@@ -450,7 +450,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                 label: "Owners",
                                 context: "OWNERS",
                                 objectId: app.id!,
-                                icon: new ThemeIcon("organization", new ThemeColor("editor.foreground")),
+                                iconPath: new ThemeIcon("organization", new ThemeColor("editor.foreground")),
                                 tooltip: "Owners are users who can manage the application.",
                                 children: app.owners!.length === 0 ? undefined : []
                             }),
@@ -510,7 +510,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             return new AppRegItem({
                 label: owner.displayName!,
                 context: "OWNER",
-                icon: new ThemeIcon("person", new ThemeColor("editor.foreground")),
+                iconPath: new ThemeIcon("person", new ThemeColor("editor.foreground")),
                 objectId: element.objectId,
                 userId: owner.id!,
                 children: [
@@ -518,14 +518,14 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         label: owner.mail!,
                         context: "COPY",
                         value: owner.mail!,
-                        icon: new ThemeIcon("mail", new ThemeColor("editor.foreground")),
+                        iconPath: new ThemeIcon("mail", new ThemeColor("editor.foreground")),
                         tooltip: "Email address of user"
                     }),
                     new AppRegItem({
                         label: owner.userPrincipalName!,
                         context: "COPY",
                         value: owner.userPrincipalName!,
-                        icon: new ThemeIcon("account", new ThemeColor("editor.foreground")),
+                        iconPath: new ThemeIcon("account", new ThemeColor("editor.foreground")),
                         tooltip: "User principal name of user"
                     })
                 ]
@@ -540,7 +540,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 label: redirectUri,
                 value: redirectUri,
                 context: context,
-                icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                 objectId: element.objectId
             });
         });
@@ -552,7 +552,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             return new AppRegItem({
                 label: credential.displayName!,
                 context: "PASSWORD",
-                icon: new ThemeIcon("symbol-key", new ThemeColor("editor.foreground")),
+                iconPath: new ThemeIcon("symbol-key", new ThemeColor("editor.foreground")),
                 value: credential.keyId!,
                 objectId: element.objectId,
                 tooltip: "A secret string that the application uses to prove its identity when requesting a token. Also can be referred to as application password.",
@@ -560,18 +560,18 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     new AppRegItem({
                         label: `Value: ${credential.hint!}******************`,
                         context: "PASSWORD-VALUE",
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                         tooltip: "Client secret values cannot be viewed or accessed, except for immediately after creation."
                     }),
                     new AppRegItem({
                         label: `Created: ${format(new Date(credential.startDateTime!), 'yyyy-MM-dd')}`,
                         context: "PASSWORD-VALUE",
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Expires: ${format(new Date(credential.endDateTime!), 'yyyy-MM-dd')}`,
                         context: "PASSWORD-VALUE",
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     })
                 ]
             });
@@ -584,30 +584,30 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             return new AppRegItem({
                 label: credential.displayName!,
                 context: "CERTIFICATE",
-                icon: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
+                iconPath: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
                 objectId: element.objectId,
                 tooltip: "A certificate that the application uses to prove its identity when requesting a token. Also can be referred to as application certificate or public key.",
                 children: [
                     new AppRegItem({
                         label: `Type: ${credential.type!}`,
                         context: "CERTIFICATE-VALUE",
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Key Identifier: ${credential.customKeyIdentifier!}`,
                         context: "COPY",
                         value: credential.customKeyIdentifier!,
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Created: ${format(new Date(credential.startDateTime!), 'yyyy-MM-dd')}`,
                         context: "CERTIFICATE-VALUE",
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Expires: ${format(new Date(credential.endDateTime!), 'yyyy-MM-dd')}`,
                         context: "CERTIFICATE-VALUE",
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     })
                 ]
             });
@@ -623,7 +623,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             return new AppRegItem({
                 label: response.displayName!,
                 context: "API-PERMISSIONS-APP",
-                icon: new ThemeIcon("preview", new ThemeColor("editor.foreground")),
+                iconPath: new ThemeIcon("preview", new ThemeColor("editor.foreground")),
                 objectId: element.objectId,
                 resourceAppId: permission.resourceAppId,
                 children: permission.resourceAccess!.map(resourceAccess => {
@@ -648,7 +648,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         resourceAppId: permission.resourceAppId,
                         resourceScopeId: resourceAccess.id,
                         value: scope,
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                         tooltip: tooltip!
                     });
                 })
@@ -665,7 +665,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             return new AppRegItem({
                 label: scope.adminConsentDisplayName!,
                 context: `SCOPE-${scope.isEnabled! === true ? "ENABLED" : "DISABLED"}`,
-                icon: new ThemeIcon(icon, new ThemeColor("editor.foreground")),
+                iconPath: new ThemeIcon(icon, new ThemeColor("editor.foreground")),
                 objectId: element.objectId,
                 value: scope.id!,
                 state: scope.isEnabled!,
@@ -673,22 +673,22 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     new AppRegItem({
                         label: `Scope: ${scope.value!}`,
                         context: "SCOPE-VALUE",
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Description: ${scope.adminConsentDescription!}`,
                         context: "SCOPE-VALUE",
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Consent: ${scope.type! === "User" ? "Admins and Users" : "Admins Only"}`,
                         context: "SCOPE-VALUE",
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Enabled: ${scope.isEnabled! ? "Yes" : "No"}`,
                         context: "SCOPE-VALUE",
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     })
                 ]
             });
@@ -702,7 +702,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             return new AppRegItem({
                 label: role.displayName!,
                 context: `ROLE-${role.isEnabled! === true ? "ENABLED" : "DISABLED"}`,
-                icon: new ThemeIcon(icon, new ThemeColor("editor.foreground")),
+                iconPath: new ThemeIcon(icon, new ThemeColor("editor.foreground")),
                 objectId: element.objectId,
                 value: role.id!,
                 state: role.isEnabled!,
@@ -710,22 +710,22 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     new AppRegItem({
                         label: `Value: ${role.value!}`,
                         context: "ROLE-VALUE",
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Description: ${role.description!}`,
                         context: "ROLE-VALUE",
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Allowed: ${role.allowedMemberTypes!.map(type => type === "Application" ? "Applications" : "Users/Groups").join(", ")}`,
                         context: "ROLE-VALUE",
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Enabled: ${role.isEnabled! ? "Yes" : "No"}`,
                         context: "ROLE-VALUE",
-                        icon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+                        iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     })
                 ]
             });

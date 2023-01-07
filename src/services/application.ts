@@ -1,4 +1,3 @@
-import * as path from "path";
 import { PORTAL_APP_URI, SIGNIN_AUDIENCE_OPTIONS } from "../constants";
 import { window, env, Uri, TextDocumentContentProvider, EventEmitter, workspace } from "vscode";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
@@ -169,7 +168,6 @@ export class ApplicationService extends ServiceBase {
         workspace.openTextDocument(uri)
             .then(doc => {
                 window.showTextDocument(doc, { preview: false });
-                item.iconPath = path.join(__filename, "..", "..", "..", "resources", "icons", "app.svg");
                 this.treeDataProvider.triggerOnDidChangeTreeData(item);
                 status!.dispose();
             });

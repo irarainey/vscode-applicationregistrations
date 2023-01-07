@@ -13,7 +13,7 @@ export interface AppRegItemParams {
     userId?: string;
     children?: AppRegItem[];
     command?: Command;
-    icon?: string | ThemeIcon;
+    iconPath?: string | ThemeIcon;
     tooltip?: string;
     order?: number;
     state?: boolean;
