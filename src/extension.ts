@@ -15,8 +15,8 @@ import { SignInAudienceService } from "./services/sign-in-audience";
 import { ActivityResult } from "./interfaces/activity-result";
 
 // Values to hold the list filter
-export let filterCommand: string | undefined = undefined;
-export let filterText: string | undefined = undefined;
+let filterCommand: string | undefined = undefined;
+let filterText: string | undefined = undefined;
 
 // Create a new instance of the GraphClient class.
 const graphClient = new GraphClient();
