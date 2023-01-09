@@ -12,6 +12,12 @@
     "type": "git",
     "url": "https://github.com/irarainey/vscode-applicationregistrations"
   },
+  "galleryBanner": {
+    "color": "#3a3d41",
+    "theme": "dark"
+  },
+  "homepage": "https://github.com/irarainey/vscode-applicationregistrations/blob/main/README.md",
+  "license": "SEE LICENSE IN LICENSE.md",
   "version": "0.1.0",
   "engines": {
     "vscode": "^1.73.0"
@@ -19,6 +25,10 @@
   "categories": [
     "Azure",
     "Other"
+  ],
+  "keywords": [
+    "Azure",
+    "Application Registrations"
   ],
   "activationEvents": [
     "onView:appRegistrations"
@@ -421,11 +431,11 @@
     }
   },
   "scripts": {
+    "package": "vsce package --out ./packages/",
     "vscode:prepublish": "npm run esbuild-base -- --minify",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
     "esbuild": "npm run esbuild-base -- --sourcemap",
     "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
-    "test-compile": "tsc -p ./",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
