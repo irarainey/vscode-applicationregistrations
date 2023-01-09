@@ -9,6 +9,7 @@ It allows for easy viewing, copying, adding, and editing of most the core applic
 * Client Id
 * Application ID URI
 * Sign In Audience
+* Certificates and Secrets
 * Redirect URIs
 * API Permissions
 * Exposed API Permissions
@@ -25,7 +26,7 @@ All application properties have their own range of functionality. From the top-l
 
 ![Context Menus](resources/images/context_002.png)
 
-By default, to improve performance, the application list is limited to show 40 applications. This however is exposed as a user setting and can be changed if you wish. The list is sorted by application name. If your application is not shown in the list you can also apply a filter on application name, which is applied before the maximum application shown limit _(although only when eventual consistency is applied - see section below)_.
+By default, to improve performance, the application list is limited to show 40 applications. This however is exposed as a user setting and can be changed if you wish. The list is sorted by application display name. If your application is not shown in the list you can also apply a filter on display name, which is applied before the maximum application shown limit _(although only when eventual consistency is applied - see section below)_.
 
 The default view only shows applications where the signed in user is an owner. This behaviour can be changed in user settings to show all applications if required.
 
@@ -36,16 +37,16 @@ Please ensure your Azure CLI is authenticated to the correct tenant using `az lo
 
 ![VS Code Sign In](resources/images/sign_in.png)
 
-The access token used for this extension uses the scope `Directory.AccessAsUser.All`. This means that it will use the Azure RBAC directory roles assigned to the authenticated user, and hence requires a role that allows for application management. More details on this scope can be found on this [Microsoft Graph Permission Explorer](https://graphpermissions.merill.net/permission/Directory.AccessAsUser.All).
+The access token used for this extension uses the scope `Directory.AccessAsUser.All`. This means that it will use the Azure RBAC directory roles assigned to the authenticated user, and hence requires the user to be assigned a role which allows for application management. More details on this scope can be found on this [Microsoft Graph Permission Explorer](https://graphpermissions.merill.net/permission/Directory.AccessAsUser.All).
 
 ## Eventual Consistency
-Azure Active Directory stores multiple copies of data to handle large read volume and provide high availability. When data is created or updated, the change will eventually be applied to all the copies. This means that occasionally after making changes they may not initially be reflected in the application list. It can take anything from a few seconds to a few minutes for all copies to be updated, hence the term **Eventual**.
+Azure Active Directory stores multiple copies of data to handle large read volume and provide high availability. When directory objects are created or updated, changes will eventually be applied to all the copies. This means that occasionally after making changes they may not initially be reflected in the application list. It can take anything from a few seconds to a few minutes for all copies to be updated, hence the term **Eventual**.
 
-Microsoft Graph API manages this with the use of an eventual consistency header in API requests. Adding this header means the API will only return the results of objects where all copies have been updated. This can sometimes lead to confusing results.
+Microsoft Graph API (which this extension uses to manage applications registrations) handles this with the use of an eventual consistency header in API requests. Adding this header means the API will only return the results of directory objects where all copies have been updated. This can sometimes lead to confusing results.
 
-Furthermore, some [advanced query functionality of Graph API](https://learn.microsoft.com/en-us/graph/aad-advanced-queries?tabs=javascript) such as server-side ordering and filtering only works when explicitly telling the API to use eventual consistency. To deliver a better user experience this extension offers the ability to make Graph API calls with or without the eventual consistency header required for advanced queries. This can be enabled or disabled in the user settings _(see section below)_.
+Furthermore, some [advanced query functionality of Graph API](https://learn.microsoft.com/en-us/graph/aad-advanced-queries?tabs=javascript) such as server-side ordering and filtering only works when explicitly telling the API to use eventual consistency. To deliver a better user experience this extension offers the ability to make Graph API calls with or without the eventual consistency header. This can be enabled or disabled in the user settings _(see section below)_.
 
-As a rule of thumb, if you are working with a small list of applications (fewer than 200 in total) it is recommended to disable the use of the eventual consistency header _(this is the default)_. The application list will then be ordered client-side, although the filter option will be unavailable.
+As a rule of thumb, if you are working with a small list of applications (fewer than 200 in total) it is recommended to disable the use of the eventual consistency header _(which is enabled by default)_. The application list will then be ordered client-side, although the filter option will be unavailable.
 
 If you are working with a large list of applications (more than 200 in total) then it is recommended to enable the use of the eventual consistency header. This will allow the list of applications to be filtered server-side by Graph API and enforce the application of the filter command before results are returned.
 
@@ -68,7 +69,7 @@ There are a number of user settings to control the behaviour of this extension. 
 * **Show Application Count Warning**
     * With this enabled the total number of applications you have in your tenant will be counted and a warning will be displayed if it is determined your **Use Eventual Consistency** setting is not set to the optimal value for your best experience. Default value is `true`.
 * **Maximum Query Apps**
-    * This controls how many applications Graph API requests in the initial query when _not_ using eventual consistency. There is a limit to how many results a single Graph API request will return before it paginates the results and if working with a small number of applications reducing this number can improve performance. Be aware though that due to the nature of Graph API and client-side ordering, reducing this to below **Maximum Applications Shown** could result in not seeing the applications you expect in the right order. Default value is `100`.
+    * This controls how many applications Graph API requests in the initial query when **_not_** using eventual consistency. If working with a small number of applications reducing this number can improve performance. Be aware though that due to the nature of Graph API and client-side ordering, reducing this to below **Maximum Applications Shown** could result in not seeing the applications you expect in the right order. Default value is `100`.
 
 ![User Settings](resources/images/settings.png)
 
@@ -76,7 +77,6 @@ There are a number of user settings to control the behaviour of this extension. 
 The following functionality has not yet been implemented, but is on the backlog for addition in future releases. If any of this functionality is required you can right-click the application and open in the portal blade to manage them. If you have any suggestions for useful functionality please get in touch.
 
 * Pre-authorized applications
-* Management of certificate credentials
 * Android / iOS Redirect URIs
 * Public flow settings
 * Implicit flow settings

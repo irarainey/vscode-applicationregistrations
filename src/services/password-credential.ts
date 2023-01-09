@@ -54,7 +54,7 @@ export class PasswordCredentialService extends ServiceBase {
                     });
             }
         }
-    };
+    }
 
     // Deletes a password credential from an application registration.
     async delete(item: AppRegItem): Promise<void> {
@@ -62,7 +62,7 @@ export class PasswordCredentialService extends ServiceBase {
         // Prompt the user to confirm the removal.
         const answer = await window.showInformationMessage("Do you want to delete this password credential?", "Yes", "No");
 
-        // If the user confirms the removal then remove the user.
+        // If the user confirms the removal then remove the password credential.
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
             const previousIcon = item.iconPath;
