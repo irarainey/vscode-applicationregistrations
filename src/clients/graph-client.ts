@@ -227,8 +227,8 @@ export class GraphClient {
             });
     }
 
-    // Deletes a key credential from an application registration
-    async deleteKeyCredential(id: string, credentials: KeyCredential[]): Promise<void> {
+    // Updates the key credential collection from an application registration
+    async updateKeyCredentials(id: string, credentials: KeyCredential[]): Promise<void> {
         await this.client!.api(`/applications/${id}`)
             .patch({
                 "id": id,
