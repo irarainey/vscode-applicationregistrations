@@ -23,7 +23,7 @@ export class KeyCredentialService extends ServiceBase {
             prompt: "Description",
             placeHolder: "Enter a description for this certificate. If empty the Common Name will be used.",
             title: "Upload Certificate",
-            ignoreFocusOut: true,
+            ignoreFocusOut: true
         });
 
         // If escape is pressed then return undefined.
@@ -39,8 +39,8 @@ export class KeyCredentialService extends ServiceBase {
             openLabel: "Select Certificate",
             filters: {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
-                "Certificate": ["cer", "pem", "crt"],
-            },
+                "Certificate": ["cer", "pem", "crt"]
+            }
         });
 
         // If escape is pressed then return undefined.
@@ -60,7 +60,7 @@ export class KeyCredentialService extends ServiceBase {
             // Read the certificate file as binary.
             const buffer = await fs.promises.readFile(file[0].fsPath);
             const asn1 = forge.asn1.fromDer(forge.util.decode64(buffer.toString('base64')));
-            certificate = forge.pki.certificateFromAsn1(asn1);;
+            certificate = forge.pki.certificateFromAsn1(asn1);
         }
         const pem = forge.pki.certificateToPem(certificate);
         const base64EncodedCertificate = forge.util.encode64(pem);

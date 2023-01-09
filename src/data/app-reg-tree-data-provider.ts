@@ -114,7 +114,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     iconPath: new ThemeIcon("sign-in", new ThemeColor("editor.foreground")),
                     command: {
                         command: "appRegistrations.signInToAzure",
-                        title: SIGNIN_COMMAND_TEXT,
+                        title: SIGNIN_COMMAND_TEXT
                     }
                 }));
                 this.onDidChangeTreeDataEvent.fire(undefined);
@@ -312,7 +312,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                         value: app.appId!,
                                         context: "COPY",
                                         iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-                                        tooltip: "The Application (Client) Id is used to identify the application to Azure AD.",
+                                        tooltip: "The Application (Client) Id is used to identify the application to Azure AD."
                                     })
                                 ]
                             }),
@@ -333,7 +333,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                         objectId: app.id!,
                                         context: "APPID-URI",
                                         iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-                                        tooltip: "The Application Id URI, this is set when an application is used as a resource app. The URI acts as the prefix for the scopes you'll reference in your API's code, and must be globally unique.",
+                                        tooltip: "The Application Id URI, this is set when an application is used as a resource app. The URI acts as the prefix for the scopes you'll reference in your API's code, and must be globally unique."
                                     })
                                 ]
                             }),
@@ -354,7 +354,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                         context: "AUDIENCE",
                                         iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                                         objectId: app.id!,
-                                        tooltip: "The Sign In Audience determines whether the application can be used by accounts in the same Azure AD tenant or accounts in any Azure AD tenant.",
+                                        tooltip: "The Sign In Audience determines whether the application can be used by accounts in the same Azure AD tenant or accounts in any Azure AD tenant."
                                     })
                                 ]
                             }),
@@ -453,7 +453,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                 iconPath: new ThemeIcon("organization", new ThemeColor("editor.foreground")),
                                 tooltip: "Owners are users who can manage the application.",
                                 children: app.owners!.length === 0 ? undefined : []
-                            }),
+                            })
                         ]
                     }));
                 } catch (error: any) {

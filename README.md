@@ -40,7 +40,7 @@ Please ensure your Azure CLI is authenticated to the correct tenant using `az lo
 The access token used for this extension uses the scope `Directory.AccessAsUser.All`. This means that it will use the Azure RBAC directory roles assigned to the authenticated user, and hence requires the user to be assigned a role which allows for application management. More details on this scope can be found on this [Microsoft Graph Permission Explorer](https://graphpermissions.merill.net/permission/Directory.AccessAsUser.All).
 
 ## Eventual Consistency
-Azure Active Directory stores multiple copies of data to handle large read volume and provide high availability. When directory objects are created or updated, changes will eventually be applied to all the copies. This means that occasionally after making changes they may not initially be reflected in the application list. It can take anything from a few seconds to a few minutes for all copies to be updated, hence the term **Eventual**.
+Azure Active Directory stores multiple copies of data to handle large read volumes and provide high availability. When directory objects are created or updated, changes will eventually be applied to all the copies. This means that occasionally after making changes they may not initially be reflected in the application list. It can take anything from a few seconds to a few minutes for all copies to be updated, hence the term **Eventual**.
 
 Microsoft Graph API (which this extension uses to manage applications registrations) handles this with the use of an eventual consistency header in API requests. Adding this header means the API will only return the results of directory objects where all copies have been updated. This can sometimes lead to confusing results.
 
@@ -48,9 +48,9 @@ Furthermore, some [advanced query functionality of Graph API](https://learn.micr
 
 As a rule of thumb, if you are working with a small list of applications (fewer than 200 in total) it is recommended to disable the use of the eventual consistency header _(which is enabled by default)_. The application list will then be ordered client-side, although the filter option will be unavailable.
 
-If you are working with a large list of applications (more than 200 in total) then it is recommended to enable the use of the eventual consistency header. This will allow the list of applications to be filtered server-side by Graph API and enforce the application of the filter command before results are returned.
+If you are working with a large list of applications (more than 200 in total) then it is recommended to enable the use of the eventual consistency header. This will allow the list of applications to be filtered server-side by Graph API before results are returned ensuring the filter is based upon a full list of applications.
 
-By default a consistency setting check and warning is enabled. When the application list is refreshed the total applications are counted and if it is considered that the consistency setting is set incorrectly then a warning will be shown. This warning can be disabled in the user settings.
+By default a consistency setting check and warning is enabled. When the application list is refreshed the total number of applications is counted and if it is considered that the consistency setting is set incorrectly then a warning will be shown. This warning can be disabled in the user settings.
 
 ![Consistency Warning](resources/images/consistency_warning.png)
 
@@ -69,7 +69,7 @@ There are a number of user settings to control the behaviour of this extension. 
 * **Show Application Count Warning**
     * With this enabled the total number of applications you have in your tenant will be counted and a warning will be displayed if it is determined your **Use Eventual Consistency** setting is not set to the optimal value for your best experience. Default value is `true`.
 * **Maximum Query Apps**
-    * This controls how many applications Graph API requests in the initial query when **_not_** using eventual consistency. If working with a small number of applications reducing this number can improve performance. Be aware though that due to the nature of Graph API and client-side ordering, reducing this to below **Maximum Applications Shown** could result in not seeing the applications you expect in the right order. Default value is `100`.
+    * This controls how many applications Graph API will request in an initial query to build the list when **_not_** using eventual consistency. If working with a small number of applications reducing this number can improve performance. Be aware though that due to the nature of Graph API and client-side ordering, reducing this to below **Maximum Applications Shown** could result in not seeing the applications you expect in the right order. Default value is `100`.
 
 ![User Settings](resources/images/settings.png)
 

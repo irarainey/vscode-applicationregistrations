@@ -12,12 +12,12 @@
         "@typescript-eslint/naming-convention": "warn",
         "@typescript-eslint/semi": "warn",
         "curly": "warn",
-        "eqeqeq": "warn",
+        "eqeqeq": ["warn", "always"],
         "no-throw-literal": "warn",
-        "semi": "off"
+        "semi": "off",
+        "comma-dangle": ["warn", "never"]
     },
     "ignorePatterns": [
-        "out",
         "dist",
         "**/*.d.ts"
     ]

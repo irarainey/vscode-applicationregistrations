@@ -175,7 +175,7 @@ export class RequiredResourceAccessService extends ServiceBase {
                 {
                     placeHolder: "Select a user delegated permission",
                     title: `Add API Permission (${startStep + 1}/${numberOfSteps})`,
-                    ignoreFocusOut: true,
+                    ignoreFocusOut: true
                 });
 
             // If the user cancels the input then drop out.
