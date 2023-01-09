@@ -5,7 +5,7 @@ import { window, Disposable, workspace } from "vscode";
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
-import { Application, PasswordCredential, ServicePrincipal } from "@microsoft/microsoft-graph-types";
+import { Application, KeyCredential, PasswordCredential, ServicePrincipal } from "@microsoft/microsoft-graph-types";
 
 // This is the client for the Microsoft Graph API
 export class GraphClient {
@@ -208,7 +208,7 @@ export class GraphClient {
             });
     }
 
-    // Deletes a password credential from an application registration
+    // Adds a password credential to an application registration
     async addPasswordCredential(id: string, description: string, expiry: string): Promise<PasswordCredential> {
         return await this.client!.api(`/applications/${id}/addPassword`)
             .post({
@@ -224,6 +224,15 @@ export class GraphClient {
         await this.client!.api(`/applications/${id}/removePassword`)
             .post({
                 "keyId": passwordId
+            });
+    }
+
+    // Deletes a key credential from an application registration
+    async deleteKeyCredential(id: string, credentials: KeyCredential[]): Promise<void> {
+        await this.client!.api(`/applications/${id}`)
+            .patch({
+                "id": id,
+                "keyCredentials": credentials
             });
     }
 

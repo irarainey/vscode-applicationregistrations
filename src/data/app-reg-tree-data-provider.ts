@@ -586,6 +586,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 context: "CERTIFICATE",
                 iconPath: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
                 objectId: element.objectId,
+                keyId: credential.keyId!,
                 tooltip: "A certificate that the application uses to prove its identity when requesting a token. Also can be referred to as application certificate or public key.",
                 children: [
                     new AppRegItem({

@@ -9,6 +9,7 @@ export class AppRegItem extends TreeItem {
     public objectId?: string = "";
     public appId?: string = "";
     public userId?: string = "";
+    public keyId?: string = "";
     public value?: string = "";
     public order?: number = 0;
     public state?: boolean = false;
@@ -33,6 +34,7 @@ export class AppRegItem extends TreeItem {
         this.objectId = params.objectId;
         this.appId = params.appId;
         this.userId = params.userId;
+        this.keyId = params.keyId;
         this.order = params.order;
         this.state = params.state;
         this.resourceAppId = params.resourceAppId;

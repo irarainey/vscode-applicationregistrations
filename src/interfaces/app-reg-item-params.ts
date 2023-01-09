@@ -11,6 +11,7 @@ export interface AppRegItemParams {
     resourceAppId?: string;
     resourceScopeId?: string;
     userId?: string;
+    keyId?: string;
     children?: AppRegItem[];
     command?: Command;
     iconPath?: string | ThemeIcon;
