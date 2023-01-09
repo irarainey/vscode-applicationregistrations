@@ -9,6 +9,7 @@ It allows for easy viewing, copying, adding, and editing of most the core applic
 * Client Id
 * Application ID URI
 * Sign In Audience
+* Certificates and Secrets
 * Redirect URIs
 * API Permissions
 * Exposed API Permissions
@@ -76,7 +77,6 @@ There are a number of user settings to control the behaviour of this extension. 
 The following functionality has not yet been implemented, but is on the backlog for addition in future releases. If any of this functionality is required you can right-click the application and open in the portal blade to manage them. If you have any suggestions for useful functionality please get in touch.
 
 * Pre-authorized applications
-* Management of certificate credentials
 * Android / iOS Redirect URIs
 * Public flow settings
 * Implicit flow settings
