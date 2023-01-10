@@ -7,8 +7,8 @@ import { GraphClient } from "../clients/graph-client";
 export class RedirectUriService extends ServiceBase {
 
     // The constructor for the RedirectUriService class.
-    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
-        super(treeDataProvider, graphClient);
+    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphClient, treeDataProvider);
     }
 
     // Adds a new redirect URI to an application registration.
@@ -46,17 +46,17 @@ export class RedirectUriService extends ServiceBase {
             // Remove the redirect URI from the array.
             switch (item.contextValue) {
                 case "WEB-REDIRECT-URI":
-                    const webParent = await this.treeDataProvider.getApplicationPartial(item.objectId!, "web");
+                    const webParent = await this.graphClient.getApplicationDetailsPartial(item.objectId!, "web");
                     webParent.web!.redirectUris!.splice(webParent.web!.redirectUris!.indexOf(item.label!.toString()), 1);
                     newArray = webParent.web!.redirectUris!;
                     break;
                 case "SPA-REDIRECT-URI":
-                    const spaParent = await this.treeDataProvider.getApplicationPartial(item.objectId!, "spa");
+                    const spaParent = await this.graphClient.getApplicationDetailsPartial(item.objectId!, "spa");
                     spaParent.spa!.redirectUris!.splice(spaParent.spa!.redirectUris!.indexOf(item.label!.toString()), 1);
                     newArray = spaParent.spa!.redirectUris!;
                     break;
                 case "NATIVE-REDIRECT-URI":
-                    const publicClientParent = await this.treeDataProvider.getApplicationPartial(item.objectId!, "publicClient");
+                    const publicClientParent = await this.graphClient.getApplicationDetailsPartial(item.objectId!, "publicClient");
                     publicClientParent.publicClient!.redirectUris!.splice(publicClientParent.publicClient!.redirectUris!.indexOf(item.label!.toString()), 1);
                     newArray = publicClientParent.publicClient!.redirectUris!;
                     break;
@@ -105,17 +105,17 @@ export class RedirectUriService extends ServiceBase {
         switch (item.contextValue) {
             case "WEB-REDIRECT":
             case "WEB-REDIRECT-URI":
-                const webParent = await this.treeDataProvider.getApplicationPartial(item.objectId!, "web");
+                const webParent = await this.graphClient.getApplicationDetailsPartial(item.objectId!, "web");
                 existingRedirectUris = webParent.web!.redirectUris!;
                 break;
             case "SPA-REDIRECT":
             case "SPA-REDIRECT-URI":
-                const spaParent = await this.treeDataProvider.getApplicationPartial(item.objectId!, "spa");
+                const spaParent = await this.graphClient.getApplicationDetailsPartial(item.objectId!, "spa");
                 existingRedirectUris = spaParent.spa!.redirectUris!;
                 break;
             case "NATIVE-REDIRECT":
             case "NATIVE-REDIRECT-URI":
-                const publicClientParent = await this.treeDataProvider.getApplicationPartial(item.objectId!, "publicClient");
+                const publicClientParent = await this.graphClient.getApplicationDetailsPartial(item.objectId!, "publicClient");
                 existingRedirectUris = publicClientParent.publicClient!.redirectUris!;
                 break;
             default:

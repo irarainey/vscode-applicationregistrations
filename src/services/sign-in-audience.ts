@@ -8,8 +8,8 @@ import { GraphClient } from "../clients/graph-client";
 export class SignInAudienceService extends ServiceBase {
 
     // The constructor for the SignInAudienceService class.
-    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
-        super(treeDataProvider, graphClient);
+    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphClient, treeDataProvider);
     }
 
     // Edits the application sign in audience.
@@ -29,7 +29,7 @@ export class SignInAudienceService extends ServiceBase {
             } else {
                 item.iconPath = new ThemeIcon("loading~spin");
             }
-            this.treeDataProvider.triggerOnDidChangeTreeData(item);
+            this.treeDataProvider!.triggerOnDidChangeTreeData(item);
             const status = window.setStatusBarMessage(`$(loading~spin) Updating Sign In Audience`);
 
             this.graphClient.updateApplication(item.objectId!, { signInAudience: audience.value })
@@ -42,7 +42,7 @@ export class SignInAudienceService extends ServiceBase {
                     } else {
                         item.iconPath = new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"));
                     }
-                    this.treeDataProvider.triggerOnDidChangeTreeData(item);
+                    this.treeDataProvider!.triggerOnDidChangeTreeData(item);
                     status.dispose();
 
                     window.showErrorMessage(

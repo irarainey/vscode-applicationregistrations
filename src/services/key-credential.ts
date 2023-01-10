@@ -11,8 +11,8 @@ import { KeyCredential } from "@microsoft/microsoft-graph-types";
 export class KeyCredentialService extends ServiceBase {
 
     // The constructor for the KeyCredentialsService class.
-    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
-        super(treeDataProvider, graphClient);
+    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphClient, treeDataProvider);
     }
 
     // Adds a new key credential by uploading a certificate.
@@ -122,6 +122,6 @@ export class KeyCredentialService extends ServiceBase {
 
     // Gets the key credentials for an application registration.
     private async getKeyCredentials(id: string): Promise<KeyCredential[]> {
-        return (await this.treeDataProvider.getApplicationPartial(id, "keyCredentials")).keyCredentials!;
+        return (await this.graphClient.getApplicationDetailsPartial(id, "keyCredentials")).keyCredentials!;
     }
 }

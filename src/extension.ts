@@ -7,6 +7,7 @@ import { ApplicationService } from "./services/application";
 import { AppRoleService } from "./services/app-role";
 import { KeyCredentialService } from "./services/key-credential";
 import { OAuth2PermissionScopeService } from "./services/oauth2-permission-scope";
+import { OrganizationService } from "./services/organization";
 import { OwnerService } from "./services/owner";
 import { PasswordCredentialService } from "./services/password-credential";
 import { RedirectUriService } from "./services/redirect-uri";
@@ -25,15 +26,16 @@ const graphClient = new GraphClient();
 const treeDataProvider = new AppRegTreeDataProvider(graphClient);
 
 // Create new instances of the services classes.
-const applicationService = new ApplicationService(treeDataProvider, graphClient);
-const appRoleService = new AppRoleService(treeDataProvider, graphClient);
-const keyCredentialService = new KeyCredentialService(treeDataProvider, graphClient);
-const oauth2PermissionScopeService = new OAuth2PermissionScopeService(treeDataProvider, graphClient);
-const ownerService = new OwnerService(treeDataProvider, graphClient);
-const passwordCredentialService = new PasswordCredentialService(treeDataProvider, graphClient);
-const redirectUriService = new RedirectUriService(treeDataProvider, graphClient);
-const requiredResourceAccessService = new RequiredResourceAccessService(treeDataProvider, graphClient);
-const signInAudienceService = new SignInAudienceService(treeDataProvider, graphClient);
+const applicationService = new ApplicationService(graphClient, treeDataProvider);
+const appRoleService = new AppRoleService(graphClient, treeDataProvider);
+const keyCredentialService = new KeyCredentialService(graphClient, treeDataProvider);
+const oauth2PermissionScopeService = new OAuth2PermissionScopeService(graphClient, treeDataProvider);
+const organizationService = new OrganizationService(graphClient);
+const ownerService = new OwnerService(graphClient, treeDataProvider);
+const passwordCredentialService = new PasswordCredentialService(graphClient, treeDataProvider);
+const redirectUriService = new RedirectUriService(graphClient, treeDataProvider);
+const requiredResourceAccessService = new RequiredResourceAccessService(graphClient, treeDataProvider);
+const signInAudienceService = new SignInAudienceService(graphClient, treeDataProvider);
 
 // This method is called when the extension is activated.
 export const activate = async (context: ExtensionContext) => {
@@ -53,6 +55,7 @@ export const activate = async (context: ExtensionContext) => {
 	appRoleService.onError((result) => errorHandler(result));
 	keyCredentialService.onError((result) => errorHandler(result));
 	oauth2PermissionScopeService.onError((result) => errorHandler(result));
+	organizationService.onError((result) => errorHandler(result));
 	ownerService.onError((result) => errorHandler(result));
 	passwordCredentialService.onError((result) => errorHandler(result));
 	redirectUriService.onError((result) => errorHandler(result));
@@ -78,6 +81,7 @@ export const activate = async (context: ExtensionContext) => {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addApp`, async () => await applicationService.add()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshApps`, async () => await populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"))));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.filterApps`, async () => await filterTreeView()));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.tenantInfo`, async () => await organizationService.showTenantInformation()));
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Application Commands

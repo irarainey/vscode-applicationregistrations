@@ -10,7 +10,7 @@ export class ServiceBase {
     protected readonly disposable: Disposable[] = [];
 
     // A private instance of the AppRegTreeDataProvider class.
-    protected readonly treeDataProvider: AppRegTreeDataProvider;
+    protected readonly treeDataProvider: AppRegTreeDataProvider | undefined;
 
     // A protected instance of the GraphClient class.
     protected readonly graphClient: GraphClient;
@@ -28,9 +28,11 @@ export class ServiceBase {
     public readonly onComplete: Event<ActivityResult> = this.onCompleteEvent.event;
 
     // The constructor for the OwnerService class.
-    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
-        this.treeDataProvider = treeDataProvider;
+    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider | undefined = undefined) {
         this.graphClient = graphClient;
+        if(treeDataProvider === undefined) {
+            this.treeDataProvider = treeDataProvider;
+        }
     }
 
     // Trigger the event to indicate an error
@@ -47,7 +49,7 @@ export class ServiceBase {
     protected triggerTreeChange(statusBarMessage?: string, item?: AppRegItem): Disposable | undefined {
         if (item !== undefined) {
             item.iconPath = new ThemeIcon("loading~spin");
-            this.treeDataProvider.triggerOnDidChangeTreeData(item);
+            this.treeDataProvider!.triggerOnDidChangeTreeData(item);
         }
 
         if (statusBarMessage !== undefined) {
@@ -65,7 +67,7 @@ export class ServiceBase {
             icon = new ThemeIcon("loading~spin");
         }
         item.iconPath = icon;
-        this.treeDataProvider.triggerOnDidChangeTreeData(item);
+        this.treeDataProvider!.triggerOnDidChangeTreeData(item);
     }
 
     // Dispose of anything that needs to be disposed of.

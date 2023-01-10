@@ -8,15 +8,15 @@ import { GraphClient } from "../clients/graph-client";
 export class ApplicationService extends ServiceBase {
 
     // The constructor for the ApplicationService class.
-    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
-        super(treeDataProvider, graphClient);
+    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphClient, treeDataProvider);
     }
 
     // Creates a new application registration.
     async add(): Promise<void> {
 
-        if (!this.treeDataProvider.isGraphClientInitialised) {
-            await this.treeDataProvider.initialiseGraphClient();
+        if (!this.treeDataProvider!.isGraphClientInitialised) {
+            await this.treeDataProvider!.initialiseGraphClient();
             return;
         }
 
@@ -170,7 +170,7 @@ export class ApplicationService extends ServiceBase {
             .then(doc => {
                 window.showTextDocument(doc, { preview: false });
                 item.iconPath = previousIcon;
-                this.treeDataProvider.triggerOnDidChangeTreeData(item);
+                this.treeDataProvider!.triggerOnDidChangeTreeData(item);
                 status!.dispose();
             });
     }

@@ -5,7 +5,7 @@ import { window, Disposable, workspace } from "vscode";
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
-import { Application, KeyCredential, PasswordCredential, ServicePrincipal } from "@microsoft/microsoft-graph-types";
+import { Application, KeyCredential, Organization, PasswordCredential, ServicePrincipal } from "@microsoft/microsoft-graph-types";
 
 // This is the client for the Microsoft Graph API
 export class GraphClient {
@@ -45,8 +45,9 @@ export class GraphClient {
 
         // Attempt to get an access token to determine the authentication state
         await credential.getToken(SCOPE)
-            .then(() => {
+            .then((result) => {
                 // If the access token is returned, the user is authenticated
+                console.log(result.token);
                 this.isGraphClientInitialised = true;
                 this.initialiseTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading Application Registrations"));
             })
@@ -276,6 +277,14 @@ export class GraphClient {
         return servicePrincipals.value;
     }
 
+    // Gets the tenant information.
+    async getTenantInformation(tenantId: string): Promise<Organization> {
+        // Get the tenant information
+        return await this.client!.api(`/organization/${tenantId}`)
+            .select("id,displayName,verifiedDomains")
+            .get();
+    }
+
     // Disposes the client
     dispose(): void {
         this.client = undefined;
@@ -291,7 +300,7 @@ export const escapeSingleQuotesForSearch = (str: string) => {
     return str.replace(/'/g, "\'");
 };
 
-const execShellCmd = (cmd: string) => {
+export const execShellCmd = (cmd: string) => {
     return new Promise<string>((resolve, reject) => {
         ChildProcess.exec(cmd, (error: any, response: any) => {
             if (error) {

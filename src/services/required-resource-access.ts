@@ -10,8 +10,8 @@ import { debounce } from "ts-debounce";
 export class RequiredResourceAccessService extends ServiceBase {
 
     // The constructor for the RequiredResourceAccessService class.
-    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
-        super(treeDataProvider, graphClient);
+    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphClient, treeDataProvider);
     }
 
     // Adds the selected scope to an application registration.
@@ -323,6 +323,6 @@ export class RequiredResourceAccessService extends ServiceBase {
 
     // Gets the api permissions for an application registration.
     private async getApiPermissions(id: string): Promise<RequiredResourceAccess[]> {
-        return (await this.treeDataProvider.getApplicationPartial(id, "requiredResourceAccess")).requiredResourceAccess!;
+        return (await this.graphClient.getApplicationDetailsPartial(id, "requiredResourceAccess")).requiredResourceAccess!;
     }
 }
