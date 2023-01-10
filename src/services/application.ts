@@ -152,6 +152,7 @@ export class ApplicationService extends ServiceBase {
     // Opens the application manifest in a new editor window.
     async viewManifest(item: AppRegItem): Promise<void> {
 
+        const previousIcon = item.iconPath;
         const status = this.triggerTreeChange("Loading Application Manifest", item);
         const manifest = await this.graphClient.getApplicationDetailsFull(item.objectId!);
 
@@ -168,6 +169,7 @@ export class ApplicationService extends ServiceBase {
         workspace.openTextDocument(uri)
             .then(doc => {
                 window.showTextDocument(doc, { preview: false });
+                item.iconPath = previousIcon;
                 this.treeDataProvider.triggerOnDidChangeTreeData(item);
                 status!.dispose();
             });
