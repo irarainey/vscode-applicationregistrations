@@ -73,7 +73,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
         this.graphClient.initialiseTreeView = async (type: string, statusBarMessage?: Disposable | undefined, filter?: string) => {
             await this.renderTreeView(type, statusBarMessage, filter);
         };
-        await this.graphClient.initialise();
+        this.graphClient.initialise();
     }
 
     // Initialises the tree view data based on the type of data to be displayed.
@@ -114,7 +114,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     iconPath: new ThemeIcon("sign-in", new ThemeColor("editor.foreground")),
                     command: {
                         command: "appRegistrations.signInToAzure",
-                        title: SIGNIN_COMMAND_TEXT,
+                        title: SIGNIN_COMMAND_TEXT
                     }
                 }));
                 this.onDidChangeTreeDataEvent.fire(undefined);
@@ -155,54 +155,90 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
         switch (element.contextValue) {
             case "OWNERS":
                 // Return the owners for the application
-                return this.getApplicationOwners(element);
+                return this.getApplicationOwners(element)
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
+                    });
             case "WEB-REDIRECT":
                 // Return the web redirect URIs for the application
                 return this.getApplicationPartial(element.objectId!, "web")
                     .then((app: Application) => {
                         return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", app.web!.redirectUris!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             case "SPA-REDIRECT":
                 // Return the SPA redirect URIs for the application
                 return this.getApplicationPartial(element.objectId!, "spa")
                     .then((app: Application) => {
                         return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", app.spa!.redirectUris!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             case "NATIVE-REDIRECT":
                 // Return the native redirect URIs for the application
                 return this.getApplicationPartial(element.objectId!, "publicClient")
                     .then((app: Application) => {
                         return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", app.publicClient!.redirectUris!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             case "PASSWORD-CREDENTIALS":
                 // Return the password credentials for the application
                 return this.getApplicationPartial(element.objectId!, "passwordCredentials")
                     .then((app: Application) => {
                         return this.getApplicationPasswordCredentials(element, app.passwordCredentials!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             case "CERTIFICATE-CREDENTIALS":
                 // Return the key credentials for the application
                 return this.getApplicationPartial(element.objectId!, "keyCredentials")
                     .then((app: Application) => {
                         return this.getApplicationKeyCredentials(element, app.keyCredentials!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             case "API-PERMISSIONS":
                 // Return the API permissions for the application
                 return this.getApplicationPartial(element.objectId!, "requiredResourceAccess")
                     .then((app: Application) => {
                         return this.getApplicationApiPermissions(element, app.requiredResourceAccess!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             case "EXPOSED-API-PERMISSIONS":
                 // Return the exposed API permissions for the application
                 return this.getApplicationPartial(element.objectId!, "api")
                     .then((app: Application) => {
                         return this.getApplicationExposedApiPermissions(element, app.api?.oauth2PermissionScopes!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             case "APP-ROLES":
                 // Return the app roles for the application
                 return this.getApplicationPartial(element.objectId!, "appRoles")
                     .then((app: Application) => {
                         return this.getApplicationAppRoles(element, app.appRoles!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             default:
                 // Nothing specific so return the statically defined children
@@ -312,7 +348,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                         value: app.appId!,
                                         context: "COPY",
                                         iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-                                        tooltip: "The Application (Client) Id is used to identify the application to Azure AD.",
+                                        tooltip: "The Application (Client) Id is used to identify the application to Azure AD."
                                     })
                                 ]
                             }),
@@ -333,7 +369,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                         objectId: app.id!,
                                         context: "APPID-URI",
                                         iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-                                        tooltip: "The Application Id URI, this is set when an application is used as a resource app. The URI acts as the prefix for the scopes you'll reference in your API's code, and must be globally unique.",
+                                        tooltip: "The Application Id URI, this is set when an application is used as a resource app. The URI acts as the prefix for the scopes you'll reference in your API's code, and must be globally unique."
                                     })
                                 ]
                             }),
@@ -354,7 +390,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                         context: "AUDIENCE",
                                         iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                                         objectId: app.id!,
-                                        tooltip: "The Sign In Audience determines whether the application can be used by accounts in the same Azure AD tenant or accounts in any Azure AD tenant.",
+                                        tooltip: "The Sign In Audience determines whether the application can be used by accounts in the same Azure AD tenant or accounts in any Azure AD tenant."
                                     })
                                 ]
                             }),
@@ -453,7 +489,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                 iconPath: new ThemeIcon("organization", new ThemeColor("editor.foreground")),
                                 tooltip: "Owners are users who can manage the application.",
                                 children: app.owners!.length === 0 ? undefined : []
-                            }),
+                            })
                         ]
                     }));
                 } catch (error: any) {

@@ -13,8 +13,8 @@ export class OwnerService extends ServiceBase {
     private userList: any = undefined;
 
     // The constructor for the OwnerService class.
-    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
-        super(treeDataProvider, graphClient);
+    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphClient, treeDataProvider);
     }
 
     // Adds a new owner to an application registration.

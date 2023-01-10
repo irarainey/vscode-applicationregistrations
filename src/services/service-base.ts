@@ -28,14 +28,14 @@ export class ServiceBase {
     public readonly onComplete: Event<ActivityResult> = this.onCompleteEvent.event;
 
     // The constructor for the OwnerService class.
-    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
-        this.treeDataProvider = treeDataProvider;
+    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
         this.graphClient = graphClient;
+        this.treeDataProvider = treeDataProvider;
     }
 
     // Trigger the event to indicate an error
-    protected triggerOnError(item: ActivityResult) {
-        this.onErrorEvent.fire(item);
+    protected triggerOnError(result: ActivityResult) {
+        this.onErrorEvent.fire(result);
     }
 
     // Trigger the event to indicate completion

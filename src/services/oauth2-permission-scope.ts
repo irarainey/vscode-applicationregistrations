@@ -10,8 +10,8 @@ import { debounce } from "ts-debounce";
 export class OAuth2PermissionScopeService extends ServiceBase {
 
     // The constructor for the OAuth2PermissionScopeService class.
-    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
-        super(treeDataProvider, graphClient);
+    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphClient, treeDataProvider);
     }
 
     // Adds a new exposed api scope to an application registration.
@@ -139,7 +139,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
     // Gets the exposed api scopes for an application registration.
     private async getScopes(id: string): Promise<ApiApplication> {
-        return (await this.treeDataProvider.getApplicationPartial(id, "api")).api!;
+        return (await this.graphClient.getApplicationDetailsPartial(id, "api")).api!;
     }
 
     // Captures the details for a scope.

@@ -1,5 +1,5 @@
-import { commands, window, workspace, env, Disposable, ExtensionContext } from "vscode";
-import { VIEW_NAME } from "./constants";
+import { commands, window, workspace, env, Disposable, ExtensionContext, Uri } from "vscode";
+import { VIEW_NAME, SIGNIN_AUDIENCE_DOCUMENTATION_URI } from "./constants";
 import { AppRegTreeDataProvider } from "./data/app-reg-tree-data-provider";
 import { AppRegItem } from "./models/app-reg-item";
 import { GraphClient, escapeSingleQuotesForFilter } from "./clients/graph-client";
@@ -7,6 +7,7 @@ import { ApplicationService } from "./services/application";
 import { AppRoleService } from "./services/app-role";
 import { KeyCredentialService } from "./services/key-credential";
 import { OAuth2PermissionScopeService } from "./services/oauth2-permission-scope";
+import { OrganizationService } from "./services/organization";
 import { OwnerService } from "./services/owner";
 import { PasswordCredentialService } from "./services/password-credential";
 import { RedirectUriService } from "./services/redirect-uri";
@@ -25,15 +26,16 @@ const graphClient = new GraphClient();
 const treeDataProvider = new AppRegTreeDataProvider(graphClient);
 
 // Create new instances of the services classes.
-const applicationService = new ApplicationService(treeDataProvider, graphClient);
-const appRoleService = new AppRoleService(treeDataProvider, graphClient);
-const keyCredentialService = new KeyCredentialService(treeDataProvider, graphClient);
-const oauth2PermissionScopeService = new OAuth2PermissionScopeService(treeDataProvider, graphClient);
-const ownerService = new OwnerService(treeDataProvider, graphClient);
-const passwordCredentialService = new PasswordCredentialService(treeDataProvider, graphClient);
-const redirectUriService = new RedirectUriService(treeDataProvider, graphClient);
-const requiredResourceAccessService = new RequiredResourceAccessService(treeDataProvider, graphClient);
-const signInAudienceService = new SignInAudienceService(treeDataProvider, graphClient);
+const applicationService = new ApplicationService(graphClient, treeDataProvider);
+const appRoleService = new AppRoleService(graphClient, treeDataProvider);
+const keyCredentialService = new KeyCredentialService(graphClient, treeDataProvider);
+const oauth2PermissionScopeService = new OAuth2PermissionScopeService(graphClient, treeDataProvider);
+const organizationService = new OrganizationService(graphClient, treeDataProvider);
+const ownerService = new OwnerService(graphClient, treeDataProvider);
+const passwordCredentialService = new PasswordCredentialService(graphClient, treeDataProvider);
+const redirectUriService = new RedirectUriService(graphClient, treeDataProvider);
+const requiredResourceAccessService = new RequiredResourceAccessService(graphClient, treeDataProvider);
+const signInAudienceService = new SignInAudienceService(graphClient, treeDataProvider);
 
 // This method is called when the extension is activated.
 export const activate = async (context: ExtensionContext) => {
@@ -53,6 +55,7 @@ export const activate = async (context: ExtensionContext) => {
 	appRoleService.onError((result) => errorHandler(result));
 	keyCredentialService.onError((result) => errorHandler(result));
 	oauth2PermissionScopeService.onError((result) => errorHandler(result));
+	organizationService.onError((result) => errorHandler(result));
 	ownerService.onError((result) => errorHandler(result));
 	passwordCredentialService.onError((result) => errorHandler(result));
 	redirectUriService.onError((result) => errorHandler(result));
@@ -78,6 +81,7 @@ export const activate = async (context: ExtensionContext) => {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addApp`, async () => await applicationService.add()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshApps`, async () => await populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"))));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.filterApps`, async () => await filterTreeView()));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.tenantInfo`, async () => await organizationService.showTenantInformation()));
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Application Commands
@@ -187,7 +191,7 @@ export const deactivate = async () => {
 
 // Define the populateTreeView function.
 const populateTreeView = async (statusBarHandle: Disposable | undefined = undefined) => {
-	if (!treeDataProvider.isGraphClientInitialised) {
+	if (graphClient.isGraphClientInitialised === false) {
 		await treeDataProvider.initialiseGraphClient(statusBarHandle);
 		return;
 	}
@@ -196,8 +200,7 @@ const populateTreeView = async (statusBarHandle: Disposable | undefined = undefi
 
 // Define the filterTreeView function.
 const filterTreeView = async () => {
-	// If the user is not authenticated then we don't want to do anything        
-	if (!treeDataProvider.isGraphClientInitialised) {
+	if (graphClient.isGraphClientInitialised === false) {
 		await treeDataProvider.initialiseGraphClient();
 		return;
 	}
@@ -273,6 +276,28 @@ const errorHandler = async (result: ActivityResult) => {
 	if (result.error !== undefined) {
 		// Log the error.
 		console.error(result.error);
+
+		// Determine if the error is due to the user not being logged in.
+		if (result.error.message.includes("az login")) {
+			window.showErrorMessage("You are not logged in to the Azure CLI. Please click the option to sign in, or run 'az login' in a terminal window.", "OK");
+			await treeDataProvider.initialiseGraphClient();
+			return;
+		}
+
+		// Determine if the error is due to trying to change the sign in audience.
+		if (result.error.message.includes("signInAudience")) {
+			const result = await window.showErrorMessage(
+				`An error occurred while attempting to change the Sign In Audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at ${SIGNIN_AUDIENCE_DOCUMENTATION_URI}.`,
+				...["OK", "Open Documentation"]
+			);
+
+			if (result === "Open Documentation") {
+				env.openExternal(Uri.parse(SIGNIN_AUDIENCE_DOCUMENTATION_URI));
+				return;
+			}
+			
+			return;
+		}
 
 		// Display an error message.
 		window.showErrorMessage(`An error occurred trying to complete your task: ${result.error!.message}.`, "OK");

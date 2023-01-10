@@ -8,14 +8,14 @@ import { GraphClient } from "../clients/graph-client";
 export class ApplicationService extends ServiceBase {
 
     // The constructor for the ApplicationService class.
-    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
-        super(treeDataProvider, graphClient);
+    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphClient, treeDataProvider);
     }
 
     // Creates a new application registration.
     async add(): Promise<void> {
 
-        if (!this.treeDataProvider.isGraphClientInitialised) {
+        if (this.graphClient.isGraphClientInitialised === false) {
             await this.treeDataProvider.initialiseGraphClient();
             return;
         }
@@ -44,7 +44,7 @@ export class ApplicationService extends ServiceBase {
             if (signInAudience !== undefined) {
                 // Set the added trigger to the status bar message.
                 const status = this.triggerTreeChange("Creating Application Registration");
-                await this.graphClient.createApplication({ displayName: displayName, signInAudience: signInAudience.value })
+                this.graphClient.createApplication({ displayName: displayName, signInAudience: signInAudience.value })
                     .then(() => {
                         this.triggerOnComplete({ success: true, statusBarHandle: status });
                     })
@@ -151,25 +151,30 @@ export class ApplicationService extends ServiceBase {
 
     // Opens the application manifest in a new editor window.
     async viewManifest(item: AppRegItem): Promise<void> {
-
+        const previousIcon = item.iconPath;
         const status = this.triggerTreeChange("Loading Application Manifest", item);
-        const manifest = await this.graphClient.getApplicationDetailsFull(item.objectId!);
+        this.graphClient.getApplicationDetailsFull(item.objectId!)
+            .then((manifest) => {
+                const newDocument = new class implements TextDocumentContentProvider {
+                    onDidChangeEmitter = new EventEmitter<Uri>();
+                    onDidChange = this.onDidChangeEmitter.event;
+                    provideTextDocumentContent(): string {
+                        return JSON.stringify(manifest, null, 4);
+                    }
+                };
 
-        const newDocument = new class implements TextDocumentContentProvider {
-            onDidChangeEmitter = new EventEmitter<Uri>();
-            onDidChange = this.onDidChangeEmitter.event;
-            provideTextDocumentContent(): string {
-                return JSON.stringify(manifest, null, 4);
-            }
-        };
-
-        this.disposable.push(workspace.registerTextDocumentContentProvider('manifest', newDocument));
-        const uri = Uri.parse('manifest:' + item.label + ".json");
-        workspace.openTextDocument(uri)
-            .then(doc => {
-                window.showTextDocument(doc, { preview: false });
-                this.treeDataProvider.triggerOnDidChangeTreeData(item);
-                status!.dispose();
+                this.disposable.push(workspace.registerTextDocumentContentProvider('manifest', newDocument));
+                const uri = Uri.parse('manifest:' + item.label + ".json");
+                workspace.openTextDocument(uri)
+                    .then(async (doc) => {
+                        await window.showTextDocument(doc, { preview: false });
+                        status!.dispose();
+                        item.iconPath = previousIcon;
+                        this.treeDataProvider.triggerOnDidChangeTreeData(item);
+                    });
+            })
+            .catch((error) => {
+                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
             });
     }
 

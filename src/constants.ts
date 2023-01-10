@@ -61,3 +61,6 @@ export const SIGNIN_AUDIENCE_DOCUMENTATION_URI = "https://learn.microsoft.com/en
 
 // The properties to return when querying for applications
 export const APPLICATION_SELECT_PROPERTIES = "id,displayName,appId,notes,signInAudience,appRoles,oauth2Permissions,web,spa,api,requiredResourceAccess,publicClient,identifierUris,passwordCredentials,keyCredentials";
+
+// The Azure CLI command to get the tenant id
+export const CLI_TENANT_CMD = "az account show --query tenantId -o tsv";

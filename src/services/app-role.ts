@@ -10,8 +10,8 @@ import { debounce } from "ts-debounce";
 export class AppRoleService extends ServiceBase {
 
     // The constructor for the AppRolesService class.
-    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
-        super(treeDataProvider, graphClient);
+    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphClient, treeDataProvider);
     }
 
     // Adds a new app role to an application registration.
@@ -132,7 +132,7 @@ export class AppRoleService extends ServiceBase {
 
     // Gets the app roles for an application registration.
     private async getAppRoles(id: string): Promise<AppRole[]> {
-        return (await this.treeDataProvider.getApplicationPartial(id, "appRoles")).appRoles!;
+        return (await this.graphClient.getApplicationDetailsPartial(id, "appRoles")).appRoles!;
     }
 
     // Captures the details for an app role.

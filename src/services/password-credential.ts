@@ -9,8 +9,8 @@ import { format } from "date-fns";
 export class PasswordCredentialService extends ServiceBase {
 
     // The constructor for the PasswordCredentialsService class.
-    constructor(treeDataProvider: AppRegTreeDataProvider, graphClient: GraphClient) {
-        super(treeDataProvider, graphClient);
+    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphClient, treeDataProvider);
     }
 
     // Adds a new password credential.
