@@ -10,7 +10,7 @@ export class ServiceBase {
     protected readonly disposable: Disposable[] = [];
 
     // A private instance of the AppRegTreeDataProvider class.
-    protected readonly treeDataProvider: AppRegTreeDataProvider | undefined;
+    protected readonly treeDataProvider: AppRegTreeDataProvider;
 
     // A protected instance of the GraphClient class.
     protected readonly graphClient: GraphClient;
@@ -28,16 +28,14 @@ export class ServiceBase {
     public readonly onComplete: Event<ActivityResult> = this.onCompleteEvent.event;
 
     // The constructor for the OwnerService class.
-    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider | undefined = undefined) {
+    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
         this.graphClient = graphClient;
-        if(treeDataProvider === undefined) {
-            this.treeDataProvider = treeDataProvider;
-        }
+        this.treeDataProvider = treeDataProvider;
     }
 
     // Trigger the event to indicate an error
-    protected triggerOnError(item: ActivityResult) {
-        this.onErrorEvent.fire(item);
+    protected triggerOnError(result: ActivityResult) {
+        this.onErrorEvent.fire(result);
     }
 
     // Trigger the event to indicate completion
@@ -49,7 +47,7 @@ export class ServiceBase {
     protected triggerTreeChange(statusBarMessage?: string, item?: AppRegItem): Disposable | undefined {
         if (item !== undefined) {
             item.iconPath = new ThemeIcon("loading~spin");
-            this.treeDataProvider!.triggerOnDidChangeTreeData(item);
+            this.treeDataProvider.triggerOnDidChangeTreeData(item);
         }
 
         if (statusBarMessage !== undefined) {
@@ -67,7 +65,7 @@ export class ServiceBase {
             icon = new ThemeIcon("loading~spin");
         }
         item.iconPath = icon;
-        this.treeDataProvider!.triggerOnDidChangeTreeData(item);
+        this.treeDataProvider.triggerOnDidChangeTreeData(item);
     }
 
     // Dispose of anything that needs to be disposed of.

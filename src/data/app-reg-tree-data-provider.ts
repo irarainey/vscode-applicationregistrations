@@ -155,54 +155,90 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
         switch (element.contextValue) {
             case "OWNERS":
                 // Return the owners for the application
-                return this.getApplicationOwners(element);
+                return this.getApplicationOwners(element)
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
+                    });
             case "WEB-REDIRECT":
                 // Return the web redirect URIs for the application
                 return this.getApplicationPartial(element.objectId!, "web")
                     .then((app: Application) => {
                         return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", app.web!.redirectUris!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             case "SPA-REDIRECT":
                 // Return the SPA redirect URIs for the application
                 return this.getApplicationPartial(element.objectId!, "spa")
                     .then((app: Application) => {
                         return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", app.spa!.redirectUris!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             case "NATIVE-REDIRECT":
                 // Return the native redirect URIs for the application
                 return this.getApplicationPartial(element.objectId!, "publicClient")
                     .then((app: Application) => {
                         return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", app.publicClient!.redirectUris!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             case "PASSWORD-CREDENTIALS":
                 // Return the password credentials for the application
                 return this.getApplicationPartial(element.objectId!, "passwordCredentials")
                     .then((app: Application) => {
                         return this.getApplicationPasswordCredentials(element, app.passwordCredentials!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             case "CERTIFICATE-CREDENTIALS":
                 // Return the key credentials for the application
                 return this.getApplicationPartial(element.objectId!, "keyCredentials")
                     .then((app: Application) => {
                         return this.getApplicationKeyCredentials(element, app.keyCredentials!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             case "API-PERMISSIONS":
                 // Return the API permissions for the application
                 return this.getApplicationPartial(element.objectId!, "requiredResourceAccess")
                     .then((app: Application) => {
                         return this.getApplicationApiPermissions(element, app.requiredResourceAccess!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             case "EXPOSED-API-PERMISSIONS":
                 // Return the exposed API permissions for the application
                 return this.getApplicationPartial(element.objectId!, "api")
                     .then((app: Application) => {
                         return this.getApplicationExposedApiPermissions(element, app.api?.oauth2PermissionScopes!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             case "APP-ROLES":
                 // Return the app roles for the application
                 return this.getApplicationPartial(element.objectId!, "appRoles")
                     .then((app: Application) => {
                         return this.getApplicationAppRoles(element, app.appRoles!);
+                    })
+                    .catch((error: any) => {
+                        this.triggerOnError({ success: false, error: error });
+                        return [];
                     });
             default:
                 // Nothing specific so return the statically defined children

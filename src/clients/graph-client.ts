@@ -300,7 +300,7 @@ export const escapeSingleQuotesForSearch = (str: string) => {
     return str.replace(/'/g, "\'");
 };
 
-export const execShellCmd = (cmd: string) => {
+export const execShellCmd = async (cmd: string) => {
     return new Promise<string>((resolve, reject) => {
         ChildProcess.exec(cmd, (error: any, response: any) => {
             if (error) {
