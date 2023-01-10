@@ -73,7 +73,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
         this.graphClient.initialiseTreeView = async (type: string, statusBarMessage?: Disposable | undefined, filter?: string) => {
             await this.renderTreeView(type, statusBarMessage, filter);
         };
-        await this.graphClient.initialise();
+        this.graphClient.initialise();
     }
 
     // Initialises the tree view data based on the type of data to be displayed.

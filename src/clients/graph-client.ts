@@ -25,7 +25,7 @@ export class GraphClient {
     initialiseTreeView: (type: string, statusBarMessage?: Disposable | undefined, filter?: string) => void;
 
     // Initialises the graph client
-    async initialise(): Promise<void> {
+    initialise() {
 
         // Create an Azure CLI credential
         const credential = new AzureCliCredential();
@@ -44,10 +44,9 @@ export class GraphClient {
         this.client = Client.initWithMiddleware(clientOptions);
 
         // Attempt to get an access token to determine the authentication state
-        await credential.getToken(SCOPE)
-            .then((result) => {
+        credential.getToken(SCOPE)
+            .then(() => {
                 // If the access token is returned, the user is authenticated
-                console.log(result.token);
                 this.isGraphClientInitialised = true;
                 this.initialiseTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading Application Registrations"));
             })
@@ -84,7 +83,8 @@ export class GraphClient {
             .then(() => {
                 this.initialiseTreeView("INITIALISING");
                 this.initialise();
-            }).catch(() => {
+            })
+            .catch(() => {
                 this.initialise();
             });
     }
