@@ -4,7 +4,7 @@ import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, E
 import { Application, KeyCredential, PasswordCredential, User, AppRole, RequiredResourceAccess, PermissionScope } from "@microsoft/microsoft-graph-types";
 import { GraphClient } from "../clients/graph-client";
 import { AppRegItem } from "../models/app-reg-item";
-import { ActivityResult } from "../interfaces/activity-result";
+import { ActivityResult } from "../types/activity-result";
 import { sort } from "fast-sort";
 import { format } from "date-fns";
 
@@ -157,7 +157,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 // Return the owners for the application
                 return this.getApplicationOwners(element)
                     .catch((error: any) => {
-                        this.triggerOnError({ success: false, error: error });
+                        this.triggerOnError({ success: false, error: error, treeDataProvider: this });
                         return [];
                     });
             case "WEB-REDIRECT":
@@ -167,7 +167,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", app.web!.redirectUris!);
                     })
                     .catch((error: any) => {
-                        this.triggerOnError({ success: false, error: error });
+                        this.triggerOnError({ success: false, error: error, treeDataProvider: this });
                         return [];
                     });
             case "SPA-REDIRECT":
@@ -177,7 +177,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", app.spa!.redirectUris!);
                     })
                     .catch((error: any) => {
-                        this.triggerOnError({ success: false, error: error });
+                        this.triggerOnError({ success: false, error: error, treeDataProvider: this });
                         return [];
                     });
             case "NATIVE-REDIRECT":
@@ -187,7 +187,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", app.publicClient!.redirectUris!);
                     })
                     .catch((error: any) => {
-                        this.triggerOnError({ success: false, error: error });
+                        this.triggerOnError({ success: false, error: error, treeDataProvider: this });
                         return [];
                     });
             case "PASSWORD-CREDENTIALS":
@@ -197,7 +197,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         return this.getApplicationPasswordCredentials(element, app.passwordCredentials!);
                     })
                     .catch((error: any) => {
-                        this.triggerOnError({ success: false, error: error });
+                        this.triggerOnError({ success: false, error: error, treeDataProvider: this });
                         return [];
                     });
             case "CERTIFICATE-CREDENTIALS":
@@ -207,7 +207,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         return this.getApplicationKeyCredentials(element, app.keyCredentials!);
                     })
                     .catch((error: any) => {
-                        this.triggerOnError({ success: false, error: error });
+                        this.triggerOnError({ success: false, error: error, treeDataProvider: this });
                         return [];
                     });
             case "API-PERMISSIONS":
@@ -217,7 +217,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         return this.getApplicationApiPermissions(element, app.requiredResourceAccess!);
                     })
                     .catch((error: any) => {
-                        this.triggerOnError({ success: false, error: error });
+                        this.triggerOnError({ success: false, error: error, treeDataProvider: this });
                         return [];
                     });
             case "EXPOSED-API-PERMISSIONS":
@@ -227,7 +227,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         return this.getApplicationExposedApiPermissions(element, app.api?.oauth2PermissionScopes!);
                     })
                     .catch((error: any) => {
-                        this.triggerOnError({ success: false, error: error });
+                        this.triggerOnError({ success: false, error: error, treeDataProvider: this });
                         return [];
                     });
             case "APP-ROLES":
@@ -237,7 +237,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         return this.getApplicationAppRoles(element, app.appRoles!);
                     })
                     .catch((error: any) => {
-                        this.triggerOnError({ success: false, error: error });
+                        this.triggerOnError({ success: false, error: error, treeDataProvider: this });
                         return [];
                     });
             default:
@@ -526,7 +526,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 this.graphClient.initialise();
             }
             else {
-                this.triggerOnError({ success: false, statusBarHandle: this.statusBarHandle, error: error });
+                this.triggerOnError({ success: false, statusBarHandle: this.statusBarHandle, error: error, treeDataProvider: this });
             }
         }
     }

@@ -1,4 +1,9 @@
-## 0.3.0
+## 0.4.0
+
+- Added a dispose call for the organization service.
+- Minor refactoring.
+
+- ## 0.3.0
 
 - Added the ability to show current tenant information.
 - Fixed a bug where the application icon wasn't reset after opening the manifest.

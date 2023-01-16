@@ -29,7 +29,7 @@ export class OrganizationService extends ServiceBase {
                 await this.showTenantWindow(response, status);
             })
             .catch(async (error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error });
+                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeDataProvider: this.treeDataProvider });
             });
     }
 
@@ -63,7 +63,7 @@ export class OrganizationService extends ServiceBase {
             })
             .catch((error) => {
                 statusBarHandle!.dispose();
-                this.triggerOnError({ success: false, statusBarHandle: statusBarHandle, error: error });
+                this.triggerOnError({ success: false, statusBarHandle: statusBarHandle, error: error, treeDataProvider: this.treeDataProvider });
             });
     }
 }

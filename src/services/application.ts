@@ -49,7 +49,7 @@ export class ApplicationService extends ServiceBase {
                         this.triggerOnComplete({ success: true, statusBarHandle: status });
                     })
                     .catch((error) => {
-                        this.triggerOnError({ success: false, statusBarHandle: status, error: error });
+                        this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeDataProvider: this.treeDataProvider });
                     });
             }
         }
@@ -77,7 +77,7 @@ export class ApplicationService extends ServiceBase {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
                 .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
                 });
         }
     }
@@ -104,7 +104,7 @@ export class ApplicationService extends ServiceBase {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
                 .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
                 });
         }
     }
@@ -124,7 +124,7 @@ export class ApplicationService extends ServiceBase {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
                 .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
                 });
         }
     }
@@ -144,7 +144,7 @@ export class ApplicationService extends ServiceBase {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
                 .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
                 });
         }
     }
@@ -174,7 +174,7 @@ export class ApplicationService extends ServiceBase {
                     });
             })
             .catch((error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
+                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
             });
     }
 

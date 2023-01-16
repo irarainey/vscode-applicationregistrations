@@ -1,5 +1,5 @@
 import { commands, window, workspace, env, Disposable, ExtensionContext, Uri } from "vscode";
-import { VIEW_NAME, SIGNIN_AUDIENCE_DOCUMENTATION_URI } from "./constants";
+import { VIEW_NAME } from "./constants";
 import { AppRegTreeDataProvider } from "./data/app-reg-tree-data-provider";
 import { AppRegItem } from "./models/app-reg-item";
 import { GraphClient, escapeSingleQuotesForFilter } from "./clients/graph-client";
@@ -13,7 +13,7 @@ import { PasswordCredentialService } from "./services/password-credential";
 import { RedirectUriService } from "./services/redirect-uri";
 import { RequiredResourceAccessService } from "./services/required-resource-access";
 import { SignInAudienceService } from "./services/sign-in-audience";
-import { ActivityResult } from "./interfaces/activity-result";
+import { errorHandler } from "./error-handler";
 
 // Values to hold the list filter
 let filterCommand: string | undefined = undefined;
@@ -258,49 +258,4 @@ const copyValue = (item: AppRegItem) => {
 			|| item.contextValue === "APPID-URI"
 			? item.value!
 			: item.children![0].value!);
-};
-
-// Define the error handler function.
-const errorHandler = async (result: ActivityResult) => {
-
-	if (result.statusBarHandle !== undefined) {
-		// Clear any status bar messages.
-		result.statusBarHandle!.dispose();
-	}
-
-	if (result.treeViewItem !== undefined) {
-		// Restore the original icon.
-		result.treeViewItem!.iconPath = result.previousIcon;
-		treeDataProvider.triggerOnDidChangeTreeData(result.treeViewItem);
-	}
-
-	if (result.error !== undefined) {
-		// Log the error.
-		console.error(result.error);
-
-		// Determine if the error is due to the user not being logged in.
-		if (result.error.message.includes("az login")) {
-			window.showErrorMessage("You are not logged in to the Azure CLI. Please click the option to sign in, or run 'az login' in a terminal window.", "OK");
-			await treeDataProvider.initialiseGraphClient();
-			return;
-		}
-
-		// Determine if the error is due to trying to change the sign in audience.
-		if (result.error.message.includes("signInAudience")) {
-			const result = await window.showErrorMessage(
-				`An error occurred while attempting to change the Sign In Audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at ${SIGNIN_AUDIENCE_DOCUMENTATION_URI}.`,
-				...["OK", "Open Documentation"]
-			);
-
-			if (result === "Open Documentation") {
-				env.openExternal(Uri.parse(SIGNIN_AUDIENCE_DOCUMENTATION_URI));
-				return;
-			}
-			
-			return;
-		}
-
-		// Display an error message.
-		window.showErrorMessage(`An error occurred trying to complete your task: ${result.error!.message}.`, "OK");
-	}
 };

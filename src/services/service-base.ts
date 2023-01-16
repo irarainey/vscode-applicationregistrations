@@ -1,7 +1,7 @@
 import { Event, EventEmitter, Disposable, ThemeIcon, window, Uri } from "vscode";
 import { GraphClient } from "../clients/graph-client";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
-import { ActivityResult } from "../interfaces/activity-result";
+import { ActivityResult } from "../types/activity-result";
 import { AppRegItem } from "../models/app-reg-item";
 
 export class ServiceBase {

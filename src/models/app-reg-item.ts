@@ -1,5 +1,5 @@
 import { TreeItem, TreeItemCollapsibleState } from "vscode";
-import { AppRegItemParams } from "../interfaces/app-reg-item-params";
+import { AppRegItemParams } from "../types/app-reg-item-params";
 
 // This is the data structure for the application registration tree view item
 export class AppRegItem extends TreeItem {

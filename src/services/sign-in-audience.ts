@@ -37,7 +37,7 @@ export class SignInAudienceService extends ServiceBase {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
                 .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item.contextValue! === "AUDIENCE-PARENT" ? item.children![0] : item, previousIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")) });
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item.contextValue! === "AUDIENCE-PARENT" ? item.children![0] : item, previousIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")), treeDataProvider: this.treeDataProvider });
                 });
         }
     }

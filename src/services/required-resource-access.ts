@@ -251,7 +251,7 @@ export class RequiredResourceAccessService extends ServiceBase {
                 this.triggerOnComplete({ success: true, statusBarHandle: statusAdd });
             })
             .catch((error) => {
-                this.triggerOnError({ success: false, statusBarHandle: statusAdd, error: error, treeViewItem: item, previousIcon: previousIcon });
+                this.triggerOnError({ success: false, statusBarHandle: statusAdd, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
             });
     }
 
@@ -287,7 +287,7 @@ export class RequiredResourceAccessService extends ServiceBase {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
                 .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
                 });
         }
     }
@@ -316,7 +316,7 @@ export class RequiredResourceAccessService extends ServiceBase {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
                 .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
                 });
         }
     }
