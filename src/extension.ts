@@ -233,13 +233,13 @@ const filterTreeView = async () => {
 	});
 
 	// Escape has been hit so we don't want to do anything.
-	if ((newFilter === undefined) || (newFilter === '' && newFilter === (filterText ?? ""))) {
+	if ((newFilter === undefined) || (newFilter === "" && newFilter === (filterText ?? ""))) {
 		return;
-	} else if (newFilter === '' && filterText !== '') {
+	} else if (newFilter === "" && filterText !== "") {
 		filterText = undefined;
 		filterCommand = undefined;
 		await populateTreeView(window.setStatusBarMessage("$(loading~spin) Loading Application Registrations"));
-	} else if (newFilter !== '' && newFilter !== filterText) {
+	} else if (newFilter !== "" && newFilter !== filterText) {
 		// If the filter text is not empty then set the filter command and filter text.
 		filterText = newFilter!;
 		filterCommand = `startswith(displayName, \'${escapeSingleQuotesForFilter(newFilter)}\')`;
