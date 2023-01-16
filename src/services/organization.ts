@@ -53,8 +53,8 @@ export class OrganizationService extends ServiceBase {
                     }
                 };
 
-                this.disposable.push(workspace.registerTextDocumentContentProvider('tenantInformation', newDocument));
-                const uri = Uri.parse('tenantInformation:' + response.displayName + ".json");
+                this.disposable.push(workspace.registerTextDocumentContentProvider("tenantInformation", newDocument));
+                const uri = Uri.parse(`tenantInformation:Tenant - ${response.displayName}.json`);
                 workspace.openTextDocument(uri)
                     .then(async (doc) => {
                         await window.showTextDocument(doc, { preview: false });

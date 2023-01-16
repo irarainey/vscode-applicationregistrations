@@ -6,7 +6,8 @@ import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
 import { GraphClient } from "../clients/graph-client";
-import { KeyCredential } from "@microsoft/microsoft-graph-types";
+import { KeyCredential, Application } from "@microsoft/microsoft-graph-types";
+import { GraphResult } from "../types/graph-result";
 
 export class KeyCredentialService extends ServiceBase {
 
@@ -122,6 +123,12 @@ export class KeyCredentialService extends ServiceBase {
 
     // Gets the key credentials for an application registration.
     private async getKeyCredentials(id: string): Promise<KeyCredential[]> {
-        return (await this.graphClient.getApplicationDetailsPartial(id, "keyCredentials")).keyCredentials!;
+        const result: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(id, "keyCredentials");
+        if (result.success === true && result.value !== undefined) {
+            return result.value.keyCredentials!;
+        } else {
+            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this.treeDataProvider });
+            return [];
+        }
     }
 }

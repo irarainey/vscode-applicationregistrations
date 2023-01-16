@@ -4,6 +4,8 @@ import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
 import { GraphClient } from "../clients/graph-client";
+import { Application } from "@microsoft/microsoft-graph-types";
+import { GraphResult } from "../types/graph-result";
 
 export class ApplicationService extends ServiceBase {
 
@@ -153,29 +155,28 @@ export class ApplicationService extends ServiceBase {
     async viewManifest(item: AppRegItem): Promise<void> {
         const previousIcon = item.iconPath;
         const status = this.triggerTreeChange("Loading Application Manifest", item);
-        this.graphClient.getApplicationDetailsFull(item.objectId!)
-            .then((manifest) => {
-                const newDocument = new class implements TextDocumentContentProvider {
-                    onDidChangeEmitter = new EventEmitter<Uri>();
-                    onDidChange = this.onDidChangeEmitter.event;
-                    provideTextDocumentContent(): string {
-                        return JSON.stringify(manifest, null, 4);
-                    }
-                };
-
-                this.disposable.push(workspace.registerTextDocumentContentProvider('manifest', newDocument));
-                const uri = Uri.parse('manifest:' + item.label + ".json");
-                workspace.openTextDocument(uri)
-                    .then(async (doc) => {
-                        await window.showTextDocument(doc, { preview: false });
-                        status!.dispose();
-                        item.iconPath = previousIcon;
-                        this.treeDataProvider.triggerOnDidChangeTreeData(item);
-                    });
-            })
-            .catch((error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            });
+        const result: GraphResult<Application> = await this.graphClient.getApplicationDetailsFull<Application>(item.objectId!);
+        if (result.success === true && result.value !== undefined) {
+            const newDocument = new class implements TextDocumentContentProvider {
+                onDidChangeEmitter = new EventEmitter<Uri>();
+                onDidChange = this.onDidChangeEmitter.event;
+                provideTextDocumentContent(): string {
+                    return JSON.stringify(result.value, null, 4);
+                }
+            };
+            this.disposable.push(workspace.registerTextDocumentContentProvider("manifest", newDocument));
+            const uri = Uri.parse(`manifest:Manifest - ${item.label}.json`);
+            workspace.openTextDocument(uri)
+                .then(async (doc) => {
+                    await window.showTextDocument(doc, { preview: false });
+                    status!.dispose();
+                    item.iconPath = previousIcon;
+                    this.treeDataProvider.triggerOnDidChangeTreeData(item);
+                });
+        } else {
+            this.triggerOnError({ success: false, statusBarHandle: status, error: result.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+            return;
+        }
     }
 
     // Validates the display name of the application.

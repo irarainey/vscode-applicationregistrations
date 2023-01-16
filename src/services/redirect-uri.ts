@@ -3,6 +3,8 @@ import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
 import { GraphClient } from "../clients/graph-client";
+import { GraphResult } from "../types/graph-result";
+import { Application } from "@microsoft/microsoft-graph-types";
 
 export class RedirectUriService extends ServiceBase {
 
@@ -46,20 +48,35 @@ export class RedirectUriService extends ServiceBase {
             // Remove the redirect URI from the array.
             switch (item.contextValue) {
                 case "WEB-REDIRECT-URI":
-                    const webParent = await this.graphClient.getApplicationDetailsPartial(item.objectId!, "web");
-                    webParent.web!.redirectUris!.splice(webParent.web!.redirectUris!.indexOf(item.label!.toString()), 1);
-                    newArray = webParent.web!.redirectUris!;
-                    break;
+                    const resultWeb: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(item.objectId!, "web");
+                    if (resultWeb.success === true && resultWeb.value !== undefined) {
+                        resultWeb.value.web!.redirectUris!.splice(resultWeb.value.web!.redirectUris!.indexOf(item.label!.toString()), 1);
+                        newArray = resultWeb.value.web!.redirectUris!;
+                        break;
+                    } else {
+                        this.triggerOnError({ success: false, error: resultWeb.error, treeDataProvider: this.treeDataProvider });
+                        return;
+                    }
                 case "SPA-REDIRECT-URI":
-                    const spaParent = await this.graphClient.getApplicationDetailsPartial(item.objectId!, "spa");
-                    spaParent.spa!.redirectUris!.splice(spaParent.spa!.redirectUris!.indexOf(item.label!.toString()), 1);
-                    newArray = spaParent.spa!.redirectUris!;
-                    break;
+                    const resultSpa: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(item.objectId!, "spa");
+                    if (resultSpa.success === true && resultSpa.value !== undefined) {
+                        resultSpa.value.spa!.redirectUris!.splice(resultSpa.value.spa!.redirectUris!.indexOf(item.label!.toString()), 1);
+                        newArray = resultSpa.value.spa!.redirectUris!;
+                        break;
+                    } else {
+                        this.triggerOnError({ success: false, error: resultSpa.error, treeDataProvider: this.treeDataProvider });
+                        return;
+                    }
                 case "NATIVE-REDIRECT-URI":
-                    const publicClientParent = await this.graphClient.getApplicationDetailsPartial(item.objectId!, "publicClient");
-                    publicClientParent.publicClient!.redirectUris!.splice(publicClientParent.publicClient!.redirectUris!.indexOf(item.label!.toString()), 1);
-                    newArray = publicClientParent.publicClient!.redirectUris!;
-                    break;
+                    const resultPublic: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(item.objectId!, "publicClient");
+                    if (resultPublic.success === true && resultPublic.value !== undefined) {
+                        resultPublic.value.publicClient!.redirectUris!.splice(resultPublic.value.publicClient!.redirectUris!.indexOf(item.label!.toString()), 1);
+                        newArray = resultPublic.value.publicClient!.redirectUris!;
+                        break;
+                    } else {
+                        this.triggerOnError({ success: false, error: resultPublic.error, treeDataProvider: this.treeDataProvider });
+                        return;
+                    }
                 default:
                     // Do nothing.
                     break;
@@ -105,19 +122,34 @@ export class RedirectUriService extends ServiceBase {
         switch (item.contextValue) {
             case "WEB-REDIRECT":
             case "WEB-REDIRECT-URI":
-                const webParent = await this.graphClient.getApplicationDetailsPartial(item.objectId!, "web");
-                existingRedirectUris = webParent.web!.redirectUris!;
-                break;
+                const resultWeb: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(item.objectId!, "web");
+                if (resultWeb.success === true && resultWeb.value !== undefined) {
+                    existingRedirectUris = resultWeb.value.web!.redirectUris!;
+                    break;
+                } else {
+                    this.triggerOnError({ success: false, error: resultWeb.error, treeDataProvider: this.treeDataProvider });
+                    return [];
+                }
             case "SPA-REDIRECT":
             case "SPA-REDIRECT-URI":
-                const spaParent = await this.graphClient.getApplicationDetailsPartial(item.objectId!, "spa");
-                existingRedirectUris = spaParent.spa!.redirectUris!;
-                break;
+                const resultSpa: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(item.objectId!, "spa");
+                if (resultSpa.success === true && resultSpa.value !== undefined) {
+                    existingRedirectUris = resultSpa.value.spa!.redirectUris!;
+                    break;
+                } else {
+                    this.triggerOnError({ success: false, error: resultSpa.error, treeDataProvider: this.treeDataProvider });
+                    return [];
+                }
             case "NATIVE-REDIRECT":
             case "NATIVE-REDIRECT-URI":
-                const publicClientParent = await this.graphClient.getApplicationDetailsPartial(item.objectId!, "publicClient");
-                existingRedirectUris = publicClientParent.publicClient!.redirectUris!;
-                break;
+                const resultPublic: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(item.objectId!, "publicClient");
+                if (resultPublic.success === true && resultPublic.value !== undefined) {
+                    existingRedirectUris = resultPublic.value.publicClient!.redirectUris!;
+                    break;
+                } else {
+                    this.triggerOnError({ success: false, error: resultPublic.error, treeDataProvider: this.treeDataProvider });
+                    return [];
+                }
             default:
                 // Do nothing.
                 break;

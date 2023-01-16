@@ -6,6 +6,7 @@ import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
 import { Application, KeyCredential, Organization, PasswordCredential, ServicePrincipal } from "@microsoft/microsoft-graph-types";
+import { GraphResult } from "../types/graph-result";
 
 // This is the client for the Microsoft Graph API
 export class GraphClient {
@@ -90,100 +91,159 @@ export class GraphClient {
     }
 
     // Returns a count of all owned application registrations
-    async getApplicationCountOwned(): Promise<number> {
-        return await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application/$count")
-            .header("ConsistencyLevel", "eventual")
-            .get();
+    async getApplicationCountOwned<Type>(): Promise<GraphResult<Type>> {
+        try {
+            const result: Type = await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application/$count")
+                .header("ConsistencyLevel", "eventual")
+                .get();
+            return { success: true, value: result };
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
     }
 
     // Returns a count of all application registrations
-    async getApplicationCountAll(): Promise<number> {
-        return await this.client!.api("/applications/$count")
-            .header("ConsistencyLevel", "eventual")
-            .get();
-    }
-
-    // Returns full details for a specified application registration
-    async getApplicationDetailsFull(id: string): Promise<Application> {
-        return await this.client!.api(`/applications/${id}`)
-            .top(1)
-            .get();
+    async getApplicationCountAll<Type>(): Promise<GraphResult<Type>> {
+        try {
+            const result: Type = await this.client!.api("/applications/$count")
+                .header("ConsistencyLevel", "eventual")
+                .get();
+            return { success: true, value: result };
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
     }
 
     // Returns partial details for a specified application registration
-    async getApplicationDetailsPartial(id: string, select: string, expandOwners: boolean = false): Promise<Application> {
-        if (expandOwners !== true) {
-            return await this.client!.api(`/applications/${id}`)
-                .top(1)
-                .select(select)
-                .get();
-        } else {
-            return await this.client!.api(`/applications/${id}`)
-                .top(1)
-                .select(select)
-                .expand("owners")
-                .get();
+    async getApplicationDetailsPartial<Type>(id: string, select: string, expandOwners: boolean = false): Promise<GraphResult<Type>> {
+        try {
+            if (expandOwners !== true) {
+                const result: Type = await this.client!.api(`/applications/${id}`)
+                    .top(1)
+                    .select(select)
+                    .get();
+                return { success: true, value: result };
+            } else {
+                const result: Type = await this.client!.api(`/applications/${id}`)
+                    .top(1)
+                    .select(select)
+                    .expand("owners")
+                    .get();
+                return { success: true, value: result };
+            }
+        } catch (error: any) {
+            return { success: false, error: error };
         }
     }
 
     // Returns ids and names for all owned application registrations
-    async getApplicationListOwned(filter?: string): Promise<Application[]> {
-        const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
-        if (useEventualConsistency === true) {
-            const maximumApplicationsShown = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsShown") as number;
-            const ownedApplications = await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
-                .filter(filter === undefined ? "" : filter)
-                .header("ConsistencyLevel", "eventual")
-                .count(true)
-                .top(maximumApplicationsShown)
-                .orderby("displayName")
-                .select("id,displayName")
-                .get();
-            return ownedApplications.value;
-        } else {
-            const maximumQueryApps = workspace.getConfiguration("applicationregistrations").get("maximumQueryApps") as number;
-            const ownedApplications = await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
-                .top(maximumQueryApps)
-                .select("id,displayName")
-                .get();
-            return ownedApplications.value;
+    async getApplicationListOwned<Type>(filter?: string): Promise<GraphResult<Type>> {
+        try {
+            const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
+            if (useEventualConsistency === true) {
+                const maximumApplicationsShown = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsShown") as number;
+                const result = await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
+                    .filter(filter === undefined ? "" : filter)
+                    .header("ConsistencyLevel", "eventual")
+                    .count(true)
+                    .top(maximumApplicationsShown)
+                    .orderby("displayName")
+                    .select("id,displayName")
+                    .get();
+                return { success: true, value: result.value as Type };
+            } else {
+                const maximumQueryApps = workspace.getConfiguration("applicationregistrations").get("maximumQueryApps") as number;
+                const result = await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
+                    .top(maximumQueryApps)
+                    .select("id,displayName")
+                    .get();
+                return { success: true, value: result.value as Type };
+            }
+        }
+        catch (error: any) {
+            return { success: false, error: error };
         }
     }
 
     // Returns ids and names for all application registrations
-    async getApplicationListAll(filter?: string): Promise<Application[]> {
-        const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
-        if (useEventualConsistency === true) {
-            const maximumApplicationsShown = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsShown") as number;
-            const allApplications = await this.client!.api("/applications/")
-                .filter(filter === undefined ? "" : filter)
-                .header("ConsistencyLevel", "eventual")
-                .count(true)
-                .top(maximumApplicationsShown)
-                .orderby("displayName")
-                .select("id,displayName")
-                .get();
-            return allApplications.value;
-        } else {
-            const maximumQueryApps = workspace.getConfiguration("applicationregistrations").get("maximumQueryApps") as number;
-            const allApplications = await this.client!.api("/applications/")
-                .top(maximumQueryApps)
-                .select("id,displayName")
-                .get();
-            return allApplications.value;
+    async getApplicationListAll<Type>(filter?: string): Promise<GraphResult<Type>> {
+        try {
+            const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
+            if (useEventualConsistency === true) {
+                const maximumApplicationsShown = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsShown") as number;
+                const result: any = await this.client!.api("/applications/")
+                    .filter(filter === undefined ? "" : filter)
+                    .header("ConsistencyLevel", "eventual")
+                    .count(true)
+                    .top(maximumApplicationsShown)
+                    .orderby("displayName")
+                    .select("id,displayName")
+                    .get();
+                return { success: true, value: result.value as Type };
+            } else {
+                const maximumQueryApps = workspace.getConfiguration("applicationregistrations").get("maximumQueryApps") as number;
+                const result: any = await this.client!.api("/applications/")
+                    .top(maximumQueryApps)
+                    .select("id,displayName")
+                    .get();
+                return { success: true, value: result.value as Type };
+            }
+        }
+        catch (error: any) {
+            return { success: false, error: error };
         }
     }
 
     // Returns all owners for a specified application registration
-    async getApplicationOwners(id: string): Promise<any> {
-        return await this.client!.api(`/applications/${id}/owners`)
-            .get();
+    async getApplicationOwners<Type>(id: string): Promise<GraphResult<Type>> {
+        try {
+            const result: any = await this.client!.api(`/applications/${id}/owners`)
+                .get();
+            return { success: true, value: result.value as Type };
+        }
+        catch (error: any) {
+            return { success: false, error: error };
+        }
+    }
+
+    // Returns full details for a specified application registration
+    async getApplicationDetailsFull<Type>(id: string): Promise<GraphResult<Type>> {
+        try {
+            const result: Type = await this.client!.api(`/applications/${id}`)
+                .top(1)
+                .get();
+            return { success: true, value: result };
+        }
+        catch (error: any) {
+            return { success: false, error: error };
+        }
     }
 
     // Removes an owner from an application registration
-    async removeApplicationOwner(id: string, userId: string): Promise<void> {
-        await this.client!.api(`/applications/${id}/owners/${userId}/$ref`)
-            .delete();
+    async removeApplicationOwner<Type>(id: string, userId: string): Promise<GraphResult<Type>> {
+        try {
+            const result: Type = await this.client!.api(`/applications/${id}/owners/${userId}/$ref`)
+                .delete();
+            return { success: true, value: result };
+        }
+        catch (error: any) {
+            return { success: false, error: error };
+        }
+    }
+
+    // Adds an owner to an application registration
+    async addApplicationOwner<Type>(id: string, userId: string): Promise<GraphResult<Type>> {
+        try {
+            const result = await this.client!.api(`/applications/${id}/owners/$ref`)
+                .post({
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    "@odata.id": `${DIRECTORY_OBJECTS_URI}${userId}`
+                });
+            return { success: true, value: result };
+        }
+        catch (error: any) {
+            return { success: false, error: error };
+        }
     }
 
     // Find users by display name
@@ -198,15 +258,6 @@ export class GraphClient {
         return await this.client!.api("/users")
             .filter(`startswith(mail, '${escapeSingleQuotesForFilter(name)}')`)
             .get();
-    }
-
-    // Adds an owner to an application registration
-    async addApplicationOwner(id: string, userId: string): Promise<void> {
-        await this.client!.api(`/applications/${id}/owners/$ref`)
-            .post({
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                "@odata.id": `${DIRECTORY_OBJECTS_URI}${userId}`
-            });
     }
 
     // Adds a password credential to an application registration

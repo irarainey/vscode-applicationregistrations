@@ -1,11 +1,12 @@
 import { window } from "vscode";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
-import { AppRole } from "@microsoft/microsoft-graph-types";
+import { AppRole, Application } from "@microsoft/microsoft-graph-types";
 import { v4 as uuidv4 } from "uuid";
 import { ServiceBase } from "./service-base";
 import { GraphClient } from "../clients/graph-client";
 import { debounce } from "ts-debounce";
+import { GraphResult } from "../types/graph-result";
 
 export class AppRoleService extends ServiceBase {
 
@@ -132,7 +133,13 @@ export class AppRoleService extends ServiceBase {
 
     // Gets the app roles for an application registration.
     private async getAppRoles(id: string): Promise<AppRole[]> {
-        return (await this.graphClient.getApplicationDetailsPartial(id, "appRoles")).appRoles!;
+        const result: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(id, "appRoles");
+        if (result.success === true && result.value !== undefined) {
+            return result.value.appRoles!;
+        } else {
+            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this.treeDataProvider });
+            return [];
+        }
     }
 
     // Captures the details for an app role.

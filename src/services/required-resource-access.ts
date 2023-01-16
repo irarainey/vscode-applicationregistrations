@@ -3,9 +3,10 @@ import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
 import { GraphClient } from "../clients/graph-client";
-import { RequiredResourceAccess, NullableOption } from "@microsoft/microsoft-graph-types";
+import { RequiredResourceAccess, NullableOption, Application } from "@microsoft/microsoft-graph-types";
 import { sort } from "fast-sort";
 import { debounce } from "ts-debounce";
+import { GraphResult } from "../types/graph-result";
 
 export class RequiredResourceAccessService extends ServiceBase {
 
@@ -323,6 +324,12 @@ export class RequiredResourceAccessService extends ServiceBase {
 
     // Gets the api permissions for an application registration.
     private async getApiPermissions(id: string): Promise<RequiredResourceAccess[]> {
-        return (await this.graphClient.getApplicationDetailsPartial(id, "requiredResourceAccess")).requiredResourceAccess!;
+        const result: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(id, "requiredResourceAccess");
+        if (result.success === true && result.value !== undefined) {
+            return result.value.requiredResourceAccess!;
+        } else {
+            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this.treeDataProvider });
+            return [];
+        }
     }
 }

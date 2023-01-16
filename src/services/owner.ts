@@ -6,6 +6,7 @@ import { ServiceBase } from "./service-base";
 import { GraphClient } from "../clients/graph-client";
 import { User } from "@microsoft/microsoft-graph-types";
 import { debounce } from "ts-debounce";
+import { GraphResult } from "../types/graph-result";
 
 export class OwnerService extends ServiceBase {
 
@@ -21,33 +22,36 @@ export class OwnerService extends ServiceBase {
     async add(item: AppRegItem): Promise<void> {
 
         // Get the existing owners.
-        const existingOwners = (await this.graphClient.getApplicationOwners(item.objectId!)).value;
+        const result: GraphResult<User[]> = await this.graphClient.getApplicationOwners<User[]>(item.objectId!);
+        if (result.success === true && result.value !== undefined) {
+            // Debounce the validation function to prevent multiple calls to the Graph API.
+            const validation = async (value: string) => this.validateOwner(value, result.value!);
+            const debouncedValidation = debounce(validation, 500);
 
-        // Debounce the validation function to prevent multiple calls to the Graph API.
-        const validation = async (value: string) => this.validateOwner(value, existingOwners);
-        const debouncedValidation = debounce(validation, 500);
+            // Prompt the user for the new owner.
+            const owner = await window.showInputBox({
+                placeHolder: "Enter user name or email address",
+                prompt: "Add new owner to application",
+                title: "Add Owner",
+                ignoreFocusOut: true,
+                validateInput: async (value) => await debouncedValidation(value)
+            });
 
-        // Prompt the user for the new owner.
-        const owner = await window.showInputBox({
-            placeHolder: "Enter user name or email address",
-            prompt: "Add new owner to application",
-            title: "Add Owner",
-            ignoreFocusOut: true,
-            validateInput: async (value) => await debouncedValidation(value)
-        });
+            // If the new owner name is not empty then add as an owner.
+            if (owner !== undefined) {
+                // Set the added trigger to the status bar message.
+                const previousIcon = item.iconPath;
+                const status = this.triggerTreeChange("Adding Owner", item);
 
-        // If the new owner name is not empty then add as an owner.
-        if (owner !== undefined) {
-            // Set the added trigger to the status bar message.
-            const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Adding Owner", item);
-            this.graphClient.addApplicationOwner(item.objectId!, this.userList.value[0].id)
-                .then(() => {
+                const result: GraphResult<undefined> = await this.graphClient.addApplicationOwner<undefined>(item.objectId!, this.userList.value[0].id);
+                if (result.success === true) {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-                });
+                } else {
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: result.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+                }
+            }
+        } else {
+            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this.treeDataProvider });
         }
     }
 
@@ -62,13 +66,13 @@ export class OwnerService extends ServiceBase {
             // Set the added trigger to the status bar message.
             const previousIcon = item.iconPath;
             const status = this.triggerTreeChange("Removing Owner", item);
-            this.graphClient.removeApplicationOwner(item.objectId!, item.userId!)
-                .then(() => {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-                });
+
+            const result: GraphResult<undefined> = await this.graphClient.removeApplicationOwner<undefined>(item.objectId!, item.userId!);
+            if (result.success === true) {
+                this.triggerOnComplete({ success: true, statusBarHandle: status });
+            } else {
+                this.triggerOnError({ success: false, statusBarHandle: status, error: result.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+            }
         }
     }
 

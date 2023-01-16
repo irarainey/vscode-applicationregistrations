@@ -1,11 +1,12 @@
 import { window } from "vscode";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
-import { PermissionScope, ApiApplication } from "@microsoft/microsoft-graph-types";
+import { PermissionScope, ApiApplication, Application, NullableOption } from "@microsoft/microsoft-graph-types";
 import { v4 as uuidv4 } from "uuid";
 import { ServiceBase } from "./service-base";
 import { GraphClient } from "../clients/graph-client";
 import { debounce } from "ts-debounce";
+import { GraphResult } from "../types/graph-result";
 
 export class OAuth2PermissionScopeService extends ServiceBase {
 
@@ -18,7 +19,16 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     async add(item: AppRegItem): Promise<void> {
 
         // Check to see if the application has an appIdURI. If it doesn't then we don't want to add a scope.
-        const appIdUri = (await this.graphClient.getApplicationDetailsPartial(item.objectId!, "identifierUris")).identifierUris;
+        let appIdUri: string[];
+
+        const result: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(item.objectId!, "identifierUris");
+        if (result.success === true && result.value !== undefined) {
+            appIdUri = result.value.identifierUris!;
+        } else {
+            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this.treeDataProvider });
+            return;
+        }
+
         if (appIdUri === undefined || appIdUri.length === 0) {
             window.showWarningMessage("This application does not have an Application II URI. Please add one before adding a scope.", "OK");
             return;
@@ -139,7 +149,13 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
     // Gets the exposed api scopes for an application registration.
     private async getScopes(id: string): Promise<ApiApplication> {
-        return (await this.graphClient.getApplicationDetailsPartial(id, "api")).api!;
+        const result: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(id, "api");
+        if (result.success === true && result.value !== undefined) {
+            return result.value.api!;
+        } else {
+            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this.treeDataProvider });
+            return {};
+        }
     }
 
     // Captures the details for a scope.

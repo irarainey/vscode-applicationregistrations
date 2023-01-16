@@ -1,7 +1,8 @@
 ## 0.4.0
 
 - Added a dispose call for the organization service.
-- Minor refactoring.
+- Refactored error handling.
+- Other minor refactoring.
 
 - ## 0.3.0
 
