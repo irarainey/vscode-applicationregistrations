@@ -180,6 +180,7 @@ export const deactivate = async () => {
 	requiredResourceAccessService.dispose();
 	redirectUriService.dispose();
 	passwordCredentialService.dispose();
+	organizationService.dispose();
 	ownerService.dispose();
 	oauth2PermissionScopeService.dispose();
 	keyCredentialService.dispose();
