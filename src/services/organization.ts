@@ -2,20 +2,20 @@ import { window, Uri, TextDocumentContentProvider, EventEmitter, workspace, Disp
 import { CLI_TENANT_CMD } from "../constants";
 import { ServiceBase } from "./service-base";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
-import { GraphClient, execShellCmd } from "../clients/graph-client";
+import { GraphApiRepository, execShellCmd } from "../repositories/graph-api-repository";
 
 export class OrganizationService extends ServiceBase {
 
     // The constructor for the OwnerService class.
-    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
-        super(graphClient, treeDataProvider);
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphRepository, treeDataProvider);
     }
 
     // Shows the tenant information.
     async showTenantInformation(): Promise<void> {
 
         // Check if the graph client is initialised.
-        if (this.graphClient.isGraphClientInitialised === false) {
+        if (this.graphRepository.isGraphClientInitialised === false) {
             await this.treeDataProvider.initialiseGraphClient();
             return;
         }
@@ -36,7 +36,7 @@ export class OrganizationService extends ServiceBase {
     // Shows the tenant information in a new read-only window.
     private async showTenantWindow(tenantId: string, statusBarHandle: Disposable | undefined): Promise<void> {
         // Get the tenant information.
-        this.graphClient.getTenantInformation(tenantId)
+        this.graphRepository.getTenantInformation(tenantId)
             .then(async (response) => {
                 const tenantInformation = {
                     id: response.id,

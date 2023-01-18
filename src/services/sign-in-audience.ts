@@ -3,13 +3,13 @@ import { SIGNIN_AUDIENCE_OPTIONS } from "../constants";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
-import { GraphClient } from "../clients/graph-client";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
 
 export class SignInAudienceService extends ServiceBase {
 
     // The constructor for the SignInAudienceService class.
-    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
-        super(graphClient, treeDataProvider);
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphRepository, treeDataProvider);
     }
 
     // Edits the application sign in audience.
@@ -32,7 +32,7 @@ export class SignInAudienceService extends ServiceBase {
             this.treeDataProvider.triggerOnDidChangeTreeData(item);
             const status = window.setStatusBarMessage(`$(loading~spin) Updating Sign In Audience`);
 
-            this.graphClient.updateApplication(item.objectId!, { signInAudience: audience.value })
+            this.graphRepository.updateApplication(item.objectId!, { signInAudience: audience.value })
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })

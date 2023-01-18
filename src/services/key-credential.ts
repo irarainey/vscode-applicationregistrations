@@ -5,15 +5,15 @@ import { window, workspace } from "vscode";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
-import { GraphClient } from "../clients/graph-client";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { KeyCredential, Application } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../types/graph-result";
 
 export class KeyCredentialService extends ServiceBase {
 
     // The constructor for the KeyCredentialsService class.
-    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
-        super(graphClient, treeDataProvider);
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphRepository, treeDataProvider);
     }
 
     // Adds a new key credential by uploading a certificate.
@@ -84,7 +84,7 @@ export class KeyCredentialService extends ServiceBase {
         // Set the added trigger to the status bar message.
         const previousIcon = item.iconPath;
         const status = this.triggerTreeChange("Adding Certificate Credential", item);
-        this.graphClient.updateKeyCredentials(item.objectId!, keyCredentials)
+        this.graphRepository.updateKeyCredentials(item.objectId!, keyCredentials)
             .then(() => {
                 this.triggerOnComplete({ success: true, statusBarHandle: status });
             })
@@ -111,7 +111,7 @@ export class KeyCredentialService extends ServiceBase {
             // Set the added trigger to the status bar message.
             const previousIcon = item.iconPath;
             const status = this.triggerTreeChange("Deleting Certificate Credential", item);
-            this.graphClient.updateKeyCredentials(item.objectId!, keyCredentials)
+            this.graphRepository.updateKeyCredentials(item.objectId!, keyCredentials)
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
@@ -123,7 +123,7 @@ export class KeyCredentialService extends ServiceBase {
 
     // Gets the key credentials for an application registration.
     private async getKeyCredentials(id: string): Promise<KeyCredential[]> {
-        const result: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(id, "keyCredentials");
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(id, "keyCredentials");
         if (result.success === true && result.value !== undefined) {
             return result.value.keyCredentials!;
         } else {

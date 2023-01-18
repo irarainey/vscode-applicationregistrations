@@ -1,8 +1,8 @@
-import { commands, window, workspace, env, Disposable, ExtensionContext, Uri } from "vscode";
+import { commands, window, workspace, env, Disposable, ExtensionContext } from "vscode";
 import { VIEW_NAME } from "./constants";
 import { AppRegTreeDataProvider } from "./data/app-reg-tree-data-provider";
 import { AppRegItem } from "./models/app-reg-item";
-import { GraphClient, escapeSingleQuotesForFilter } from "./clients/graph-client";
+import { GraphApiRepository, escapeSingleQuotesForFilter } from "./repositories/graph-api-repository";
 import { ApplicationService } from "./services/application";
 import { AppRoleService } from "./services/app-role";
 import { KeyCredentialService } from "./services/key-credential";
@@ -19,23 +19,23 @@ import { errorHandler } from "./error-handler";
 let filterCommand: string | undefined = undefined;
 let filterText: string | undefined = undefined;
 
-// Create a new instance of the GraphClient class.
-const graphClient = new GraphClient();
+// Create a new instance of the Graph Api Repository.
+const graphRepository = new GraphApiRepository();
 
 // Create a new instance of the ApplicationTreeDataProvider class.
-const treeDataProvider = new AppRegTreeDataProvider(graphClient);
+const treeDataProvider = new AppRegTreeDataProvider(graphRepository);
 
 // Create new instances of the services classes.
-const applicationService = new ApplicationService(graphClient, treeDataProvider);
-const appRoleService = new AppRoleService(graphClient, treeDataProvider);
-const keyCredentialService = new KeyCredentialService(graphClient, treeDataProvider);
-const oauth2PermissionScopeService = new OAuth2PermissionScopeService(graphClient, treeDataProvider);
-const organizationService = new OrganizationService(graphClient, treeDataProvider);
-const ownerService = new OwnerService(graphClient, treeDataProvider);
-const passwordCredentialService = new PasswordCredentialService(graphClient, treeDataProvider);
-const redirectUriService = new RedirectUriService(graphClient, treeDataProvider);
-const requiredResourceAccessService = new RequiredResourceAccessService(graphClient, treeDataProvider);
-const signInAudienceService = new SignInAudienceService(graphClient, treeDataProvider);
+const applicationService = new ApplicationService(graphRepository, treeDataProvider);
+const appRoleService = new AppRoleService(graphRepository, treeDataProvider);
+const keyCredentialService = new KeyCredentialService(graphRepository, treeDataProvider);
+const oauth2PermissionScopeService = new OAuth2PermissionScopeService(graphRepository, treeDataProvider);
+const organizationService = new OrganizationService(graphRepository, treeDataProvider);
+const ownerService = new OwnerService(graphRepository, treeDataProvider);
+const passwordCredentialService = new PasswordCredentialService(graphRepository, treeDataProvider);
+const redirectUriService = new RedirectUriService(graphRepository, treeDataProvider);
+const requiredResourceAccessService = new RequiredResourceAccessService(graphRepository, treeDataProvider);
+const signInAudienceService = new SignInAudienceService(graphRepository, treeDataProvider);
 
 // This method is called when the extension is activated.
 export const activate = async (context: ExtensionContext) => {
@@ -77,7 +77,7 @@ export const activate = async (context: ExtensionContext) => {
 	// Menu Commands
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.signInToAzure`, async () => await graphClient.cliSignIn()));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.signInToAzure`, async () => await graphRepository.cliSignIn()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addApp`, async () => await applicationService.add()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshApps`, async () => await populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"))));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.filterApps`, async () => await filterTreeView()));
@@ -186,13 +186,13 @@ export const deactivate = async () => {
 	keyCredentialService.dispose();
 	appRoleService.dispose();
 	applicationService.dispose();
-	graphClient.dispose();
+	graphRepository.dispose();
 	treeDataProvider.dispose();
 };
 
 // Define the populateTreeView function.
 const populateTreeView = async (statusBarHandle: Disposable | undefined = undefined) => {
-	if (graphClient.isGraphClientInitialised === false) {
+	if (graphRepository.isGraphClientInitialised === false) {
 		await treeDataProvider.initialiseGraphClient(statusBarHandle);
 		return;
 	}
@@ -201,7 +201,7 @@ const populateTreeView = async (statusBarHandle: Disposable | undefined = undefi
 
 // Define the filterTreeView function.
 const filterTreeView = async () => {
-	if (graphClient.isGraphClientInitialised === false) {
+	if (graphRepository.isGraphClientInitialised === false) {
 		await treeDataProvider.initialiseGraphClient();
 		return;
 	}

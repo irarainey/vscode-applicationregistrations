@@ -9,7 +9,7 @@ import { Application, KeyCredential, Organization, PasswordCredential, ServicePr
 import { GraphResult } from "../types/graph-result";
 
 // This is the client for the Microsoft Graph API
-export class GraphClient {
+export class GraphApiRepository {
 
     // A private instance of the graph client
     private client?: Client;

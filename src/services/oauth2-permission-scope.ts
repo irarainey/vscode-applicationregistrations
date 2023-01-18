@@ -4,15 +4,15 @@ import { AppRegItem } from "../models/app-reg-item";
 import { PermissionScope, ApiApplication, Application, NullableOption } from "@microsoft/microsoft-graph-types";
 import { v4 as uuidv4 } from "uuid";
 import { ServiceBase } from "./service-base";
-import { GraphClient } from "../clients/graph-client";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { debounce } from "ts-debounce";
 import { GraphResult } from "../types/graph-result";
 
 export class OAuth2PermissionScopeService extends ServiceBase {
 
     // The constructor for the OAuth2PermissionScopeService class.
-    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
-        super(graphClient, treeDataProvider);
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphRepository, treeDataProvider);
     }
 
     // Adds a new exposed api scope to an application registration.
@@ -21,7 +21,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         // Check to see if the application has an appIdURI. If it doesn't then we don't want to add a scope.
         let appIdUri: string[];
 
-        const result: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(item.objectId!, "identifierUris");
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(item.objectId!, "identifierUris");
         if (result.success === true && result.value !== undefined) {
             appIdUri = result.value.identifierUris!;
         } else {
@@ -53,7 +53,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         api.oauth2PermissionScopes!.push(scope);
 
         // Update the application.
-        this.graphClient.updateApplication(item.objectId!, { api: api })
+        this.graphRepository.updateApplication(item.objectId!, { api: api })
             .then(() => {
                 this.triggerOnComplete({ success: true, statusBarHandle: status });
             })
@@ -81,7 +81,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         const status = this.triggerTreeChange("Updating Scope", item);
 
         // Update the application.
-        this.graphClient.updateApplication(item.objectId!, { api: api })
+        this.graphRepository.updateApplication(item.objectId!, { api: api })
             .then(() => {
                 this.triggerOnComplete({ success: true, statusBarHandle: status });
             })
@@ -104,7 +104,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0].isEnabled = state;
 
         // Update the application.
-        this.graphClient.updateApplication(item.objectId!, { api: api })
+        this.graphRepository.updateApplication(item.objectId!, { api: api })
             .then(() => {
                 this.triggerOnComplete({ success: true, statusBarHandle: status });
             })
@@ -137,7 +137,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
             api!.oauth2PermissionScopes!.splice(api!.oauth2PermissionScopes!.findIndex(r => r.id === item.value!), 1);
 
             // Update the application.
-            this.graphClient.updateApplication(item.objectId!, { api: api })
+            this.graphRepository.updateApplication(item.objectId!, { api: api })
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
@@ -149,7 +149,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
     // Gets the exposed api scopes for an application registration.
     private async getScopes(id: string): Promise<ApiApplication> {
-        const result: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(id, "api");
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(id, "api");
         if (result.success === true && result.value !== undefined) {
             return result.value.api!;
         } else {

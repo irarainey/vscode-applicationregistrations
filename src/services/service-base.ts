@@ -1,5 +1,5 @@
 import { Event, EventEmitter, Disposable, ThemeIcon, window, Uri } from "vscode";
-import { GraphClient } from "../clients/graph-client";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { ActivityResult } from "../types/activity-result";
 import { AppRegItem } from "../models/app-reg-item";
@@ -12,8 +12,8 @@ export class ServiceBase {
     // A private instance of the AppRegTreeDataProvider class.
     protected readonly treeDataProvider: AppRegTreeDataProvider;
 
-    // A protected instance of the GraphClient class.
-    protected readonly graphClient: GraphClient;
+    // A protected instance of the Graph Api Repository.
+    protected readonly graphRepository: GraphApiRepository;
 
     // A protected instance of the EventEmitter class to handle error events.
     private onErrorEvent: EventEmitter<ActivityResult> = new EventEmitter<ActivityResult>();
@@ -28,8 +28,8 @@ export class ServiceBase {
     public readonly onComplete: Event<ActivityResult> = this.onCompleteEvent.event;
 
     // The constructor for the OwnerService class.
-    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
-        this.graphClient = graphClient;
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+        this.graphRepository = graphRepository;
         this.treeDataProvider = treeDataProvider;
     }
 

@@ -4,15 +4,15 @@ import { AppRegItem } from "../models/app-reg-item";
 import { AppRole, Application } from "@microsoft/microsoft-graph-types";
 import { v4 as uuidv4 } from "uuid";
 import { ServiceBase } from "./service-base";
-import { GraphClient } from "../clients/graph-client";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { debounce } from "ts-debounce";
 import { GraphResult } from "../types/graph-result";
 
 export class AppRoleService extends ServiceBase {
 
     // The constructor for the AppRolesService class.
-    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
-        super(graphClient, treeDataProvider);
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphRepository, treeDataProvider);
     }
 
     // Adds a new app role to an application registration.
@@ -37,7 +37,7 @@ export class AppRoleService extends ServiceBase {
         roles.push(role);
 
         // Update the application.
-        this.graphClient.updateApplication(item.objectId!, { appRoles: roles })
+        this.graphRepository.updateApplication(item.objectId!, { appRoles: roles })
             .then(() => {
                 this.triggerOnComplete({ success: true, statusBarHandle: status });
             })
@@ -65,7 +65,7 @@ export class AppRoleService extends ServiceBase {
         const status = this.triggerTreeChange("Updating App Role", item);
 
         // Update the application.
-        this.graphClient.updateApplication(item.objectId!, { appRoles: roles })
+        this.graphRepository.updateApplication(item.objectId!, { appRoles: roles })
             .then(() => {
                 this.triggerOnComplete({ success: true, statusBarHandle: status });
             })
@@ -88,7 +88,7 @@ export class AppRoleService extends ServiceBase {
         roles.filter(r => r.id === item.value!)[0].isEnabled = state;
 
         // Update the application.
-        this.graphClient.updateApplication(item.objectId!, { appRoles: roles })
+        this.graphRepository.updateApplication(item.objectId!, { appRoles: roles })
             .then(() => {
                 this.triggerOnComplete({ success: true, statusBarHandle: status });
             })
@@ -121,7 +121,7 @@ export class AppRoleService extends ServiceBase {
             roles.splice(roles.findIndex(r => r.id === item.value!), 1);
 
             // Update the application.
-            this.graphClient.updateApplication(item.objectId!, { appRoles: roles })
+            this.graphRepository.updateApplication(item.objectId!, { appRoles: roles })
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
@@ -133,7 +133,7 @@ export class AppRoleService extends ServiceBase {
 
     // Gets the app roles for an application registration.
     private async getAppRoles(id: string): Promise<AppRole[]> {
-        const result: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(id, "appRoles");
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(id, "appRoles");
         if (result.success === true && result.value !== undefined) {
             return result.value.appRoles!;
         } else {

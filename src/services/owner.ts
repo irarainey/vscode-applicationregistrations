@@ -3,7 +3,7 @@ import { PORTAL_USER_URI } from "../constants";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
-import { GraphClient } from "../clients/graph-client";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { User } from "@microsoft/microsoft-graph-types";
 import { debounce } from "ts-debounce";
 import { GraphResult } from "../types/graph-result";
@@ -14,15 +14,15 @@ export class OwnerService extends ServiceBase {
     private userList: any = undefined;
 
     // The constructor for the OwnerService class.
-    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
-        super(graphClient, treeDataProvider);
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphRepository, treeDataProvider);
     }
 
     // Adds a new owner to an application registration.
     async add(item: AppRegItem): Promise<void> {
 
         // Get the existing owners.
-        const result: GraphResult<User[]> = await this.graphClient.getApplicationOwners<User[]>(item.objectId!);
+        const result: GraphResult<User[]> = await this.graphRepository.getApplicationOwners<User[]>(item.objectId!);
         if (result.success === true && result.value !== undefined) {
             // Debounce the validation function to prevent multiple calls to the Graph API.
             const validation = async (value: string) => this.validateOwner(value, result.value!);
@@ -43,7 +43,7 @@ export class OwnerService extends ServiceBase {
                 const previousIcon = item.iconPath;
                 const status = this.triggerTreeChange("Adding Owner", item);
 
-                const result: GraphResult<undefined> = await this.graphClient.addApplicationOwner<undefined>(item.objectId!, this.userList.value[0].id);
+                const result: GraphResult<undefined> = await this.graphRepository.addApplicationOwner<undefined>(item.objectId!, this.userList.value[0].id);
                 if (result.success === true) {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 } else {
@@ -67,7 +67,7 @@ export class OwnerService extends ServiceBase {
             const previousIcon = item.iconPath;
             const status = this.triggerTreeChange("Removing Owner", item);
 
-            const result: GraphResult<undefined> = await this.graphClient.removeApplicationOwner<undefined>(item.objectId!, item.userId!);
+            const result: GraphResult<undefined> = await this.graphRepository.removeApplicationOwner<undefined>(item.objectId!, item.userId!);
             if (result.success === true) {
                 this.triggerOnComplete({ success: true, statusBarHandle: status });
             } else {
@@ -88,11 +88,11 @@ export class OwnerService extends ServiceBase {
         let identifier: string = "";
         if (owner.indexOf('@') > -1) {
             // Try to find the user by email.
-            this.userList = await this.graphClient.findUsersByEmail(owner);
+            this.userList = await this.graphRepository.findUsersByEmail(owner);
             identifier = "user with an email address";
         } else {
             // Try to find the user by name.
-            this.userList = await this.graphClient.findUsersByName(owner);
+            this.userList = await this.graphRepository.findUsersByName(owner);
             identifier = "name";
         }
 

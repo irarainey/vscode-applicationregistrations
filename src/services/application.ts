@@ -3,21 +3,21 @@ import { window, env, Uri, TextDocumentContentProvider, EventEmitter, workspace 
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
-import { GraphClient } from "../clients/graph-client";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { Application } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../types/graph-result";
 
 export class ApplicationService extends ServiceBase {
 
     // The constructor for the ApplicationService class.
-    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
-        super(graphClient, treeDataProvider);
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphRepository, treeDataProvider);
     }
 
     // Creates a new application registration.
     async add(): Promise<void> {
 
-        if (this.graphClient.isGraphClientInitialised === false) {
+        if (this.graphRepository.isGraphClientInitialised === false) {
             await this.treeDataProvider.initialiseGraphClient();
             return;
         }
@@ -46,7 +46,7 @@ export class ApplicationService extends ServiceBase {
             if (signInAudience !== undefined) {
                 // Set the added trigger to the status bar message.
                 const status = this.triggerTreeChange("Creating Application Registration");
-                this.graphClient.createApplication({ displayName: displayName, signInAudience: signInAudience.value })
+                this.graphRepository.createApplication({ displayName: displayName, signInAudience: signInAudience.value })
                     .then(() => {
                         this.triggerOnComplete({ success: true, statusBarHandle: status });
                     })
@@ -74,7 +74,7 @@ export class ApplicationService extends ServiceBase {
         if (uri !== undefined) {
             const previousIcon = item.iconPath;
             const status = this.triggerTreeChange("Setting Application ID URI", item);
-            this.graphClient.updateApplication(item.objectId!, { identifierUris: [uri] })
+            this.graphRepository.updateApplication(item.objectId!, { identifierUris: [uri] })
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
@@ -101,7 +101,7 @@ export class ApplicationService extends ServiceBase {
         if (displayName !== undefined) {
             const previousIcon = item.iconPath;
             const status = this.triggerTreeChange("Renaming Application Registration", item);
-            this.graphClient.updateApplication(item.objectId!, { displayName: displayName })
+            this.graphRepository.updateApplication(item.objectId!, { displayName: displayName })
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
@@ -121,7 +121,7 @@ export class ApplicationService extends ServiceBase {
         if (answer === "Yes") {
             const previousIcon = item.iconPath;
             const status = this.triggerTreeChange("Deleting Application Registration", item);
-            this.graphClient.deleteApplication(item.objectId!)
+            this.graphRepository.deleteApplication(item.objectId!)
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
@@ -141,7 +141,7 @@ export class ApplicationService extends ServiceBase {
         if (answer === "Yes") {
             const previousIcon = item.iconPath;
             const status = this.triggerTreeChange("Removing Application ID URI", item);
-            this.graphClient.updateApplication(item.objectId!, { identifierUris: [] })
+            this.graphRepository.updateApplication(item.objectId!, { identifierUris: [] })
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
@@ -155,7 +155,7 @@ export class ApplicationService extends ServiceBase {
     async viewManifest(item: AppRegItem): Promise<void> {
         const previousIcon = item.iconPath;
         const status = this.triggerTreeChange("Loading Application Manifest", item);
-        const result: GraphResult<Application> = await this.graphClient.getApplicationDetailsFull<Application>(item.objectId!);
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsFull<Application>(item.objectId!);
         if (result.success === true && result.value !== undefined) {
             const newDocument = new class implements TextDocumentContentProvider {
                 onDidChangeEmitter = new EventEmitter<Uri>();

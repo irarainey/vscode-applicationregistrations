@@ -3,14 +3,14 @@ import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { addYears, isAfter, isBefore, isDate } from "date-fns";
 import { ServiceBase } from "./service-base";
-import { GraphClient } from "../clients/graph-client";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { format } from "date-fns";
 
 export class PasswordCredentialService extends ServiceBase {
 
     // The constructor for the PasswordCredentialsService class.
-    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
-        super(graphClient, treeDataProvider);
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphRepository, treeDataProvider);
     }
 
     // Adds a new password credential.
@@ -43,7 +43,7 @@ export class PasswordCredentialService extends ServiceBase {
                 // Set the added trigger to the status bar message.
                 const previousIcon = item.iconPath;
                 const status = this.triggerTreeChange("Adding Password Credential", item);
-                this.graphClient.addPasswordCredential(item.objectId!, description, expiry)
+                this.graphRepository.addPasswordCredential(item.objectId!, description, expiry)
                     .then((response) => {
                         env.clipboard.writeText(response.secretText!);
                         this.triggerOnComplete({ success: true, statusBarHandle: status });
@@ -67,7 +67,7 @@ export class PasswordCredentialService extends ServiceBase {
             // Set the added trigger to the status bar message.
             const previousIcon = item.iconPath;
             const status = this.triggerTreeChange("Deleting Password Credential", item);
-            this.graphClient.deletePasswordCredential(item.objectId!, item.value!)
+            this.graphRepository.deletePasswordCredential(item.objectId!, item.value!)
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })

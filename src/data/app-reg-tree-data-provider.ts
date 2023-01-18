@@ -2,7 +2,7 @@ import * as path from "path";
 import { SIGNIN_COMMAND_TEXT, VIEW_NAME, APPLICATION_SELECT_PROPERTIES } from "../constants";
 import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, Disposable, ConfigurationTarget } from "vscode";
 import { Application, KeyCredential, PasswordCredential, User, AppRole, RequiredResourceAccess, PermissionScope } from "@microsoft/microsoft-graph-types";
-import { GraphClient } from "../clients/graph-client";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegItem } from "../models/app-reg-item";
 import { ActivityResult } from "../types/activity-result";
 import { sort } from "fast-sort";
@@ -30,8 +30,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     // A public readonly property to expose the error event.
     public readonly onError: Event<ActivityResult> = this.onErrorEvent.event;
 
-    // A public property for the Graph Client.
-    public graphClient: GraphClient;
+    // A public property for the Graph Api Repository.
+    public graphRepository: GraphApiRepository;
 
     // A public get property to get the updating state
     public isUpdating: boolean = false;
@@ -55,12 +55,12 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
     // A public get property for the graphClientInitialised state.
     public get isGraphClientInitialised() {
-        return this.graphClient.isGraphClientInitialised;
+        return this.graphRepository.isGraphClientInitialised;
     }
 
     // The constructor for the AppRegTreeDataProvider class.
-    constructor(graphClient: GraphClient) {
-        this.graphClient = graphClient;
+    constructor(graphRepository: GraphApiRepository) {
+        this.graphRepository = graphRepository;
         window.registerTreeDataProvider(VIEW_NAME, this);
         this.renderTreeView("INITIALISING");
         Promise.resolve(this.initialiseGraphClient());
@@ -71,10 +71,10 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
         if (statusBar !== undefined) {
             statusBar.dispose();
         }
-        this.graphClient.initialiseTreeView = async (type: string, statusBarMessage?: Disposable | undefined, filter?: string) => {
+        this.graphRepository.initialiseTreeView = async (type: string, statusBarMessage?: Disposable | undefined, filter?: string) => {
             await this.renderTreeView(type, statusBarMessage, filter);
         };
-        this.graphClient.initialise();
+        this.graphRepository.initialise();
     }
 
     // Initialises the tree view data based on the type of data to be displayed.
@@ -158,7 +158,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     });
             case "WEB-REDIRECT":
                 // Return the web redirect URIs for the application
-                return this.graphClient.getApplicationDetailsPartial<Application>(element.objectId!, "web")
+                return this.graphRepository.getApplicationDetailsPartial<Application>(element.objectId!, "web")
                     .then((result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", result.value.web!.redirectUris!);
@@ -169,7 +169,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     });
             case "SPA-REDIRECT":
                 // Return the SPA redirect URIs for the application
-                return this.graphClient.getApplicationDetailsPartial<Application>(element.objectId!, "spa")
+                return this.graphRepository.getApplicationDetailsPartial<Application>(element.objectId!, "spa")
                     .then((result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", result.value.spa!.redirectUris!);
@@ -180,7 +180,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     });
             case "NATIVE-REDIRECT":
                 // Return the native redirect URIs for the application
-                return this.graphClient.getApplicationDetailsPartial<Application>(element.objectId!, "publicClient")
+                return this.graphRepository.getApplicationDetailsPartial<Application>(element.objectId!, "publicClient")
                     .then((result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", result.value.publicClient!.redirectUris!);
@@ -191,7 +191,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     });
             case "PASSWORD-CREDENTIALS":
                 // Return the password credentials for the application
-                return this.graphClient.getApplicationDetailsPartial<Application>(element.objectId!, "passwordCredentials")
+                return this.graphRepository.getApplicationDetailsPartial<Application>(element.objectId!, "passwordCredentials")
                     .then((result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationPasswordCredentials(element, result.value.passwordCredentials!);
@@ -202,7 +202,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     });
             case "CERTIFICATE-CREDENTIALS":
                 // Return the key credentials for the application
-                return this.graphClient.getApplicationDetailsPartial<Application>(element.objectId!, "keyCredentials")
+                return this.graphRepository.getApplicationDetailsPartial<Application>(element.objectId!, "keyCredentials")
                     .then((result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationKeyCredentials(element, result.value.keyCredentials!);
@@ -213,7 +213,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     });
             case "API-PERMISSIONS":
                 // Return the API permissions for the application
-                return this.graphClient.getApplicationDetailsPartial<Application>(element.objectId!, "requiredResourceAccess")
+                return this.graphRepository.getApplicationDetailsPartial<Application>(element.objectId!, "requiredResourceAccess")
                     .then((result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationApiPermissions(element, result.value.requiredResourceAccess!);
@@ -224,7 +224,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     });
             case "EXPOSED-API-PERMISSIONS":
                 // Return the exposed API permissions for the application
-                return this.graphClient.getApplicationDetailsPartial<Application>(element.objectId!, "api")
+                return this.graphRepository.getApplicationDetailsPartial<Application>(element.objectId!, "api")
                     .then((result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationExposedApiPermissions(element, result.value.api?.oauth2PermissionScopes!);
@@ -235,7 +235,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     });
             case "APP-ROLES":
                 // Return the app roles for the application
-                return this.graphClient.getApplicationDetailsPartial<Application>(element.objectId!, "appRoles")
+                return this.graphRepository.getApplicationDetailsPartial<Application>(element.objectId!, "appRoles")
                     .then((result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationAppRoles(element, result.value.appRoles!);
@@ -273,7 +273,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
                 // Get the total number of applications in the tenant based on the filter settings.
                 if (showOwnedApplicationsOnly) {
-                    const result: GraphResult<number> = await this.graphClient.getApplicationCountOwned<number>();
+                    const result: GraphResult<number> = await this.graphRepository.getApplicationCountOwned<number>();
                     if (result.success === true && result.value !== undefined) {
                         totalApplicationCount = result.value;
                     } else {
@@ -282,7 +282,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         return;
                     }
                 } else {
-                    const result: GraphResult<number> = await this.graphClient.getApplicationCountAll<number>();
+                    const result: GraphResult<number> = await this.graphRepository.getApplicationCountAll<number>();
                     if (result.success === true && result.value !== undefined) {
                         totalApplicationCount = result.value;
                     } else {
@@ -343,7 +343,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             const unsorted = allApplications.map(async (application, index) => {
                 try {
                     // Get the application details.
-                    const result: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(application.id!, APPLICATION_SELECT_PROPERTIES, true);
+                    const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(application.id!, APPLICATION_SELECT_PROPERTIES, true);
                     if (result.success === true && result.value !== undefined) {
                         const app: Application = result.value;
                         // Create the tree view item.
@@ -548,8 +548,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
             if (error.code !== undefined && error.code === "CredentialUnavailableError") {
                 // Check to see if the user is signed in and if not then prompt them to sign in
-                this.graphClient.isGraphClientInitialised = false;
-                this.graphClient.initialise();
+                this.graphRepository.isGraphClientInitialised = false;
+                this.graphRepository.initialise();
             }
             else {
                 this.triggerOnError({ success: false, statusBarHandle: this.statusBarHandle, error: error, treeDataProvider: this });
@@ -562,7 +562,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
         // Get the user setting to determine whether to show all applications or just the ones owned by the user
         const showOwnedApplicationsOnly = workspace.getConfiguration("applicationregistrations").get("showOwnedApplicationsOnly") as boolean;
         if (showOwnedApplicationsOnly === true) {
-            const result: GraphResult<Application[]> = await this.graphClient.getApplicationListOwned<Application[]>(filter);
+            const result: GraphResult<Application[]> = await this.graphRepository.getApplicationListOwned<Application[]>(filter);
             if (result.success === true && result.value !== undefined) {
                 return result.value;
             } else {
@@ -570,7 +570,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 return [];
             }
         } else {
-            const result: GraphResult<Application[]> = await this.graphClient.getApplicationListAll<Application[]>(filter);
+            const result: GraphResult<Application[]> = await this.graphRepository.getApplicationListAll<Application[]>(filter);
             if (result.success === true && result.value !== undefined) {
                 return result.value;
             } else {
@@ -582,7 +582,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
     // Returns the application owners for the given application
     private async getApplicationOwners(element: AppRegItem): Promise<AppRegItem[]> {
-        const result: GraphResult<User[]> = await this.graphClient.getApplicationOwners<User[]>(element.objectId!);
+        const result: GraphResult<User[]> = await this.graphRepository.getApplicationOwners<User[]>(element.objectId!);
         if (result.success === true && result.value !== undefined) {
             return result.value.map(owner => {
                 return new AppRegItem({
@@ -702,7 +702,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
         // Iterate through each permission and get the service principal app name
         const applicationNames = permissions.map(async (permission) => {
-            const response = await this.graphClient.findServicePrincipalByAppId(permission.resourceAppId!);
+            const response = await this.graphRepository.findServicePrincipalByAppId(permission.resourceAppId!);
             return new AppRegItem({
                 label: response.displayName!,
                 context: "API-PERMISSIONS-APP",

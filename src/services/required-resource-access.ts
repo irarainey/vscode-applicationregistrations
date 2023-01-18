@@ -2,7 +2,7 @@ import { window, QuickPickItem } from "vscode";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
-import { GraphClient } from "../clients/graph-client";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { RequiredResourceAccess, NullableOption, Application } from "@microsoft/microsoft-graph-types";
 import { sort } from "fast-sort";
 import { debounce } from "ts-debounce";
@@ -11,8 +11,8 @@ import { GraphResult } from "../types/graph-result";
 export class RequiredResourceAccessService extends ServiceBase {
 
     // The constructor for the RequiredResourceAccessService class.
-    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
-        super(graphClient, treeDataProvider);
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphRepository, treeDataProvider);
     }
 
     // Adds the selected scope to an application registration.
@@ -48,7 +48,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         const status = this.triggerTreeChange("Loading API Applications", item);
 
         // Get the service principals that match the search criteria.
-        const servicePrincipals = await this.graphClient.findServicePrincipalsByDisplayName(apiAppSearch);
+        const servicePrincipals = await this.graphRepository.findServicePrincipalsByDisplayName(apiAppSearch);
 
         // If there are no service principals found then drop out.
         if (servicePrincipals.length === 0) {
@@ -130,7 +130,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         const apiIdToUse = existingApiId === undefined ? item.resourceAppId : existingApiId;
 
         // Get the service principal for the application so we can get the scopes.
-        const servicePrincipals = await this.graphClient.findServicePrincipalByAppId(apiIdToUse!);
+        const servicePrincipals = await this.graphRepository.findServicePrincipalByAppId(apiIdToUse!);
 
         // Get all the existing scopes for the application.
         const allAssignedScopes = await this.getApiPermissions(item.objectId!);
@@ -247,7 +247,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         }
 
         //Update the application.
-        this.graphClient.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes })
+        this.graphRepository.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes })
             .then(() => {
                 this.triggerOnComplete({ success: true, statusBarHandle: statusAdd });
             })
@@ -283,7 +283,7 @@ export class RequiredResourceAccessService extends ServiceBase {
             }
 
             //Update the application.
-            this.graphClient.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes })
+            this.graphRepository.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes })
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
@@ -312,7 +312,7 @@ export class RequiredResourceAccessService extends ServiceBase {
             allAssignedScopes.splice(allAssignedScopes.findIndex(r => r.resourceAppId === item.resourceAppId!), 1);
 
             //Update the application.
-            this.graphClient.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes })
+            this.graphRepository.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes })
                 .then(() => {
                     this.triggerOnComplete({ success: true, statusBarHandle: status });
                 })
@@ -324,7 +324,7 @@ export class RequiredResourceAccessService extends ServiceBase {
 
     // Gets the api permissions for an application registration.
     private async getApiPermissions(id: string): Promise<RequiredResourceAccess[]> {
-        const result: GraphResult<Application> = await this.graphClient.getApplicationDetailsPartial<Application>(id, "requiredResourceAccess");
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(id, "requiredResourceAccess");
         if (result.success === true && result.value !== undefined) {
             return result.value.requiredResourceAccess!;
         } else {
