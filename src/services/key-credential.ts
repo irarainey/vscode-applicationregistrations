@@ -78,6 +78,11 @@ export class KeyCredentialService extends ServiceBase {
         // Get all the key credentials for the application.
         const keyCredentials = await this.getKeyCredentials(item.objectId!);
 
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (keyCredentials === undefined) {
+            return;
+        }
+
         // Push the new key credential to the list.
         keyCredentials.push(keyCredential);
 
@@ -98,6 +103,11 @@ export class KeyCredentialService extends ServiceBase {
             // Get all the key credentials for the application.
             const keyCredentials = await this.getKeyCredentials(item.objectId!);
 
+            // If the array is undefined then it'll be an Azure CLI authentication issue.
+            if (keyCredentials === undefined) {
+                return;
+            }
+
             // Remove the scope requested.
             keyCredentials!.splice(keyCredentials!.findIndex(x => x.keyId === item.keyId!), 1);
 
@@ -108,13 +118,13 @@ export class KeyCredentialService extends ServiceBase {
     }
 
     // Gets the key credentials for an application registration.
-    private async getKeyCredentials(id: string): Promise<KeyCredential[]> {
+    private async getKeyCredentials(id: string): Promise<KeyCredential[] | undefined> {
         const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(id, "keyCredentials");
         if (result.success === true && result.value !== undefined) {
             return result.value.keyCredentials!;
         } else {
             this.triggerOnError(result.error);
-            return [];
+            return undefined;
         }
     }
 

@@ -19,21 +19,30 @@ export class RedirectUriService extends ServiceBase {
         // Get all existing redirect URIs to check duplicates.
         let allExistingRedirectUris = await this.getAllExistingUris(item);
 
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (allExistingRedirectUris === undefined) {
+            return;
+        }
+
         // Prompt the user for the new redirect URI.
         const redirectUri = await window.showInputBox({
             placeHolder: "Enter Redirect URI",
             prompt: "Add a new Redirect URI to the application",
             title: "Add Redirect URI",
             ignoreFocusOut: true,
-            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, allExistingRedirectUris, false, undefined)
+            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, allExistingRedirectUris!, false, undefined)
         });
 
         // If the redirect URI is not empty then add it to the application.
         if (redirectUri !== undefined && redirectUri.length > 0) {
             // Get existing redirect URIs for this section to add new one.
             let existingRedirectUris = await this.getExistingUris(item);
-            existingRedirectUris.push(redirectUri);
-            await this.updateApplication(item, existingRedirectUris);
+
+            // If the array is undefined then it'll be an Azure CLI authentication issue.
+            if (existingRedirectUris !== undefined) {
+                existingRedirectUris.push(redirectUri);
+                await this.updateApplication(item, existingRedirectUris);
+            }
         }
     }
 
@@ -95,6 +104,11 @@ export class RedirectUriService extends ServiceBase {
         // Get the existing redirect URIs.
         let allExistingRedirectUris = await this.getAllExistingUris(item);
 
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (allExistingRedirectUris === undefined) {
+            return;
+        }
+
         // Prompt the user for the new redirect URI.
         const redirectUri = await window.showInputBox({
             placeHolder: "Redirect URI",
@@ -102,7 +116,7 @@ export class RedirectUriService extends ServiceBase {
             value: item.label!.toString(),
             title: "Edit Redirect URI",
             ignoreFocusOut: true,
-            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, allExistingRedirectUris, true, item.label!.toString())
+            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, allExistingRedirectUris!, true, item.label!.toString())
         });
 
         // If the new application name is not empty then update the application.
@@ -110,17 +124,20 @@ export class RedirectUriService extends ServiceBase {
             // Get existing redirect URIs for this section to add new one.
             let existingRedirectUris = await this.getExistingUris(item);
 
-            // Remove the old redirect URI and add the new one.
-            existingRedirectUris.splice(existingRedirectUris.indexOf(item.label!.toString()), 1);
-            existingRedirectUris.push(redirectUri);
+            // If the array is undefined then it'll be an Azure CLI authentication issue.
+            if (existingRedirectUris !== undefined) {
+                // Remove the old redirect URI and add the new one.
+                existingRedirectUris.splice(existingRedirectUris.indexOf(item.label!.toString()), 1);
+                existingRedirectUris.push(redirectUri);
 
-            // Update the application.
-            await this.updateApplication(item, existingRedirectUris);
+                // Update the application.
+                await this.updateApplication(item, existingRedirectUris);
+            }
         }
     }
 
     // Gets the existing redirect URIs for an application.
-    private async getExistingUris(item: AppRegItem): Promise<string[]> {
+    private async getExistingUris(item: AppRegItem): Promise<string[] | undefined> {
 
         let existingRedirectUris: string[] = [];
 
@@ -133,7 +150,7 @@ export class RedirectUriService extends ServiceBase {
                     break;
                 } else {
                     this.triggerOnError(resultWeb.error);
-                    return [];
+                    return undefined;
                 }
             case "SPA-REDIRECT":
             case "SPA-REDIRECT-URI":
@@ -143,7 +160,7 @@ export class RedirectUriService extends ServiceBase {
                     break;
                 } else {
                     this.triggerOnError(resultSpa.error);
-                    return [];
+                    return undefined;
                 }
             case "NATIVE-REDIRECT":
             case "NATIVE-REDIRECT-URI":
@@ -153,19 +170,18 @@ export class RedirectUriService extends ServiceBase {
                     break;
                 } else {
                     this.triggerOnError(resultPublic.error);
-                    return [];
+                    return undefined;
                 }
             default:
                 // Do nothing.
                 break;
-
         }
 
         return existingRedirectUris;
     }
 
     // Gets the existing redirect URIs for an application.
-    private async getAllExistingUris(item: AppRegItem): Promise<string[]> {
+    private async getAllExistingUris(item: AppRegItem): Promise<string[] | undefined> {
         const resultWeb: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(item.objectId!, "web,spa,publicClient");
         if (resultWeb.success === true && resultWeb.value !== undefined) {
             let existingRedirectUris: string[] = [];
@@ -181,7 +197,7 @@ export class RedirectUriService extends ServiceBase {
             return existingRedirectUris;
         } else {
             this.triggerOnError(resultWeb.error);
-            return [];
+            return undefined;
         }
     }
 

@@ -32,6 +32,11 @@ export class AppRoleService extends ServiceBase {
         // Get the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
 
+        // If undefined is returned then return as it's likely an error.
+        if (roles === undefined) {
+            return;
+        }
+
         // Add the new app role to the array.
         roles.push(role);
 
@@ -45,8 +50,8 @@ export class AppRoleService extends ServiceBase {
         // Get the parent application so we can read the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
 
-        // If an empty array is returned then return as it's likely an error.
-        if (roles.length === 0) {
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (roles === undefined) {
             return;
         }
 
@@ -74,8 +79,8 @@ export class AppRoleService extends ServiceBase {
         // Get the parent application so we can read the app roles.
         const roles = await this.getAppRoles(item.objectId!);
 
-        // If an empty array is returned then return as it's likely an error.
-        if (roles.length === 0) {
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (roles === undefined) {
             return;
         }
 
@@ -105,8 +110,8 @@ export class AppRoleService extends ServiceBase {
             // Get the parent application so we can read the app roles.
             const roles = await this.getAppRoles(item.objectId!);
 
-            // If an empty array is returned then return as it's likely an error.
-            if (roles.length === 0) {
+            // If the array is undefined then it'll be an Azure CLI authentication issue.
+            if (roles === undefined) {
                 return;
             }
 
@@ -125,10 +130,15 @@ export class AppRoleService extends ServiceBase {
     }
 
     // Gets the app roles for an application registration.
-    private async getAppRoles(id: string): Promise<AppRole[]> {
+    private async getAppRoles(id: string): Promise<AppRole[] | undefined> {
         const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(id, "appRoles");
-        (result.success === true && result.value !== undefined) ? this.triggerOnComplete() : this.triggerOnError(result.error);
-        return result.value?.appRoles ?? [];
+        if (result.success === true && result.value !== undefined) {
+            return result.value?.appRoles;
+        }
+        else {
+            this.triggerOnError(result.error);
+            return undefined;
+        }
     }
 
     // Captures the details for an app role.
@@ -279,6 +289,12 @@ export class AppRoleService extends ServiceBase {
         // Check to see if the value already exists.
         if (isEditing !== true && oldValue !== value) {
             const roles = await this.getAppRoles(id);
+
+            // If the array is undefined then it'll be an Azure CLI authentication issue.
+            if (roles === undefined) {
+                return undefined;
+            }
+
             if (roles!.find(r => r.value === value) !== undefined) {
                 return "The value specified already exists.";
             }

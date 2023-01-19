@@ -48,6 +48,11 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         // Get the existing scopes
         const api = await this.getScopes(item.objectId!);
 
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (api === undefined) {
+            return;
+        }
+
         // Add the new scope to the existing scopes.
         api.oauth2PermissionScopes!.push(scope);
 
@@ -60,6 +65,11 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
         // Get the parent application so we can read the app roles.
         const api = await this.getScopes(item.objectId!);
+
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (api === undefined) {
+            return;
+        }
 
         // Capture the new app role details by passing in the existing role.
         const scope = await this.inputScopeDetails(api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0], item.objectId!, true);
@@ -84,6 +94,11 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
         // Get the parent application so we can read the scopes.
         const api = await this.getScopes(item.objectId!);
+
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (api === undefined) {
+            return;
+        }
 
         // Toggle the state of the app role.
         api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0].isEnabled = state;
@@ -111,6 +126,11 @@ export class OAuth2PermissionScopeService extends ServiceBase {
             // Get the parent application so we can read the app roles.
             const api = await this.getScopes(item.objectId!);
 
+            // If the array is undefined then it'll be an Azure CLI authentication issue.
+            if (api === undefined) {
+                return;
+            }
+
             // Remove the app role from the array.
             api!.oauth2PermissionScopes!.splice(api!.oauth2PermissionScopes!.findIndex(r => r.id === item.value!), 1);
 
@@ -126,13 +146,13 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     }
 
     // Gets the exposed api scopes for an application registration.
-    private async getScopes(id: string): Promise<ApiApplication> {
+    private async getScopes(id: string): Promise<ApiApplication | undefined> {
         const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(id, "api");
         if (result.success === true && result.value !== undefined) {
             return result.value.api!;
         } else {
             this.triggerOnError(result.error);
-            return {};
+            return undefined;
         }
     }
 
@@ -321,6 +341,12 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         // Check to see if the value already exists.
         if ((isEditing === true && oldValue !== value) || isEditing === false) {
             const scopes = await this.getScopes(id);
+
+            // If the array is undefined then it'll be an Azure CLI authentication issue.
+            if (scopes === undefined) {
+                return undefined;
+            }
+
             if (scopes.oauth2PermissionScopes!.find(r => r.value === value) !== undefined) {
                 return "The value specified already exists.";
             }

@@ -141,6 +141,11 @@ export class RequiredResourceAccessService extends ServiceBase {
         // Get all the existing scopes for the application.
         const allAssignedScopes = await this.getApiPermissions(item.objectId!);
 
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (allAssignedScopes === undefined) {
+            return;
+        }
+
         // Find the api app in the collection.
         const apiAppScopes = allAssignedScopes.filter(r => r.resourceAppId === apiIdToUse!)[0];
 
@@ -270,6 +275,11 @@ export class RequiredResourceAccessService extends ServiceBase {
             // Get all the scopes for the application.
             const allAssignedScopes = await this.getApiPermissions(item.objectId!);
 
+            // If the array is undefined then it'll be an Azure CLI authentication issue.
+            if (allAssignedScopes === undefined) {
+                return;
+            }
+
             // Find the api app in the collection.
             const apiAppScopes = allAssignedScopes.filter(r => r.resourceAppId === item.resourceAppId!)[0];
 
@@ -300,6 +310,11 @@ export class RequiredResourceAccessService extends ServiceBase {
             // Get all the scopes for the application.
             const allAssignedScopes = await this.getApiPermissions(item.objectId!);
 
+            // If the array is undefined then it'll be an Azure CLI authentication issue.
+            if (allAssignedScopes === undefined) {
+                return;
+            }
+
             // Find the requested api app in the collection and remove it.
             allAssignedScopes.splice(allAssignedScopes.findIndex(r => r.resourceAppId === item.resourceAppId!), 1);
 
@@ -309,13 +324,13 @@ export class RequiredResourceAccessService extends ServiceBase {
     }
 
     // Gets the api permissions for an application registration.
-    private async getApiPermissions(id: string): Promise<RequiredResourceAccess[]> {
+    private async getApiPermissions(id: string): Promise<RequiredResourceAccess[] | undefined> {
         const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(id, "requiredResourceAccess");
         if (result.success === true && result.value !== undefined) {
             return result.value.requiredResourceAccess!;
         } else {
             this.triggerOnError(result.error);
-            return [];
+            return undefined;
         }
     }
 
