@@ -17,7 +17,7 @@ export class ApplicationService extends ServiceBase {
     // Creates a new application registration.
     async add(): Promise<void> {
 
-        if (this.graphRepository.isGraphClientInitialised === false) {
+        if (this.graphRepository.isClientInitialised === false) {
             await this.treeDataProvider.initialiseGraphClient();
             return;
         }
@@ -46,13 +46,12 @@ export class ApplicationService extends ServiceBase {
             if (signInAudience !== undefined) {
                 // Set the added trigger to the status bar message.
                 const status = this.triggerTreeChange("Creating Application Registration");
-                this.graphRepository.createApplication({ displayName: displayName, signInAudience: signInAudience.value })
-                    .then(() => {
-                        this.triggerOnComplete({ success: true, statusBarHandle: status });
-                    })
-                    .catch((error) => {
-                        this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeDataProvider: this.treeDataProvider });
-                    });
+                const update: GraphResult<Application> = await this.graphRepository.createApplication({ displayName: displayName, signInAudience: signInAudience.value });
+                if (update.success === true && update.value !== undefined) {
+                    this.triggerOnComplete({ success: true, statusBarHandle: status });
+                } else {
+                    this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeDataProvider: this.treeDataProvider });
+                }
             }
         }
     }
@@ -74,13 +73,13 @@ export class ApplicationService extends ServiceBase {
         if (uri !== undefined) {
             const previousIcon = item.iconPath;
             const status = this.triggerTreeChange("Setting Application ID URI", item);
-            this.graphRepository.updateApplication(item.objectId!, { identifierUris: [uri] })
-                .then(() => {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-                });
+            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { identifierUris: [uri] });
+            if (update.success === true) {
+                this.triggerOnComplete({ success: true, statusBarHandle: status });
+
+            } else {
+                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+            }
         }
     }
 
@@ -101,13 +100,12 @@ export class ApplicationService extends ServiceBase {
         if (displayName !== undefined) {
             const previousIcon = item.iconPath;
             const status = this.triggerTreeChange("Renaming Application Registration", item);
-            this.graphRepository.updateApplication(item.objectId!, { displayName: displayName })
-                .then(() => {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-                });
+            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { displayName: displayName });
+            if (update.success === true) {
+                this.triggerOnComplete({ success: true, statusBarHandle: status });
+            } else {
+                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+            }
         }
     }
 
@@ -121,13 +119,12 @@ export class ApplicationService extends ServiceBase {
         if (answer === "Yes") {
             const previousIcon = item.iconPath;
             const status = this.triggerTreeChange("Deleting Application Registration", item);
-            this.graphRepository.deleteApplication(item.objectId!)
-                .then(() => {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-                });
+            const update: GraphResult<void> = await this.graphRepository.deleteApplication(item.objectId!);
+            if (update.success === true) {
+                this.triggerOnComplete({ success: true, statusBarHandle: status });
+            } else {
+                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+            }
         }
     }
 
@@ -141,13 +138,13 @@ export class ApplicationService extends ServiceBase {
         if (answer === "Yes") {
             const previousIcon = item.iconPath;
             const status = this.triggerTreeChange("Removing Application ID URI", item);
-            this.graphRepository.updateApplication(item.objectId!, { identifierUris: [] })
-                .then(() => {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-                });
+            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { identifierUris: [] });
+            if (update.success === true) {
+                this.triggerOnComplete({ success: true, statusBarHandle: status });
+
+            } else {
+                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+            }
         }
     }
 
@@ -155,7 +152,7 @@ export class ApplicationService extends ServiceBase {
     async viewManifest(item: AppRegItem): Promise<void> {
         const previousIcon = item.iconPath;
         const status = this.triggerTreeChange("Loading Application Manifest", item);
-        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsFull<Application>(item.objectId!);
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsFull(item.objectId!);
         if (result.success === true && result.value !== undefined) {
             const newDocument = new class implements TextDocumentContentProvider {
                 onDidChangeEmitter = new EventEmitter<Uri>();
@@ -175,8 +172,17 @@ export class ApplicationService extends ServiceBase {
                 });
         } else {
             this.triggerOnError({ success: false, statusBarHandle: status, error: result.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            return;
         }
+    }
+
+    // Copies the application Id to the clipboard.
+    copyClientId(item: AppRegItem): void {
+        env.clipboard.writeText(item.appId!);
+    }
+
+    // Opens the application registration in the Azure Portal.
+    openInPortal(item: AppRegItem): void {
+        env.openExternal(Uri.parse(`${PORTAL_APP_URI}${item.appId}`));
     }
 
     // Validates the display name of the application.
@@ -210,15 +216,5 @@ export class ApplicationService extends ServiceBase {
         }
 
         return undefined;
-    }
-
-    // Copies the application Id to the clipboard.
-    copyClientId(item: AppRegItem): void {
-        env.clipboard.writeText(item.appId!);
-    }
-
-    // Opens the application registration in the Azure Portal.
-    openInPortal(item: AppRegItem): void {
-        env.openExternal(Uri.parse(`${PORTAL_APP_URI}${item.appId}`));
     }
 }

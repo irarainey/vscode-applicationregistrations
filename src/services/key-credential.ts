@@ -84,13 +84,12 @@ export class KeyCredentialService extends ServiceBase {
         // Set the added trigger to the status bar message.
         const previousIcon = item.iconPath;
         const status = this.triggerTreeChange("Adding Certificate Credential", item);
-        this.graphRepository.updateKeyCredentials(item.objectId!, keyCredentials)
-            .then(() => {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            })
-            .catch((error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            });
+        const update: GraphResult<void> = await this.graphRepository.updateKeyCredentials(item.objectId!, keyCredentials);
+        if (update.success === true) {
+            this.triggerOnComplete({ success: true, statusBarHandle: status });
+        } else {
+            this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+        }
     }
 
     // Deletes a key credential from an application registration.
@@ -111,19 +110,18 @@ export class KeyCredentialService extends ServiceBase {
             // Set the added trigger to the status bar message.
             const previousIcon = item.iconPath;
             const status = this.triggerTreeChange("Deleting Certificate Credential", item);
-            this.graphRepository.updateKeyCredentials(item.objectId!, keyCredentials)
-                .then(() => {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-                });
+            const update: GraphResult<void> = await this.graphRepository.updateKeyCredentials(item.objectId!, keyCredentials);
+            if (update.success === true) {
+                this.triggerOnComplete({ success: true, statusBarHandle: status });
+            } else {
+                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+            }
         }
     }
 
     // Gets the key credentials for an application registration.
     private async getKeyCredentials(id: string): Promise<KeyCredential[]> {
-        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(id, "keyCredentials");
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(id, "keyCredentials");
         if (result.success === true && result.value !== undefined) {
             return result.value.keyCredentials!;
         } else {

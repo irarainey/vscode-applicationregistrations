@@ -21,7 +21,7 @@ export const errorHandler = async (result: ActivityResult) => {
 		console.error(result.error);
 
 		// Determine if the error is due to the user not being logged in.
-		if (result.error.message.includes("az login")) {
+		if (result.error.message.includes("az login") || result.error.message.includes("az account set")) {
 			if (result.treeDataProvider !== undefined) {
 				window.showErrorMessage("You are not logged in to the Azure CLI. Please click the option to sign in, or run 'az login' in a terminal window.", "OK");
 				await result.treeDataProvider.initialiseGraphClient();

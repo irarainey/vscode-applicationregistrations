@@ -2,10 +2,10 @@ import "isomorphic-fetch";
 import * as ChildProcess from "child_process";
 import { SCOPE, PROPERTIES_TO_IGNORE_ON_UPDATE, DIRECTORY_OBJECTS_URI } from "../constants";
 import { window, Disposable, workspace } from "vscode";
-import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
+import { Client, ClientOptions, GraphRequest } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
-import { Application, KeyCredential, Organization, PasswordCredential, ServicePrincipal } from "@microsoft/microsoft-graph-types";
+import { Application, KeyCredential, User, PasswordCredential, ServicePrincipal, Organization } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../types/graph-result";
 
 // This is the client for the Microsoft Graph API
@@ -15,7 +15,7 @@ export class GraphApiRepository {
     private client?: Client;
 
     // A public property for the initialisation state
-    public isGraphClientInitialised: boolean = false;
+    public isClientInitialised: boolean = false;
 
     // Constructor for the graph client
     constructor() {
@@ -48,18 +48,18 @@ export class GraphApiRepository {
         credential.getToken(SCOPE)
             .then(() => {
                 // If the access token is returned, the user is authenticated
-                this.isGraphClientInitialised = true;
+                this.isClientInitialised = true;
                 this.initialiseTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading Application Registrations"));
             })
             .catch(() => {
                 // If the access token is not returned, the user is not authenticated
-                this.isGraphClientInitialised = false;
+                this.isClientInitialised = false;
                 this.initialiseTreeView("SIGN-IN");
             });
     }
 
-    // Invokes the Azure CLI sign-in command.
-    async cliSignIn(): Promise<void> {
+    // Invokes the Azure CLI sign-in command to authenticate the user.
+    async authenticate(): Promise<void> {
         // Prompt the user for the tenant name or Id.
         const tenant = await window.showInputBox({
             placeHolder: "Tenant Name or ID",
@@ -91,9 +91,9 @@ export class GraphApiRepository {
     }
 
     // Returns a count of all owned application registrations
-    async getApplicationCountOwned<Type>(): Promise<GraphResult<Type>> {
+    async getApplicationCountOwned(): Promise<GraphResult<number>> {
         try {
-            const result: Type = await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application/$count")
+            const result: number = await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application/$count")
                 .header("ConsistencyLevel", "eventual")
                 .get();
             return { success: true, value: result };
@@ -103,9 +103,9 @@ export class GraphApiRepository {
     }
 
     // Returns a count of all application registrations
-    async getApplicationCountAll<Type>(): Promise<GraphResult<Type>> {
+    async getApplicationCountAll(): Promise<GraphResult<number>> {
         try {
-            const result: Type = await this.client!.api("/applications/$count")
+            const result: number = await this.client!.api("/applications/$count")
                 .header("ConsistencyLevel", "eventual")
                 .get();
             return { success: true, value: result };
@@ -115,16 +115,16 @@ export class GraphApiRepository {
     }
 
     // Returns partial details for a specified application registration
-    async getApplicationDetailsPartial<Type>(id: string, select: string, expandOwners: boolean = false): Promise<GraphResult<Type>> {
+    async getApplicationDetailsPartial(id: string, select: string, expandOwners: boolean = false): Promise<GraphResult<Application>> {
         try {
             if (expandOwners !== true) {
-                const result: Type = await this.client!.api(`/applications/${id}`)
+                const result: Application = await this.client!.api(`/applications/${id}`)
                     .top(1)
                     .select(select)
                     .get();
                 return { success: true, value: result };
             } else {
-                const result: Type = await this.client!.api(`/applications/${id}`)
+                const result: Application = await this.client!.api(`/applications/${id}`)
                     .top(1)
                     .select(select)
                     .expand("owners")
@@ -137,12 +137,12 @@ export class GraphApiRepository {
     }
 
     // Returns ids and names for all owned application registrations
-    async getApplicationListOwned<Type>(filter?: string): Promise<GraphResult<Type>> {
+    async getApplicationListOwned(filter?: string): Promise<GraphResult<Application[]>> {
         try {
             const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
             if (useEventualConsistency === true) {
                 const maximumApplicationsShown = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsShown") as number;
-                const result = await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
+                const result: any = await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
                     .filter(filter === undefined ? "" : filter)
                     .header("ConsistencyLevel", "eventual")
                     .count(true)
@@ -150,14 +150,14 @@ export class GraphApiRepository {
                     .orderby("displayName")
                     .select("id,displayName")
                     .get();
-                return { success: true, value: result.value as Type };
+                return { success: true, value: result.value };
             } else {
                 const maximumQueryApps = workspace.getConfiguration("applicationregistrations").get("maximumQueryApps") as number;
-                const result = await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
+                const result: any = await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
                     .top(maximumQueryApps)
                     .select("id,displayName")
                     .get();
-                return { success: true, value: result.value as Type };
+                return { success: true, value: result.value };
             }
         }
         catch (error: any) {
@@ -166,7 +166,7 @@ export class GraphApiRepository {
     }
 
     // Returns ids and names for all application registrations
-    async getApplicationListAll<Type>(filter?: string): Promise<GraphResult<Type>> {
+    async getApplicationListAll(filter?: string): Promise<GraphResult<Application[]>> {
         try {
             const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
             if (useEventualConsistency === true) {
@@ -179,14 +179,14 @@ export class GraphApiRepository {
                     .orderby("displayName")
                     .select("id,displayName")
                     .get();
-                return { success: true, value: result.value as Type };
+                return { success: true, value: result.value };
             } else {
                 const maximumQueryApps = workspace.getConfiguration("applicationregistrations").get("maximumQueryApps") as number;
                 const result: any = await this.client!.api("/applications/")
                     .top(maximumQueryApps)
                     .select("id,displayName")
                     .get();
-                return { success: true, value: result.value as Type };
+                return { success: true, value: result.value };
             }
         }
         catch (error: any) {
@@ -195,11 +195,11 @@ export class GraphApiRepository {
     }
 
     // Returns all owners for a specified application registration
-    async getApplicationOwners<Type>(id: string): Promise<GraphResult<Type>> {
+    async getApplicationOwners(id: string): Promise<GraphResult<User[]>> {
         try {
             const result: any = await this.client!.api(`/applications/${id}/owners`)
                 .get();
-            return { success: true, value: result.value as Type };
+            return { success: true, value: result.value };
         }
         catch (error: any) {
             return { success: false, error: error };
@@ -207,9 +207,9 @@ export class GraphApiRepository {
     }
 
     // Returns full details for a specified application registration
-    async getApplicationDetailsFull<Type>(id: string): Promise<GraphResult<Type>> {
+    async getApplicationDetailsFull(id: string): Promise<GraphResult<Application>> {
         try {
-            const result: Type = await this.client!.api(`/applications/${id}`)
+            const result: Application = await this.client!.api(`/applications/${id}`)
                 .top(1)
                 .get();
             return { success: true, value: result };
@@ -220,11 +220,13 @@ export class GraphApiRepository {
     }
 
     // Removes an owner from an application registration
-    async removeApplicationOwner<Type>(id: string, userId: string): Promise<GraphResult<Type>> {
+    async removeApplicationOwner(id: string, userId: string): Promise<GraphResult<void>> {
         try {
-            const result: Type = await this.client!.api(`/applications/${id}/owners/${userId}/$ref`)
-                .delete();
-            return { success: true, value: result };
+            return await this.client!.api(`/applications/${id}/owners/${userId}/$ref`)
+                .delete()
+                .then(() => {
+                    return { success: true };
+                });
         }
         catch (error: any) {
             return { success: false, error: error };
@@ -232,114 +234,177 @@ export class GraphApiRepository {
     }
 
     // Adds an owner to an application registration
-    async addApplicationOwner<Type>(id: string, userId: string): Promise<GraphResult<Type>> {
+    async addApplicationOwner(id: string, userId: string): Promise<GraphResult<void>> {
         try {
-            const result = await this.client!.api(`/applications/${id}/owners/$ref`)
+            return await this.client!.api(`/applications/${id}/owners/$ref`)
                 .post({
                     // eslint-disable-next-line @typescript-eslint/naming-convention
                     "@odata.id": `${DIRECTORY_OBJECTS_URI}${userId}`
+                })
+                .then(() => {
+                    return { success: true };
                 });
-            return { success: true, value: result };
         }
         catch (error: any) {
             return { success: false, error: error };
         }
     }
 
-    // Find users by display name
-    async findUsersByName(name: string): Promise<any> {
-        return await this.client!.api("/users")
-            .filter(`startswith(displayName, '${escapeSingleQuotesForFilter(name)}')`)
-            .get();
-    }
-
-    // Find users by email address
-    async findUsersByEmail(name: string): Promise<any> {
-        return await this.client!.api("/users")
-            .filter(`startswith(mail, '${escapeSingleQuotesForFilter(name)}')`)
-            .get();
-    }
-
     // Adds a password credential to an application registration
-    async addPasswordCredential(id: string, description: string, expiry: string): Promise<PasswordCredential> {
-        return await this.client!.api(`/applications/${id}/addPassword`)
-            .post({
-                "passwordCredential": {
-                    "endDateTime": expiry,
-                    "displayName": description
-                }
-            });
+    async addPasswordCredential(id: string, description: string, expiry: string): Promise<GraphResult<PasswordCredential>> {
+        try {
+            const result: PasswordCredential = await this.client!.api(`/applications/${id}/addPassword`)
+                .post({
+                    "passwordCredential": {
+                        "endDateTime": expiry,
+                        "displayName": description
+                    }
+                });
+            return { success: true, value: result };
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
     }
 
     // Deletes a password credential from an application registration
-    async deletePasswordCredential(id: string, passwordId: string): Promise<void> {
-        await this.client!.api(`/applications/${id}/removePassword`)
-            .post({
-                "keyId": passwordId
-            });
+    async deletePasswordCredential(id: string, passwordId: string): Promise<GraphResult<void>> {
+        try {
+            return await this.client!.api(`/applications/${id}/removePassword`)
+                .post({
+                    "keyId": passwordId
+                })
+                .then(() => {
+                    return { success: true };
+                });
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
     }
 
     // Updates the key credential collection from an application registration
-    async updateKeyCredentials(id: string, credentials: KeyCredential[]): Promise<void> {
-        await this.client!.api(`/applications/${id}`)
-            .patch({
-                "id": id,
-                "keyCredentials": credentials
-            });
+    async updateKeyCredentials(id: string, credentials: KeyCredential[]): Promise<GraphResult<void>> {
+        try {
+            return await this.client!.api(`/applications/${id}`)
+                .patch({
+                    "id": id,
+                    "keyCredentials": credentials
+                })
+                .then(() => {
+                    return { success: true };
+                });
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
     }
 
     // Creates a new application registration
-    async createApplication(application: Application): Promise<Application> {
-        return await this.client!.api("/applications/")
-            .post(application);
+    async createApplication(application: Application): Promise<GraphResult<Application>> {
+        try {
+            const result: Application = await this.client!.api("/applications/")
+                .post(application);
+            return { success: true, value: result };
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
     }
 
     // Updates an application registration
-    async updateApplication(id: string, application: Application): Promise<Application> {
-        // Remove the properties that cannot be updated
-        PROPERTIES_TO_IGNORE_ON_UPDATE.forEach(property => {
-            delete application[property as keyof Application];
-        });
-        return await this.client!.api(`/applications/${id}`)
-            .update(application);
+    async updateApplication(id: string, application: Application): Promise<GraphResult<void>> {
+        try {
+            // Remove the properties that cannot be updated
+            PROPERTIES_TO_IGNORE_ON_UPDATE.forEach(property => {
+                delete application[property as keyof Application];
+            });
+            return this.client!.api(`/applications/${id}`)
+                .update(application)
+                .then(() => {
+                    return { success: true };
+                });
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
     }
 
     // Deletes an application registration
-    async deleteApplication(id: string): Promise<void> {
-        await this.client!.api(`/applications/${id}`)
-            .delete();
+    async deleteApplication(id: string): Promise<GraphResult<void>> {
+        try {
+            return this.client!.api(`/applications/${id}`)
+                .delete()
+                .then(() => {
+                    return { success: true };
+                });
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
+    }
+
+    // Find users by display name
+    async findUsersByName(name: string): Promise<GraphResult<User[]>> {
+        try {
+            const result: any = await this.client!.api("/users")
+                .filter(`startswith(displayName, '${escapeSingleQuotesForFilter(name)}')`)
+                .get();
+            return { success: true, value: result.value };
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
+    }
+
+    // Find users by email address
+    async findUsersByEmail(name: string): Promise<GraphResult<User[]>> {
+        try {
+            const result: any = await this.client!.api("/users")
+                .filter(`startswith(mail, '${escapeSingleQuotesForFilter(name)}')`)
+                .get();
+            return { success: true, value: result.value };
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
     }
 
     // Gets a service principal by application registration id
-    async findServicePrincipalByAppId(id: string): Promise<ServicePrincipal> {
-        return await this.client!.api(`servicePrincipals(appId='${id}')`)
-            .get();
+    async findServicePrincipalByAppId(id: string): Promise<GraphResult<ServicePrincipal>> {
+        try {
+            const result: ServicePrincipal = await this.client!.api(`servicePrincipals(appId='${id}')`)
+                .get();
+            return { success: true, value: result };
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
     }
 
     // Gets a list of service principals by display name
-    async findServicePrincipalsByDisplayName(name: string): Promise<ServicePrincipal[]> {
-        const servicePrincipals = await this.client!.api("servicePrincipals")
-            //.filter(`startswith(displayName, '${escapeSingleQuotes(name)}')`)
-            .header("ConsistencyLevel", "eventual")
-            .count(true)
-            .search(`"displayName:${escapeSingleQuotesForSearch(name)}"`)
-            .select("appId,appDisplayName,appDescription")
-            .get();
-        return servicePrincipals.value;
+    async findServicePrincipalsByDisplayName(name: string): Promise<GraphResult<ServicePrincipal[]>> {
+        try {
+            const result: any = await this.client!.api("servicePrincipals")
+                .header("ConsistencyLevel", "eventual")
+                .count(true)
+                .search(`"displayName:${escapeSingleQuotesForSearch(name)}"`)
+                .select("appId,appDisplayName,appDescription")
+                .get();
+            return { success: true, value: result.value };
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
     }
 
     // Gets the tenant information.
-    async getTenantInformation(tenantId: string): Promise<Organization> {
-        // Get the tenant information
-        return await this.client!.api(`/organization/${tenantId}`)
-            .select("id,displayName,verifiedDomains")
-            .get();
+    async getTenantInformation(tenantId: string): Promise<GraphResult<Organization>> {
+        try {
+            // Get the tenant information
+            const result: Organization = await this.client!.api(`/organization/${tenantId}`)
+                .select("id,displayName,verifiedDomains")
+                .get();
+            return { success: true, value: result };
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
     }
 
     // Disposes the client
     dispose(): void {
         this.client = undefined;
-        this.isGraphClientInitialised = false;
+        this.isClientInitialised = false;
     }
 }
 

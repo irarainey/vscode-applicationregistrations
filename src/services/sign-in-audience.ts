@@ -4,6 +4,8 @@ import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
+import { GraphResult } from "../types/graph-result";
+import { Application } from "@microsoft/microsoft-graph-types";
 
 export class SignInAudienceService extends ServiceBase {
 
@@ -31,14 +33,12 @@ export class SignInAudienceService extends ServiceBase {
             }
             this.treeDataProvider.triggerOnDidChangeTreeData(item);
             const status = window.setStatusBarMessage(`$(loading~spin) Updating Sign In Audience`);
-
-            this.graphRepository.updateApplication(item.objectId!, { signInAudience: audience.value })
-                .then(() => {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item.contextValue! === "AUDIENCE-PARENT" ? item.children![0] : item, previousIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")), treeDataProvider: this.treeDataProvider });
-                });
+            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { signInAudience: audience.value });
+            if (update.success === true) {
+                this.triggerOnComplete({ success: true, statusBarHandle: status });
+            } else {
+                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item.contextValue! === "AUDIENCE-PARENT" ? item.children![0] : item, previousIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")), treeDataProvider: this.treeDataProvider });
+            }
         }
     }
 }

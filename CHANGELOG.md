@@ -1,6 +1,7 @@
 ## 0.4.0
 
 - Added a dispose call for the organization service.
+- Fixed an issue where duplicate redirect uris could be added.
 - Refactored error handling.
 - Other minor refactoring.
 

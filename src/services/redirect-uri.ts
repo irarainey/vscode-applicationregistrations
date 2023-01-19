@@ -16,8 +16,8 @@ export class RedirectUriService extends ServiceBase {
     // Adds a new redirect URI to an application registration.
     async add(item: AppRegItem): Promise<void> {
 
-        // Get the existing redirect URIs.
-        let existingRedirectUris = await this.getExistingUris(item);
+        // Get all existing redirect URIs to check duplicates.
+        let allExistingRedirectUris = await this.getAllExistingUris(item);
 
         // Prompt the user for the new redirect URI.
         const redirectUri = await window.showInputBox({
@@ -25,11 +25,13 @@ export class RedirectUriService extends ServiceBase {
             prompt: "Add a new Redirect URI to the application",
             title: "Add Redirect URI",
             ignoreFocusOut: true,
-            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, false, undefined)
+            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, allExistingRedirectUris, false, undefined)
         });
 
         // If the redirect URI is not empty then add it to the application.
         if (redirectUri !== undefined && redirectUri.length > 0) {
+            // Get existing redirect URIs for this section to add new one.
+            let existingRedirectUris = await this.getExistingUris(item);
             existingRedirectUris.push(redirectUri);
             await this.update(item, existingRedirectUris);
         }
@@ -48,7 +50,7 @@ export class RedirectUriService extends ServiceBase {
             // Remove the redirect URI from the array.
             switch (item.contextValue) {
                 case "WEB-REDIRECT-URI":
-                    const resultWeb: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(item.objectId!, "web");
+                    const resultWeb: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(item.objectId!, "web");
                     if (resultWeb.success === true && resultWeb.value !== undefined) {
                         resultWeb.value.web!.redirectUris!.splice(resultWeb.value.web!.redirectUris!.indexOf(item.label!.toString()), 1);
                         newArray = resultWeb.value.web!.redirectUris!;
@@ -58,7 +60,7 @@ export class RedirectUriService extends ServiceBase {
                         return;
                     }
                 case "SPA-REDIRECT-URI":
-                    const resultSpa: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(item.objectId!, "spa");
+                    const resultSpa: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(item.objectId!, "spa");
                     if (resultSpa.success === true && resultSpa.value !== undefined) {
                         resultSpa.value.spa!.redirectUris!.splice(resultSpa.value.spa!.redirectUris!.indexOf(item.label!.toString()), 1);
                         newArray = resultSpa.value.spa!.redirectUris!;
@@ -68,7 +70,7 @@ export class RedirectUriService extends ServiceBase {
                         return;
                     }
                 case "NATIVE-REDIRECT-URI":
-                    const resultPublic: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(item.objectId!, "publicClient");
+                    const resultPublic: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(item.objectId!, "publicClient");
                     if (resultPublic.success === true && resultPublic.value !== undefined) {
                         resultPublic.value.publicClient!.redirectUris!.splice(resultPublic.value.publicClient!.redirectUris!.indexOf(item.label!.toString()), 1);
                         newArray = resultPublic.value.publicClient!.redirectUris!;
@@ -91,7 +93,7 @@ export class RedirectUriService extends ServiceBase {
     async edit(item: AppRegItem): Promise<void> {
 
         // Get the existing redirect URIs.
-        let existingRedirectUris = await this.getExistingUris(item);
+        let allExistingRedirectUris = await this.getAllExistingUris(item);
 
         // Prompt the user for the new redirect URI.
         const redirectUri = await window.showInputBox({
@@ -100,11 +102,14 @@ export class RedirectUriService extends ServiceBase {
             value: item.label!.toString(),
             title: "Edit Redirect URI",
             ignoreFocusOut: true,
-            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, existingRedirectUris, true, item.label!.toString())
+            validateInput: (value) => this.validateRedirectUri(value, item.contextValue!, allExistingRedirectUris, true, item.label!.toString())
         });
 
         // If the new application name is not empty then update the application.
         if (redirectUri !== undefined && redirectUri !== item.label!.toString()) {
+            // Get existing redirect URIs for this section to add new one.
+            let existingRedirectUris = await this.getExistingUris(item);
+
             // Remove the old redirect URI and add the new one.
             existingRedirectUris.splice(existingRedirectUris.indexOf(item.label!.toString()), 1);
             existingRedirectUris.push(redirectUri);
@@ -122,7 +127,7 @@ export class RedirectUriService extends ServiceBase {
         switch (item.contextValue) {
             case "WEB-REDIRECT":
             case "WEB-REDIRECT-URI":
-                const resultWeb: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(item.objectId!, "web");
+                const resultWeb: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(item.objectId!, "web");
                 if (resultWeb.success === true && resultWeb.value !== undefined) {
                     existingRedirectUris = resultWeb.value.web!.redirectUris!;
                     break;
@@ -132,7 +137,7 @@ export class RedirectUriService extends ServiceBase {
                 }
             case "SPA-REDIRECT":
             case "SPA-REDIRECT-URI":
-                const resultSpa: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(item.objectId!, "spa");
+                const resultSpa: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(item.objectId!, "spa");
                 if (resultSpa.success === true && resultSpa.value !== undefined) {
                     existingRedirectUris = resultSpa.value.spa!.redirectUris!;
                     break;
@@ -142,7 +147,7 @@ export class RedirectUriService extends ServiceBase {
                 }
             case "NATIVE-REDIRECT":
             case "NATIVE-REDIRECT-URI":
-                const resultPublic: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(item.objectId!, "publicClient");
+                const resultPublic: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(item.objectId!, "publicClient");
                 if (resultPublic.success === true && resultPublic.value !== undefined) {
                     existingRedirectUris = resultPublic.value.publicClient!.redirectUris!;
                     break;
@@ -159,6 +164,27 @@ export class RedirectUriService extends ServiceBase {
         return existingRedirectUris;
     }
 
+    // Gets the existing redirect URIs for an application.
+    private async getAllExistingUris(item: AppRegItem): Promise<string[]> {
+        const resultWeb: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(item.objectId!, "web,spa,publicClient");
+        if (resultWeb.success === true && resultWeb.value !== undefined) {
+            let existingRedirectUris: string[] = [];
+            resultWeb.value.web!.redirectUris!.map((uri) => {
+                existingRedirectUris.push(uri);
+            });
+            resultWeb.value.spa!.redirectUris!.map((uri) => {
+                existingRedirectUris.push(uri);
+            });
+            resultWeb.value.publicClient!.redirectUris!.map((uri) => {
+                existingRedirectUris.push(uri);
+            });
+            return existingRedirectUris;
+        } else {
+            this.triggerOnError({ success: false, error: resultWeb.error, treeDataProvider: this.treeDataProvider });
+            return [];
+        }
+    }
+
     // Updates the redirect URIs for an application.
     private async update(item: AppRegItem, redirectUris: string[]): Promise<void> {
 
@@ -168,31 +194,28 @@ export class RedirectUriService extends ServiceBase {
 
         // Determine which section to add the redirect URI to.
         if (item.contextValue! === "WEB-REDIRECT-URI" || item.contextValue! === "WEB-REDIRECT") {
-            this.graphRepository.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } })
-                .then(() => {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-                });
+            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } });
+            if (update.success === true) {
+                this.triggerOnComplete({ success: true, statusBarHandle: status });
+            } else {
+                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+            }
         }
         else if (item.contextValue! === "SPA-REDIRECT-URI" || item.contextValue! === "SPA-REDIRECT") {
-            this.graphRepository.updateApplication(item.objectId!, { spa: { redirectUris: redirectUris } })
-                .then(() => {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-                });
+            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { spa: { redirectUris: redirectUris } });
+            if (update.success === true) {
+                this.triggerOnComplete({ success: true, statusBarHandle: status });
+            } else {
+                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+            }
         }
         else if (item.contextValue! === "NATIVE-REDIRECT-URI" || item.contextValue! === "NATIVE-REDIRECT") {
-            this.graphRepository.updateApplication(item.objectId!, { publicClient: { redirectUris: redirectUris } })
-                .then(() => {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-                });
+            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { publicClient: { redirectUris: redirectUris } });
+            if (update.success === true) {
+                this.triggerOnComplete({ success: true, statusBarHandle: status });
+            } else {
+                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+            }
         }
     }
 
@@ -202,7 +225,7 @@ export class RedirectUriService extends ServiceBase {
         // Check to see if the uri already exists.
         if ((isEditing === true && oldValue !== uri) || isEditing === false) {
             if (existingRedirectUris.includes(uri)) {
-                return "The Redirect URI specified already exists.";
+                return "The Redirect URI specified already exists in this application.";
             }
         }
 

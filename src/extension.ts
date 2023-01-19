@@ -77,7 +77,7 @@ export const activate = async (context: ExtensionContext) => {
 	// Menu Commands
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.signInToAzure`, async () => await graphRepository.cliSignIn()));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.signInToAzure`, async () => await graphRepository.authenticate()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addApp`, async () => await applicationService.add()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshApps`, async () => await populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"))));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.filterApps`, async () => await filterTreeView()));
@@ -192,7 +192,7 @@ export const deactivate = async () => {
 
 // Define the populateTreeView function.
 const populateTreeView = async (statusBarHandle: Disposable | undefined = undefined) => {
-	if (graphRepository.isGraphClientInitialised === false) {
+	if (graphRepository.isClientInitialised === false) {
 		await treeDataProvider.initialiseGraphClient(statusBarHandle);
 		return;
 	}
@@ -201,7 +201,7 @@ const populateTreeView = async (statusBarHandle: Disposable | undefined = undefi
 
 // Define the filterTreeView function.
 const filterTreeView = async () => {
-	if (graphRepository.isGraphClientInitialised === false) {
+	if (graphRepository.isClientInitialised === false) {
 		await treeDataProvider.initialiseGraphClient();
 		return;
 	}

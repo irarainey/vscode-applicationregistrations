@@ -21,7 +21,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         // Check to see if the application has an appIdURI. If it doesn't then we don't want to add a scope.
         let appIdUri: string[];
 
-        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(item.objectId!, "identifierUris");
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(item.objectId!, "identifierUris");
         if (result.success === true && result.value !== undefined) {
             appIdUri = result.value.identifierUris!;
         } else {
@@ -53,13 +53,12 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         api.oauth2PermissionScopes!.push(scope);
 
         // Update the application.
-        this.graphRepository.updateApplication(item.objectId!, { api: api })
-            .then(() => {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            })
-            .catch((error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            });
+        const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { api: api });
+        if (update.success === true) {
+            this.triggerOnComplete({ success: true, statusBarHandle: status });
+        } else {
+            this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+        }
     }
 
     // Edits an exposed api scope from an application registration.
@@ -81,13 +80,12 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         const status = this.triggerTreeChange("Updating Scope", item);
 
         // Update the application.
-        this.graphRepository.updateApplication(item.objectId!, { api: api })
-            .then(() => {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            })
-            .catch((error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            });
+        const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { api: api });
+        if (update.success === true) {
+            this.triggerOnComplete({ success: true, statusBarHandle: status });
+        } else {
+            this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+        }
     }
 
     // Changes the enabled state of an exposed api scope for an application registration.
@@ -104,13 +102,12 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0].isEnabled = state;
 
         // Update the application.
-        this.graphRepository.updateApplication(item.objectId!, { api: api })
-            .then(() => {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            })
-            .catch((error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            });
+        const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { api: api });
+        if (update.success === true) {
+            this.triggerOnComplete({ success: true, statusBarHandle: status });
+        } else {
+            this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+        }
     }
 
     // Deletes an exposed api scope from an application registration.
@@ -137,19 +134,18 @@ export class OAuth2PermissionScopeService extends ServiceBase {
             api!.oauth2PermissionScopes!.splice(api!.oauth2PermissionScopes!.findIndex(r => r.id === item.value!), 1);
 
             // Update the application.
-            this.graphRepository.updateApplication(item.objectId!, { api: api })
-                .then(() => {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-                });
+            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { api: api });
+            if (update.success === true) {
+                this.triggerOnComplete({ success: true, statusBarHandle: status });
+            } else {
+                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+            }
         }
     }
 
     // Gets the exposed api scopes for an application registration.
     private async getScopes(id: string): Promise<ApiApplication> {
-        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(id, "api");
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(id, "api");
         if (result.success === true && result.value !== undefined) {
             return result.value.api!;
         } else {

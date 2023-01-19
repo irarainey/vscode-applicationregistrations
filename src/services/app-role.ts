@@ -37,13 +37,12 @@ export class AppRoleService extends ServiceBase {
         roles.push(role);
 
         // Update the application.
-        this.graphRepository.updateApplication(item.objectId!, { appRoles: roles })
-            .then(() => {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            })
-            .catch((error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            });
+        const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { appRoles: roles });
+        if (update.success === true) {
+            this.triggerOnComplete({ success: true, statusBarHandle: status });
+        } else {
+            this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+        }
     }
 
     // Edits an app role from an application registration.
@@ -65,13 +64,12 @@ export class AppRoleService extends ServiceBase {
         const status = this.triggerTreeChange("Updating App Role", item);
 
         // Update the application.
-        this.graphRepository.updateApplication(item.objectId!, { appRoles: roles })
-            .then(() => {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            })
-            .catch((error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            });
+        const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { appRoles: roles });
+        if (update.success === true) {
+            this.triggerOnComplete({ success: true, statusBarHandle: status });
+        } else {
+            this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+        }
     }
 
     // Changes the enabled state of an app role from an application registration.
@@ -88,13 +86,12 @@ export class AppRoleService extends ServiceBase {
         roles.filter(r => r.id === item.value!)[0].isEnabled = state;
 
         // Update the application.
-        this.graphRepository.updateApplication(item.objectId!, { appRoles: roles })
-            .then(() => {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            })
-            .catch((error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            });
+        const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { appRoles: roles });
+        if (update.success === true) {
+            this.triggerOnComplete({ success: true, statusBarHandle: status });
+        } else {
+            this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+        }
     }
 
     // Deletes an app role from an application registration.
@@ -121,19 +118,18 @@ export class AppRoleService extends ServiceBase {
             roles.splice(roles.findIndex(r => r.id === item.value!), 1);
 
             // Update the application.
-            this.graphRepository.updateApplication(item.objectId!, { appRoles: roles })
-                .then(() => {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-                });
+            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { appRoles: roles });
+            if (update.success === true) {
+                this.triggerOnComplete({ success: true, statusBarHandle: status });
+            } else {
+                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+            }
         }
     }
 
     // Gets the app roles for an application registration.
     private async getAppRoles(id: string): Promise<AppRole[]> {
-        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial<Application>(id, "appRoles");
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(id, "appRoles");
         if (result.success === true && result.value !== undefined) {
             return result.value.appRoles!;
         } else {
