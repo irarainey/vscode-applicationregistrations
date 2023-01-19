@@ -40,17 +40,12 @@ export class OwnerService extends ServiceBase {
             // If the new owner name is not empty then add as an owner.
             if (owner !== undefined) {
                 // Set the added trigger to the status bar message.
-                const previousIcon = item.iconPath;
-                const status = this.triggerTreeChange("Adding Owner", item);
+                this.triggerTreeChange("Adding Owner", item);
                 const result: GraphResult<void> = await this.graphRepository.addApplicationOwner(item.objectId!, this.userList[0].id);
-                if (result.success === true) {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                } else {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: result.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-                }
+                result.success === true ? this.triggerOnComplete() : this.triggerOnError(result.error);
             }
         } else {
-            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this.treeDataProvider });
+            this.triggerOnError(result.error);
         }
     }
 
@@ -63,14 +58,9 @@ export class OwnerService extends ServiceBase {
         // If the user confirms the removal then remove the user.
         if (response === "Yes") {
             // Set the added trigger to the status bar message.
-            const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Removing Owner", item);
+            this.triggerTreeChange("Removing Owner", item);
             const result: GraphResult<void> = await this.graphRepository.removeApplicationOwner(item.objectId!, item.userId!);
-            if (result.success === true) {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            } else {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: result.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            }
+            result.success === true ? this.triggerOnComplete() : this.triggerOnError(result.error);
         }
     }
 
@@ -83,7 +73,7 @@ export class OwnerService extends ServiceBase {
     private async validateOwner(owner: string, existing: User[]): Promise<string | undefined> {
 
         // Check if the owner name is empty.
-        if(owner === undefined || owner === null || owner.length === 0) {
+        if (owner === undefined || owner === null || owner.length === 0) {
             return undefined;
         }
 
@@ -96,7 +86,7 @@ export class OwnerService extends ServiceBase {
                 this.userList = result.value;
                 identifier = "user with an email address";
             } else {
-                this.triggerOnError({ success: false, error: result.error });
+                this.triggerOnError(result.error);
                 return;
             }
         } else {
@@ -106,7 +96,7 @@ export class OwnerService extends ServiceBase {
                 this.userList = result.value;
                 identifier = "name";
             } else {
-                this.triggerOnError({ success: false, error: result.error });
+                this.triggerOnError(result.error);
                 return;
             }
         }

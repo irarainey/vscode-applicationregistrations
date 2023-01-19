@@ -23,20 +23,20 @@ export class OrganizationService extends ServiceBase {
         }
 
         // Set the status bar message.
-        const status = this.triggerTreeChange("Loading Tenant Information");
+        this.triggerTreeChange("Loading Tenant Information");
 
         // Execute the az cli command to get the tenant id
         execShellCmd(CLI_TENANT_CMD)
             .then(async (response) => {
-                await this.showTenantWindow(response, status);
+                await this.showTenantWindow(response);
             })
             .catch(async (error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeDataProvider: this.treeDataProvider });
+                this.triggerOnError(error);
             });
     }
 
     // Shows the tenant information in a new read-only window.
-    private async showTenantWindow(tenantId: string, statusBarHandle: Disposable | undefined): Promise<void> {
+    private async showTenantWindow(tenantId: string): Promise<void> {
         // Get the tenant information.
         const result: GraphResult<Organization> = await this.graphRepository.getTenantInformation(tenantId);
         if (result.success === true && result.value !== undefined) {
@@ -60,10 +60,12 @@ export class OrganizationService extends ServiceBase {
             workspace.openTextDocument(uri)
                 .then(async (doc) => {
                     await window.showTextDocument(doc, { preview: false });
-                    statusBarHandle!.dispose();
+                    if (this.statusBarHandle !== undefined) {
+                        this.statusBarHandle!.dispose();
+                    }
                 });
         } else {
-            this.triggerOnError({ success: false, statusBarHandle: statusBarHandle, error: result.error, treeDataProvider: this.treeDataProvider });
+            this.triggerOnError(result.error);
             return;
         }
     }

@@ -1,11 +1,10 @@
-import { window, ThemeIcon, ThemeColor } from "vscode";
+import { window } from "vscode";
 import { SIGNIN_AUDIENCE_OPTIONS } from "../constants";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { GraphResult } from "../types/graph-result";
-import { Application } from "@microsoft/microsoft-graph-types";
 
 export class SignInAudienceService extends ServiceBase {
 
@@ -27,18 +26,12 @@ export class SignInAudienceService extends ServiceBase {
 
         if (audience !== undefined) {
             if (item.contextValue! === "AUDIENCE-PARENT") {
-                item.children![0].iconPath = new ThemeIcon("loading~spin");
+                this.triggerTreeChange("Updating Sign In Audience", item.children![0]);
             } else {
-                item.iconPath = new ThemeIcon("loading~spin");
+                this.triggerTreeChange("Updating Sign In Audience", item);
             }
-            this.treeDataProvider.triggerOnDidChangeTreeData(item);
-            const status = window.setStatusBarMessage(`$(loading~spin) Updating Sign In Audience`);
             const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { signInAudience: audience.value });
-            if (update.success === true) {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            } else {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item.contextValue! === "AUDIENCE-PARENT" ? item.children![0] : item, previousIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")), treeDataProvider: this.treeDataProvider });
-            }
+            update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
         }
     }
 }

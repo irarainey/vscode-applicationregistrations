@@ -45,13 +45,9 @@ export class ApplicationService extends ServiceBase {
             // If the sign in audience is not undefined then create the application.
             if (signInAudience !== undefined) {
                 // Set the added trigger to the status bar message.
-                const status = this.triggerTreeChange("Creating Application Registration");
+                this.triggerTreeChange("Creating Application Registration");
                 const update: GraphResult<Application> = await this.graphRepository.createApplication({ displayName: displayName, signInAudience: signInAudience.value });
-                if (update.success === true && update.value !== undefined) {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                } else {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeDataProvider: this.treeDataProvider });
-                }
+                (update.success === true && update.value !== undefined) ? this.triggerOnComplete() : this.triggerOnError(update.error);
             }
         }
     }
@@ -71,15 +67,8 @@ export class ApplicationService extends ServiceBase {
 
         // If the new application id uri is not undefined then update the application.
         if (uri !== undefined) {
-            const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Setting Application ID URI", item);
-            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { identifierUris: [uri] });
-            if (update.success === true) {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-
-            } else {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            }
+            this.triggerTreeChange("Setting Application ID URI", item);
+            await this.updateApplication(item.objectId!, { identifierUris: [uri] });
         }
     }
 
@@ -98,14 +87,8 @@ export class ApplicationService extends ServiceBase {
 
         // If the new application name is not undefined then update the application.
         if (displayName !== undefined) {
-            const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Renaming Application Registration", item);
-            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { displayName: displayName });
-            if (update.success === true) {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            } else {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            }
+            this.triggerTreeChange("Renaming Application Registration", item);
+            await this.updateApplication(item.objectId!, { displayName: displayName });
         }
     }
 
@@ -117,14 +100,9 @@ export class ApplicationService extends ServiceBase {
 
         // If the user confirms the deletion then delete the application.
         if (answer === "Yes") {
-            const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Deleting Application Registration", item);
+            this.triggerTreeChange("Deleting Application Registration", item);
             const update: GraphResult<void> = await this.graphRepository.deleteApplication(item.objectId!);
-            if (update.success === true) {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            } else {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            }
+            update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
         }
     }
 
@@ -136,22 +114,14 @@ export class ApplicationService extends ServiceBase {
 
         // If the user confirms the deletion then delete the application.
         if (answer === "Yes") {
-            const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Removing Application ID URI", item);
-            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { identifierUris: [] });
-            if (update.success === true) {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-
-            } else {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            }
+            this.triggerTreeChange("Removing Application ID URI", item);
+            await this.updateApplication(item.objectId!, { identifierUris: [] });
         }
     }
 
     // Opens the application manifest in a new editor window.
     async viewManifest(item: AppRegItem): Promise<void> {
-        const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Loading Application Manifest", item);
+        this.triggerTreeChange("Loading Application Manifest");
         const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsFull(item.objectId!);
         if (result.success === true && result.value !== undefined) {
             const newDocument = new class implements TextDocumentContentProvider {
@@ -166,13 +136,19 @@ export class ApplicationService extends ServiceBase {
             workspace.openTextDocument(uri)
                 .then(async (doc) => {
                     await window.showTextDocument(doc, { preview: false });
-                    status!.dispose();
-                    item.iconPath = previousIcon;
-                    this.treeDataProvider.triggerOnDidChangeTreeData(item);
+                    if (this.statusBarHandle !== undefined) {
+                        this.statusBarHandle!.dispose();
+                    }
                 });
         } else {
-            this.triggerOnError({ success: false, statusBarHandle: status, error: result.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+            this.triggerOnError(result.error);
         }
+    }
+
+    // Updates the application registration.
+    private async updateApplication(id: string, application: Application) {
+        const update: GraphResult<void> = await this.graphRepository.updateApplication(id, application);
+        update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
     }
 
     // Copies the application Id to the clipboard.

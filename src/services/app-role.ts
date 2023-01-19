@@ -27,8 +27,7 @@ export class AppRoleService extends ServiceBase {
         }
 
         // Set the added trigger to the status bar message.
-        const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Adding App Role", item);
+        this.triggerTreeChange("Adding App Role", item);
 
         // Get the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
@@ -37,12 +36,7 @@ export class AppRoleService extends ServiceBase {
         roles.push(role);
 
         // Update the application.
-        const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { appRoles: roles });
-        if (update.success === true) {
-            this.triggerOnComplete({ success: true, statusBarHandle: status });
-        } else {
-            this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-        }
+        await this.updateApplication(item.objectId!, { appRoles: roles });
     }
 
     // Edits an app role from an application registration.
@@ -60,24 +54,17 @@ export class AppRoleService extends ServiceBase {
         }
 
         // Set the added trigger to the status bar message.
-        const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Updating App Role", item);
+        this.triggerTreeChange("Updating App Role", item);
 
         // Update the application.
-        const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { appRoles: roles });
-        if (update.success === true) {
-            this.triggerOnComplete({ success: true, statusBarHandle: status });
-        } else {
-            this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-        }
+        await this.updateApplication(item.objectId!, { appRoles: roles });
     }
 
     // Changes the enabled state of an app role from an application registration.
     async changeState(item: AppRegItem, state: boolean): Promise<void> {
 
         // Set the added trigger to the status bar message.
-        const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange(state === true ? "Enabling App Role" : "Disabling App Role", item);
+        this.triggerTreeChange(state === true ? "Enabling App Role" : "Disabling App Role", item);
 
         // Get the parent application so we can read the app roles.
         const roles = await this.getAppRoles(item.objectId!);
@@ -86,12 +73,7 @@ export class AppRoleService extends ServiceBase {
         roles.filter(r => r.id === item.value!)[0].isEnabled = state;
 
         // Update the application.
-        const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { appRoles: roles });
-        if (update.success === true) {
-            this.triggerOnComplete({ success: true, statusBarHandle: status });
-        } else {
-            this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-        }
+        await this.updateApplication(item.objectId!, { appRoles: roles });
     }
 
     // Deletes an app role from an application registration.
@@ -108,8 +90,7 @@ export class AppRoleService extends ServiceBase {
         // If the user confirms the removal then delete the role.
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
-            const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Deleting App Role", item);
+            this.triggerTreeChange("Deleting App Role", item);
 
             // Get the parent application so we can read the app roles.
             const roles = await this.getAppRoles(item.objectId!);
@@ -118,24 +99,21 @@ export class AppRoleService extends ServiceBase {
             roles.splice(roles.findIndex(r => r.id === item.value!), 1);
 
             // Update the application.
-            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { appRoles: roles });
-            if (update.success === true) {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            } else {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            }
+            await this.updateApplication(item.objectId!, { appRoles: roles });
         }
+    }
+
+    // Updates an application registration with the new app roles.
+    private async updateApplication(id: string, application: Application) {
+        const update: GraphResult<void> = await this.graphRepository.updateApplication(id, application);
+        update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
     }
 
     // Gets the app roles for an application registration.
     private async getAppRoles(id: string): Promise<AppRole[]> {
         const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(id, "appRoles");
-        if (result.success === true && result.value !== undefined) {
-            return result.value.appRoles!;
-        } else {
-            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this.treeDataProvider });
-            return [];
-        }
+        (result.success === true && result.value !== undefined) ? this.triggerOnComplete() : this.triggerOnError(result.error);
+        return result.value?.appRoles ?? [];
     }
 
     // Captures the details for an app role.

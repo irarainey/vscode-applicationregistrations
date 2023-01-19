@@ -1,7 +1,7 @@
 import { window } from "vscode";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
-import { PermissionScope, ApiApplication, Application, NullableOption } from "@microsoft/microsoft-graph-types";
+import { PermissionScope, ApiApplication, Application } from "@microsoft/microsoft-graph-types";
 import { v4 as uuidv4 } from "uuid";
 import { ServiceBase } from "./service-base";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
@@ -25,7 +25,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         if (result.success === true && result.value !== undefined) {
             appIdUri = result.value.identifierUris!;
         } else {
-            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this.treeDataProvider });
+            this.triggerOnError(result.error);
             return;
         }
 
@@ -43,8 +43,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         }
 
         // Set the added trigger to the status bar message.
-        const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Adding Scope", item);
+        this.triggerTreeChange("Adding Scope", item);
 
         // Get the existing scopes
         const api = await this.getScopes(item.objectId!);
@@ -53,12 +52,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         api.oauth2PermissionScopes!.push(scope);
 
         // Update the application.
-        const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { api: api });
-        if (update.success === true) {
-            this.triggerOnComplete({ success: true, statusBarHandle: status });
-        } else {
-            this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-        }
+        await this.updateApplication(item.objectId!, { api: api });
     }
 
     // Edits an exposed api scope from an application registration.
@@ -76,24 +70,17 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         }
 
         // Set the added trigger to the status bar message.
-        const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Updating Scope", item);
+        this.triggerTreeChange("Updating Scope", item);
 
         // Update the application.
-        const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { api: api });
-        if (update.success === true) {
-            this.triggerOnComplete({ success: true, statusBarHandle: status });
-        } else {
-            this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-        }
+        await this.updateApplication(item.objectId!, { api: api });
     }
 
     // Changes the enabled state of an exposed api scope for an application registration.
     async changeState(item: AppRegItem, state: boolean): Promise<void> {
 
         // Set the added trigger to the status bar message.
-        const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange(state === true ? "Enabling Scope" : "Disabling Scope", item);
+        this.triggerTreeChange(state === true ? "Enabling Scope" : "Disabling Scope", item);
 
         // Get the parent application so we can read the scopes.
         const api = await this.getScopes(item.objectId!);
@@ -102,12 +89,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0].isEnabled = state;
 
         // Update the application.
-        const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { api: api });
-        if (update.success === true) {
-            this.triggerOnComplete({ success: true, statusBarHandle: status });
-        } else {
-            this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-        }
+        await this.updateApplication(item.objectId!, { api: api });
     }
 
     // Deletes an exposed api scope from an application registration.
@@ -124,8 +106,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         // If the user confirms the removal then delete the role.
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
-            const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Deleting Scope", item);
+            this.triggerTreeChange("Deleting Scope", item);
 
             // Get the parent application so we can read the app roles.
             const api = await this.getScopes(item.objectId!);
@@ -134,13 +115,14 @@ export class OAuth2PermissionScopeService extends ServiceBase {
             api!.oauth2PermissionScopes!.splice(api!.oauth2PermissionScopes!.findIndex(r => r.id === item.value!), 1);
 
             // Update the application.
-            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { api: api });
-            if (update.success === true) {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            } else {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            }
+            await this.updateApplication(item.objectId!, { api: api });
         }
+    }
+
+    // Updates the application registration.
+    private async updateApplication(id: string, application: Application) {
+        const update: GraphResult<void> = await this.graphRepository.updateApplication(id, application);
+        update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
     }
 
     // Gets the exposed api scopes for an application registration.
@@ -149,7 +131,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         if (result.success === true && result.value !== undefined) {
             return result.value.api!;
         } else {
-            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this.treeDataProvider });
+            this.triggerOnError(result.error);
             return {};
         }
     }

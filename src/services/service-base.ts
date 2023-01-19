@@ -15,6 +15,18 @@ export class ServiceBase {
     // A protected instance of the Graph Api Repository.
     protected readonly graphRepository: GraphApiRepository;
 
+    // A protected instance of the previous icon path.
+    protected previousIcon: string | Uri | {
+        light: string | Uri;
+        dark: string | Uri;
+    } | ThemeIcon | undefined = undefined;
+
+    // A protected instance of the previous tree item.
+    protected item: AppRegItem | undefined = undefined;
+
+    // A protected instance of the previous status bar handle.
+    protected statusBarHandle: Disposable | undefined = undefined;
+
     // A protected instance of the EventEmitter class to handle error events.
     private onErrorEvent: EventEmitter<ActivityResult> = new EventEmitter<ActivityResult>();
 
@@ -34,24 +46,26 @@ export class ServiceBase {
     }
 
     // Trigger the event to indicate an error
-    protected triggerOnError(result: ActivityResult) {
-        this.onErrorEvent.fire(result);
+    protected triggerOnError(error?: Error) {
+        this.onErrorEvent.fire({ success: false, error: error, item: this.item, previousIcon: this.previousIcon, statusBarHandle: this.statusBarHandle, treeDataProvider: this.treeDataProvider });
     }
 
     // Trigger the event to indicate completion
-    protected triggerOnComplete(item: ActivityResult) {
-        this.onCompleteEvent.fire(item);
+    protected triggerOnComplete() {
+        this.onCompleteEvent.fire({ success: true, previousIcon: this.previousIcon, statusBarHandle: this.statusBarHandle, treeDataProvider: this.treeDataProvider });
     }
 
     // Initiates the visual change of the tree view
-    protected triggerTreeChange(statusBarMessage?: string, item?: AppRegItem): Disposable | undefined {
+    protected triggerTreeChange(statusBarMessage?: string, item?: AppRegItem): void {
         if (item !== undefined) {
+            this.item = item;
+            this.previousIcon = item.iconPath;
             item.iconPath = new ThemeIcon("loading~spin");
             this.treeDataProvider.triggerOnDidChangeTreeData(item);
         }
 
         if (statusBarMessage !== undefined) {
-            return window.setStatusBarMessage(`$(loading~spin) ${statusBarMessage}`);
+            this.statusBarHandle = window.setStatusBarMessage(`$(loading~spin) ${statusBarMessage}`);
         }
     }
 

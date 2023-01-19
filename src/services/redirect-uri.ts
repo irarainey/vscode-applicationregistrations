@@ -33,7 +33,7 @@ export class RedirectUriService extends ServiceBase {
             // Get existing redirect URIs for this section to add new one.
             let existingRedirectUris = await this.getExistingUris(item);
             existingRedirectUris.push(redirectUri);
-            await this.update(item, existingRedirectUris);
+            await this.updateApplication(item, existingRedirectUris);
         }
     }
 
@@ -56,7 +56,7 @@ export class RedirectUriService extends ServiceBase {
                         newArray = resultWeb.value.web!.redirectUris!;
                         break;
                     } else {
-                        this.triggerOnError({ success: false, error: resultWeb.error, treeDataProvider: this.treeDataProvider });
+                        this.triggerOnError(resultWeb.error);
                         return;
                     }
                 case "SPA-REDIRECT-URI":
@@ -66,7 +66,7 @@ export class RedirectUriService extends ServiceBase {
                         newArray = resultSpa.value.spa!.redirectUris!;
                         break;
                     } else {
-                        this.triggerOnError({ success: false, error: resultSpa.error, treeDataProvider: this.treeDataProvider });
+                        this.triggerOnError(resultSpa.error);
                         return;
                     }
                 case "NATIVE-REDIRECT-URI":
@@ -76,7 +76,7 @@ export class RedirectUriService extends ServiceBase {
                         newArray = resultPublic.value.publicClient!.redirectUris!;
                         break;
                     } else {
-                        this.triggerOnError({ success: false, error: resultPublic.error, treeDataProvider: this.treeDataProvider });
+                        this.triggerOnError(resultPublic.error);
                         return;
                     }
                 default:
@@ -85,7 +85,7 @@ export class RedirectUriService extends ServiceBase {
             }
 
             // Update the application.
-            await this.update(item, newArray);
+            await this.updateApplication(item, newArray);
         }
     }
 
@@ -115,7 +115,7 @@ export class RedirectUriService extends ServiceBase {
             existingRedirectUris.push(redirectUri);
 
             // Update the application.
-            await this.update(item, existingRedirectUris);
+            await this.updateApplication(item, existingRedirectUris);
         }
     }
 
@@ -132,7 +132,7 @@ export class RedirectUriService extends ServiceBase {
                     existingRedirectUris = resultWeb.value.web!.redirectUris!;
                     break;
                 } else {
-                    this.triggerOnError({ success: false, error: resultWeb.error, treeDataProvider: this.treeDataProvider });
+                    this.triggerOnError(resultWeb.error);
                     return [];
                 }
             case "SPA-REDIRECT":
@@ -142,7 +142,7 @@ export class RedirectUriService extends ServiceBase {
                     existingRedirectUris = resultSpa.value.spa!.redirectUris!;
                     break;
                 } else {
-                    this.triggerOnError({ success: false, error: resultSpa.error, treeDataProvider: this.treeDataProvider });
+                    this.triggerOnError(resultSpa.error);
                     return [];
                 }
             case "NATIVE-REDIRECT":
@@ -152,7 +152,7 @@ export class RedirectUriService extends ServiceBase {
                     existingRedirectUris = resultPublic.value.publicClient!.redirectUris!;
                     break;
                 } else {
-                    this.triggerOnError({ success: false, error: resultPublic.error, treeDataProvider: this.treeDataProvider });
+                    this.triggerOnError(resultPublic.error);
                     return [];
                 }
             default:
@@ -180,42 +180,29 @@ export class RedirectUriService extends ServiceBase {
             });
             return existingRedirectUris;
         } else {
-            this.triggerOnError({ success: false, error: resultWeb.error, treeDataProvider: this.treeDataProvider });
+            this.triggerOnError(resultWeb.error);
             return [];
         }
     }
 
     // Updates the redirect URIs for an application.
-    private async update(item: AppRegItem, redirectUris: string[]): Promise<void> {
+    private async updateApplication(item: AppRegItem, redirectUris: string[]): Promise<void> {
 
         // Show progress indicator.
-        const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Updating Redirect URIs", item);
+        this.triggerTreeChange("Updating Redirect URIs", item);
 
         // Determine which section to add the redirect URI to.
         if (item.contextValue! === "WEB-REDIRECT-URI" || item.contextValue! === "WEB-REDIRECT") {
             const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } });
-            if (update.success === true) {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            } else {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            }
+            update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
         }
         else if (item.contextValue! === "SPA-REDIRECT-URI" || item.contextValue! === "SPA-REDIRECT") {
             const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { spa: { redirectUris: redirectUris } });
-            if (update.success === true) {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            } else {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            }
+            update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
         }
         else if (item.contextValue! === "NATIVE-REDIRECT-URI" || item.contextValue! === "NATIVE-REDIRECT") {
             const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { publicClient: { redirectUris: redirectUris } });
-            if (update.success === true) {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            } else {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            }
+            update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
         }
     }
 

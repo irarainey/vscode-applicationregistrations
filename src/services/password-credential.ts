@@ -44,15 +44,14 @@ export class PasswordCredentialService extends ServiceBase {
 
             if (expiry !== undefined) {
                 // Set the added trigger to the status bar message.
-                const previousIcon = item.iconPath;
-                const status = this.triggerTreeChange("Adding Password Credential", item);
+                this.triggerTreeChange("Adding Password Credential", item);
                 const update: GraphResult<PasswordCredential> = await this.graphRepository.addPasswordCredential(item.objectId!, description, expiry);
                 if (update.success === true && update.value !== undefined) {
                     env.clipboard.writeText(update.value.secretText!);
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
+                    this.triggerOnComplete();
                     window.showInformationMessage("New password copied to clipboard.", "OK");
                 } else {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+                    this.triggerOnError(update.error);
                 }
             }
         }
@@ -67,14 +66,9 @@ export class PasswordCredentialService extends ServiceBase {
         // If the user confirms the removal then remove the password credential.
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
-            const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Deleting Password Credential", item);
+            this.triggerTreeChange("Deleting Password Credential", item);
             const update: GraphResult<void> = await this.graphRepository.deletePasswordCredential(item.objectId!, item.value!);
-            if (update.success === true) {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            } else {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            }
+            update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
         }
     }
 

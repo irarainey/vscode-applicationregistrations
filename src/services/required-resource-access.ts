@@ -41,16 +41,13 @@ export class RequiredResourceAccessService extends ServiceBase {
             return;
         }
 
-        // Get the previous icon so we can revert if the update fails.
-        const previousIcon = item.iconPath;
-
         // Update the tree item icon to show the loading animation.
-        const status = this.triggerTreeChange("Loading API Applications", item);
+        this.triggerTreeChange("Loading API Applications", item);
 
         // Get the service principals that match the search criteria.
         const result: GraphResult<ServicePrincipal[]> = await this.graphRepository.findServicePrincipalsByDisplayName(apiAppSearch);
         if (result.success === false || result.value === undefined) {
-            this.triggerOnError({ success: false, statusBarHandle: status, error: result.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+            this.triggerOnError(result.error);
             return;
         }
 
@@ -59,8 +56,8 @@ export class RequiredResourceAccessService extends ServiceBase {
         // If there are no service principals found then drop out.
         if (servicePrincipals.length === 0) {
             window.showInformationMessage("No API Applications were found that match the search criteria.", "OK");
-            status?.dispose();
-            this.setTreeItemIcon(item, previousIcon, false);
+            this.statusBarHandle?.dispose();
+            this.setTreeItemIcon(item, this.previousIcon, false);
             return;
         }
 
@@ -73,8 +70,8 @@ export class RequiredResourceAccessService extends ServiceBase {
             };
         });
 
-        status?.dispose();
-        this.setTreeItemIcon(item, previousIcon, false);
+        this.statusBarHandle?.dispose();
+        this.setTreeItemIcon(item, this.previousIcon, false);
 
         // Prompt the user for the new allowed member types.
         const allowed = await window.showQuickPick(
@@ -126,11 +123,8 @@ export class RequiredResourceAccessService extends ServiceBase {
             return;
         }
 
-        // Get the previous icon so we can revert if the update fails.
-        const previousIcon = item.iconPath;
-
         // Update the tree item icon to show the loading animation.
-        const status = this.triggerTreeChange(`Loading API Permissions for ${apiAppName}`, item);
+        this.triggerTreeChange(`Loading API Permissions for ${apiAppName}`, item);
 
         // Determine the API application ID to use.
         const apiIdToUse = existingApiId === undefined ? item.resourceAppId : existingApiId;
@@ -138,7 +132,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         // Get the service principal for the application so we can get the scopes.
         const result: GraphResult<ServicePrincipal> = await this.graphRepository.findServicePrincipalByAppId(apiIdToUse!);
         if (result.success === false || result.value === undefined) {
-            this.triggerOnError({ success: false, statusBarHandle: status, error: result.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
+            this.triggerOnError(result.error);
             return;
         }
 
@@ -164,14 +158,14 @@ export class RequiredResourceAccessService extends ServiceBase {
 
             // If there are no scopes available then drop out.
             if (servicePrincipal.oauth2PermissionScopes === undefined || servicePrincipal.oauth2PermissionScopes!.length === 0) {
-                status?.dispose();
-                this.setTreeItemIcon(item, previousIcon, false);
+                this.statusBarHandle?.dispose();
+                this.setTreeItemIcon(item, this.previousIcon, false);
                 window.showInformationMessage("There are no user delegated permissions available to add to this application registration.", "OK");
                 return;
             }
 
-            status?.dispose();
-            this.setTreeItemIcon(item, previousIcon, false);
+            this.statusBarHandle?.dispose();
+            this.setTreeItemIcon(item, this.previousIcon, false);
 
             // Prompt the user for the scope to add.
             const permissions = sort(servicePrincipal.oauth2PermissionScopes!)
@@ -205,14 +199,14 @@ export class RequiredResourceAccessService extends ServiceBase {
 
             // If there are no scopes available then drop out.
             if (servicePrincipal.appRoles === undefined || servicePrincipal.appRoles!.length === 0) {
-                status?.dispose();
-                this.setTreeItemIcon(item, previousIcon, false);
+                this.statusBarHandle?.dispose();
+                this.setTreeItemIcon(item, this.previousIcon, false);
                 window.showInformationMessage("There are no application permissions available to add to this application registration.", "OK");
                 return;
             }
 
-            status?.dispose();
-            this.setTreeItemIcon(item, previousIcon, false);
+            this.statusBarHandle?.dispose();
+            this.setTreeItemIcon(item, this.previousIcon, false);
 
             // Prompt the user for the scope to add.
             const permissions = sort(servicePrincipal.appRoles!)
@@ -239,7 +233,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         }
 
         // Set the added trigger to the status bar message.
-        const statusAdd = this.triggerTreeChange("Adding API Permission", item);
+        this.triggerTreeChange("Adding API Permission", item);
 
         if (apiAppScopes !== undefined) {
             // Add the new scope to the existing app.
@@ -259,12 +253,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         }
 
         //Update the application.
-        const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes });
-        if (update.success === true) {
-            this.triggerOnComplete({ success: true, statusBarHandle: statusAdd });
-        } else {
-            this.triggerOnError({ success: false, statusBarHandle: statusAdd, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-        }
+        await this.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes });
     }
 
     // Removes the selected scope from an application registration.
@@ -276,8 +265,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         // If the user confirms the removal then delete the role.
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
-            const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Removing API Permission", item);
+            this.triggerTreeChange("Removing API Permission", item);
 
             // Get all the scopes for the application.
             const allAssignedScopes = await this.getApiPermissions(item.objectId!);
@@ -294,12 +282,7 @@ export class RequiredResourceAccessService extends ServiceBase {
             }
 
             //Update the application.
-            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes });
-            if (update.success === true) {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            } else {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            }
+            await this.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes });
         }
     }
 
@@ -312,8 +295,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         // If the user confirms the removal then remove the scopes.
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
-            const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Removing API Permissions", item);
+            this.triggerTreeChange("Removing API Permissions", item);
 
             // Get all the scopes for the application.
             const allAssignedScopes = await this.getApiPermissions(item.objectId!);
@@ -322,12 +304,7 @@ export class RequiredResourceAccessService extends ServiceBase {
             allAssignedScopes.splice(allAssignedScopes.findIndex(r => r.resourceAppId === item.resourceAppId!), 1);
 
             //Update the application.
-            const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes });
-            if (update.success === true) {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            } else {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            }
+            await this.updateApplication(item.objectId!, { requiredResourceAccess: allAssignedScopes });
         }
     }
 
@@ -337,8 +314,14 @@ export class RequiredResourceAccessService extends ServiceBase {
         if (result.success === true && result.value !== undefined) {
             return result.value.requiredResourceAccess!;
         } else {
-            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this.treeDataProvider });
+            this.triggerOnError(result.error);
             return [];
         }
+    }
+
+    // Updates the application registration.
+    private async updateApplication(id: string, application: Application) {
+        const update: GraphResult<void> = await this.graphRepository.updateApplication(id, application);
+        update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
     }
 }

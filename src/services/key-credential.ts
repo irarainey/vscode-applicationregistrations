@@ -82,14 +82,8 @@ export class KeyCredentialService extends ServiceBase {
         keyCredentials.push(keyCredential);
 
         // Set the added trigger to the status bar message.
-        const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Adding Certificate Credential", item);
-        const update: GraphResult<void> = await this.graphRepository.updateKeyCredentials(item.objectId!, keyCredentials);
-        if (update.success === true) {
-            this.triggerOnComplete({ success: true, statusBarHandle: status });
-        } else {
-            this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-        }
+        this.triggerTreeChange("Adding Certificate Credential", item);
+        await this.updateKeyCredentials(item.objectId!, keyCredentials);
     }
 
     // Deletes a key credential from an application registration.
@@ -108,14 +102,8 @@ export class KeyCredentialService extends ServiceBase {
             keyCredentials!.splice(keyCredentials!.findIndex(x => x.keyId === item.keyId!), 1);
 
             // Set the added trigger to the status bar message.
-            const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Deleting Certificate Credential", item);
-            const update: GraphResult<void> = await this.graphRepository.updateKeyCredentials(item.objectId!, keyCredentials);
-            if (update.success === true) {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            } else {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: update.error, treeViewItem: item, previousIcon: previousIcon, treeDataProvider: this.treeDataProvider });
-            }
+            this.triggerTreeChange("Deleting Certificate Credential", item);
+            await this.updateKeyCredentials(item.objectId!, keyCredentials);
         }
     }
 
@@ -125,8 +113,14 @@ export class KeyCredentialService extends ServiceBase {
         if (result.success === true && result.value !== undefined) {
             return result.value.keyCredentials!;
         } else {
-            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this.treeDataProvider });
+            this.triggerOnError(result.error);
             return [];
         }
+    }
+
+    // Updates the key credentials.
+    private async updateKeyCredentials(id: string, credentials: KeyCredential[]) {
+        const update: GraphResult<void> = await this.graphRepository.updateKeyCredentials(id, credentials);
+        update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
     }
 }

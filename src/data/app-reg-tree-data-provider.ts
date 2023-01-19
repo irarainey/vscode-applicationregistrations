@@ -153,7 +153,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 // Return the owners for the application
                 return this.getApplicationOwners(element)
                     .catch((error: any) => {
-                        this.triggerOnError({ success: false, error: error, treeDataProvider: this });
+                        this.triggerOnError(error);
                         return [];
                     });
             case "WEB-REDIRECT":
@@ -163,7 +163,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", result.value.web!.redirectUris!);
                         } else {
-                            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this });
+                            this.triggerOnError(result.error);
                             return [];
                         }
                     });
@@ -174,7 +174,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", result.value.spa!.redirectUris!);
                         } else {
-                            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this });
+                            this.triggerOnError(result.error);
                             return [];
                         }
                     });
@@ -185,7 +185,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", result.value.publicClient!.redirectUris!);
                         } else {
-                            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this });
+                            this.triggerOnError(result.error);
                             return [];
                         }
                     });
@@ -196,7 +196,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationPasswordCredentials(element, result.value.passwordCredentials!);
                         } else {
-                            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this });
+                            this.triggerOnError(result.error);
                             return [];
                         }
                     });
@@ -207,7 +207,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationKeyCredentials(element, result.value.keyCredentials!);
                         } else {
-                            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this });
+                            this.triggerOnError(result.error);
                             return [];
                         }
                     });
@@ -218,7 +218,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationApiPermissions(element, result.value.requiredResourceAccess!);
                         } else {
-                            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this });
+                            this.triggerOnError(result.error);
                             return [];
                         }
                     });
@@ -229,7 +229,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationExposedApiPermissions(element, result.value.api?.oauth2PermissionScopes!);
                         } else {
-                            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this });
+                            this.triggerOnError(result.error);
                             return [];
                         }
                     });
@@ -240,7 +240,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         if (result.success === true && result.value !== undefined) {
                             return this.getApplicationAppRoles(element, result.value.appRoles!);
                         } else {
-                            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this });
+                            this.triggerOnError(result.error);
                             return [];
                         }
                     });
@@ -278,7 +278,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         totalApplicationCount = result.value;
                     } else {
                         this.isUpdating = false;
-                        this.triggerOnError({ success: false, error: result.error, treeDataProvider: this });
+                        this.triggerOnError(result.error);
                         return;
                     }
                 } else {
@@ -287,7 +287,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         totalApplicationCount = result.value;
                     } else {
                         this.isUpdating = false;
-                        this.triggerOnError({ success: false, error: result.error, treeDataProvider: this });
+                        this.triggerOnError(result.error);
                         return;
                     }
                 }
@@ -515,7 +515,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
                     } else {
                         this.isUpdating = false;
-                        this.triggerOnError({ success: false, error: result.error, treeDataProvider: this });
+                        this.triggerOnError(result.error);
                         return undefined;
                     }
                 } catch (error: any) {
@@ -552,7 +552,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 this.graphRepository.initialise();
             }
             else {
-                this.triggerOnError({ success: false, statusBarHandle: this.statusBarHandle, error: error, treeDataProvider: this });
+                this.triggerOnError(error);
             }
         }
     }
@@ -566,7 +566,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             if (result.success === true && result.value !== undefined) {
                 return result.value;
             } else {
-                this.triggerOnError({ success: false, error: result.error, treeDataProvider: this });
+                this.triggerOnError(result.error);
                 return [];
             }
         } else {
@@ -574,7 +574,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             if (result.success === true && result.value !== undefined) {
                 return result.value;
             } else {
-                this.triggerOnError({ success: false, error: result.error, treeDataProvider: this });
+                this.triggerOnError(result.error);
                 return [];
             }
         }
@@ -610,7 +610,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 });
             });
         } else {
-            this.triggerOnError({ success: false, error: result.error, treeDataProvider: this });
+            this.triggerOnError(result.error);
             return [];
         }
     }
@@ -711,7 +711,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     objectId: element.objectId,
                     resourceAppId: permission.resourceAppId,
                     children: permission.resourceAccess!.map(resourceAccess => {
-    
+
                         let scopeLabel = "";
                         let tooltip = undefined;
                         let scope = undefined;
@@ -724,7 +724,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                             scopeLabel = `Application: ${scope}`;
                             tooltip = result.value!.appRoles!.find(scope => scope.id === resourceAccess.id)!.description;
                         }
-    
+
                         return new AppRegItem({
                             label: scopeLabel,
                             context: "API-PERMISSIONS-SCOPE",
@@ -738,7 +738,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     })
                 });
             } else {
-                this.triggerOnError({ success: false, error: result.error, treeDataProvider: this });
+                this.triggerOnError(result.error);
                 return {};
             }
         });
@@ -821,8 +821,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Trigger the event to indicate an error
-    private triggerOnError(item: ActivityResult) {
-        this.onErrorEvent.fire(item);
+    private triggerOnError(error?: Error) {
+        this.onErrorEvent.fire({ success: false, error: error, treeDataProvider: this, statusBarHandle: this.statusBarHandle });
     }
 
     // Dispose of the event listener
