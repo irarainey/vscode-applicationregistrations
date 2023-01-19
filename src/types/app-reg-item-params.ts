@@ -5,6 +5,8 @@ import { AppRegItem } from "../models/app-reg-item";
 export type AppRegItemParams = {
     label: string;
     context: string;
+    iconPath: string | ThemeIcon;
+    baseIcon?: string | ThemeIcon;
     value?: string;
     objectId?: string;
     appId?: string;
@@ -14,7 +16,6 @@ export type AppRegItemParams = {
     keyId?: string;
     children?: AppRegItem[];
     command?: Command;
-    iconPath?: string | ThemeIcon;
     tooltip?: string;
     order?: number;
     state?: boolean;

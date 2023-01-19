@@ -1,8 +1,9 @@
 ## 0.4.0
 
 - Added a dispose call for the organization service.
+- Added additional error handling to capture Azure CLI being signed out.
 - Fixed an issue where duplicate redirect uris could be added.
-- Refactored error handling.
+- Refactored error and action completion triggers.
 - Other minor refactoring.
 
 - ## 0.3.0

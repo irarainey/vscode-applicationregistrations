@@ -57,7 +57,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         if (servicePrincipals.length === 0) {
             window.showInformationMessage("No API Applications were found that match the search criteria.", "OK");
             this.statusBarHandle?.dispose();
-            this.setTreeItemIcon(item, this.previousIcon, false);
+            this.resetTreeItemIcon(item);
             return;
         }
 
@@ -71,7 +71,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         });
 
         this.statusBarHandle?.dispose();
-        this.setTreeItemIcon(item, this.previousIcon, false);
+        this.resetTreeItemIcon(item);
 
         // Prompt the user for the new allowed member types.
         const allowed = await window.showQuickPick(
@@ -159,13 +159,13 @@ export class RequiredResourceAccessService extends ServiceBase {
             // If there are no scopes available then drop out.
             if (servicePrincipal.oauth2PermissionScopes === undefined || servicePrincipal.oauth2PermissionScopes!.length === 0) {
                 this.statusBarHandle?.dispose();
-                this.setTreeItemIcon(item, this.previousIcon, false);
+                this.resetTreeItemIcon(item);
                 window.showInformationMessage("There are no user delegated permissions available to add to this application registration.", "OK");
                 return;
             }
 
             this.statusBarHandle?.dispose();
-            this.setTreeItemIcon(item, this.previousIcon, false);
+            this.resetTreeItemIcon(item);
 
             // Prompt the user for the scope to add.
             const permissions = sort(servicePrincipal.oauth2PermissionScopes!)
@@ -200,13 +200,13 @@ export class RequiredResourceAccessService extends ServiceBase {
             // If there are no scopes available then drop out.
             if (servicePrincipal.appRoles === undefined || servicePrincipal.appRoles!.length === 0) {
                 this.statusBarHandle?.dispose();
-                this.setTreeItemIcon(item, this.previousIcon, false);
+                this.resetTreeItemIcon(item);
                 window.showInformationMessage("There are no application permissions available to add to this application registration.", "OK");
                 return;
             }
 
             this.statusBarHandle?.dispose();
-            this.setTreeItemIcon(item, this.previousIcon, false);
+            this.resetTreeItemIcon(item);
 
             // Prompt the user for the scope to add.
             const permissions = sort(servicePrincipal.appRoles!)

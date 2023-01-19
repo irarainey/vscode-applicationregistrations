@@ -1,4 +1,4 @@
-import { Event, EventEmitter, Disposable, ThemeIcon, window, Uri } from "vscode";
+import { Event, EventEmitter, Disposable, ThemeIcon, window } from "vscode";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { ActivityResult } from "../types/activity-result";
@@ -14,12 +14,6 @@ export class ServiceBase {
 
     // A protected instance of the Graph Api Repository.
     protected readonly graphRepository: GraphApiRepository;
-
-    // A protected instance of the previous icon path.
-    protected previousIcon: string | Uri | {
-        light: string | Uri;
-        dark: string | Uri;
-    } | ThemeIcon | undefined = undefined;
 
     // A protected instance of the previous tree item.
     protected item: AppRegItem | undefined = undefined;
@@ -47,19 +41,18 @@ export class ServiceBase {
 
     // Trigger the event to indicate an error
     protected triggerOnError(error?: Error) {
-        this.onErrorEvent.fire({ success: false, error: error, item: this.item, previousIcon: this.previousIcon, statusBarHandle: this.statusBarHandle, treeDataProvider: this.treeDataProvider });
+        this.onErrorEvent.fire({ success: false, error: error, item: this.item, statusBarHandle: this.statusBarHandle, treeDataProvider: this.treeDataProvider });
     }
 
     // Trigger the event to indicate completion
     protected triggerOnComplete() {
-        this.onCompleteEvent.fire({ success: true, previousIcon: this.previousIcon, statusBarHandle: this.statusBarHandle, treeDataProvider: this.treeDataProvider });
+        this.onCompleteEvent.fire({ success: true, statusBarHandle: this.statusBarHandle, treeDataProvider: this.treeDataProvider });
     }
 
     // Initiates the visual change of the tree view
     protected triggerTreeChange(statusBarMessage?: string, item?: AppRegItem): void {
         if (item !== undefined) {
             this.item = item;
-            this.previousIcon = item.iconPath;
             item.iconPath = new ThemeIcon("loading~spin");
             this.treeDataProvider.triggerOnDidChangeTreeData(item);
         }
@@ -69,16 +62,9 @@ export class ServiceBase {
         }
     }
 
-    // Sets the icon for a tree item
-    protected setTreeItemIcon(item: AppRegItem, icon?: string | Uri | {
-        light: string | Uri;
-        dark: string | Uri;
-    } | ThemeIcon | undefined, spinner?: boolean) {
-
-        if (spinner) {
-            icon = new ThemeIcon("loading~spin");
-        }
-        item.iconPath = icon;
+    // Resets the icon for a tree item
+    protected resetTreeItemIcon(item: AppRegItem) {
+        item.iconPath = item.baseIcon;
         this.treeDataProvider.triggerOnDidChangeTreeData(item);
     }
 

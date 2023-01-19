@@ -10,9 +10,9 @@ export const errorHandler = async (result: ActivityResult) => {
 		result.statusBarHandle!.dispose();
 	}
 
-	if (result.item !== undefined && result.treeDataProvider !== undefined && result.previousIcon !== undefined) {
+	if (result.item !== undefined && result.treeDataProvider !== undefined) {
 		// Restore the original icon.
-		result.item.iconPath = result.previousIcon;
+		result.item.iconPath = result.item.baseIcon;
 		result.treeDataProvider.triggerOnDidChangeTreeData(result.item);
 	}
 
