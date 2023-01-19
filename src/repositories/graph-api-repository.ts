@@ -315,7 +315,7 @@ export class GraphApiRepository {
             PROPERTIES_TO_IGNORE_ON_UPDATE.forEach(property => {
                 delete application[property as keyof Application];
             });
-            return this.client!.api(`/applications/${id}`)
+            return await this.client!.api(`/applications/${id}`)
                 .update(application)
                 .then(() => {
                     return { success: true };
@@ -328,7 +328,7 @@ export class GraphApiRepository {
     // Deletes an application registration
     async deleteApplication(id: string): Promise<GraphResult<void>> {
         try {
-            return this.client!.api(`/applications/${id}`)
+            return await this.client!.api(`/applications/${id}`)
                 .delete()
                 .then(() => {
                     return { success: true };

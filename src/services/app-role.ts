@@ -45,6 +45,11 @@ export class AppRoleService extends ServiceBase {
         // Get the parent application so we can read the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
 
+        // If an empty array is returned then return as it's likely an error.
+        if (roles.length === 0) {
+            return;
+        }
+
         // Capture the new app role details by passing in the existing role.
         const role = await this.inputRoleDetails(roles.filter(r => r.id === item.value!)[0], item.objectId!, true);
 
@@ -68,6 +73,11 @@ export class AppRoleService extends ServiceBase {
 
         // Get the parent application so we can read the app roles.
         const roles = await this.getAppRoles(item.objectId!);
+
+        // If an empty array is returned then return as it's likely an error.
+        if (roles.length === 0) {
+            return;
+        }
 
         // Toggle the state of the app role.
         roles.filter(r => r.id === item.value!)[0].isEnabled = state;
@@ -94,6 +104,11 @@ export class AppRoleService extends ServiceBase {
 
             // Get the parent application so we can read the app roles.
             const roles = await this.getAppRoles(item.objectId!);
+
+            // If an empty array is returned then return as it's likely an error.
+            if (roles.length === 0) {
+                return;
+            }
 
             // Remove the app role from the array.
             roles.splice(roles.findIndex(r => r.id === item.value!), 1);
