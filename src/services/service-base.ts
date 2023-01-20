@@ -15,7 +15,7 @@ export class ServiceBase {
     // A protected instance of the Graph Api Repository.
     protected readonly graphRepository: GraphApiRepository;
 
-    // A protected instance of the previous tree item.
+    // A protected instance of the tree item.
     protected item: AppRegItem | undefined = undefined;
 
     // A protected instance of the previous status bar handle.
