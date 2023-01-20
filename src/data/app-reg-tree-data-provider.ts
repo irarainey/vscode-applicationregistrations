@@ -73,14 +73,19 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Initialises the tree view data based on the type of data to be displayed.
-    async renderTreeView(type: string, statusBarMessage: Disposable | undefined = undefined, filter?: string): Promise<void> {
+    async renderTreeView(type: string, statusBarHandle: Disposable | undefined = undefined, filter?: string): Promise<void> {
+
+        if (this.graphRepository.isClientInitialised === false) {
+            await this.initialiseGraphClient(statusBarHandle);
+            return;
+        }
 
         // Clear any existing status bar message
         if (this.statusBarHandle !== undefined) {
             await this.statusBarHandle.dispose();
         }
 
-        this.statusBarHandle = statusBarMessage;
+        this.statusBarHandle = statusBarHandle;
 
         // Clear the tree data
         this.treeData = [];

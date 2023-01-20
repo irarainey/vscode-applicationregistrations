@@ -1,4 +1,4 @@
-import { commands, window, workspace, env, Disposable, ExtensionContext } from "vscode";
+import { commands, window, workspace, env, ExtensionContext } from "vscode";
 import { VIEW_NAME } from "./constants";
 import { AppRegTreeDataProvider } from "./data/app-reg-tree-data-provider";
 import { AppRegItem } from "./models/app-reg-item";
@@ -40,12 +40,12 @@ const signInAudienceService = new SignInAudienceService(graphRepository, treeDat
 // This method is called when the extension is activated.
 export const activate = async (context: ExtensionContext) => {
 
-	workspace.onDidChangeConfiguration(event => {
+	workspace.onDidChangeConfiguration(async (event) => {
 		if (event.affectsConfiguration("applicationregistrations.showOwnedApplicationsOnly")
 			|| event.affectsConfiguration("applicationregistrations.maximumQueryApps")
 			|| event.affectsConfiguration("applicationregistrations.maximumApplicationsShown")
 			|| event.affectsConfiguration("applicationregistrations.useEventualConsistency")) {
-			populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"));
+			await treeDataProvider.renderTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"));
 		}
 	});
 
@@ -63,15 +63,15 @@ export const activate = async (context: ExtensionContext) => {
 	signInAudienceService.onError((result) => errorHandler(result));
 
 	// Hook up the complete handlers.
-	applicationService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	appRoleService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	keyCredentialService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	oauth2PermissionScopeService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	ownerService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	passwordCredentialService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	redirectUriService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	requiredResourceAccessService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	signInAudienceService.onComplete((result) => populateTreeView(result.statusBarHandle));
+	applicationService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
+	appRoleService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
+	keyCredentialService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
+	oauth2PermissionScopeService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
+	ownerService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
+	passwordCredentialService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
+	redirectUriService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
+	requiredResourceAccessService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
+	signInAudienceService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Menu Commands
@@ -79,7 +79,7 @@ export const activate = async (context: ExtensionContext) => {
 
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.signInToAzure`, async () => await graphRepository.authenticate()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addApp`, async () => await applicationService.add()));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshApps`, async () => await populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"))));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshApps`, async () => await treeDataProvider.renderTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"))));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.filterApps`, async () => await filterTreeView()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.tenantInfo`, async () => await organizationService.showTenantInformation()));
 
@@ -190,15 +190,6 @@ export const deactivate = async () => {
 	treeDataProvider.dispose();
 };
 
-// Define the populateTreeView function.
-const populateTreeView = async (statusBarHandle: Disposable | undefined = undefined) => {
-	if (graphRepository.isClientInitialised === false) {
-		await treeDataProvider.initialiseGraphClient(statusBarHandle);
-		return;
-	}
-	await treeDataProvider.renderTreeView("APPLICATIONS", statusBarHandle, filterCommand);
-};
-
 // Define the filterTreeView function.
 const filterTreeView = async () => {
 	if (graphRepository.isClientInitialised === false) {
@@ -239,12 +230,12 @@ const filterTreeView = async () => {
 	} else if (newFilter === "" && filterText !== "") {
 		filterText = undefined;
 		filterCommand = undefined;
-		await populateTreeView(window.setStatusBarMessage("$(loading~spin) Loading Application Registrations"));
+		await treeDataProvider.renderTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading Application Registrations"));
 	} else if (newFilter !== "" && newFilter !== filterText) {
 		// If the filter text is not empty then set the filter command and filter text.
 		filterText = newFilter!;
 		filterCommand = `startswith(displayName, \'${escapeSingleQuotesForFilter(newFilter)}\')`;
-		await populateTreeView(window.setStatusBarMessage("$(loading~spin) Filtering Application Registrations"));
+		await treeDataProvider.renderTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Filtering Application Registrations"), filterCommand);
 	}
 };
 
