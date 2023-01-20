@@ -32,7 +32,7 @@ export class AppRoleService extends ServiceBase {
         // Get the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
 
-        // If undefined is returned then return as it's likely an error.
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
         if (roles === undefined) {
             return;
         }

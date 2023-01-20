@@ -8,8 +8,9 @@ import { ActivityResult } from "../types/activity-result";
 import { sort } from "fast-sort";
 import { format } from "date-fns";
 import { GraphResult } from "../types/graph-result";
+import { escapeSingleQuotesForFilter } from "../utils/escape-string";
 
-// This is the application registration tree data provider for the tree view.
+// Application registration tree data provider for the tree view.
 export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
     // Private instance of the tree data
@@ -17,6 +18,10 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
     // A private instance of the status bar message handle.
     private statusBarHandle: Disposable | undefined;
+
+    // Private properties to hold the list filter
+    private filterCommand: string | undefined = undefined;
+    private filterText: string | undefined = undefined;
 
     // This is the event that is fired when the tree view is refreshed.
     private onDidChangeTreeDataEvent: EventEmitter<AppRegItem | undefined | null | void> = new EventEmitter<AppRegItem | undefined | null | void>();
@@ -57,7 +62,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     constructor(graphRepository: GraphApiRepository) {
         this.graphRepository = graphRepository;
         window.registerTreeDataProvider(VIEW_NAME, this);
-        this.renderTreeView("INITIALISING");
+        this.render("INITIALISING");
         Promise.resolve(this.initialiseGraphClient());
     }
 
@@ -66,14 +71,14 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
         if (statusBar !== undefined) {
             statusBar.dispose();
         }
-        this.graphRepository.initialiseTreeView = async (type: string, statusBarMessage?: Disposable | undefined, filter?: string) => {
-            await this.renderTreeView(type, statusBarMessage, filter);
+        this.graphRepository.initialiseTreeView = async (type: string, statusBarMessage?: Disposable | undefined) => {
+            await this.render(type, statusBarMessage);
         };
         this.graphRepository.initialise();
     }
 
     // Initialises the tree view data based on the type of data to be displayed.
-    async renderTreeView(type: string, statusBarHandle: Disposable | undefined = undefined, filter?: string): Promise<void> {
+    async render(type: string, statusBarHandle: Disposable | undefined = undefined): Promise<void> {
 
         if (this.graphRepository.isClientInitialised === false) {
             await this.initialiseGraphClient(statusBarHandle);
@@ -121,11 +126,60 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 this.onDidChangeTreeDataEvent.fire(undefined);
                 break;
             case "APPLICATIONS":
-                await this.populateAppRegTreeData(filter);
+                await this.populateTreeData();
                 break;
             default:
                 // Do nothing.
                 break;
+        }
+    }
+
+    // Filters the tree view.
+    async filter() {
+        if (this.graphRepository.isClientInitialised === false) {
+            await this.initialiseGraphClient();
+            return;
+        }
+
+        // If the tree is currently updating then we don't want to do anything.
+        if (this.isUpdating) {
+            return;
+        }
+
+        // If the tree is currently empty then we don't want to do anything.
+        if (this.isTreeEmpty) {
+            return;
+        }
+
+        // Determine if eventual consistency is enabled.
+        const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
+
+        // If eventual consistency is disabled then we cannot apply the filter
+        if (useEventualConsistency === false) {
+            window.showInformationMessage("The application list cannot be filtered when not using eventual consistency. Please enable this in user settings first.", "OK");
+            return;
+        }
+
+        // Prompt the user for the filter text.
+        const newFilter = await window.showInputBox({
+            placeHolder: "Name starts with",
+            prompt: "Filter applications by display name",
+            value: this.filterText,
+            ignoreFocusOut: true
+        });
+
+        // Escape has been hit so we don't want to do anything.
+        if ((newFilter === undefined) || (newFilter === "" && newFilter === (this.filterText ?? ""))) {
+            return;
+        } else if (newFilter === "" && this.filterText !== "") {
+            this.filterText = undefined;
+            this.filterCommand = undefined;
+            await this.render("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading Application Registrations"));
+        } else if (newFilter !== "" && newFilter !== this.filterText) {
+            // If the filter text is not empty then set the filter command and filter text.
+            this.filterText = newFilter!;
+            this.filterCommand = `startswith(displayName, \'${escapeSingleQuotesForFilter(newFilter)}\')`;
+            await this.render("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Filtering Application Registrations"));
         }
     }
 
@@ -251,7 +305,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Populates the tree view data for the application registrations.
-    private async populateAppRegTreeData(filter?: string): Promise<void> {
+    private async populateTreeData(): Promise<void> {
 
         // If the tree view is already being updated then return.
         if (this.isUpdating) {
@@ -320,11 +374,17 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             }
 
             // Get the application registrations from the graph client.
-            const applicationList = await this.getApplicationList(filter);
+            const applicationList = await this.getApplicationList();
+
+            // If the array is undefined then it'll be an Azure CLI authentication issue.
+            if (applicationList === undefined) {
+                this.isUpdating = false;
+                return;
+            }
 
             // If there are no application registrations then display an empty tree view.
             if (applicationList.length === 0) {
-                this.renderTreeView("EMPTY");
+                this.render("EMPTY");
                 this.isUpdating = false;
                 return;
             }
@@ -576,24 +636,24 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Returns application list depending on the user setting
-    private async getApplicationList(filter?: string): Promise<Application[]> {
+    private async getApplicationList(): Promise<Application[] | undefined> {
         // Get the user setting to determine whether to show all applications or just the ones owned by the user
         const showOwnedApplicationsOnly = workspace.getConfiguration("applicationregistrations").get("showOwnedApplicationsOnly") as boolean;
         if (showOwnedApplicationsOnly === true) {
-            const result: GraphResult<Application[]> = await this.graphRepository.getApplicationListOwned(filter);
+            const result: GraphResult<Application[]> = await this.graphRepository.getApplicationListOwned(this.filterCommand);
             if (result.success === true && result.value !== undefined) {
                 return result.value;
             } else {
                 this.triggerOnError(result.error);
-                return [];
+                return undefined;
             }
         } else {
-            const result: GraphResult<Application[]> = await this.graphRepository.getApplicationListAll(filter);
+            const result: GraphResult<Application[]> = await this.graphRepository.getApplicationListAll(this.filterCommand);
             if (result.success === true && result.value !== undefined) {
                 return result.value;
             } else {
                 this.triggerOnError(result.error);
-                return [];
+                return undefined;
             }
         }
     }

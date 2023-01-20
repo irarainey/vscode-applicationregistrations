@@ -1,12 +1,13 @@
 import "isomorphic-fetch";
-import * as ChildProcess from "child_process";
 import { SCOPE, PROPERTIES_TO_IGNORE_ON_UPDATE, DIRECTORY_OBJECTS_URI } from "../constants";
 import { window, Disposable, workspace } from "vscode";
-import { Client, ClientOptions, GraphRequest } from "@microsoft/microsoft-graph-client";
+import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
 import { Application, KeyCredential, User, PasswordCredential, ServicePrincipal, Organization } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../types/graph-result";
+import { execShellCmd } from "../utils/exec-shell-cmd";
+import { escapeSingleQuotesForFilter, escapeSingleQuotesForSearch } from "../utils/escape-string";
 
 // This is the client for the Microsoft Graph API
 export class GraphApiRepository {
@@ -23,7 +24,7 @@ export class GraphApiRepository {
     }
 
     // A function that is called when the tree view is ready to be initialised
-    initialiseTreeView: (type: string, statusBarMessage?: Disposable | undefined, filter?: string) => void;
+    initialiseTreeView: (type: string, statusBarMessage?: Disposable | undefined) => void;
 
     // Initialises the graph client
     initialise() {
@@ -407,22 +408,3 @@ export class GraphApiRepository {
         this.isClientInitialised = false;
     }
 }
-
-export const escapeSingleQuotesForFilter = (str: string) => {
-    return str.replace(/'/g, "''");
-};
-
-export const escapeSingleQuotesForSearch = (str: string) => {
-    return str.replace(/'/g, "\'");
-};
-
-export const execShellCmd = async (cmd: string) => {
-    return new Promise<string>((resolve, reject) => {
-        ChildProcess.exec(cmd, (error: any, response: any) => {
-            if (error) {
-                return reject(error);
-            }
-            return resolve(response);
-        });
-    });
-};

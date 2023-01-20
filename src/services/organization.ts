@@ -2,7 +2,8 @@ import { window, Uri, TextDocumentContentProvider, EventEmitter, workspace, Disp
 import { CLI_TENANT_CMD } from "../constants";
 import { ServiceBase } from "./service-base";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
-import { GraphApiRepository, execShellCmd } from "../repositories/graph-api-repository";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
+import { execShellCmd } from "../utils/exec-shell-cmd";
 import { GraphResult } from "../types/graph-result";
 import { Organization } from "@microsoft/microsoft-graph-types";
 

@@ -1,8 +1,7 @@
-import { commands, window, workspace, env, ExtensionContext } from "vscode";
+import { commands, window, workspace, ExtensionContext } from "vscode";
 import { VIEW_NAME } from "./constants";
+import { GraphApiRepository } from "./repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "./data/app-reg-tree-data-provider";
-import { AppRegItem } from "./models/app-reg-item";
-import { GraphApiRepository, escapeSingleQuotesForFilter } from "./repositories/graph-api-repository";
 import { ApplicationService } from "./services/application";
 import { AppRoleService } from "./services/app-role";
 import { KeyCredentialService } from "./services/key-credential";
@@ -14,10 +13,7 @@ import { RedirectUriService } from "./services/redirect-uri";
 import { RequiredResourceAccessService } from "./services/required-resource-access";
 import { SignInAudienceService } from "./services/sign-in-audience";
 import { errorHandler } from "./error-handler";
-
-// Values to hold the list filter
-let filterCommand: string | undefined = undefined;
-let filterText: string | undefined = undefined;
+import { copyValue } from "./utils/copy-value";
 
 // Create a new instance of the Graph Api Repository.
 const graphRepository = new GraphApiRepository();
@@ -37,19 +33,31 @@ const redirectUriService = new RedirectUriService(graphRepository, treeDataProvi
 const requiredResourceAccessService = new RequiredResourceAccessService(graphRepository, treeDataProvider);
 const signInAudienceService = new SignInAudienceService(graphRepository, treeDataProvider);
 
-// This method is called when the extension is activated.
-export const activate = async (context: ExtensionContext) => {
+// Extension Activation
+export async function activate(context: ExtensionContext) {
 
+	// Hook up the configuration setting change handlers.
 	workspace.onDidChangeConfiguration(async (event) => {
 		if (event.affectsConfiguration("applicationregistrations.showOwnedApplicationsOnly")
 			|| event.affectsConfiguration("applicationregistrations.maximumQueryApps")
 			|| event.affectsConfiguration("applicationregistrations.maximumApplicationsShown")
 			|| event.affectsConfiguration("applicationregistrations.useEventualConsistency")) {
-			await treeDataProvider.renderTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"));
+			await treeDataProvider.render("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"));
 		}
 	});
 
-	// Hook up the error handlers.
+	// Hook up the complete event handlers.
+	applicationService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
+	appRoleService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
+	keyCredentialService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
+	oauth2PermissionScopeService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
+	ownerService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
+	passwordCredentialService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
+	redirectUriService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
+	requiredResourceAccessService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
+	signInAudienceService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
+
+	// Hook up the error event handlers.
 	treeDataProvider.onError((result) => errorHandler(result));
 	applicationService.onError((result) => errorHandler(result));
 	appRoleService.onError((result) => errorHandler(result));
@@ -62,120 +70,74 @@ export const activate = async (context: ExtensionContext) => {
 	requiredResourceAccessService.onError((result) => errorHandler(result));
 	signInAudienceService.onError((result) => errorHandler(result));
 
-	// Hook up the complete handlers.
-	applicationService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
-	appRoleService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
-	keyCredentialService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
-	oauth2PermissionScopeService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
-	ownerService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
-	passwordCredentialService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
-	redirectUriService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
-	requiredResourceAccessService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
-	signInAudienceService.onComplete((result) => treeDataProvider.renderTreeView("APPLICATIONS", result.statusBarHandle, filterCommand));
-
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Menu Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.signInToAzure`, async () => await graphRepository.authenticate()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addApp`, async () => await applicationService.add()));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshApps`, async () => await treeDataProvider.renderTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"))));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.filterApps`, async () => await filterTreeView()));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshApps`, async () => await treeDataProvider.render("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"))));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.filterApps`, async () => await treeDataProvider.filter()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.tenantInfo`, async () => await organizationService.showTenantInformation()));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Application Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteApp`, async item => await applicationService.delete(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.renameApp`, async item => await applicationService.rename(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.viewAppManifest`, async item => await applicationService.viewManifest(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyClientId`, item => applicationService.copyClientId(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openAppInPortal`, item => applicationService.openInPortal(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// App Role Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAppRole`, async item => await appRoleService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editAppRole`, async item => await appRoleService.edit(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteAppRole`, async item => await appRoleService.delete(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.enableAppRole`, async item => await appRoleService.changeState(item, true)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.disableAppRole`, async item => await appRoleService.changeState(item, false)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// API Permission Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addSingleScopeToExisting`, async item => await requiredResourceAccessService.addToExisting(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addSingleScope`, async item => await requiredResourceAccessService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeSingleScope`, async item => await requiredResourceAccessService.remove(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeApiScopes`, async item => await requiredResourceAccessService.removeApi(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Exposed API Scope Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addExposedApiScope`, async item => await oauth2PermissionScopeService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editExposedApiScope`, async item => await oauth2PermissionScopeService.edit(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteExposedApiScope`, async item => await oauth2PermissionScopeService.delete(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.enableExposedApiScope`, async item => await oauth2PermissionScopeService.changeState(item, true)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.disableExposedApiScope`, async item => await oauth2PermissionScopeService.changeState(item, false)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// App Id URI Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editAppIdUri`, async item => await applicationService.editAppIdUri(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeAppIdUri`, async item => await applicationService.removeAppIdUri(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyAppIdUri`, item => copyValue(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Password Credentials Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addPasswordCredential`, async item => await passwordCredentialService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deletePasswordCredential`, async item => await passwordCredentialService.delete(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Key Credentials Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.uploadKeyCredential`, async item => await keyCredentialService.upload(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteKeyCredential`, async item => await keyCredentialService.delete(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Redirect URI Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addRedirectUri`, async item => await redirectUriService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editRedirectUri`, async item => await redirectUriService.edit(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteRedirectUri`, async item => await redirectUriService.delete(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyRedirectUri`, item => copyValue(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Sign In Audience Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editAudience`, async item => await signInAudienceService.edit(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Owner Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addOwner`, async item => await ownerService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeOwner`, async item => await ownerService.remove(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openUserInPortal`, item => ownerService.openInPortal(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Common Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyValue`, item => copyValue(item)));
-};
+}
 
-// This method is called when your extension is deactivated.
-export const deactivate = async () => {
+// Extension Deactivation
+export function deactivate(): void {
+	// Dispose the services, tree data provider, and graph client.
 	signInAudienceService.dispose();
 	requiredResourceAccessService.dispose();
 	redirectUriService.dispose();
@@ -188,65 +150,4 @@ export const deactivate = async () => {
 	applicationService.dispose();
 	graphRepository.dispose();
 	treeDataProvider.dispose();
-};
-
-// Define the filterTreeView function.
-const filterTreeView = async () => {
-	if (graphRepository.isClientInitialised === false) {
-		await treeDataProvider.initialiseGraphClient();
-		return;
-	}
-
-	// If the tree is currently updating then we don't want to do anything.
-	if (treeDataProvider.isUpdating) {
-		return;
-	}
-
-	// If the tree is currently empty then we don't want to do anything.
-	if (treeDataProvider.isTreeEmpty) {
-		return;
-	}
-
-	// Determine if eventual consistency is enabled.
-	const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
-
-	// If eventual consistency is disabled then we cannot apply the filter
-	if (useEventualConsistency === false) {
-		window.showInformationMessage("The application list cannot be filtered when not using eventual consistency. Please enable this in user settings first.", "OK");
-		return;
-	}
-
-	// Prompt the user for the filter text.
-	const newFilter = await window.showInputBox({
-		placeHolder: "Name starts with",
-		prompt: "Filter applications by display name",
-		value: filterText,
-		ignoreFocusOut: true
-	});
-
-	// Escape has been hit so we don't want to do anything.
-	if ((newFilter === undefined) || (newFilter === "" && newFilter === (filterText ?? ""))) {
-		return;
-	} else if (newFilter === "" && filterText !== "") {
-		filterText = undefined;
-		filterCommand = undefined;
-		await treeDataProvider.renderTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading Application Registrations"));
-	} else if (newFilter !== "" && newFilter !== filterText) {
-		// If the filter text is not empty then set the filter command and filter text.
-		filterText = newFilter!;
-		filterCommand = `startswith(displayName, \'${escapeSingleQuotesForFilter(newFilter)}\')`;
-		await treeDataProvider.renderTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Filtering Application Registrations"), filterCommand);
-	}
-};
-
-// Define the copy value function.
-const copyValue = (item: AppRegItem) => {
-	env.clipboard.writeText(
-		item.contextValue === "COPY"
-			|| item.contextValue === "WEB-REDIRECT-URI"
-			|| item.contextValue === "SPA-REDIRECT-URI"
-			|| item.contextValue === "NATIVE-REDIRECT-URI"
-			|| item.contextValue === "APPID-URI"
-			? item.value!
-			: item.children![0].value!);
-};
+}
