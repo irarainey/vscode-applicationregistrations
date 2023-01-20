@@ -43,7 +43,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         }
 
         // Set the added trigger to the status bar message.
-        this.triggerTreeChange("Adding Scope", item);
+        const status = this.indicateChange("Adding Scope...", item);
 
         // Get the existing scopes
         const api = await this.getScopes(item.objectId!);
@@ -57,7 +57,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         api.oauth2PermissionScopes!.push(scope);
 
         // Update the application.
-        await this.updateApplication(item.objectId!, { api: api });
+        await this.updateApplication(item.objectId!, { api: api }, status);
     }
 
     // Edits an exposed api scope from an application registration.
@@ -80,17 +80,17 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         }
 
         // Set the added trigger to the status bar message.
-        this.triggerTreeChange("Updating Scope", item);
+        const status = this.indicateChange("Updating Scope...", item);
 
         // Update the application.
-        await this.updateApplication(item.objectId!, { api: api });
+        await this.updateApplication(item.objectId!, { api: api }, status);
     }
 
     // Changes the enabled state of an exposed api scope for an application registration.
     async changeState(item: AppRegItem, state: boolean): Promise<void> {
 
         // Set the added trigger to the status bar message.
-        this.triggerTreeChange(state === true ? "Enabling Scope" : "Disabling Scope", item);
+        const status = this.indicateChange(state === true ? "Enabling Scope..." : "Disabling Scope...", item);
 
         // Get the parent application so we can read the scopes.
         const api = await this.getScopes(item.objectId!);
@@ -104,7 +104,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0].isEnabled = state;
 
         // Update the application.
-        await this.updateApplication(item.objectId!, { api: api });
+        await this.updateApplication(item.objectId!, { api: api }, status);
     }
 
     // Deletes an exposed api scope from an application registration.
@@ -121,7 +121,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         // If the user confirms the removal then delete the role.
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
-            this.triggerTreeChange("Deleting Scope", item);
+            const status = this.indicateChange("Deleting Scope...", item);
 
             // Get the parent application so we can read the app roles.
             const api = await this.getScopes(item.objectId!);
@@ -135,14 +135,14 @@ export class OAuth2PermissionScopeService extends ServiceBase {
             api!.oauth2PermissionScopes!.splice(api!.oauth2PermissionScopes!.findIndex(r => r.id === item.value!), 1);
 
             // Update the application.
-            await this.updateApplication(item.objectId!, { api: api });
+            await this.updateApplication(item.objectId!, { api: api }, status);
         }
     }
 
     // Updates the application registration.
-    private async updateApplication(id: string, application: Application) {
+    private async updateApplication(id: string, application: Application, status: string | undefined = undefined): Promise<void> {
         const update: GraphResult<void> = await this.graphRepository.updateApplication(id, application);
-        update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
+        update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
     }
 
     // Gets the exposed api scopes for an application registration.

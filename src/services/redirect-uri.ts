@@ -205,20 +205,20 @@ export class RedirectUriService extends ServiceBase {
     private async updateApplication(item: AppRegItem, redirectUris: string[]): Promise<void> {
 
         // Show progress indicator.
-        this.triggerTreeChange("Updating Redirect URIs", item);
+        const status = this.indicateChange("Updating Redirect URIs...", item);
 
         // Determine which section to add the redirect URI to.
         if (item.contextValue! === "WEB-REDIRECT-URI" || item.contextValue! === "WEB-REDIRECT") {
             const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } });
-            update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
+            update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
         }
         else if (item.contextValue! === "SPA-REDIRECT-URI" || item.contextValue! === "SPA-REDIRECT") {
             const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { spa: { redirectUris: redirectUris } });
-            update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
+            update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
         }
         else if (item.contextValue! === "NATIVE-REDIRECT-URI" || item.contextValue! === "NATIVE-REDIRECT") {
             const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { publicClient: { redirectUris: redirectUris } });
-            update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
+            update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
         }
     }
 

@@ -1,4 +1,4 @@
-import { window, Uri, TextDocumentContentProvider, EventEmitter, workspace, Disposable } from "vscode";
+import { window, Uri, TextDocumentContentProvider, EventEmitter, workspace } from "vscode";
 import { CLI_TENANT_CMD } from "../constants";
 import { ServiceBase } from "./service-base";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
@@ -6,6 +6,7 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { execShellCmd } from "../utils/exec-shell-cmd";
 import { GraphResult } from "../types/graph-result";
 import { Organization } from "@microsoft/microsoft-graph-types";
+import { clearStatusBarMessage } from "../utils/status-bar";
 
 export class OrganizationService extends ServiceBase {
 
@@ -17,19 +18,13 @@ export class OrganizationService extends ServiceBase {
     // Shows the tenant information.
     async showTenantInformation(): Promise<void> {
 
-        // Check if the graph client is initialised.
-        if (this.graphRepository.isClientInitialised === false) {
-            await this.treeDataProvider.initialiseGraphClient();
-            return;
-        }
-
         // Set the status bar message.
-        this.triggerTreeChange("Loading Tenant Information");
+        const status = this.indicateChange("Loading Tenant Information...");
 
         // Execute the az cli command to get the tenant id
         execShellCmd(CLI_TENANT_CMD)
             .then(async (response) => {
-                await this.showTenantWindow(response);
+                await this.showTenantWindow(response, status);
             })
             .catch(async (error) => {
                 this.triggerOnError(error);
@@ -37,7 +32,7 @@ export class OrganizationService extends ServiceBase {
     }
 
     // Shows the tenant information in a new read-only window.
-    private async showTenantWindow(tenantId: string): Promise<void> {
+    private async showTenantWindow(tenantId: string, status: string | undefined): Promise<void> {
         // Get the tenant information.
         const result: GraphResult<Organization> = await this.graphRepository.getTenantInformation(tenantId);
         if (result.success === true && result.value !== undefined) {
@@ -61,9 +56,7 @@ export class OrganizationService extends ServiceBase {
             workspace.openTextDocument(uri)
                 .then(async (doc) => {
                     await window.showTextDocument(doc, { preview: false });
-                    if (this.statusBarHandle !== undefined) {
-                        this.statusBarHandle!.dispose();
-                    }
+                    clearStatusBarMessage(status!);
                 });
         } else {
             this.triggerOnError(result.error);

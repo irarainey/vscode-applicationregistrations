@@ -1,9 +1,12 @@
 ## 0.4.0
 
-- Added a dispose call for the organization service.
 - Added additional error handling to capture Azure CLI being signed out.
-- Fixed an issue where duplicate redirect uris could be added.
+- Added a dispose call for the organization service.
 - Refactored error and action completion triggers.
+- Refactored statusbar message handling and disposal.
+- Refactored Azure CLI authentication process.
+- Fixed an issue where duplicate redirect uris could be added.
+- Fixed an issue where the filter became inactive if the list was filtered empty.
 - Other minor refactoring.
 
 - ## 0.3.0

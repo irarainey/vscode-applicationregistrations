@@ -1,14 +1,15 @@
 import * as path from "path";
-import { SIGNIN_COMMAND_TEXT, VIEW_NAME, APPLICATION_SELECT_PROPERTIES } from "../constants";
-import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, Disposable, ConfigurationTarget } from "vscode";
+import { SIGNIN_COMMAND_TEXT, APPLICATION_SELECT_PROPERTIES } from "../constants";
+import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, ConfigurationTarget } from "vscode";
 import { Application, KeyCredential, PasswordCredential, User, AppRole, RequiredResourceAccess, PermissionScope, ServicePrincipal } from "@microsoft/microsoft-graph-types";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegItem } from "../models/app-reg-item";
-import { ActivityResult } from "../types/activity-result";
+import { ErrorResult } from "../types/error-result";
 import { sort } from "fast-sort";
 import { format } from "date-fns";
 import { GraphResult } from "../types/graph-result";
 import { escapeSingleQuotesForFilter } from "../utils/escape-string";
+import { clearStatusBarMessage, setStatusBarMessage } from "../utils/status-bar";
 
 // Application registration tree data provider for the tree view.
 export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
@@ -16,24 +17,23 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     // Private instance of the tree data
     private treeData: AppRegItem[] = [];
 
-    // A private instance of the status bar message handle.
-    private statusBarHandle: Disposable | undefined;
-
-    // Private properties to hold the list filter
+    // Private property to hold the list filter command
     private filterCommand: string | undefined = undefined;
+
+    // Private property to hold the list filter plain text
     private filterText: string | undefined = undefined;
 
     // This is the event that is fired when the tree view is refreshed.
     private onDidChangeTreeDataEvent: EventEmitter<AppRegItem | undefined | null | void> = new EventEmitter<AppRegItem | undefined | null | void>();
 
     // A protected instance of the EventEmitter class to handle error events.
-    private onErrorEvent: EventEmitter<ActivityResult> = new EventEmitter<ActivityResult>();
+    private onErrorEvent: EventEmitter<ErrorResult> = new EventEmitter<ErrorResult>();
 
     //Defines the event that is fired when the tree view is refreshed.
     public readonly onDidChangeTreeData: Event<AppRegItem | undefined | null | void> = this.onDidChangeTreeDataEvent.event;
 
     // A public readonly property to expose the error event.
-    public readonly onError: Event<ActivityResult> = this.onErrorEvent.event;
+    public readonly onError: Event<ErrorResult> = this.onErrorEvent.event;
 
     // A public property for the Graph Api Repository.
     public graphRepository: GraphApiRepository;
@@ -61,36 +61,13 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     // The constructor for the AppRegTreeDataProvider class.
     constructor(graphRepository: GraphApiRepository) {
         this.graphRepository = graphRepository;
-        window.registerTreeDataProvider(VIEW_NAME, this);
-        this.render("INITIALISING");
-        Promise.resolve(this.initialiseGraphClient());
-    }
-
-    // A public method to initialise the graph client.
-    async initialiseGraphClient(statusBar?: Disposable | undefined): Promise<void> {
-        if (statusBar !== undefined) {
-            statusBar.dispose();
-        }
-        this.graphRepository.initialiseTreeView = async (type: string, statusBarMessage?: Disposable | undefined) => {
-            await this.render(type, statusBarMessage);
+        this.graphRepository.initialiseTreeView = async (type: string) => {
+            await this.render(undefined, type);
         };
-        this.graphRepository.initialise();
     }
 
     // Initialises the tree view data based on the type of data to be displayed.
-    async render(type: string, statusBarHandle: Disposable | undefined = undefined): Promise<void> {
-
-        if (this.graphRepository.isClientInitialised === false) {
-            await this.initialiseGraphClient(statusBarHandle);
-            return;
-        }
-
-        // Clear any existing status bar message
-        if (this.statusBarHandle !== undefined) {
-            await this.statusBarHandle.dispose();
-        }
-
-        this.statusBarHandle = statusBarHandle;
+    async render(status: string | undefined = undefined, type: string = "APPLICATIONS"): Promise<void> {
 
         // Clear the tree data
         this.treeData = [];
@@ -105,12 +82,23 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 }));
                 this.onDidChangeTreeDataEvent.fire(undefined);
                 break;
+            case "AUTHENTICATING":
+                this.treeData.push(new AppRegItem({
+                    label: "Waiting for authentication to complete",
+                    context: "AUTHENTICATING",
+                    iconPath: new ThemeIcon("loading~spin", new ThemeColor("editor.foreground"))
+                }));
+                this.onDidChangeTreeDataEvent.fire(undefined);
+                break;
             case "EMPTY":
                 this.treeData.push(new AppRegItem({
                     label: "No applications found",
                     context: "EMPTY",
                     iconPath: new ThemeIcon("info", new ThemeColor("editor.foreground"))
                 }));
+                if (status !== undefined) {
+                    clearStatusBarMessage(status);
+                }
                 this.onDidChangeTreeDataEvent.fire(undefined);
                 break;
             case "SIGN-IN":
@@ -123,10 +111,20 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         title: SIGNIN_COMMAND_TEXT
                     }
                 }));
+                if (status !== undefined) {
+                    clearStatusBarMessage(status);
+                }
                 this.onDidChangeTreeDataEvent.fire(undefined);
                 break;
+            case "AUTHENTICATED":
+                this.treeData.push(new AppRegItem({
+                    label: "Initialising extension",
+                    context: "INITIALISING",
+                    iconPath: new ThemeIcon("loading~spin", new ThemeColor("editor.foreground"))
+                }));
+                this.onDidChangeTreeDataEvent.fire(undefined);
             case "APPLICATIONS":
-                await this.populateTreeData();
+                await this.populateTreeData(status);
                 break;
             default:
                 // Do nothing.
@@ -136,10 +134,6 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
     // Filters the tree view.
     async filter() {
-        if (this.graphRepository.isClientInitialised === false) {
-            await this.initialiseGraphClient();
-            return;
-        }
 
         // If the tree is currently updating then we don't want to do anything.
         if (this.isUpdating) {
@@ -147,7 +141,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
         }
 
         // If the tree is currently empty then we don't want to do anything.
-        if (this.isTreeEmpty) {
+        if (this.isTreeEmpty === true && this.filterText === undefined) {
             return;
         }
 
@@ -174,12 +168,12 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
         } else if (newFilter === "" && this.filterText !== "") {
             this.filterText = undefined;
             this.filterCommand = undefined;
-            await this.render("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading Application Registrations"));
+            await this.render(setStatusBarMessage("Loading Application Registrations..."));
         } else if (newFilter !== "" && newFilter !== this.filterText) {
             // If the filter text is not empty then set the filter command and filter text.
             this.filterText = newFilter!;
             this.filterCommand = `startswith(displayName, \'${escapeSingleQuotesForFilter(newFilter)}\')`;
-            await this.render("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Filtering Application Registrations"));
+            await this.render(setStatusBarMessage("Filtering Application Registrations..."));
         }
     }
 
@@ -194,7 +188,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Returns the UI representation (AppItem) of the element that gets displayed in the view
-    getChildren(element?: AppRegItem | undefined): ProviderResult<AppRegItem[]> {
+    getChildren(element?: AppRegItem | undefined): ProviderResult<AppRegItem[] | undefined> {
 
         // No element selected so return all top level applications to render static elements
         if (element === undefined) {
@@ -208,7 +202,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 return this.getApplicationOwners(element)
                     .catch((error: any) => {
                         this.triggerOnError(error);
-                        return [];
+                        return undefined;
                     });
             case "WEB-REDIRECT":
                 // Return the web redirect URIs for the application
@@ -218,7 +212,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                             return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", result.value.web!.redirectUris!);
                         } else {
                             this.triggerOnError(result.error);
-                            return [];
+                            return undefined;
                         }
                     });
             case "SPA-REDIRECT":
@@ -229,7 +223,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                             return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", result.value.spa!.redirectUris!);
                         } else {
                             this.triggerOnError(result.error);
-                            return [];
+                            return undefined;
                         }
                     });
             case "NATIVE-REDIRECT":
@@ -240,7 +234,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                             return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", result.value.publicClient!.redirectUris!);
                         } else {
                             this.triggerOnError(result.error);
-                            return [];
+                            return undefined;
                         }
                     });
             case "PASSWORD-CREDENTIALS":
@@ -251,7 +245,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                             return this.getApplicationPasswordCredentials(element, result.value.passwordCredentials!);
                         } else {
                             this.triggerOnError(result.error);
-                            return [];
+                            return undefined;
                         }
                     });
             case "CERTIFICATE-CREDENTIALS":
@@ -262,7 +256,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                             return this.getApplicationKeyCredentials(element, result.value.keyCredentials!);
                         } else {
                             this.triggerOnError(result.error);
-                            return [];
+                            return undefined;
                         }
                     });
             case "API-PERMISSIONS":
@@ -273,7 +267,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                             return this.getApplicationApiPermissions(element, result.value.requiredResourceAccess!);
                         } else {
                             this.triggerOnError(result.error);
-                            return [];
+                            return undefined;
                         }
                     });
             case "EXPOSED-API-PERMISSIONS":
@@ -284,7 +278,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                             return this.getApplicationExposedApiPermissions(element, result.value.api?.oauth2PermissionScopes!);
                         } else {
                             this.triggerOnError(result.error);
-                            return [];
+                            return undefined;
                         }
                     });
             case "APP-ROLES":
@@ -295,7 +289,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                             return this.getApplicationAppRoles(element, result.value.appRoles!);
                         } else {
                             this.triggerOnError(result.error);
-                            return [];
+                            return undefined;
                         }
                     });
             default:
@@ -305,10 +299,13 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Populates the tree view data for the application registrations.
-    private async populateTreeData(): Promise<void> {
+    private async populateTreeData(status?: string): Promise<void> {
 
         // If the tree view is already being updated then return.
         if (this.isUpdating) {
+            if (status !== undefined) {
+                clearStatusBarMessage(status);
+            }
             return;
         }
 
@@ -384,7 +381,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
             // If there are no application registrations then display an empty tree view.
             if (applicationList.length === 0) {
-                this.render("EMPTY");
+                this.render(status, "EMPTY");
                 this.isUpdating = false;
                 return;
             }
@@ -609,13 +606,13 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             // Sort the applications by name and assign to the class-level array used to render the tree.
             this.treeData = sort(await Promise.all(unsorted.filter(a => a !== undefined)) as AppRegItem[]).asc(async a => a.order);
 
-            // Clear any status bar message
-            if (this, this.statusBarHandle !== undefined) {
-                this.statusBarHandle.dispose();
-            }
-
             // Trigger the event to refresh the tree view
             this.triggerOnDidChangeTreeData();
+
+            // Clear the status bar message
+            if (status !== undefined) {
+                clearStatusBarMessage(status);
+            }
 
             // Set the flag to indicate that the tree is no longer updating
             this.isUpdating = false;
@@ -625,9 +622,14 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             this.isUpdating = false;
 
             if (error.code !== undefined && error.code === "CredentialUnavailableError") {
-                // Check to see if the user is signed in and if not then prompt them to sign in
-                this.graphRepository.isClientInitialised = false;
-                this.graphRepository.initialise();
+                // Clear the status bar message
+                if (status !== undefined) {
+                    clearStatusBarMessage(status);
+                }
+
+                // // Check to see if the user is signed in and if not then prompt them to sign in
+                // this.graphRepository.isClientInitialised = false;
+                // this.graphRepository.initialise();
             }
             else {
                 this.triggerOnError(error);
@@ -659,7 +661,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Returns the application owners for the given application
-    private async getApplicationOwners(element: AppRegItem): Promise<AppRegItem[]> {
+    private async getApplicationOwners(element: AppRegItem): Promise<AppRegItem[] | undefined> {
         const result: GraphResult<User[]> = await this.graphRepository.getApplicationOwners(element.objectId!);
         if (result.success === true && result.value !== undefined) {
             return result.value.map(owner => {
@@ -692,7 +694,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             });
         } else {
             this.triggerOnError(result.error);
-            return [];
+            return undefined;
         }
     }
 
@@ -925,7 +927,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
     // Trigger the event to indicate an error
     private triggerOnError(error?: Error) {
-        this.onErrorEvent.fire({ success: false, error: error, treeDataProvider: this, statusBarHandle: this.statusBarHandle });
+        this.onErrorEvent.fire({ error: error, treeDataProvider: this });
     }
 
     // Dispose of the event listener

@@ -1,14 +1,13 @@
 import { window, env, Uri } from "vscode";
 import { SIGNIN_AUDIENCE_DOCUMENTATION_URI } from "./constants";
-import { ActivityResult } from "./types/activity-result";
+import { ErrorResult } from "./types/error-result";
+import { clearAllStatusBarMessages } from "./utils/status-bar";
 
 // Define the error handler function.
-export const errorHandler = async (result: ActivityResult) => {
+export const errorHandler = async (result: ErrorResult) => {
 
-	if (result.statusBarHandle !== undefined) {
-		// Clear any status bar messages.
-		result.statusBarHandle!.dispose();
-	}
+	// Clear all status bar messages.
+	clearAllStatusBarMessages();
 
 	if (result.item !== undefined && result.treeDataProvider !== undefined) {
 		// Restore the original icon.
@@ -24,7 +23,7 @@ export const errorHandler = async (result: ActivityResult) => {
 		if (result.error.message.includes("az login") || result.error.message.includes("az account set")) {
 			if (result.treeDataProvider !== undefined) {
 				window.showErrorMessage("You are not logged in to the Azure CLI. Please click the option to sign in, or run 'az login' in a terminal window.", "OK");
-				await result.treeDataProvider.initialiseGraphClient();
+				await result.treeDataProvider.render(undefined, "SIGN-IN");
 				return;
 			} else {
 				window.showErrorMessage("You are not logged in to the Azure CLI. Please run 'az login' in a terminal window.", "OK");

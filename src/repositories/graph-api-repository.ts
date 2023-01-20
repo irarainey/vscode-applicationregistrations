@@ -1,12 +1,11 @@
 import "isomorphic-fetch";
 import { SCOPE, PROPERTIES_TO_IGNORE_ON_UPDATE, DIRECTORY_OBJECTS_URI } from "../constants";
-import { window, Disposable, workspace } from "vscode";
+import { workspace } from "vscode";
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
 import { Application, KeyCredential, User, PasswordCredential, ServicePrincipal, Organization } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../types/graph-result";
-import { execShellCmd } from "../utils/exec-shell-cmd";
 import { escapeSingleQuotesForFilter, escapeSingleQuotesForSearch } from "../utils/escape-string";
 
 // This is the client for the Microsoft Graph API
@@ -15,19 +14,16 @@ export class GraphApiRepository {
     // A private instance of the graph client
     private client?: Client;
 
-    // A public property for the initialisation state
-    public isClientInitialised: boolean = false;
-
     // Constructor for the graph client
     constructor() {
         this.initialiseTreeView = () => { };
     }
 
     // A function that is called when the tree view is ready to be initialised
-    initialiseTreeView: (type: string, statusBarMessage?: Disposable | undefined) => void;
+    initialiseTreeView: (type: string) => void;
 
     // Initialises the graph client
-    initialise() {
+    async initialise(): Promise<boolean> {
 
         // Create an Azure CLI credential
         const credential = new AzureCliCredential();
@@ -46,49 +42,18 @@ export class GraphApiRepository {
         this.client = Client.initWithMiddleware(clientOptions);
 
         // Attempt to get an access token to determine the authentication state
-        credential.getToken(SCOPE)
+        const status = await credential.getToken(SCOPE)
             .then(() => {
                 // If the access token is returned, the user is authenticated
-                this.isClientInitialised = true;
-                this.initialiseTreeView("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Loading Application Registrations"));
+                return true;
             })
             .catch(() => {
                 // If the access token is not returned, the user is not authenticated
-                this.isClientInitialised = false;
-                this.initialiseTreeView("SIGN-IN");
+                return false;
             });
-    }
 
-    // Invokes the Azure CLI sign-in command to authenticate the user.
-    async authenticate(): Promise<void> {
-        // Prompt the user for the tenant name or Id.
-        const tenant = await window.showInputBox({
-            placeHolder: "Tenant Name or ID",
-            prompt: "Enter the tenant name or ID, or leave blank for the default tenant",
-            title: "Azure CLI Sign-In Tenant",
-            ignoreFocusOut: true
-        });
-
-        // If the tenant is undefined then we don't want to do anything because they pressed cancel.
-        if (tenant === undefined) {
-            return;
-        }
-
-        // Build the command to invoke the Azure CLI sign-in command.
-        let command = "az login";
-        if (tenant.length > 0) {
-            command += ` --tenant ${tenant}`;
-        }
-
-        // Execute the command.
-        execShellCmd(command)
-            .then(() => {
-                this.initialiseTreeView("INITIALISING");
-                this.initialise();
-            })
-            .catch(() => {
-                this.initialise();
-            });
+        // Return the initialisation state
+        return status;
     }
 
     // Returns a count of all owned application registrations
@@ -405,6 +370,5 @@ export class GraphApiRepository {
     // Disposes the client
     dispose(): void {
         this.client = undefined;
-        this.isClientInitialised = false;
     }
 }

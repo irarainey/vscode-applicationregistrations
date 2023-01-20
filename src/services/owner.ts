@@ -40,9 +40,9 @@ export class OwnerService extends ServiceBase {
             // If the new owner name is not empty then add as an owner.
             if (owner !== undefined) {
                 // Set the added trigger to the status bar message.
-                this.triggerTreeChange("Adding Owner", item);
+                const status = this.indicateChange("Adding Owner...", item);
                 const result: GraphResult<void> = await this.graphRepository.addApplicationOwner(item.objectId!, this.userList[0].id);
-                result.success === true ? this.triggerOnComplete() : this.triggerOnError(result.error);
+                result.success === true ? this.triggerOnComplete(status) : this.triggerOnError(result.error);
             }
         } else {
             this.triggerOnError(result.error);
@@ -58,9 +58,9 @@ export class OwnerService extends ServiceBase {
         // If the user confirms the removal then remove the user.
         if (response === "Yes") {
             // Set the added trigger to the status bar message.
-            this.triggerTreeChange("Removing Owner", item);
+            const status = this.indicateChange("Removing Owner...", item);
             const result: GraphResult<void> = await this.graphRepository.removeApplicationOwner(item.objectId!, item.userId!);
-            result.success === true ? this.triggerOnComplete() : this.triggerOnError(result.error);
+            result.success === true ? this.triggerOnComplete(status) : this.triggerOnError(result.error);
         }
     }
 

@@ -87,8 +87,8 @@ export class KeyCredentialService extends ServiceBase {
         keyCredentials.push(keyCredential);
 
         // Set the added trigger to the status bar message.
-        this.triggerTreeChange("Adding Certificate Credential", item);
-        await this.updateKeyCredentials(item.objectId!, keyCredentials);
+        const status = this.indicateChange("Adding Certificate Credential...", item);
+        await this.updateKeyCredentials(item.objectId!, keyCredentials, status);
     }
 
     // Deletes a key credential from an application registration.
@@ -112,8 +112,8 @@ export class KeyCredentialService extends ServiceBase {
             keyCredentials!.splice(keyCredentials!.findIndex(x => x.keyId === item.keyId!), 1);
 
             // Set the added trigger to the status bar message.
-            this.triggerTreeChange("Deleting Certificate Credential", item);
-            await this.updateKeyCredentials(item.objectId!, keyCredentials);
+            const status = this.indicateChange("Deleting Certificate Credential...", item);
+            await this.updateKeyCredentials(item.objectId!, keyCredentials, status);
         }
     }
 
@@ -129,8 +129,8 @@ export class KeyCredentialService extends ServiceBase {
     }
 
     // Updates the key credentials.
-    private async updateKeyCredentials(id: string, credentials: KeyCredential[]) {
+    private async updateKeyCredentials(id: string, credentials: KeyCredential[], status: string | undefined = undefined): Promise<void> {
         const update: GraphResult<void> = await this.graphRepository.updateKeyCredentials(id, credentials);
-        update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
+        update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
     }
 }

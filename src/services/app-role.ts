@@ -27,7 +27,7 @@ export class AppRoleService extends ServiceBase {
         }
 
         // Set the added trigger to the status bar message.
-        this.triggerTreeChange("Adding App Role", item);
+        const status = this.indicateChange("Adding App Role...", item);
 
         // Get the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
@@ -41,7 +41,7 @@ export class AppRoleService extends ServiceBase {
         roles.push(role);
 
         // Update the application.
-        await this.updateApplication(item.objectId!, { appRoles: roles });
+        await this.updateApplication(item.objectId!, { appRoles: roles }, status);
     }
 
     // Edits an app role from an application registration.
@@ -64,17 +64,17 @@ export class AppRoleService extends ServiceBase {
         }
 
         // Set the added trigger to the status bar message.
-        this.triggerTreeChange("Updating App Role", item);
+        const status = this.indicateChange("Updating App Role...", item);
 
         // Update the application.
-        await this.updateApplication(item.objectId!, { appRoles: roles });
+        await this.updateApplication(item.objectId!, { appRoles: roles }, status);
     }
 
     // Changes the enabled state of an app role from an application registration.
     async changeState(item: AppRegItem, state: boolean): Promise<void> {
 
         // Set the added trigger to the status bar message.
-        this.triggerTreeChange(state === true ? "Enabling App Role" : "Disabling App Role", item);
+        const status = this.indicateChange(state === true ? "Enabling App Role..." : "Disabling App Role...", item);
 
         // Get the parent application so we can read the app roles.
         const roles = await this.getAppRoles(item.objectId!);
@@ -88,7 +88,7 @@ export class AppRoleService extends ServiceBase {
         roles.filter(r => r.id === item.value!)[0].isEnabled = state;
 
         // Update the application.
-        await this.updateApplication(item.objectId!, { appRoles: roles });
+        await this.updateApplication(item.objectId!, { appRoles: roles }, status);
     }
 
     // Deletes an app role from an application registration.
@@ -105,7 +105,7 @@ export class AppRoleService extends ServiceBase {
         // If the user confirms the removal then delete the role.
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
-            this.triggerTreeChange("Deleting App Role", item);
+            const status = this.indicateChange("Deleting App Role...", item);
 
             // Get the parent application so we can read the app roles.
             const roles = await this.getAppRoles(item.objectId!);
@@ -119,14 +119,14 @@ export class AppRoleService extends ServiceBase {
             roles.splice(roles.findIndex(r => r.id === item.value!), 1);
 
             // Update the application.
-            await this.updateApplication(item.objectId!, { appRoles: roles });
+            await this.updateApplication(item.objectId!, { appRoles: roles }, status);
         }
     }
 
     // Updates an application registration with the new app roles.
-    private async updateApplication(id: string, application: Application) {
+    private async updateApplication(id: string, application: Application, status: string | undefined = undefined): Promise<void> {
         const update: GraphResult<void> = await this.graphRepository.updateApplication(id, application);
-        update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
+        update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
     }
 
     // Gets the app roles for an application registration.

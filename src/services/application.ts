@@ -6,6 +6,7 @@ import { ServiceBase } from "./service-base";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { Application } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../types/graph-result";
+import { clearStatusBarMessage } from "../utils/status-bar";
 
 export class ApplicationService extends ServiceBase {
 
@@ -16,11 +17,6 @@ export class ApplicationService extends ServiceBase {
 
     // Creates a new application registration.
     async add(): Promise<void> {
-
-        if (this.graphRepository.isClientInitialised === false) {
-            await this.treeDataProvider.initialiseGraphClient();
-            return;
-        }
 
         // Prompt the user for the application name.
         const displayName = await window.showInputBox({
@@ -45,9 +41,9 @@ export class ApplicationService extends ServiceBase {
             // If the sign in audience is not undefined then create the application.
             if (signInAudience !== undefined) {
                 // Set the added trigger to the status bar message.
-                this.triggerTreeChange("Creating Application Registration");
+                const status = this.indicateChange("Creating Application Registration...");
                 const update: GraphResult<Application> = await this.graphRepository.createApplication({ displayName: displayName, signInAudience: signInAudience.value });
-                (update.success === true && update.value !== undefined) ? this.triggerOnComplete() : this.triggerOnError(update.error);
+                (update.success === true && update.value !== undefined) ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
             }
         }
     }
@@ -67,8 +63,8 @@ export class ApplicationService extends ServiceBase {
 
         // If the new application id uri is not undefined then update the application.
         if (uri !== undefined) {
-            this.triggerTreeChange("Setting Application ID URI", item);
-            await this.updateApplication(item.objectId!, { identifierUris: [uri] });
+            const status = this.indicateChange("Setting Application ID URI...", item);
+            await this.updateApplication(item.objectId!, { identifierUris: [uri] }, status);
         }
     }
 
@@ -87,8 +83,8 @@ export class ApplicationService extends ServiceBase {
 
         // If the new application name is not undefined then update the application.
         if (displayName !== undefined) {
-            this.triggerTreeChange("Renaming Application Registration", item);
-            await this.updateApplication(item.objectId!, { displayName: displayName });
+            const status = this.indicateChange("Renaming Application Registration...", item);
+            await this.updateApplication(item.objectId!, { displayName: displayName }, status);
         }
     }
 
@@ -100,9 +96,9 @@ export class ApplicationService extends ServiceBase {
 
         // If the user confirms the deletion then delete the application.
         if (answer === "Yes") {
-            this.triggerTreeChange("Deleting Application Registration", item);
+            const status = this.indicateChange("Deleting Application Registration...", item);
             const update: GraphResult<void> = await this.graphRepository.deleteApplication(item.objectId!);
-            update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
+            update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
         }
     }
 
@@ -114,14 +110,14 @@ export class ApplicationService extends ServiceBase {
 
         // If the user confirms the deletion then delete the application.
         if (answer === "Yes") {
-            this.triggerTreeChange("Removing Application ID URI", item);
-            await this.updateApplication(item.objectId!, { identifierUris: [] });
+            const status = this.indicateChange("Removing Application ID URI...", item);
+            await this.updateApplication(item.objectId!, { identifierUris: [] }, status);
         }
     }
 
     // Opens the application manifest in a new editor window.
     async viewManifest(item: AppRegItem): Promise<void> {
-        this.triggerTreeChange("Loading Application Manifest");
+        const status = this.indicateChange("Loading Application Manifest...");
         const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsFull(item.objectId!);
         if (result.success === true && result.value !== undefined) {
             const newDocument = new class implements TextDocumentContentProvider {
@@ -136,9 +132,7 @@ export class ApplicationService extends ServiceBase {
             workspace.openTextDocument(uri)
                 .then(async (doc) => {
                     await window.showTextDocument(doc, { preview: false });
-                    if (this.statusBarHandle !== undefined) {
-                        this.statusBarHandle!.dispose();
-                    }
+                    clearStatusBarMessage(status!);
                 });
         } else {
             this.triggerOnError(result.error);
@@ -146,9 +140,9 @@ export class ApplicationService extends ServiceBase {
     }
 
     // Updates the application registration.
-    private async updateApplication(id: string, application: Application) {
+    private async updateApplication(id: string, application: Application, status: string | undefined = undefined): Promise<void> {
         const update: GraphResult<void> = await this.graphRepository.updateApplication(id, application);
-        update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
+        update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
     }
 
     // Copies the application Id to the clipboard.

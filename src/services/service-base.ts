@@ -1,8 +1,9 @@
 import { Event, EventEmitter, Disposable, ThemeIcon, window } from "vscode";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
-import { ActivityResult } from "../types/activity-result";
+import { ErrorResult } from "../types/error-result";
 import { AppRegItem } from "../models/app-reg-item";
+import { setStatusBarMessage, clearAllStatusBarMessages } from "../utils/status-bar";
 
 export class ServiceBase {
 
@@ -22,16 +23,16 @@ export class ServiceBase {
     protected statusBarHandle: Disposable | undefined = undefined;
 
     // A protected instance of the EventEmitter class to handle error events.
-    private onErrorEvent: EventEmitter<ActivityResult> = new EventEmitter<ActivityResult>();
+    private onErrorEvent: EventEmitter<ErrorResult> = new EventEmitter<ErrorResult>();
 
     // A protected instance of the EventEmitter class to handle complete events.
-    private onCompleteEvent: EventEmitter<ActivityResult> = new EventEmitter<ActivityResult>();
+    private onCompleteEvent: EventEmitter<string | undefined> = new EventEmitter<string | undefined>();
 
     // A public readonly property to expose the error event.
-    public readonly onError: Event<ActivityResult> = this.onErrorEvent.event;
+    public readonly onError: Event<ErrorResult> = this.onErrorEvent.event;
 
     // A public readonly property to expose the complete event.
-    public readonly onComplete: Event<ActivityResult> = this.onCompleteEvent.event;
+    public readonly onComplete: Event<string | undefined> = this.onCompleteEvent.event;
 
     // The constructor for the OwnerService class.
     constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
@@ -41,25 +42,30 @@ export class ServiceBase {
 
     // Trigger the event to indicate an error
     protected triggerOnError(error?: Error) {
-        this.onErrorEvent.fire({ success: false, error: error, item: this.item, statusBarHandle: this.statusBarHandle, treeDataProvider: this.treeDataProvider });
+        this.onErrorEvent.fire({ error: error, item: this.item, treeDataProvider: this.treeDataProvider });
     }
 
     // Trigger the event to indicate completion
-    protected triggerOnComplete() {
-        this.onCompleteEvent.fire({ success: true, statusBarHandle: this.statusBarHandle, treeDataProvider: this.treeDataProvider });
+    protected triggerOnComplete(statusId: string | undefined = undefined) {
+        this.onCompleteEvent.fire(statusId);
     }
 
     // Initiates the visual change of the tree view
-    protected triggerTreeChange(statusBarMessage?: string, item?: AppRegItem): void {
+    protected indicateChange(statusMessage?: string, item?: AppRegItem): string | undefined {
+
+        let id: string | undefined = undefined;
+
+        if(statusMessage !== undefined) {
+            id = setStatusBarMessage(statusMessage);
+        }
+
         if (item !== undefined) {
             this.item = item;
             item.iconPath = new ThemeIcon("loading~spin");
             this.treeDataProvider.triggerOnDidChangeTreeData(item);
         }
 
-        if (statusBarMessage !== undefined) {
-            this.statusBarHandle = window.setStatusBarMessage(`$(loading~spin) ${statusBarMessage}`);
-        }
+        return id;
     }
 
     // Resets the icon for a tree item
@@ -70,6 +76,7 @@ export class ServiceBase {
 
     // Dispose of anything that needs to be disposed of.
     dispose(): void {
+        clearAllStatusBarMessages();
         this.onErrorEvent.dispose();
         this.onCompleteEvent.dispose();
         while (this.disposable.length) {

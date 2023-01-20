@@ -14,6 +14,8 @@ import { RequiredResourceAccessService } from "./services/required-resource-acce
 import { SignInAudienceService } from "./services/sign-in-audience";
 import { errorHandler } from "./error-handler";
 import { copyValue } from "./utils/copy-value";
+import { setStatusBarMessage } from "./utils/status-bar";
+import { authenticate } from "./utils/cli-authentication";
 
 // Create a new instance of the Graph Api Repository.
 const graphRepository = new GraphApiRepository();
@@ -42,38 +44,37 @@ export async function activate(context: ExtensionContext) {
 			|| event.affectsConfiguration("applicationregistrations.maximumQueryApps")
 			|| event.affectsConfiguration("applicationregistrations.maximumApplicationsShown")
 			|| event.affectsConfiguration("applicationregistrations.useEventualConsistency")) {
-			await treeDataProvider.render("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"));
+			await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."));
 		}
 	});
 
 	// Hook up the complete event handlers.
-	applicationService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
-	appRoleService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
-	keyCredentialService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
-	oauth2PermissionScopeService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
-	ownerService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
-	passwordCredentialService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
-	redirectUriService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
-	requiredResourceAccessService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
-	signInAudienceService.onComplete((result) => treeDataProvider.render("APPLICATIONS", result.statusBarHandle));
+	applicationService.onComplete(async (result) => await treeDataProvider.render(result));
+	appRoleService.onComplete(async (result) => await treeDataProvider.render(result));
+	keyCredentialService.onComplete(async (result) => await treeDataProvider.render(result));
+	oauth2PermissionScopeService.onComplete(async (result) => await treeDataProvider.render(result));
+	ownerService.onComplete(async (result) => await treeDataProvider.render(result));
+	passwordCredentialService.onComplete(async (result) => await treeDataProvider.render(result));
+	redirectUriService.onComplete(async (result) => await treeDataProvider.render(result));
+	requiredResourceAccessService.onComplete(async (result) => await treeDataProvider.render(result));
+	signInAudienceService.onComplete(async (result) => await treeDataProvider.render(result));
 
 	// Hook up the error event handlers.
-	treeDataProvider.onError((result) => errorHandler(result));
-	applicationService.onError((result) => errorHandler(result));
-	appRoleService.onError((result) => errorHandler(result));
-	keyCredentialService.onError((result) => errorHandler(result));
-	oauth2PermissionScopeService.onError((result) => errorHandler(result));
-	organizationService.onError((result) => errorHandler(result));
-	ownerService.onError((result) => errorHandler(result));
-	passwordCredentialService.onError((result) => errorHandler(result));
-	redirectUriService.onError((result) => errorHandler(result));
-	requiredResourceAccessService.onError((result) => errorHandler(result));
-	signInAudienceService.onError((result) => errorHandler(result));
+	treeDataProvider.onError(async (result) => await errorHandler(result));
+	applicationService.onError(async (result) => await errorHandler(result));
+	appRoleService.onError(async (result) => await errorHandler(result));
+	keyCredentialService.onError(async (result) => await errorHandler(result));
+	oauth2PermissionScopeService.onError(async (result) => await errorHandler(result));
+	organizationService.onError(async (result) => await errorHandler(result));
+	ownerService.onError(async (result) => await errorHandler(result));
+	passwordCredentialService.onError(async (result) => await errorHandler(result));
+	redirectUriService.onError(async (result) => await errorHandler(result));
+	requiredResourceAccessService.onError(async (result) => await errorHandler(result));
+	signInAudienceService.onError(async (result) => await errorHandler(result));
 
 	// Menu Commands
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.signInToAzure`, async () => await graphRepository.authenticate()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addApp`, async () => await applicationService.add()));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshApps`, async () => await treeDataProvider.render("APPLICATIONS", window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"))));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshApps`, async () => await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."))));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.filterApps`, async () => await treeDataProvider.filter()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.tenantInfo`, async () => await organizationService.showTenantInformation()));
 
@@ -133,6 +134,33 @@ export async function activate(context: ExtensionContext) {
 
 	// Common Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyValue`, item => copyValue(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.signInToAzure`, async () => {
+		await treeDataProvider.render(undefined, "AUTHENTICATING");
+		const status = await authenticate();
+		if (status === true) {
+			await treeDataProvider.render(setStatusBarMessage("Loading Application Registrations..."), "AUTHENTICATED");
+		} else {
+			await treeDataProvider.render(undefined, "SIGN-IN");
+		}
+	}));
+
+	// Register the tree data provider.
+	window.registerTreeDataProvider(VIEW_NAME, treeDataProvider);
+
+	// Set the tree view to initialising.
+	await treeDataProvider.render(undefined, "INITIALISING");
+
+	// Initialise the graph repository.
+	const status = await graphRepository.initialise();
+
+	// Were we able to get an access token?
+	if (status !== true) {
+		// If not then the user needs to authenticate.
+		await treeDataProvider.render(undefined, "SIGN-IN");
+	} else {
+		// If so then the user is authenticated so load the tree view.
+		await treeDataProvider.render(setStatusBarMessage("Loading Application Registrations..."));
+	}
 }
 
 // Extension Deactivation

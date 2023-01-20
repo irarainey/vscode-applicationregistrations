@@ -25,13 +25,14 @@ export class SignInAudienceService extends ServiceBase {
             });
 
         if (audience !== undefined) {
+            let status: string | undefined; 
             if (item.contextValue! === "AUDIENCE-PARENT") {
-                this.triggerTreeChange("Updating Sign In Audience", item.children![0]);
+                status = this.indicateChange("Updating Sign In Audience...", item.children![0]);
             } else {
-                this.triggerTreeChange("Updating Sign In Audience", item);
+                status = this.indicateChange("Updating Sign In Audience...", item);
             }
             const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { signInAudience: audience.value });
-            update.success === true ? this.triggerOnComplete() : this.triggerOnError(update.error);
+            update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
         }
     }
 }
