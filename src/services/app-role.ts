@@ -1,17 +1,18 @@
 import { window } from "vscode";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
-import { AppRole } from "@microsoft/microsoft-graph-types";
+import { AppRole, Application } from "@microsoft/microsoft-graph-types";
 import { v4 as uuidv4 } from "uuid";
 import { ServiceBase } from "./service-base";
-import { GraphClient } from "../clients/graph-client";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { debounce } from "ts-debounce";
+import { GraphResult } from "../types/graph-result";
 
 export class AppRoleService extends ServiceBase {
 
     // The constructor for the AppRolesService class.
-    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
-        super(graphClient, treeDataProvider);
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphRepository, treeDataProvider);
     }
 
     // Adds a new app role to an application registration.
@@ -26,23 +27,21 @@ export class AppRoleService extends ServiceBase {
         }
 
         // Set the added trigger to the status bar message.
-        const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Adding App Role", item);
+        const status = this.indicateChange("Adding App Role...", item);
 
         // Get the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
+
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (roles === undefined) {
+            return;
+        }
 
         // Add the new app role to the array.
         roles.push(role);
 
         // Update the application.
-        this.graphClient.updateApplication(item.objectId!, { appRoles: roles })
-            .then(() => {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            })
-            .catch((error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
-            });
+        await this.updateApplication(item.objectId!, { appRoles: roles }, status);
     }
 
     // Edits an app role from an application registration.
@@ -50,6 +49,11 @@ export class AppRoleService extends ServiceBase {
 
         // Get the parent application so we can read the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
+
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (roles === undefined) {
+            return;
+        }
 
         // Capture the new app role details by passing in the existing role.
         const role = await this.inputRoleDetails(roles.filter(r => r.id === item.value!)[0], item.objectId!, true);
@@ -60,40 +64,31 @@ export class AppRoleService extends ServiceBase {
         }
 
         // Set the added trigger to the status bar message.
-        const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Updating App Role", item);
+        const status = this.indicateChange("Updating App Role...", item);
 
         // Update the application.
-        this.graphClient.updateApplication(item.objectId!, { appRoles: roles })
-            .then(() => {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            })
-            .catch((error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
-            });
+        await this.updateApplication(item.objectId!, { appRoles: roles }, status);
     }
 
     // Changes the enabled state of an app role from an application registration.
     async changeState(item: AppRegItem, state: boolean): Promise<void> {
 
         // Set the added trigger to the status bar message.
-        const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange(state === true ? "Enabling App Role" : "Disabling App Role", item);
+        const status = this.indicateChange(state === true ? "Enabling App Role..." : "Disabling App Role...", item);
 
         // Get the parent application so we can read the app roles.
         const roles = await this.getAppRoles(item.objectId!);
+
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (roles === undefined) {
+            return;
+        }
 
         // Toggle the state of the app role.
         roles.filter(r => r.id === item.value!)[0].isEnabled = state;
 
         // Update the application.
-        this.graphClient.updateApplication(item.objectId!, { appRoles: roles })
-            .then(() => {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            })
-            .catch((error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
-            });
+        await this.updateApplication(item.objectId!, { appRoles: roles }, status);
     }
 
     // Deletes an app role from an application registration.
@@ -110,29 +105,40 @@ export class AppRoleService extends ServiceBase {
         // If the user confirms the removal then delete the role.
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
-            const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Deleting App Role", item);
+            const status = this.indicateChange("Deleting App Role...", item);
 
             // Get the parent application so we can read the app roles.
             const roles = await this.getAppRoles(item.objectId!);
+
+            // If the array is undefined then it'll be an Azure CLI authentication issue.
+            if (roles === undefined) {
+                return;
+            }
 
             // Remove the app role from the array.
             roles.splice(roles.findIndex(r => r.id === item.value!), 1);
 
             // Update the application.
-            this.graphClient.updateApplication(item.objectId!, { appRoles: roles })
-                .then(() => {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
-                });
+            await this.updateApplication(item.objectId!, { appRoles: roles }, status);
         }
     }
 
+    // Updates an application registration with the new app roles.
+    private async updateApplication(id: string, application: Application, status: string | undefined = undefined): Promise<void> {
+        const update: GraphResult<void> = await this.graphRepository.updateApplication(id, application);
+        update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
+    }
+
     // Gets the app roles for an application registration.
-    private async getAppRoles(id: string): Promise<AppRole[]> {
-        return (await this.graphClient.getApplicationDetailsPartial(id, "appRoles")).appRoles!;
+    private async getAppRoles(id: string): Promise<AppRole[] | undefined> {
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(id, "appRoles");
+        if (result.success === true && result.value !== undefined) {
+            return result.value?.appRoles;
+        }
+        else {
+            this.triggerOnError(result.error);
+            return undefined;
+        }
     }
 
     // Captures the details for an app role.
@@ -283,6 +289,12 @@ export class AppRoleService extends ServiceBase {
         // Check to see if the value already exists.
         if (isEditing !== true && oldValue !== value) {
             const roles = await this.getAppRoles(id);
+
+            // If the array is undefined then it'll be an Azure CLI authentication issue.
+            if (roles === undefined) {
+                return undefined;
+            }
+
             if (roles!.find(r => r.value === value) !== undefined) {
                 return "The value specified already exists.";
             }

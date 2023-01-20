@@ -1,10 +1,12 @@
 import { ThemeIcon, Command } from "vscode";
 import { AppRegItem } from "../models/app-reg-item";
 
-// This is the interface for the application registration tree view item parameters
-export interface AppRegItemParams {
+// This is the type for the application registration tree view item parameters
+export type AppRegItemParams = {
     label: string;
     context: string;
+    iconPath: string | ThemeIcon;
+    baseIcon?: string | ThemeIcon;
     value?: string;
     objectId?: string;
     appId?: string;
@@ -14,8 +16,7 @@ export interface AppRegItemParams {
     keyId?: string;
     children?: AppRegItem[];
     command?: Command;
-    iconPath?: string | ThemeIcon;
     tooltip?: string;
     order?: number;
     state?: boolean;
-}
+};

@@ -3,14 +3,17 @@ import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { addYears, isAfter, isBefore, isDate } from "date-fns";
 import { ServiceBase } from "./service-base";
-import { GraphClient } from "../clients/graph-client";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { format } from "date-fns";
+import { GraphResult } from "../types/graph-result";
+import { PasswordCredential } from "@microsoft/microsoft-graph-types";
+
 
 export class PasswordCredentialService extends ServiceBase {
 
     // The constructor for the PasswordCredentialsService class.
-    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
-        super(graphClient, treeDataProvider);
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphRepository, treeDataProvider);
     }
 
     // Adds a new password credential.
@@ -41,17 +44,15 @@ export class PasswordCredentialService extends ServiceBase {
 
             if (expiry !== undefined) {
                 // Set the added trigger to the status bar message.
-                const previousIcon = item.iconPath;
-                const status = this.triggerTreeChange("Adding Password Credential", item);
-                this.graphClient.addPasswordCredential(item.objectId!, description, expiry)
-                    .then((response) => {
-                        env.clipboard.writeText(response.secretText!);
-                        this.triggerOnComplete({ success: true, statusBarHandle: status });
-                        window.showInformationMessage("New password copied to clipboard.", "OK");
-                    })
-                    .catch((error) => {
-                        this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
-                    });
+                const status = this.indicateChange("Adding Password Credential...", item);
+                const update: GraphResult<PasswordCredential> = await this.graphRepository.addPasswordCredential(item.objectId!, description, expiry);
+                if (update.success === true && update.value !== undefined) {
+                    env.clipboard.writeText(update.value.secretText!);
+                    this.triggerOnComplete(status);
+                    window.showInformationMessage("New password copied to clipboard.", "OK");
+                } else {
+                    this.triggerOnError(update.error);
+                }
             }
         }
     }
@@ -65,15 +66,9 @@ export class PasswordCredentialService extends ServiceBase {
         // If the user confirms the removal then remove the password credential.
         if (answer === "Yes") {
             // Set the added trigger to the status bar message.
-            const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Deleting Password Credential", item);
-            this.graphClient.deletePasswordCredential(item.objectId!, item.value!)
-                .then(() => {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
-                });
+            const status = this.indicateChange("Deleting Password Credential...", item);
+            const update: GraphResult<void> = await this.graphRepository.deletePasswordCredential(item.objectId!, item.value!);
+            update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
         }
     }
 

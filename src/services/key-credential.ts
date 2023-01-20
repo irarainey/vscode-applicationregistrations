@@ -5,14 +5,15 @@ import { window, workspace } from "vscode";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
-import { GraphClient } from "../clients/graph-client";
-import { KeyCredential } from "@microsoft/microsoft-graph-types";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
+import { KeyCredential, Application } from "@microsoft/microsoft-graph-types";
+import { GraphResult } from "../types/graph-result";
 
 export class KeyCredentialService extends ServiceBase {
 
     // The constructor for the KeyCredentialsService class.
-    constructor(graphClient: GraphClient, treeDataProvider: AppRegTreeDataProvider) {
-        super(graphClient, treeDataProvider);
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+        super(graphRepository, treeDataProvider);
     }
 
     // Adds a new key credential by uploading a certificate.
@@ -77,19 +78,17 @@ export class KeyCredentialService extends ServiceBase {
         // Get all the key credentials for the application.
         const keyCredentials = await this.getKeyCredentials(item.objectId!);
 
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (keyCredentials === undefined) {
+            return;
+        }
+
         // Push the new key credential to the list.
         keyCredentials.push(keyCredential);
 
         // Set the added trigger to the status bar message.
-        const previousIcon = item.iconPath;
-        const status = this.triggerTreeChange("Adding Certificate Credential", item);
-        this.graphClient.updateKeyCredentials(item.objectId!, keyCredentials)
-            .then(() => {
-                this.triggerOnComplete({ success: true, statusBarHandle: status });
-            })
-            .catch((error) => {
-                this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
-            });
+        const status = this.indicateChange("Adding Certificate Credential...", item);
+        await this.updateKeyCredentials(item.objectId!, keyCredentials, status);
     }
 
     // Deletes a key credential from an application registration.
@@ -104,24 +103,34 @@ export class KeyCredentialService extends ServiceBase {
             // Get all the key credentials for the application.
             const keyCredentials = await this.getKeyCredentials(item.objectId!);
 
+            // If the array is undefined then it'll be an Azure CLI authentication issue.
+            if (keyCredentials === undefined) {
+                return;
+            }
+
             // Remove the scope requested.
             keyCredentials!.splice(keyCredentials!.findIndex(x => x.keyId === item.keyId!), 1);
 
             // Set the added trigger to the status bar message.
-            const previousIcon = item.iconPath;
-            const status = this.triggerTreeChange("Deleting Certificate Credential", item);
-            this.graphClient.updateKeyCredentials(item.objectId!, keyCredentials)
-                .then(() => {
-                    this.triggerOnComplete({ success: true, statusBarHandle: status });
-                })
-                .catch((error) => {
-                    this.triggerOnError({ success: false, statusBarHandle: status, error: error, treeViewItem: item, previousIcon: previousIcon });
-                });
+            const status = this.indicateChange("Deleting Certificate Credential...", item);
+            await this.updateKeyCredentials(item.objectId!, keyCredentials, status);
         }
     }
 
     // Gets the key credentials for an application registration.
-    private async getKeyCredentials(id: string): Promise<KeyCredential[]> {
-        return (await this.graphClient.getApplicationDetailsPartial(id, "keyCredentials")).keyCredentials!;
+    private async getKeyCredentials(id: string): Promise<KeyCredential[] | undefined> {
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(id, "keyCredentials");
+        if (result.success === true && result.value !== undefined) {
+            return result.value.keyCredentials!;
+        } else {
+            this.triggerOnError(result.error);
+            return undefined;
+        }
+    }
+
+    // Updates the key credentials.
+    private async updateKeyCredentials(id: string, credentials: KeyCredential[], status: string | undefined = undefined): Promise<void> {
+        const update: GraphResult<void> = await this.graphRepository.updateKeyCredentials(id, credentials);
+        update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
     }
 }

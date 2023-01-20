@@ -1,8 +1,7 @@
-import { commands, window, workspace, env, Disposable, ExtensionContext, Uri } from "vscode";
-import { VIEW_NAME, SIGNIN_AUDIENCE_DOCUMENTATION_URI } from "./constants";
+import { commands, window, workspace, ExtensionContext } from "vscode";
+import { VIEW_NAME } from "./constants";
+import { GraphApiRepository } from "./repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "./data/app-reg-tree-data-provider";
-import { AppRegItem } from "./models/app-reg-item";
-import { GraphClient, escapeSingleQuotesForFilter } from "./clients/graph-client";
 import { ApplicationService } from "./services/application";
 import { AppRoleService } from "./services/app-role";
 import { KeyCredentialService } from "./services/key-credential";
@@ -13,293 +12,170 @@ import { PasswordCredentialService } from "./services/password-credential";
 import { RedirectUriService } from "./services/redirect-uri";
 import { RequiredResourceAccessService } from "./services/required-resource-access";
 import { SignInAudienceService } from "./services/sign-in-audience";
-import { ActivityResult } from "./interfaces/activity-result";
+import { errorHandler } from "./error-handler";
+import { copyValue } from "./utils/copy-value";
+import { setStatusBarMessage } from "./utils/status-bar";
+import { authenticate } from "./utils/cli-authentication";
 
-// Values to hold the list filter
-let filterCommand: string | undefined = undefined;
-let filterText: string | undefined = undefined;
-
-// Create a new instance of the GraphClient class.
-const graphClient = new GraphClient();
+// Create a new instance of the Graph Api Repository.
+const graphRepository = new GraphApiRepository();
 
 // Create a new instance of the ApplicationTreeDataProvider class.
-const treeDataProvider = new AppRegTreeDataProvider(graphClient);
+const treeDataProvider = new AppRegTreeDataProvider(graphRepository);
 
 // Create new instances of the services classes.
-const applicationService = new ApplicationService(graphClient, treeDataProvider);
-const appRoleService = new AppRoleService(graphClient, treeDataProvider);
-const keyCredentialService = new KeyCredentialService(graphClient, treeDataProvider);
-const oauth2PermissionScopeService = new OAuth2PermissionScopeService(graphClient, treeDataProvider);
-const organizationService = new OrganizationService(graphClient, treeDataProvider);
-const ownerService = new OwnerService(graphClient, treeDataProvider);
-const passwordCredentialService = new PasswordCredentialService(graphClient, treeDataProvider);
-const redirectUriService = new RedirectUriService(graphClient, treeDataProvider);
-const requiredResourceAccessService = new RequiredResourceAccessService(graphClient, treeDataProvider);
-const signInAudienceService = new SignInAudienceService(graphClient, treeDataProvider);
+const applicationService = new ApplicationService(graphRepository, treeDataProvider);
+const appRoleService = new AppRoleService(graphRepository, treeDataProvider);
+const keyCredentialService = new KeyCredentialService(graphRepository, treeDataProvider);
+const oauth2PermissionScopeService = new OAuth2PermissionScopeService(graphRepository, treeDataProvider);
+const organizationService = new OrganizationService(graphRepository, treeDataProvider);
+const ownerService = new OwnerService(graphRepository, treeDataProvider);
+const passwordCredentialService = new PasswordCredentialService(graphRepository, treeDataProvider);
+const redirectUriService = new RedirectUriService(graphRepository, treeDataProvider);
+const requiredResourceAccessService = new RequiredResourceAccessService(graphRepository, treeDataProvider);
+const signInAudienceService = new SignInAudienceService(graphRepository, treeDataProvider);
 
-// This method is called when the extension is activated.
-export const activate = async (context: ExtensionContext) => {
+// Extension Activation
+export async function activate(context: ExtensionContext) {
 
-	workspace.onDidChangeConfiguration(event => {
+	// Hook up the configuration setting change handlers.
+	workspace.onDidChangeConfiguration(async (event) => {
 		if (event.affectsConfiguration("applicationregistrations.showOwnedApplicationsOnly")
 			|| event.affectsConfiguration("applicationregistrations.maximumQueryApps")
 			|| event.affectsConfiguration("applicationregistrations.maximumApplicationsShown")
 			|| event.affectsConfiguration("applicationregistrations.useEventualConsistency")) {
-			populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"));
+			await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."));
 		}
 	});
 
-	// Hook up the error handlers.
-	treeDataProvider.onError((result) => errorHandler(result));
-	applicationService.onError((result) => errorHandler(result));
-	appRoleService.onError((result) => errorHandler(result));
-	keyCredentialService.onError((result) => errorHandler(result));
-	oauth2PermissionScopeService.onError((result) => errorHandler(result));
-	organizationService.onError((result) => errorHandler(result));
-	ownerService.onError((result) => errorHandler(result));
-	passwordCredentialService.onError((result) => errorHandler(result));
-	redirectUriService.onError((result) => errorHandler(result));
-	requiredResourceAccessService.onError((result) => errorHandler(result));
-	signInAudienceService.onError((result) => errorHandler(result));
+	// Hook up the complete event handlers.
+	applicationService.onComplete(async (result) => await treeDataProvider.render(result));
+	appRoleService.onComplete(async (result) => await treeDataProvider.render(result));
+	keyCredentialService.onComplete(async (result) => await treeDataProvider.render(result));
+	oauth2PermissionScopeService.onComplete(async (result) => await treeDataProvider.render(result));
+	ownerService.onComplete(async (result) => await treeDataProvider.render(result));
+	passwordCredentialService.onComplete(async (result) => await treeDataProvider.render(result));
+	redirectUriService.onComplete(async (result) => await treeDataProvider.render(result));
+	requiredResourceAccessService.onComplete(async (result) => await treeDataProvider.render(result));
+	signInAudienceService.onComplete(async (result) => await treeDataProvider.render(result));
 
-	// Hook up the complete handlers.
-	applicationService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	appRoleService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	keyCredentialService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	oauth2PermissionScopeService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	ownerService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	passwordCredentialService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	redirectUriService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	requiredResourceAccessService.onComplete((result) => populateTreeView(result.statusBarHandle));
-	signInAudienceService.onComplete((result) => populateTreeView(result.statusBarHandle));
+	// Hook up the error event handlers.
+	treeDataProvider.onError(async (result) => await errorHandler(result));
+	applicationService.onError(async (result) => await errorHandler(result));
+	appRoleService.onError(async (result) => await errorHandler(result));
+	keyCredentialService.onError(async (result) => await errorHandler(result));
+	oauth2PermissionScopeService.onError(async (result) => await errorHandler(result));
+	organizationService.onError(async (result) => await errorHandler(result));
+	ownerService.onError(async (result) => await errorHandler(result));
+	passwordCredentialService.onError(async (result) => await errorHandler(result));
+	redirectUriService.onError(async (result) => await errorHandler(result));
+	requiredResourceAccessService.onError(async (result) => await errorHandler(result));
+	signInAudienceService.onError(async (result) => await errorHandler(result));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Menu Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.signInToAzure`, async () => await graphClient.cliSignIn()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addApp`, async () => await applicationService.add()));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshApps`, async () => await populateTreeView(window.setStatusBarMessage("$(loading~spin) Refreshing Application Registrations"))));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.filterApps`, async () => await filterTreeView()));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshApps`, async () => await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."))));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.filterApps`, async () => await treeDataProvider.filter()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.tenantInfo`, async () => await organizationService.showTenantInformation()));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Application Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteApp`, async item => await applicationService.delete(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.renameApp`, async item => await applicationService.rename(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.viewAppManifest`, async item => await applicationService.viewManifest(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyClientId`, item => applicationService.copyClientId(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openAppInPortal`, item => applicationService.openInPortal(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// App Role Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAppRole`, async item => await appRoleService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editAppRole`, async item => await appRoleService.edit(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteAppRole`, async item => await appRoleService.delete(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.enableAppRole`, async item => await appRoleService.changeState(item, true)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.disableAppRole`, async item => await appRoleService.changeState(item, false)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// API Permission Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addSingleScopeToExisting`, async item => await requiredResourceAccessService.addToExisting(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addSingleScope`, async item => await requiredResourceAccessService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeSingleScope`, async item => await requiredResourceAccessService.remove(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeApiScopes`, async item => await requiredResourceAccessService.removeApi(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Exposed API Scope Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addExposedApiScope`, async item => await oauth2PermissionScopeService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editExposedApiScope`, async item => await oauth2PermissionScopeService.edit(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteExposedApiScope`, async item => await oauth2PermissionScopeService.delete(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.enableExposedApiScope`, async item => await oauth2PermissionScopeService.changeState(item, true)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.disableExposedApiScope`, async item => await oauth2PermissionScopeService.changeState(item, false)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// App Id URI Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editAppIdUri`, async item => await applicationService.editAppIdUri(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeAppIdUri`, async item => await applicationService.removeAppIdUri(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyAppIdUri`, item => copyValue(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Password Credentials Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addPasswordCredential`, async item => await passwordCredentialService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deletePasswordCredential`, async item => await passwordCredentialService.delete(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Key Credentials Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.uploadKeyCredential`, async item => await keyCredentialService.upload(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteKeyCredential`, async item => await keyCredentialService.delete(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Redirect URI Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addRedirectUri`, async item => await redirectUriService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editRedirectUri`, async item => await redirectUriService.edit(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteRedirectUri`, async item => await redirectUriService.delete(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyRedirectUri`, item => copyValue(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Sign In Audience Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editAudience`, async item => await signInAudienceService.edit(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Owner Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addOwner`, async item => await ownerService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeOwner`, async item => await ownerService.remove(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openUserInPortal`, item => ownerService.openInPortal(item)));
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Common Commands
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyValue`, item => copyValue(item)));
-};
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.signInToAzure`, async () => {
+		await treeDataProvider.render(undefined, "AUTHENTICATING");
+		const status = await authenticate();
+		if (status === true) {
+			await treeDataProvider.render(setStatusBarMessage("Loading Application Registrations..."), "AUTHENTICATED");
+		} else {
+			await treeDataProvider.render(undefined, "SIGN-IN");
+		}
+	}));
 
-// This method is called when your extension is deactivated.
-export const deactivate = async () => {
+	// Register the tree data provider.
+	window.registerTreeDataProvider(VIEW_NAME, treeDataProvider);
+
+	// Set the tree view to initialising.
+	await treeDataProvider.render(undefined, "INITIALISING");
+
+	// Initialise the graph repository.
+	const status = await graphRepository.initialise();
+
+	// Were we able to get an access token?
+	if (status !== true) {
+		// If not then the user needs to authenticate.
+		await treeDataProvider.render(undefined, "SIGN-IN");
+	} else {
+		// If so then the user is authenticated so load the tree view.
+		await treeDataProvider.render(setStatusBarMessage("Loading Application Registrations..."));
+	}
+}
+
+// Extension Deactivation
+export function deactivate(): void {
+	// Dispose the services, tree data provider, and graph client.
 	signInAudienceService.dispose();
 	requiredResourceAccessService.dispose();
 	redirectUriService.dispose();
 	passwordCredentialService.dispose();
+	organizationService.dispose();
 	ownerService.dispose();
 	oauth2PermissionScopeService.dispose();
 	keyCredentialService.dispose();
 	appRoleService.dispose();
 	applicationService.dispose();
-	graphClient.dispose();
+	graphRepository.dispose();
 	treeDataProvider.dispose();
-};
-
-// Define the populateTreeView function.
-const populateTreeView = async (statusBarHandle: Disposable | undefined = undefined) => {
-	if (graphClient.isGraphClientInitialised === false) {
-		await treeDataProvider.initialiseGraphClient(statusBarHandle);
-		return;
-	}
-	await treeDataProvider.renderTreeView("APPLICATIONS", statusBarHandle, filterCommand);
-};
-
-// Define the filterTreeView function.
-const filterTreeView = async () => {
-	if (graphClient.isGraphClientInitialised === false) {
-		await treeDataProvider.initialiseGraphClient();
-		return;
-	}
-
-	// If the tree is currently updating then we don't want to do anything.
-	if (treeDataProvider.isUpdating) {
-		return;
-	}
-
-	// If the tree is currently empty then we don't want to do anything.
-	if (treeDataProvider.isTreeEmpty) {
-		return;
-	}
-
-	// Determine if eventual consistency is enabled.
-	const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
-
-	// If eventual consistency is disabled then we cannot apply the filter
-	if (useEventualConsistency === false) {
-		window.showInformationMessage("The application list cannot be filtered when not using eventual consistency. Please enable this in user settings first.", "OK");
-		return;
-	}
-
-	// Prompt the user for the filter text.
-	const newFilter = await window.showInputBox({
-		placeHolder: "Name starts with",
-		prompt: "Filter applications by display name",
-		value: filterText,
-		ignoreFocusOut: true
-	});
-
-	// Escape has been hit so we don't want to do anything.
-	if ((newFilter === undefined) || (newFilter === '' && newFilter === (filterText ?? ""))) {
-		return;
-	} else if (newFilter === '' && filterText !== '') {
-		filterText = undefined;
-		filterCommand = undefined;
-		await populateTreeView(window.setStatusBarMessage("$(loading~spin) Loading Application Registrations"));
-	} else if (newFilter !== '' && newFilter !== filterText) {
-		// If the filter text is not empty then set the filter command and filter text.
-		filterText = newFilter!;
-		filterCommand = `startswith(displayName, \'${escapeSingleQuotesForFilter(newFilter)}\')`;
-		await populateTreeView(window.setStatusBarMessage("$(loading~spin) Filtering Application Registrations"));
-	}
-};
-
-// Define the copy value function.
-const copyValue = (item: AppRegItem) => {
-	env.clipboard.writeText(
-		item.contextValue === "COPY"
-			|| item.contextValue === "WEB-REDIRECT-URI"
-			|| item.contextValue === "SPA-REDIRECT-URI"
-			|| item.contextValue === "NATIVE-REDIRECT-URI"
-			|| item.contextValue === "APPID-URI"
-			? item.value!
-			: item.children![0].value!);
-};
-
-// Define the error handler function.
-const errorHandler = async (result: ActivityResult) => {
-
-	if (result.statusBarHandle !== undefined) {
-		// Clear any status bar messages.
-		result.statusBarHandle!.dispose();
-	}
-
-	if (result.treeViewItem !== undefined) {
-		// Restore the original icon.
-		result.treeViewItem!.iconPath = result.previousIcon;
-		treeDataProvider.triggerOnDidChangeTreeData(result.treeViewItem);
-	}
-
-	if (result.error !== undefined) {
-		// Log the error.
-		console.error(result.error);
-
-		// Determine if the error is due to the user not being logged in.
-		if (result.error.message.includes("az login")) {
-			window.showErrorMessage("You are not logged in to the Azure CLI. Please click the option to sign in, or run 'az login' in a terminal window.", "OK");
-			await treeDataProvider.initialiseGraphClient();
-			return;
-		}
-
-		// Determine if the error is due to trying to change the sign in audience.
-		if (result.error.message.includes("signInAudience")) {
-			const result = await window.showErrorMessage(
-				`An error occurred while attempting to change the Sign In Audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at ${SIGNIN_AUDIENCE_DOCUMENTATION_URI}.`,
-				...["OK", "Open Documentation"]
-			);
-
-			if (result === "Open Documentation") {
-				env.openExternal(Uri.parse(SIGNIN_AUDIENCE_DOCUMENTATION_URI));
-				return;
-			}
-			
-			return;
-		}
-
-		// Display an error message.
-		window.showErrorMessage(`An error occurred trying to complete your task: ${result.error!.message}.`, "OK");
-	}
-};
+}
