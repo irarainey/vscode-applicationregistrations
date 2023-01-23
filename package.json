@@ -195,6 +195,10 @@
         "title": "View Manifest"
       },
       {
+        "command": "appRegistrations.showEndpoints",
+        "title": "Endpoints"
+      },
+      {
         "command": "appRegistrations.renameApp",
         "title": "Rename"
       },
@@ -413,14 +417,19 @@
           "group": "appRegistrations@1"
         },
         {
-          "command": "appRegistrations.copyClientId",
+          "command": "appRegistrations.showEndpoints",
           "when": "view == appRegistrations && viewItem == APPLICATION",
           "group": "appRegistrations@2"
         },
         {
-          "command": "appRegistrations.openAppInPortal",
+          "command": "appRegistrations.copyClientId",
           "when": "view == appRegistrations && viewItem == APPLICATION",
           "group": "appRegistrations@3"
+        },
+        {
+          "command": "appRegistrations.openAppInPortal",
+          "when": "view == appRegistrations && viewItem == APPLICATION",
+          "group": "appRegistrations@4"
         },
         {
           "command": "appRegistrations.addOwner",

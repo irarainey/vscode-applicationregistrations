@@ -16,6 +16,9 @@ export const PORTAL_USER_URI = "https://portal.azure.com/#view/Microsoft_AAD_Use
 // The URI to access directory objects in the Microsoft Graph API
 export const DIRECTORY_OBJECTS_URI = "https://graph.microsoft.com/v1.0/directoryObjects/";
 
+// The base tenant endpoint
+export const BASE_ENDPOINT = "https://login.microsoftonline.com/";
+
 // A list of properties to ignore when updating an application registration
 export const PROPERTIES_TO_IGNORE_ON_UPDATE = [
     "appId",

@@ -5,8 +5,9 @@ import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { execShellCmd } from "../utils/exec-shell-cmd";
 import { GraphResult } from "../types/graph-result";
-import { Organization, User, RoleAssignment, RoleDefinition } from "@microsoft/microsoft-graph-types";
+import { Organization, User, RoleAssignment } from "@microsoft/microsoft-graph-types";
 import { clearStatusBarMessage } from "../utils/status-bar";
+import { v4 as uuidv4 } from "uuid";
 
 export class OrganizationService extends ServiceBase {
 
@@ -22,7 +23,7 @@ export class OrganizationService extends ServiceBase {
         const status = this.indicateChange("Loading Tenant Information...");
 
         // Execute the az cli command to get the tenant id
-        execShellCmd(CLI_TENANT_CMD)
+        await execShellCmd(CLI_TENANT_CMD)
             .then(async (response) => {
                 await this.showTenantWindow(response, status);
             })
@@ -82,8 +83,9 @@ export class OrganizationService extends ServiceBase {
                 }
             };
 
-            this.disposable.push(workspace.registerTextDocumentContentProvider("tenantInformation", newDocument));
-            const uri = Uri.parse(`tenantInformation:Tenant - ${result.value.displayName}.json`);
+            const contentProvider = uuidv4();
+            this.disposable.push(workspace.registerTextDocumentContentProvider(contentProvider, newDocument));
+            const uri = Uri.parse(`${contentProvider}:Tenant - ${result.value.displayName}.json`);
             workspace.openTextDocument(uri)
                 .then(async (doc) => {
                     await window.showTextDocument(doc, { preview: false });

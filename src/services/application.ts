@@ -1,4 +1,5 @@
-import { PORTAL_APP_URI, SIGNIN_AUDIENCE_OPTIONS } from "../constants";
+/* eslint-disable @typescript-eslint/naming-convention */
+import { PORTAL_APP_URI, SIGNIN_AUDIENCE_OPTIONS, BASE_ENDPOINT, CLI_TENANT_CMD } from "../constants";
 import { window, env, Uri, TextDocumentContentProvider, EventEmitter, workspace } from "vscode";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
@@ -7,6 +8,8 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { Application } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../types/graph-result";
 import { clearStatusBarMessage } from "../utils/status-bar";
+import { execShellCmd } from "../utils/exec-shell-cmd";
+import { v4 as uuidv4 } from "uuid";
 
 export class ApplicationService extends ServiceBase {
 
@@ -115,6 +118,92 @@ export class ApplicationService extends ServiceBase {
         }
     }
 
+    // Shows the application endpoints.
+    async showEndpoints(item: AppRegItem): Promise<void> {
+        const status = this.indicateChange("Loading Endpoints...");
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(item.objectId!, "signInAudience");
+        if (result.success === true && result.value !== undefined) {
+
+            let endpoints: { [key: string]: string } = {};
+            // Create the endpoints.
+            switch (result.value.signInAudience) {
+                case "AzureADMyOrg":
+                    await execShellCmd(CLI_TENANT_CMD)
+                        .then(async (response) => {
+                            response = response.replace(/(\r\n)/gm, "");
+                            endpoints = {
+                                "OAuth 2.0 Authorization Endpoint": `${BASE_ENDPOINT}${response}/oauth2/v2.0/authorize`,
+                                "OAuth 2.0 Token Endpoint": `${BASE_ENDPOINT}${response}/oauth2/v2.0/token`,
+                                "OAuth 2.0 Device Authorization Endpoint": `${BASE_ENDPOINT}${response}/oauth2/v2.0/devicecode`,
+                                "OAuth 2.0 Token Revocation Endpoint": `${BASE_ENDPOINT}${response}/oauth2/v2.0/logout`,
+                                "OpenID Connect Discovery Document": `${BASE_ENDPOINT}${response}/v2.0/.well-known/openid-configuration`,
+                                "OpenID Connect Metadata Document": `${BASE_ENDPOINT}${response}/v2.0/.well-known/openid-configuration?p=${item.appId}`,
+                                "OpenID Connect Keys Document": `${BASE_ENDPOINT}${response}/discovery/v2.0/keys`
+                            };
+                        })
+                        .catch(async (error) => {
+                            this.triggerOnError(error);
+                        });
+                    break;
+                case "AzureADMultipleOrgs":
+                    endpoints = {
+                        "OAuth 2.0 Authorization Endpoint (Organizations)": `${BASE_ENDPOINT}organizations/oauth2/v2.0/authorize`,
+                        "OAuth 2.0 Token Endpoint (Organizations)": `${BASE_ENDPOINT}organizations/oauth2/v2.0/token`,
+                        "OAuth 2.0 Device Authorization Endpoint (Organizations)": `${BASE_ENDPOINT}organizations/oauth2/v2.0/devicecode`,
+                        "OAuth 2.0 Token Revocation Endpoint (Organizations)": `${BASE_ENDPOINT}organizations/oauth2/v2.0/logout`,
+                        "OpenID Connect Discovery Document (Organizations)": `${BASE_ENDPOINT}organizations/v2.0/.well-known/openid-configuration`,
+                        "OpenID Connect Metadata Document (Organizations)": `${BASE_ENDPOINT}organizations/v2.0/.well-known/openid-configuration?p=${item.appId}`,
+                        "OpenID Connect Keys Document (Organizations)": `${BASE_ENDPOINT}organizations/discovery/v2.0/keys`
+                    };
+                    break;
+                case "AzureADandPersonalMicrosoftAccount":
+                    endpoints = {
+                        "OAuth 2.0 Authorization Endpoint (Common)": `${BASE_ENDPOINT}common/oauth2/v2.0/authorize`,
+                        "OAuth 2.0 Token Endpoint (Common)": `${BASE_ENDPOINT}common/oauth2/v2.0/token`,
+                        "OAuth 2.0 Device Authorization Endpoint (Common)": `${BASE_ENDPOINT}common/oauth2/v2.0/devicecode`,
+                        "OAuth 2.0 Token Revocation Endpoint (Common)": `${BASE_ENDPOINT}common/oauth2/v2.0/logout`,
+                        "OpenID Connect Discovery Document (Common)": `${BASE_ENDPOINT}common/v2.0/.well-known/openid-configuration`,
+                        "OpenID Connect Metadata Document (Common)": `${BASE_ENDPOINT}common/v2.0/.well-known/openid-configuration?p=${item.appId}`,
+                        "OpenID Connect Keys Document (Common)": `${BASE_ENDPOINT}common/discovery/v2.0/keys`
+                    };
+                    break;
+                case "PersonalMicrosoftAccount":
+                    endpoints = {
+                        "OAuth 2.0 Authorization Endpoint (Consumers)": `${BASE_ENDPOINT}consumers/oauth2/v2.0/authorize`,
+                        "OAuth 2.0 Token Endpoint (Consumers)": `${BASE_ENDPOINT}consumers/oauth2/v2.0/token`,
+                        "OAuth 2.0 Device Authorization Endpoint (Consumers)": `${BASE_ENDPOINT}consumers/oauth2/v2.0/devicecode`,
+                        "OAuth 2.0 Token Revocation Endpoint (Consumers)": `${BASE_ENDPOINT}consumers/oauth2/v2.0/logout`,
+                        "OpenID Connect Discovery Document (Consumers)": `${BASE_ENDPOINT}consumers/v2.0/.well-known/openid-configuration`,
+                        "OpenID Connect Metadata Document (Consumers)": `${BASE_ENDPOINT}consumers/v2.0/.well-known/openid-configuration?p=${item.appId}`,
+                        "OpenID Connect Keys Document (Consumers)": `${BASE_ENDPOINT}consumers/discovery/v2.0/keys`
+                    };
+                    break;
+                default:
+                    endpoints = {};
+                    break;
+            }
+
+            const newDocument = new class implements TextDocumentContentProvider {
+                onDidChangeEmitter = new EventEmitter<Uri>();
+                onDidChange = this.onDidChangeEmitter.event;
+                provideTextDocumentContent(): string {
+                    return JSON.stringify(endpoints, null, 4);
+                }
+            };
+            
+            const contentProvider = uuidv4();
+            this.disposable.push(workspace.registerTextDocumentContentProvider(contentProvider, newDocument));
+            const uri = Uri.parse(`${contentProvider}:Endpoints - ${item.label}.json`);
+            workspace.openTextDocument(uri)
+                .then(async (doc) => {
+                    await window.showTextDocument(doc, { preview: false });
+                    clearStatusBarMessage(status!);
+                });
+        } else {
+            this.triggerOnError(result.error);
+        }
+    }
+
     // Opens the application manifest in a new editor window.
     async viewManifest(item: AppRegItem): Promise<void> {
         const status = this.indicateChange("Loading Application Manifest...");
@@ -127,8 +216,10 @@ export class ApplicationService extends ServiceBase {
                     return JSON.stringify(result.value, null, 4);
                 }
             };
-            this.disposable.push(workspace.registerTextDocumentContentProvider("manifest", newDocument));
-            const uri = Uri.parse(`manifest:Manifest - ${item.label}.json`);
+
+            const contentProvider = uuidv4();
+            this.disposable.push(workspace.registerTextDocumentContentProvider(contentProvider, newDocument));
+            const uri = Uri.parse(`${contentProvider}:Manifest - ${item.label}.json`);
             workspace.openTextDocument(uri)
                 .then(async (doc) => {
                     await window.showTextDocument(doc, { preview: false });

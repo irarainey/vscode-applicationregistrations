@@ -1,6 +1,9 @@
 ## 0.5.0
 
 - Added user and directory role assignment information to tenant information screen.
+- Added the ability to delete all redirect uris of a single type at once.
+- Added functionality to show application endpoints based upon sign in audience.
+- Fixed an issue where the manifest shown might not always been upto date.
 
 ## 0.4.0
 
