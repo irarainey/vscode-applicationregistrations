@@ -5,9 +5,11 @@
 - Added functionality to show application endpoints based upon sign in audience.
 - Added the ability to disable and delete app roles and scopes at the same time.
 - Changed the order of parameters when creating a new application registration to check name length.
+- Improved validation of app roles and scopes when creating and editing.
 - Improved validation based upon different sign in audiences.
 - Fixed an issue where the manifest shown might not always been up to date.
 - Fixed an issue where the sign in audience might not be displayed correctly.
+- Fixed an issue that allowed duplicate app roles to be created.
 
 ## 0.4.0
 
