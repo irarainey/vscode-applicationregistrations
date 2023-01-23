@@ -21,28 +21,27 @@ export class ApplicationService extends ServiceBase {
     // Creates a new application registration.
     async add(): Promise<void> {
 
-        // Prompt the user for the application name.
-        const displayName = await window.showInputBox({
-            placeHolder: "Application name",
-            prompt: "Create new Application Registration",
-            title: "Add New Application (1/2)",
-            ignoreFocusOut: true,
-            validateInput: (value) => this.validateDisplayName(value)
-        });
+        // Prompt the user for the sign in audience.
+        const signInAudience = await window.showQuickPick(
+            SIGNIN_AUDIENCE_OPTIONS,
+            {
+                placeHolder: "Select the sign in audience",
+                title: "Add New Application (1/2)",
+                ignoreFocusOut: true
+            });
 
-        // If the application name is not undefined then prompt the user for the sign in audience.
-        if (displayName !== undefined) {
-            // Prompt the user for the sign in audience.
-            const signInAudience = await window.showQuickPick(
-                SIGNIN_AUDIENCE_OPTIONS,
-                {
-                    placeHolder: "Select the sign in audience",
-                    title: "Add New Application (2/2)",
-                    ignoreFocusOut: true
-                });
+        if (signInAudience !== undefined) {
+            // Prompt the user for the application name.
+            const displayName = await window.showInputBox({
+                placeHolder: "Application name",
+                prompt: "Create new Application Registration",
+                title: "Add New Application (2/2)",
+                ignoreFocusOut: true,
+                validateInput: (value) => this.validateDisplayName(value, signInAudience.value)
+            });
 
-            // If the sign in audience is not undefined then create the application.
-            if (signInAudience !== undefined) {
+            // If the application name is not undefined then prompt the user for the sign in audience.
+            if (displayName !== undefined) {
                 // Set the added trigger to the status bar message.
                 const status = this.indicateChange("Creating Application Registration...");
                 const update: GraphResult<Application> = await this.graphRepository.createApplication({ displayName: displayName, signInAudience: signInAudience.value });
@@ -80,6 +79,12 @@ export class ApplicationService extends ServiceBase {
     // Renames an application registration.
     async rename(item: AppRegItem): Promise<void> {
 
+        const result: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
+        if (result.success !== true || result.value === undefined) {
+            this.triggerOnError(result.error);
+            return;
+        }
+
         // Prompt the user for the new application name.
         const displayName = await window.showInputBox({
             placeHolder: "Application name",
@@ -87,7 +92,7 @@ export class ApplicationService extends ServiceBase {
             value: item.label?.toString(),
             title: "Rename Application",
             ignoreFocusOut: true,
-            validateInput: (value) => this.validateDisplayName(value)
+            validateInput: (value) => this.validateDisplayName(value, result.value!)
         });
 
         // If the new application name is not undefined then update the application.
@@ -253,15 +258,28 @@ export class ApplicationService extends ServiceBase {
     }
 
     // Validates the display name of the application.
-    private validateDisplayName(displayName: string): string | undefined {
+    private validateDisplayName(displayName: string, signInAudience: string): string | undefined {
 
         // Check the length of the application name.
         if (displayName.length < 1) {
             return "An application name must be at least one character.";
         }
 
-        if (displayName.length > 120) {
-            return "An application name cannot be longer than 120 characters.";
+        switch (signInAudience) {
+            case "AzureADMyOrg":
+            case "AzureADMultipleOrgs":
+                if (displayName.length > 120) {
+                    return "An application name cannot be longer than 120 characters.";
+                }
+                break;
+            case "AzureADandPersonalMicrosoftAccount":
+            case "PersonalMicrosoftAccount":
+                if (displayName.length > 90) {
+                    return "An application name cannot be longer than 90 characters.";
+                }
+                break;
+            default:
+                break;
         }
 
         return undefined;
