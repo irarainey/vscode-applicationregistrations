@@ -354,6 +354,18 @@ export class GraphApiRepository {
         }
     }
 
+    // Get the sign in audience for an application registration
+    async getSignInAudience(id: string): Promise<GraphResult<string>> {
+        try {
+            const result: any = await this.client!.api(`/applications/${id}`)
+                .select("signInAudience")
+                .get();
+            return { success: true, value: result.signInAudience };
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
+    }
+
     // Gets the tenant information.
     async getTenantInformation(tenantId: string): Promise<GraphResult<Organization>> {
         try {
@@ -378,7 +390,7 @@ export class GraphApiRepository {
             return { success: false, error: error };
         }
     }
-    
+
     // Gets directory roles assigned to a user
     async getRoleAssignments(id: string): Promise<GraphResult<RoleAssignment[]>> {
         try {

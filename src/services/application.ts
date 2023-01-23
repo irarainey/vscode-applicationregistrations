@@ -54,6 +54,12 @@ export class ApplicationService extends ServiceBase {
     // Edit an application id URI.
     async editAppIdUri(item: AppRegItem): Promise<void> {
 
+        const result: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
+        if (result.success !== true || result.value === undefined) {
+            this.triggerOnError(result.error);
+            return;
+        }
+
         // Prompt the user for the new uri.
         const uri = await window.showInputBox({
             placeHolder: "Application ID URI",
@@ -61,7 +67,7 @@ export class ApplicationService extends ServiceBase {
             value: item.value! === "Not set" ? `api://${item.appId!}` : item.value!,
             title: "Edit Application ID URI",
             ignoreFocusOut: true,
-            validateInput: (value) => this.validateAppIdUri(value)
+            validateInput: (value) => this.validateAppIdUri(value, result.value!)
         });
 
         // If the new application id uri is not undefined then update the application.
@@ -121,12 +127,12 @@ export class ApplicationService extends ServiceBase {
     // Shows the application endpoints.
     async showEndpoints(item: AppRegItem): Promise<void> {
         const status = this.indicateChange("Loading Endpoints...");
-        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(item.objectId!, "signInAudience");
+        const result: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
         if (result.success === true && result.value !== undefined) {
 
             let endpoints: { [key: string]: string } = {};
             // Create the endpoints.
-            switch (result.value.signInAudience) {
+            switch (result.value) {
                 case "AzureADMyOrg":
                     await execShellCmd(CLI_TENANT_CMD)
                         .then(async (response) => {
@@ -190,7 +196,7 @@ export class ApplicationService extends ServiceBase {
                     return JSON.stringify(endpoints, null, 4);
                 }
             };
-            
+
             const contentProvider = uuidv4();
             this.disposable.push(workspace.registerTextDocumentContentProvider(contentProvider, newDocument));
             const uri = Uri.parse(`${contentProvider}:Endpoints - ${item.label}.json`);
@@ -262,18 +268,39 @@ export class ApplicationService extends ServiceBase {
     }
 
     // Validates the app id URI.
-    private validateAppIdUri(uri: string): string | undefined {
-
-        if (uri.includes("://") === false || uri.startsWith("://") === true) {
-            return "The Application ID URI is not valid. It must start with http://, https://, api://; MS-APPX://, or customScheme://";
-        }
+    private validateAppIdUri(uri: string, signInAudience: string): string | undefined {
 
         if (uri.endsWith("/") === true) {
             return "The Application ID URI cannot end with a trailing slash.";
         }
 
-        if (uri.length > 120) {
-            return "The Application ID URI is not valid. A URI cannot be longer than 120 characters.";
+        switch (signInAudience) {
+            case "AzureADMyOrg":
+            case "AzureADMultipleOrgs":
+                if (uri.includes("://") === false || uri.startsWith("://") === true) {
+                    return "The Application ID URI is not valid. It must start with http://, https://, api://, MS-APPX://, or customScheme://.";
+                }
+                if (uri.includes("*") === true) {
+                    return "Wildcards are not supported.";
+                }
+                if (uri.length > 255) {
+                    return "The Application ID URI is not valid. A URI cannot be longer than 255 characters.";
+                }
+                break;
+            case "AzureADandPersonalMicrosoftAccount":
+            case "PersonalMicrosoftAccount":
+                if (uri.includes("://") === false || (uri.startsWith("api://") === false && uri.startsWith("https://") === false && uri.startsWith("http://") === true)) {
+                    return "The Application ID URI is not valid. It must start with http://, https://, or api://.";
+                }
+                if (uri.includes("?") === true || uri.includes("#") === true || uri.includes("*") === true) {
+                    return "Wildcards, fragments, and query strings are not supported.";
+                }
+                if (uri.length > 120) {
+                    return "The Application ID URI is not valid. A URI cannot be longer than 120 characters.";
+                }
+                break;
+            default:
+                break;
         }
 
         return undefined;
