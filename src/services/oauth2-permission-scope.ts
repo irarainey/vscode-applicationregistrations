@@ -18,6 +18,13 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     // Adds a new exposed api scope to an application registration.
     async add(item: AppRegItem): Promise<void> {
 
+        // Get sign in audience to enable validation
+        const signInAudience: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
+        if (signInAudience.success !== true || signInAudience.value === undefined) {
+            this.triggerOnError(signInAudience.error);
+            return;
+        }
+
         // Check to see if the application has an appIdURI. If it doesn't then we don't want to add a scope.
         let appIdUri: string[];
 
@@ -35,7 +42,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         }
 
         // Capture the new scope details by passing in an empty scope.
-        const scope = await this.inputScopeDetails({}, item.objectId!, false);
+        const scope = await this.inputScopeDetails({}, item.objectId!, false, signInAudience.value);
 
         // If the user cancels the input then return undefined.
         if (scope === undefined) {
@@ -63,6 +70,13 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     // Edits an exposed api scope from an application registration.
     async edit(item: AppRegItem): Promise<void> {
 
+        // Get sign in audience to enable validation
+        const signInAudience: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
+        if (signInAudience.success !== true || signInAudience.value === undefined) {
+            this.triggerOnError(signInAudience.error);
+            return;
+        }
+
         // Get the parent application so we can read the app roles.
         const api = await this.getScopes(item.objectId!);
 
@@ -72,7 +86,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         }
 
         // Capture the new app role details by passing in the existing role.
-        const scope = await this.inputScopeDetails(api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0], item.objectId!, true);
+        const scope = await this.inputScopeDetails(api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0], item.objectId!, true, signInAudience.value);
 
         // If the user cancels the input then return undefined.
         if (scope === undefined) {
@@ -157,10 +171,10 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     }
 
     // Captures the details for a scope.
-    private async inputScopeDetails(scope: PermissionScope, id: string, isEditing: boolean): Promise<PermissionScope | undefined> {
+    private async inputScopeDetails(scope: PermissionScope, id: string, isEditing: boolean, signInAudience: string): Promise<PermissionScope | undefined> {
 
         // Debounce the validation function to prevent multiple calls to the Graph API.
-        const validation = async (value: string, id: string, isEditing: boolean, oldValue: string | undefined) => this.validateValue(value, id, isEditing, scope.value ?? undefined);
+        const validation = async (value: string, id: string, isEditing: boolean, oldValue: string | undefined, signInAudience: string) => this.validateValue(value, id, isEditing, scope.value ?? undefined, signInAudience);
         const debouncedValidation = debounce(validation, 500);
 
         // Prompt the user for the new value.
@@ -170,7 +184,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
             title: isEditing === true ? "Edit Exposed API Permission (1/7)" : "Add API Exposed Permission (1/7)",
             ignoreFocusOut: true,
             value: scope.value ?? undefined,
-            validateInput: async (value) => debouncedValidation(value, id, isEditing, scope.value ?? undefined)
+            validateInput: async (value) => debouncedValidation(value, id, isEditing, scope.value ?? undefined, signInAudience)
         });
 
         // If escape is pressed or the new name is empty then return undefined.
@@ -326,11 +340,24 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     }
 
     // Validates the value of an scope.
-    private async validateValue(value: string, id: string, isEditing: boolean, oldValue: string | undefined): Promise<string | undefined> {
+    private async validateValue(value: string, id: string, isEditing: boolean, oldValue: string | undefined, signInAudience: string): Promise<string | undefined> {
 
         // Check the length of the value.
-        if (value.length > 40) {
-            return "A value cannot be longer than 40 characters.";
+        switch (signInAudience) {
+            case "AzureADMyOrg":
+            case "AzureADMultipleOrgs":
+                if (value.length > 120) {
+                    return "A value cannot be longer than 120 characters.";
+                }
+                break;
+            case "AzureADandPersonalMicrosoftAccount":
+            case "PersonalMicrosoftAccount":
+                if (value.length > 40) {
+                    return "A value cannot be longer than 40 characters.";
+                }
+                break;
+            default:
+                break;
         }
 
         // Check the length of the value.
