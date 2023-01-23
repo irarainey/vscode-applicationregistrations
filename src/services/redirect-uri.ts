@@ -5,6 +5,7 @@ import { ServiceBase } from "./service-base";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { GraphResult } from "../types/graph-result";
 import { Application } from "@microsoft/microsoft-graph-types";
+import { clearStatusBarMessage, setStatusBarMessage } from "../utils/status-bar";
 
 export class RedirectUriService extends ServiceBase {
 
@@ -16,12 +17,42 @@ export class RedirectUriService extends ServiceBase {
     // Adds a new redirect URI to an application registration.
     async add(item: AppRegItem): Promise<void> {
 
+        // Show that we're doing something
+        const check = setStatusBarMessage("Checking Sign In Audience...");
+
         // Get all existing redirect URIs to check duplicates.
         let allExistingRedirectUris = await this.getAllExistingUris(item);
 
         // If the array is undefined then it'll be an Azure CLI authentication issue.
         if (allExistingRedirectUris === undefined) {
             return;
+        }
+
+        const signInAudience: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
+        if (signInAudience.success !== true || signInAudience.value === undefined) {
+            this.triggerOnError(signInAudience.error);
+            return;
+        }
+
+        clearStatusBarMessage(check!);
+
+        switch (signInAudience.value) {
+            case "AzureADMyOrg":
+            case "AzureADMultipleOrgs":
+                if(allExistingRedirectUris.length > 255) {
+                    window.showWarningMessage("You cannot add any more Redirect URIs. The maximum for this application type is 255.", "OK");
+                    return;
+                }
+                break;
+            case "AzureADandPersonalMicrosoftAccount":
+            case "PersonalMicrosoftAccount":
+                if(allExistingRedirectUris.length > 100) {
+                    window.showWarningMessage("You cannot add any more Redirect URIs. The maximum for this application type is 100.", "OK");
+                    return;
+                }
+                break;
+            default:
+                break;
         }
 
         // Prompt the user for the new redirect URI.
