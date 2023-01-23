@@ -262,7 +262,7 @@ export class RequiredResourceAccessService extends ServiceBase {
     async remove(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the removal.
-        const answer = await window.showInformationMessage(`Do you want to remove the API Permission ${item.value}?`, "Yes", "No");
+        const answer = await window.showWarningMessage(`Do you want to remove the API Permission ${item.value}?`, "Yes", "No");
 
         // If the user confirms the removal then delete the role.
         if (answer === "Yes") {
@@ -297,7 +297,7 @@ export class RequiredResourceAccessService extends ServiceBase {
     async removeApi(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the removal.
-        const answer = await window.showInformationMessage(`Do you want to remove all API Permissions for ${item.label}?`, "Yes", "No");
+        const answer = await window.showWarningMessage(`Do you want to remove all API Permissions for ${item.label}?`, "Yes", "No");
 
         // If the user confirms the removal then remove the scopes.
         if (answer === "Yes") {

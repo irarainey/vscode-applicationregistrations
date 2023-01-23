@@ -50,7 +50,7 @@ export class RedirectUriService extends ServiceBase {
     async delete(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the deletion.
-        const answer = await window.showInformationMessage(`Do you want to delete the Redirect URI ${item.label!}?`, "Yes", "No");
+        const answer = await window.showWarningMessage(`Do you want to delete the Redirect URI ${item.label!}?`, "Yes", "No");
 
         // If the answer is yes then delete the redirect URI.
         if (answer === "Yes") {
@@ -102,7 +102,7 @@ export class RedirectUriService extends ServiceBase {
     async deleteAll(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the deletion.
-        const answer = await window.showInformationMessage("Do you want to delete all Redirect URIs of this type?", "Yes", "No");
+        const answer = await window.showWarningMessage("Do you want to delete all Redirect URIs of this type?", "Yes", "No");
 
         // If the answer is yes then delete the redirect URIs.
         if (answer === "Yes") {

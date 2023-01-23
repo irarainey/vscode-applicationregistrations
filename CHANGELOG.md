@@ -3,6 +3,7 @@
 - Added user and directory role assignment information to tenant information screen.
 - Added the ability to delete all redirect uris of a single type at once.
 - Added functionality to show application endpoints based upon sign in audience.
+- Added the ability to disable and delete app roles and scopes at the same time.
 - Changed the order of parameters when creating a new application registration to check name length.
 - Improved validation based upon different sign in audiences.
 - Fixed an issue where the manifest shown might not always been up to date.

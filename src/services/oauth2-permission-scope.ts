@@ -37,7 +37,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         }
 
         if (appIdUri === undefined || appIdUri.length === 0) {
-            window.showWarningMessage("This application does not have an Application II URI. Please add one before adding a scope.", "OK");
+            window.showWarningMessage("This application does not have an Application ID URI. Please add one before adding a scope.", "OK");
             return;
         }
 
@@ -122,35 +122,41 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     }
 
     // Deletes an exposed api scope from an application registration.
-    async delete(item: AppRegItem): Promise<void> {
+    async delete(item: AppRegItem, hideConfirmation: boolean = false): Promise<void> {
 
-        if (item.state !== false) {
-            window.showWarningMessage("Scopes cannot be deleted unless disabled first.", "OK");
+        if (item.state !== false && hideConfirmation === false) {
+            const disableScope = await window.showWarningMessage(`The Scope ${item.label} cannot be deleted unless it is disabled. Do you want to disable the scope and then delete it?`, "Yes", "No");
+            if (disableScope === "Yes") {
+                await this.changeState(item, false);
+                await this.delete(item, true);
+            }
             return;
         }
 
-        // Prompt the user to confirm the removal.
-        const answer = await window.showInformationMessage(`Do you want to delete the Scope ${item.label}?`, "Yes", "No");
-
-        // If the user confirms the removal then delete the role.
-        if (answer === "Yes") {
-            // Set the added trigger to the status bar message.
-            const status = this.indicateChange("Deleting Scope...", item);
-
-            // Get the parent application so we can read the app roles.
-            const api = await this.getScopes(item.objectId!);
-
-            // If the array is undefined then it'll be an Azure CLI authentication issue.
-            if (api === undefined) {
+        if (hideConfirmation === false) {
+            // If the user confirms the removal then delete the scope.
+            const deleteScope = await window.showWarningMessage(`Do you want to delete the Scope ${item.label}?`, "Yes", "No");
+            if (deleteScope === "No") {
                 return;
             }
-
-            // Remove the app role from the array.
-            api!.oauth2PermissionScopes!.splice(api!.oauth2PermissionScopes!.findIndex(r => r.id === item.value!), 1);
-
-            // Update the application.
-            await this.updateApplication(item.objectId!, { api: api }, status);
         }
+
+        // Set the added trigger to the status bar message.
+        const status = this.indicateChange("Deleting Scope...", item);
+
+        // Get the parent application so we can read the app roles.
+        const api = await this.getScopes(item.objectId!);
+
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (api === undefined) {
+            return;
+        }
+
+        // Remove the app role from the array.
+        api!.oauth2PermissionScopes!.splice(api!.oauth2PermissionScopes!.findIndex(r => r.id === item.value!), 1);
+
+        // Update the application.
+        await this.updateApplication(item.objectId!, { api: api }, status);
     }
 
     // Updates the application registration.

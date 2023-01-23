@@ -53,7 +53,7 @@ export class OwnerService extends ServiceBase {
     async remove(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the removal.
-        const response = await window.showInformationMessage(`Do you want to remove ${item.label} as an owner of this application?`, "Yes", "No");
+        const response = await window.showWarningMessage(`Do you want to remove ${item.label} as an owner of this application?`, "Yes", "No");
 
         // If the user confirms the removal then remove the user.
         if (response === "Yes") {

@@ -1,4 +1,4 @@
-import { Event, EventEmitter, Disposable, ThemeIcon, window } from "vscode";
+import { Event, EventEmitter, Disposable, ThemeIcon } from "vscode";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { ErrorResult } from "../types/error-result";
@@ -55,7 +55,7 @@ export class ServiceBase {
 
         let id: string | undefined = undefined;
 
-        if(statusMessage !== undefined) {
+        if (statusMessage !== undefined) {
             id = setStatusBarMessage(statusMessage);
         }
 

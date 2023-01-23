@@ -92,35 +92,41 @@ export class AppRoleService extends ServiceBase {
     }
 
     // Deletes an app role from an application registration.
-    async delete(item: AppRegItem): Promise<void> {
+    async delete(item: AppRegItem, hideConfirmation: boolean = false): Promise<void> {
 
-        if (item.state !== false) {
-            window.showWarningMessage("Role cannot be deleted unless disabled first.", "OK");
+        if (item.state !== false && hideConfirmation === false) {
+            const disableRole = await window.showWarningMessage(`The App Role ${item.label} cannot be deleted unless it is disabled. Do you want to disable the role and then delete it?`, "Yes", "No");
+            if (disableRole === "Yes") {
+                await this.changeState(item, false);
+                await this.delete(item, true);
+            }
             return;
         }
 
-        // Prompt the user to confirm the removal.
-        const answer = await window.showInformationMessage(`Do you want to delete the App Role ${item.label}?`, "Yes", "No");
-
-        // If the user confirms the removal then delete the role.
-        if (answer === "Yes") {
-            // Set the added trigger to the status bar message.
-            const status = this.indicateChange("Deleting App Role...", item);
-
-            // Get the parent application so we can read the app roles.
-            const roles = await this.getAppRoles(item.objectId!);
-
-            // If the array is undefined then it'll be an Azure CLI authentication issue.
-            if (roles === undefined) {
+        if (hideConfirmation === false) {
+            // If the user confirms the removal then delete the role.
+            const deleteRole = await window.showWarningMessage(`Do you want to delete the App Role ${item.label}?`, "Yes", "No");
+            if (deleteRole === "No") {
                 return;
             }
-
-            // Remove the app role from the array.
-            roles.splice(roles.findIndex(r => r.id === item.value!), 1);
-
-            // Update the application.
-            await this.updateApplication(item.objectId!, { appRoles: roles }, status);
         }
+
+        // Set the added trigger to the status bar message.
+        const status = this.indicateChange("Deleting App Role...", item);
+
+        // Get the parent application so we can read the app roles.
+        const roles = await this.getAppRoles(item.objectId!);
+
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (roles === undefined) {
+            return;
+        }
+
+        // Remove the app role from the array.
+        roles.splice(roles.findIndex(r => r.id === item.value!), 1);
+
+        // Update the application.
+        await this.updateApplication(item.objectId!, { appRoles: roles }, status);
     }
 
     // Updates an application registration with the new app roles.

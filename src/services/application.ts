@@ -106,7 +106,7 @@ export class ApplicationService extends ServiceBase {
     async delete(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the deletion.
-        const answer = await window.showInformationMessage(`Do you want to delete the Application ${item.label}?`, "Yes", "No");
+        const answer = await window.showWarningMessage(`Do you want to delete the Application ${item.label}?`, "Yes", "No");
 
         // If the user confirms the deletion then delete the application.
         if (answer === "Yes") {
@@ -120,7 +120,7 @@ export class ApplicationService extends ServiceBase {
     async removeAppIdUri(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the deletion.
-        const answer = await window.showInformationMessage("Do you want to remove the Application ID URI?", "Yes", "No");
+        const answer = await window.showWarningMessage("Do you want to remove the Application ID URI?", "Yes", "No");
 
         // If the user confirms the deletion then delete the application.
         if (answer === "Yes") {
