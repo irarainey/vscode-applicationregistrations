@@ -98,6 +98,19 @@ export class RedirectUriService extends ServiceBase {
         }
     }
 
+    // Deletes all redirect URIs for a type.
+    async deleteAll(item: AppRegItem): Promise<void> {
+
+        // Prompt the user to confirm the deletion.
+        const answer = await window.showInformationMessage("Do you want to delete all Redirect URIs of this type?", "Yes", "No");
+
+        // If the answer is yes then delete the redirect URIs.
+        if (answer === "Yes") {
+            // Update the application with an empty array for this type.
+            await this.updateApplication(item, []);
+        }
+    }
+
     // Edits a redirect URI.   
     async edit(item: AppRegItem): Promise<void> {
 

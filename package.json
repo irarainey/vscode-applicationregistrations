@@ -163,6 +163,10 @@
         "title": "Delete"
       },
       {
+        "command": "appRegistrations.deleteAllRedirectUris",
+        "title": "Delete All"
+      },
+      {
         "command": "appRegistrations.copyRedirectUri",
         "title": "Copy"
       },
@@ -367,6 +371,11 @@
           "command": "appRegistrations.addRedirectUri",
           "when": "view == appRegistrations && viewItem == WEB-REDIRECT || viewItem == SPA-REDIRECT || viewItem == NATIVE-REDIRECT",
           "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.deleteAllRedirectUris",
+          "when": "view == appRegistrations && viewItem == WEB-REDIRECT || viewItem == SPA-REDIRECT || viewItem == NATIVE-REDIRECT",
+          "group": "appRegistrations@1"
         },
         {
           "command": "appRegistrations.editRedirectUri",
