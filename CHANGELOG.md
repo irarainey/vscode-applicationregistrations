@@ -5,7 +5,8 @@
 - Added functionality to show application endpoints based upon sign in audience.
 - Changed the order of parameters when creating a new application registration to check name length.
 - Improved validation based upon different sign in audiences.
-- Fixed an issue where the manifest shown might not always been upto date.
+- Fixed an issue where the manifest shown might not always been up to date.
+- Fixed an issue where the sign in audience might not be displayed correctly.
 
 ## 0.4.0
 
