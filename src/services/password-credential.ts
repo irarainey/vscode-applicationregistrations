@@ -61,7 +61,7 @@ export class PasswordCredentialService extends ServiceBase {
     async delete(item: AppRegItem): Promise<void> {
 
         // Prompt the user to confirm the removal.
-        const answer = await window.showInformationMessage("Do you want to delete this password credential?", "Yes", "No");
+        const answer = await window.showWarningMessage("Do you want to delete this password credential?", "Yes", "No");
 
         // If the user confirms the removal then remove the password credential.
         if (answer === "Yes") {

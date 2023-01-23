@@ -5,8 +5,9 @@ import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { execShellCmd } from "../utils/exec-shell-cmd";
 import { GraphResult } from "../types/graph-result";
-import { Organization } from "@microsoft/microsoft-graph-types";
+import { Organization, User, RoleAssignment } from "@microsoft/microsoft-graph-types";
 import { clearStatusBarMessage } from "../utils/status-bar";
+import { v4 as uuidv4 } from "uuid";
 
 export class OrganizationService extends ServiceBase {
 
@@ -22,7 +23,7 @@ export class OrganizationService extends ServiceBase {
         const status = this.indicateChange("Loading Tenant Information...");
 
         // Execute the az cli command to get the tenant id
-        execShellCmd(CLI_TENANT_CMD)
+        await execShellCmd(CLI_TENANT_CMD)
             .then(async (response) => {
                 await this.showTenantWindow(response, status);
             })
@@ -33,6 +34,36 @@ export class OrganizationService extends ServiceBase {
 
     // Shows the tenant information in a new read-only window.
     private async showTenantWindow(tenantId: string, status: string | undefined): Promise<void> {
+
+        // Get the user information
+        const user: GraphResult<User> = await this.graphRepository.getUserInformation();
+        if (user.success !== true || user.value === undefined) {
+            this.triggerOnError(user.error);
+            return;
+        }
+
+        // Get the assigned directory roles.
+        const roles: GraphResult<RoleAssignment[]> = await this.graphRepository.getRoleAssignments(user.value.id!);
+        if (roles.success !== true || roles.value === undefined) {
+            this.triggerOnError(user.error);
+            return;
+        }
+
+        const userInformation = {
+            id: user.value.id,
+            displayName: user.value.displayName,
+            mail: user.value.mail,
+            userPrincipalName: user.value.userPrincipalName,
+            userType: user.value.userType,
+            roles: roles.value.map(role => {
+                return {
+                    id: role.roleDefinition!.id,
+                    displayName: role.roleDefinition!.displayName,
+                    description: role.roleDefinition!.description
+                };
+            })
+        };
+
         // Get the tenant information.
         const result: GraphResult<Organization> = await this.graphRepository.getTenantInformation(tenantId);
         if (result.success === true && result.value !== undefined) {
@@ -40,7 +71,8 @@ export class OrganizationService extends ServiceBase {
                 id: result.value.id,
                 displayName: result.value.displayName,
                 primaryDomain: result.value.verifiedDomains?.filter(x => x.isDefault === true)[0].name,
-                verifiedDomains: result.value.verifiedDomains?.map(x => x.name)
+                verifiedDomains: result.value.verifiedDomains?.map(x => x.name),
+                user: userInformation
             };
 
             const newDocument = new class implements TextDocumentContentProvider {
@@ -51,8 +83,9 @@ export class OrganizationService extends ServiceBase {
                 }
             };
 
-            this.disposable.push(workspace.registerTextDocumentContentProvider("tenantInformation", newDocument));
-            const uri = Uri.parse(`tenantInformation:Tenant - ${result.value.displayName}.json`);
+            const contentProvider = uuidv4();
+            this.disposable.push(workspace.registerTextDocumentContentProvider(contentProvider, newDocument));
+            const uri = Uri.parse(`${contentProvider}:Tenant - ${result.value.displayName}.json`);
             workspace.openTextDocument(uri)
                 .then(async (doc) => {
                     await window.showTextDocument(doc, { preview: false });

@@ -25,7 +25,7 @@ export class SignInAudienceService extends ServiceBase {
             });
 
         if (audience !== undefined) {
-            let status: string | undefined; 
+            let status: string | undefined;
             if (item.contextValue! === "AUDIENCE-PARENT") {
                 status = this.indicateChange("Updating Sign In Audience...", item.children![0]);
             } else {

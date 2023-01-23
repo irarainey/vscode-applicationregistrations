@@ -18,8 +18,16 @@ export class AppRoleService extends ServiceBase {
     // Adds a new app role to an application registration.
     async add(item: AppRegItem): Promise<void> {
 
+        // Get the existing app roles.
+        const roles = await this.getAppRoles(item.objectId!);
+
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (roles === undefined) {
+            return;
+        }
+
         // Capture the new app role details by passing in an empty app role.
-        const role = await this.inputRoleDetails({}, item.objectId!, false);
+        const role = await this.inputRoleDetails({}, false, roles);
 
         // If the user cancels the input then return undefined.
         if (role === undefined) {
@@ -28,14 +36,6 @@ export class AppRoleService extends ServiceBase {
 
         // Set the added trigger to the status bar message.
         const status = this.indicateChange("Adding App Role...", item);
-
-        // Get the existing app roles.
-        const roles = await this.getAppRoles(item.objectId!);
-
-        // If the array is undefined then it'll be an Azure CLI authentication issue.
-        if (roles === undefined) {
-            return;
-        }
 
         // Add the new app role to the array.
         roles.push(role);
@@ -47,7 +47,7 @@ export class AppRoleService extends ServiceBase {
     // Edits an app role from an application registration.
     async edit(item: AppRegItem): Promise<void> {
 
-        // Get the parent application so we can read the existing app roles.
+        // Read the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
 
         // If the array is undefined then it'll be an Azure CLI authentication issue.
@@ -56,7 +56,7 @@ export class AppRoleService extends ServiceBase {
         }
 
         // Capture the new app role details by passing in the existing role.
-        const role = await this.inputRoleDetails(roles.filter(r => r.id === item.value!)[0], item.objectId!, true);
+        const role = await this.inputRoleDetails(roles.filter(r => r.id === item.value!)[0], true, roles);
 
         // If the user cancels the input then return undefined.
         if (role === undefined) {
@@ -92,35 +92,41 @@ export class AppRoleService extends ServiceBase {
     }
 
     // Deletes an app role from an application registration.
-    async delete(item: AppRegItem): Promise<void> {
+    async delete(item: AppRegItem, hideConfirmation: boolean = false): Promise<void> {
 
-        if (item.state !== false) {
-            window.showWarningMessage("Role cannot be deleted unless disabled first.", "OK");
+        if (item.state !== false && hideConfirmation === false) {
+            const disableRole = await window.showWarningMessage(`The App Role ${item.label} cannot be deleted unless it is disabled. Do you want to disable the role and then delete it?`, "Yes", "No");
+            if (disableRole === "Yes") {
+                await this.changeState(item, false);
+                await this.delete(item, true);
+            }
             return;
         }
 
-        // Prompt the user to confirm the removal.
-        const answer = await window.showInformationMessage(`Do you want to delete the App Role ${item.label}?`, "Yes", "No");
-
-        // If the user confirms the removal then delete the role.
-        if (answer === "Yes") {
-            // Set the added trigger to the status bar message.
-            const status = this.indicateChange("Deleting App Role...", item);
-
-            // Get the parent application so we can read the app roles.
-            const roles = await this.getAppRoles(item.objectId!);
-
-            // If the array is undefined then it'll be an Azure CLI authentication issue.
-            if (roles === undefined) {
+        if (hideConfirmation === false) {
+            // If the user confirms the removal then delete the role.
+            const deleteRole = await window.showWarningMessage(`Do you want to delete the App Role ${item.label}?`, "Yes", "No");
+            if (deleteRole === "No") {
                 return;
             }
-
-            // Remove the app role from the array.
-            roles.splice(roles.findIndex(r => r.id === item.value!), 1);
-
-            // Update the application.
-            await this.updateApplication(item.objectId!, { appRoles: roles }, status);
         }
+
+        // Set the added trigger to the status bar message.
+        const status = this.indicateChange("Deleting App Role...", item);
+
+        // Get the parent application so we can read the app roles.
+        const roles = await this.getAppRoles(item.objectId!);
+
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (roles === undefined) {
+            return;
+        }
+
+        // Remove the app role from the array.
+        roles.splice(roles.findIndex(r => r.id === item.value!), 1);
+
+        // Update the application.
+        await this.updateApplication(item.objectId!, { appRoles: roles }, status);
     }
 
     // Updates an application registration with the new app roles.
@@ -142,7 +148,7 @@ export class AppRoleService extends ServiceBase {
     }
 
     // Captures the details for an app role.
-    private async inputRoleDetails(role: AppRole, id: string, isEditing: boolean): Promise<AppRole | undefined> {
+    private async inputRoleDetails(role: AppRole, isEditing: boolean, roles: AppRole[]): Promise<AppRole | undefined> {
 
         // Prompt the user for the new display name.
         const displayName = await window.showInputBox({
@@ -160,7 +166,7 @@ export class AppRoleService extends ServiceBase {
         }
 
         // Debounce the validation function to prevent multiple calls to the Graph API.
-        const validation = async (value: string, id: string, isEditing: boolean, oldValue: string | undefined) => this.validateValue(value, id, isEditing, role.value ?? undefined);
+        const validation = async (value: string, isEditing: boolean, oldValue: string | undefined, roles: AppRole[]) => this.validateValue(value, isEditing, role.value ?? undefined, roles);
         const debouncedValidation = debounce(validation, 500);
 
         // Prompt the user for the new value.
@@ -170,7 +176,7 @@ export class AppRoleService extends ServiceBase {
             title: isEditing === true ? "Edit App Role (2/5)" : "Add App Role (2/5)",
             ignoreFocusOut: true,
             value: role.value ?? undefined,
-            validateInput: async (value) => debouncedValidation(value, id, isEditing, role.value ?? undefined)
+            validateInput: async (value) => debouncedValidation(value, isEditing, role.value ?? undefined, roles)
         });
 
         // If escape is pressed then return undefined.
@@ -274,29 +280,22 @@ export class AppRoleService extends ServiceBase {
     }
 
     // Validates the value of an app role.
-    private async validateValue(value: string, id: string, isEditing: boolean, oldValue: string | undefined): Promise<string | undefined> {
+    private async validateValue(value: string, isEditing: boolean, oldValue: string | undefined, roles: AppRole[]): Promise<string | undefined> {
 
         // Check the length of the value.
         if (value.length > 250) {
-            return "A value cannot be longer than 250 characters.";
+            return "A role value cannot be longer than 250 characters.";
         }
 
         // Check the length of the display name.
         if (value.length < 1) {
-            return "A value cannot be empty.";
+            return "A role value cannot be empty.";
         }
 
         // Check to see if the value already exists.
-        if (isEditing !== true && oldValue !== value) {
-            const roles = await this.getAppRoles(id);
-
-            // If the array is undefined then it'll be an Azure CLI authentication issue.
-            if (roles === undefined) {
-                return undefined;
-            }
-
+        if (isEditing !== true || (isEditing === true && oldValue !== value)) {
             if (roles!.find(r => r.value === value) !== undefined) {
-                return "The value specified already exists.";
+                return "The role value specified already exists.";
             }
         }
 
