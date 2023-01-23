@@ -5,7 +5,7 @@ import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { execShellCmd } from "../utils/exec-shell-cmd";
 import { GraphResult } from "../types/graph-result";
-import { Organization } from "@microsoft/microsoft-graph-types";
+import { Organization, User, RoleAssignment, RoleDefinition } from "@microsoft/microsoft-graph-types";
 import { clearStatusBarMessage } from "../utils/status-bar";
 
 export class OrganizationService extends ServiceBase {
@@ -33,6 +33,36 @@ export class OrganizationService extends ServiceBase {
 
     // Shows the tenant information in a new read-only window.
     private async showTenantWindow(tenantId: string, status: string | undefined): Promise<void> {
+
+        // Get the user information
+        const user: GraphResult<User> = await this.graphRepository.getUserInformation();
+        if (user.success !== true || user.value === undefined) {
+            this.triggerOnError(user.error);
+            return;
+        }
+
+        // Get the assigned directory roles.
+        const roles: GraphResult<RoleAssignment[]> = await this.graphRepository.getRoleAssignments(user.value.id!);
+        if (roles.success !== true || roles.value === undefined) {
+            this.triggerOnError(user.error);
+            return;
+        }
+
+        const userInformation = {
+            id: user.value.id,
+            displayName: user.value.displayName,
+            mail: user.value.mail,
+            userPrincipalName: user.value.userPrincipalName,
+            userType: user.value.userType,
+            roles: roles.value.map(role => {
+                return {
+                    id: role.roleDefinition!.id,
+                    displayName: role.roleDefinition!.displayName,
+                    description: role.roleDefinition!.description
+                };
+            })
+        };
+
         // Get the tenant information.
         const result: GraphResult<Organization> = await this.graphRepository.getTenantInformation(tenantId);
         if (result.success === true && result.value !== undefined) {
@@ -40,7 +70,8 @@ export class OrganizationService extends ServiceBase {
                 id: result.value.id,
                 displayName: result.value.displayName,
                 primaryDomain: result.value.verifiedDomains?.filter(x => x.isDefault === true)[0].name,
-                verifiedDomains: result.value.verifiedDomains?.map(x => x.name)
+                verifiedDomains: result.value.verifiedDomains?.map(x => x.name),
+                user: userInformation
             };
 
             const newDocument = new class implements TextDocumentContentProvider {

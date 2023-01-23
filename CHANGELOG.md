@@ -1,3 +1,7 @@
+## 0.5.0
+
+- Added user and directory role assignment information to tenant information screen.
+
 ## 0.4.0
 
 - Added additional error handling to capture Azure CLI being signed out.

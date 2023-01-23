@@ -4,7 +4,7 @@ import { workspace } from "vscode";
 import { Client, ClientOptions } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import { AzureCliCredential } from "@azure/identity";
-import { Application, KeyCredential, User, PasswordCredential, ServicePrincipal, Organization } from "@microsoft/microsoft-graph-types";
+import { Application, KeyCredential, User, PasswordCredential, ServicePrincipal, Organization, RoleAssignment } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../types/graph-result";
 import { escapeSingleQuotesForFilter, escapeSingleQuotesForSearch } from "../utils/escape-string";
 
@@ -362,6 +362,31 @@ export class GraphApiRepository {
                 .select("id,displayName,verifiedDomains")
                 .get();
             return { success: true, value: result };
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
+    }
+
+    // Gets the current user information.
+    async getUserInformation(): Promise<GraphResult<User>> {
+        try {
+            // Get the user information
+            const result: User = await this.client!.api("/me")
+                .get();
+            return { success: true, value: result };
+        } catch (error: any) {
+            return { success: false, error: error };
+        }
+    }
+    
+    // Gets directory roles assigned to a user
+    async getRoleAssignments(id: string): Promise<GraphResult<RoleAssignment[]>> {
+        try {
+            const result: any = await this.client!.api("/roleManagement/directory/roleAssignments")
+                .filter(`principalId eq \'${id}\'`)
+                .expand("roleDefinition")
+                .get();
+            return { success: true, value: result.value };
         } catch (error: any) {
             return { success: false, error: error };
         }
