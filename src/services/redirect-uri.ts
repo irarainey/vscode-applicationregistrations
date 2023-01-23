@@ -40,13 +40,13 @@ export class RedirectUriService extends ServiceBase {
             case "AzureADMyOrg":
             case "AzureADMultipleOrgs":
                 if(allExistingRedirectUris.length > 255) {
-                    window.showWarningMessage("You cannot add any more Redirect URIs. The maximum for this application type is 255.", "OK");
+                    window.showWarningMessage("You cannot add any more Redirect URIs. The maximum for this application type is 256.", "OK");
                     return;
                 }
                 break;
             case "AzureADandPersonalMicrosoftAccount":
             case "PersonalMicrosoftAccount":
-                if(allExistingRedirectUris.length > 100) {
+                if(allExistingRedirectUris.length > 99) {
                     window.showWarningMessage("You cannot add any more Redirect URIs. The maximum for this application type is 100.", "OK");
                     return;
                 }
