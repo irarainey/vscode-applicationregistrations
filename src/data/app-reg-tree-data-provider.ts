@@ -880,24 +880,32 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     new AppRegItem({
                         label: `Scope: ${scope.value!}`,
                         context: "SCOPE-VALUE",
+                        objectId: element.objectId,
+                        value: scope.id!,
                         iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                         baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Description: ${scope.adminConsentDescription!}`,
-                        context: "SCOPE-VALUE",
+                        context: "SCOPE-DESCRIPTION",
+                        objectId: element.objectId,
+                        value: scope.id!,
                         iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                         baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Consent: ${scope.type! === "User" ? "Admins and Users" : "Admins Only"}`,
-                        context: "SCOPE-VALUE",
+                        context: "SCOPE-CONSENT",
+                        objectId: element.objectId,
+                        value: scope.id!,
                         iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                         baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Enabled: ${scope.isEnabled! ? "Yes" : "No"}`,
-                        context: "SCOPE-VALUE",
+                        context: "SCOPE-STATE",
+                        objectId: element.objectId,
+                        value: scope.id!,
                         iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                         baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     })
@@ -922,24 +930,32 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     new AppRegItem({
                         label: `Value: ${role.value!}`,
                         context: "ROLE-VALUE",
+                        objectId: element.objectId,
+                        value: role.id!,
                         iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                         baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Description: ${role.description!}`,
-                        context: "ROLE-VALUE",
+                        context: "ROLE-DESCRIPTION",
+                        objectId: element.objectId,
+                        value: role.id!,
                         iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                         baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Allowed: ${role.allowedMemberTypes!.map(type => type === "Application" ? "Applications" : "Users/Groups").join(", ")}`,
-                        context: "ROLE-VALUE",
+                        context: "ROLE-ALLOWED",
+                        objectId: element.objectId,
+                        value: role.id!,
                         iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                         baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     }),
                     new AppRegItem({
                         label: `Enabled: ${role.isEnabled! ? "Yes" : "No"}`,
-                        context: "ROLE-VALUE",
+                        context: "ROLE-STATE",
+                        objectId: element.objectId,
+                        value: role.id!,
                         iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                         baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
                     })

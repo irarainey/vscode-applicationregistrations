@@ -89,6 +89,8 @@ export async function activate(context: ExtensionContext) {
 	// App Role Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAppRole`, async item => await appRoleService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editAppRole`, async item => await appRoleService.edit(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editAppRoleValue`, async item => await appRoleService.editValue(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.renameAppRole`, async item => await appRoleService.editValue(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteAppRole`, async item => await appRoleService.delete(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.enableAppRole`, async item => await appRoleService.changeState(item, true)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.disableAppRole`, async item => await appRoleService.changeState(item, false)));
@@ -100,6 +102,8 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeApiScopes`, async item => await requiredResourceAccessService.removeApi(item)));
 
 	// Exposed API Scope Commands
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.renameExposedApiScope`, async item => await oauth2PermissionScopeService.editValue(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editExposedApiScopeValue`, async item => await oauth2PermissionScopeService.editValue(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addExposedApiScope`, async item => await oauth2PermissionScopeService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editExposedApiScope`, async item => await oauth2PermissionScopeService.edit(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteExposedApiScope`, async item => await oauth2PermissionScopeService.delete(item)));

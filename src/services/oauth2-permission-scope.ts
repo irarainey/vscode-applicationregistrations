@@ -129,6 +129,148 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         await this.updateApplication(item.objectId!, { api: api }, status);
     }
 
+    // Edits an exposed api scope value from an application registration.
+    async editValue(item: AppRegItem): Promise<void> {
+
+        // Show that we're doing something
+        const check = setStatusBarMessage("Checking Application ID URI...");
+
+        // Get sign in audience to enable validation
+        const signInAudience: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
+        if (signInAudience.success !== true || signInAudience.value === undefined) {
+            this.triggerOnError(signInAudience.error);
+            return;
+        }
+
+        // Check to see if the application has an appIdURI. If it doesn't then we don't want to add a scope.
+        let appIdUri: string[];
+
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(item.objectId!, "identifierUris");
+        if (result.success === true && result.value !== undefined) {
+            appIdUri = result.value.identifierUris!;
+        } else {
+            this.triggerOnError(result.error);
+            return;
+        }
+
+        if (appIdUri === undefined || appIdUri.length === 0) {
+            window.showWarningMessage("This application does not have an Application ID URI. Please add one before editing scopes.", "OK");
+            clearStatusBarMessage(check!);
+            return;
+        }
+
+        // Get the parent application so we can read the app roles.
+        const api = await this.getScopes(item.objectId!);
+
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (api === undefined) {
+            return;
+        }
+
+        clearStatusBarMessage(check!);
+
+        // Get the existsing scope.
+        const scope = api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0];
+
+        switch (item.contextValue) {
+            case "SCOPE-ENABLED":
+            case "SCOPE-DISABLED":
+                // Prompt the user for the new admin consent display name.
+                const adminConsentDisplayName = await window.showInputBox({
+                    prompt: "Admin consent display name",
+                    placeHolder: "Enter an admin consent display name (e.g. Read files)",
+                    title: "Edit Exposed API Permission (1/1)",
+                    ignoreFocusOut: true,
+                    value: scope.adminConsentDisplayName ?? undefined,
+                    validateInput: async (value) => this.validateAdminDisplayName(value)
+                });
+
+                // If escape is pressed or the new display name is empty then return undefined.
+                if (adminConsentDisplayName === undefined) {
+                    return undefined;
+                }
+
+                scope.adminConsentDisplayName = adminConsentDisplayName;
+                break;
+            case "SCOPE-VALUE":
+                // Debounce the validation function to prevent multiple calls to the Graph API.
+                const validation = async (value: string, id: string, isEditing: boolean, oldValue: string, signInAudience: string, scopes: ApiApplication) => this.validateValue(value, id, isEditing, scope.value!, signInAudience, scopes);
+                const debouncedValidation = debounce(validation, 500);
+
+                // Prompt the user for the new value.
+                const value = await window.showInputBox({
+                    prompt: "Scope name",
+                    placeHolder: "Enter a scope name (e.g. Files.Read)",
+                    title: "Edit Exposed API Permission (1/1)",
+                    ignoreFocusOut: true,
+                    value: scope.value ?? undefined,
+                    validateInput: async (value) => debouncedValidation(value, item.objectId!, true, scope.value!, signInAudience.value!, api)
+                });
+
+                // If escape is pressed or the new name is empty then return undefined.
+                if (value === undefined) {
+                    return undefined;
+                }
+
+                scope.value = value;
+                break;
+            case "SCOPE-DESCRIPTION":
+                // Prompt the user for the new admin consent description.
+                const adminConsentDescription = await window.showInputBox({
+                    prompt: "Admin consent description",
+                    placeHolder: "Enter an admin consent description (e.g. Allows the app to read files on your behalf.)",
+                    title: "Edit Exposed API Permission (1/1)",
+                    ignoreFocusOut: true,
+                    value: scope.adminConsentDescription!,
+                    validateInput: async (value) => this.validateAdminDescription(value)
+                });
+
+                // If escape is pressed or the new description is empty then return undefined.
+                if (adminConsentDescription === undefined) {
+                    return undefined;
+                }
+
+                scope.adminConsentDescription = adminConsentDescription;
+                break;
+            case "SCOPE-CONSENT":
+                // Prompt the user for the new allowed member types.
+                const consentType = await window.showQuickPick(
+                    [
+                        {
+                            label: "Administrators only",
+                            description: "Only administrators can consent to the scope",
+                            value: "Admin"
+                        },
+                        {
+                            label: "Administrators and users",
+                            description: "Administrators and users can consent to the scope",
+                            value: "User"
+                        }
+                    ],
+                    {
+                        placeHolder: "Select who can consent to the scope",
+                        title: "Edit Exposed API Permission (1/1)",
+                        ignoreFocusOut: true
+                    });
+
+                // If escape is pressed or the new allowed member types is empty then return undefined.
+                if (consentType === undefined) {
+                    return undefined;
+                }
+
+                scope.type = consentType.value;
+                break;
+            default:
+                return;
+        }
+
+        // Set the added trigger to the status bar message.
+        const status = this.indicateChange("Updating Scope...", item);
+
+        // Update the application.
+        await this.updateApplication(item.objectId!, { api: api }, status);
+    }
+
     // Changes the enabled state of an exposed api scope for an application registration.
     async changeState(item: AppRegItem, state: boolean): Promise<void> {
 
@@ -398,6 +540,14 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         // Check the length of the value.
         if (value.length < 1) {
             return "A scope value cannot be empty.";
+        }
+
+        if (value.includes(" ")) {
+            return "A scope value cannot contain spaces.";
+        }
+
+        if (value.startsWith(".")) {
+            return "A scope value cannot start with a full stop.";
         }
 
         // Check to see if the value already exists.

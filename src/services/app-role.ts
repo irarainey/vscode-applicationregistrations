@@ -70,6 +70,124 @@ export class AppRoleService extends ServiceBase {
         await this.updateApplication(item.objectId!, { appRoles: roles }, status);
     }
 
+    // Edits an app role value from an application registration.
+    async editValue(item: AppRegItem): Promise<void> {
+
+        // Read the existing app roles.
+        const roles = await this.getAppRoles(item.objectId!);
+
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (roles === undefined) {
+            return;
+        }
+
+        // Get the existing role.
+        const role = roles.filter(r => r.id === item.value!)[0];
+
+        switch (item.contextValue) {
+            case "ROLE-ENABLED":
+            case "ROLE-DISABLED":
+                // Prompt the user for the new display name.
+                const displayName = await window.showInputBox({
+                    prompt: "App Role Display Name",
+                    placeHolder: "Enter a display name for the App Role",
+                    ignoreFocusOut: true,
+                    title: "Edit App Role (1/1)",
+                    value: role.displayName!,
+                    validateInput: (value) => this.validateDisplayName(value)
+                });
+
+                // If escape is pressed then return undefined.
+                if (displayName === undefined) {
+                    return undefined;
+                }
+
+                role.displayName = displayName;
+                break;
+            case "ROLE-VALUE":
+                // Debounce the validation function to prevent multiple calls to the Graph API.
+                const validation = async (value: string, isEditing: boolean, oldValue: string, roles: AppRole[]) => this.validateValue(value, isEditing, role.value!, roles);
+                const debouncedValidation = debounce(validation, 500);
+
+                // Prompt the user for the new value.
+                const value = await window.showInputBox({
+                    prompt: "App Role Value",
+                    placeHolder: "Enter a value for the App Role",
+                    title: "Edit App Role (1/1)",
+                    ignoreFocusOut: true,
+                    value: role.value!,
+                    validateInput: async (value) => debouncedValidation(value, true, role.value!, roles)
+                });
+
+                // If escape is pressed then return undefined.
+                if (value === undefined) {
+                    return undefined;
+                }
+
+                role.value = value;
+                break;
+            case "ROLE-DESCRIPTION":
+                // Prompt the user for the new display name.
+                const description = await window.showInputBox({
+                    prompt: "App Role Description",
+                    placeHolder: "Enter a description for the App Role",
+                    title: "Edit App Role (1/1)",
+                    ignoreFocusOut: true,
+                    value: role.description!,
+                    validateInput: (value) => this.validateDescription(value)
+                });
+
+                // If escape is pressed then return undefined.
+                if (description === undefined) {
+                    return undefined;
+                }
+
+                role.description = description;
+                break;
+            case "ROLE-ALLOWED":
+                // Prompt the user for the new allowed member types.
+                const allowed = await window.showQuickPick(
+                    [
+                        {
+                            label: "Users/Groups",
+                            description: "Users and groups can be assigned this role.",
+                            value: ["User"]
+                        },
+                        {
+                            label: "Applications",
+                            description: "Only applications can be assigned this role.",
+                            value: ["Application"]
+                        },
+                        {
+                            label: "Both (Users/Groups + Applications)",
+                            description: "Users, groups and applications can be assigned this role.",
+                            value: ["User", "Application"]
+                        }
+                    ],
+                    {
+                        placeHolder: "Select allowed member types",
+                        title: "Edit App Role (1/1)",
+                        ignoreFocusOut: true
+                    });
+
+                // If escape is pressed or the new allowed member types is empty then return undefined.
+                if (allowed === undefined) {
+                    return undefined;
+                }
+
+                role.allowedMemberTypes = allowed.value;
+                break;
+            default:
+                return;
+        }
+
+        // Set the added trigger to the status bar message.
+        const status = this.indicateChange("Updating App Role...", item);
+
+        // Update the application.
+        await this.updateApplication(item.objectId!, { appRoles: roles }, status);
+    }
+
     // Changes the enabled state of an app role from an application registration.
     async changeState(item: AppRegItem, state: boolean): Promise<void> {
 
@@ -290,6 +408,14 @@ export class AppRoleService extends ServiceBase {
         // Check the length of the display name.
         if (value.length < 1) {
             return "A role value cannot be empty.";
+        }
+
+        if (value.includes(" ")) {
+            return "A role value cannot contain spaces.";
+        }
+
+        if (value.startsWith(".")) {
+            return "A role value cannot start with a full stop.";
         }
 
         // Check to see if the value already exists.
