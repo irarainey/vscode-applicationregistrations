@@ -20,25 +20,18 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     async add(item: AppRegItem): Promise<void> {
 
         // Show that we're doing something
-        const check = setStatusBarMessage("Checking Application ID URI...");
+        const check = setStatusBarMessage("Reading Scopes...");
 
-        // Get sign in audience to enable validation
-        const signInAudience: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
-        if (signInAudience.success !== true || signInAudience.value === undefined) {
-            this.triggerOnError(signInAudience.error);
+        // Get the parent application so we can read the required propoerties.
+        const properties = await this.getProperties(item.objectId!);
+
+        // If the object is undefined then it'll be an Azure CLI authentication issue.
+        if (properties === undefined) {
             return;
         }
 
         // Check to see if the application has an appIdURI. If it doesn't then we don't want to add a scope.
-        let appIdUri: string[];
-
-        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(item.objectId!, "identifierUris");
-        if (result.success === true && result.value !== undefined) {
-            appIdUri = result.value.identifierUris!;
-        } else {
-            this.triggerOnError(result.error);
-            return;
-        }
+        const appIdUri = properties.identifierUris;
 
         if (appIdUri === undefined || appIdUri.length === 0) {
             window.showWarningMessage("This application does not have an Application ID URI. Please add one before adding a scope.", "OK");
@@ -46,18 +39,11 @@ export class OAuth2PermissionScopeService extends ServiceBase {
             return;
         }
 
-        // Get the existing scopes
-        const api = await this.getScopes(item.objectId!);
-
-        // If the array is undefined then it'll be an Azure CLI authentication issue.
-        if (api === undefined) {
-            return;
-        }
-
+        // Clear off the status bar message.
         clearStatusBarMessage(check!);
 
         // Capture the new scope details by passing in an empty scope.
-        const scope = await this.inputScopeDetails({}, item.objectId!, false, signInAudience.value, api);
+        const scope = await this.inputScopeDetails({}, item.objectId!, false, properties.signInAudience!, properties.api!);
 
         // If the user cancels the input then return undefined.
         if (scope === undefined) {
@@ -68,35 +54,28 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         const status = this.indicateChange("Adding Scope...", item);
 
         // Add the new scope to the existing scopes.
-        api.oauth2PermissionScopes!.push(scope);
+        properties.api!.oauth2PermissionScopes!.push(scope);
 
         // Update the application.
-        await this.updateApplication(item.objectId!, { api: api }, status);
+        await this.updateApplication(item.objectId!, { api: properties.api }, status);
     }
 
     // Edits an exposed api scope from an application registration.
     async edit(item: AppRegItem): Promise<void> {
 
         // Show that we're doing something
-        const check = setStatusBarMessage("Checking Application ID URI...");
+        const check = setStatusBarMessage("Reading Scope...");
 
-        // Get sign in audience to enable validation
-        const signInAudience: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
-        if (signInAudience.success !== true || signInAudience.value === undefined) {
-            this.triggerOnError(signInAudience.error);
+        // Get the parent application so we can read the required propoerties.
+        const properties = await this.getProperties(item.objectId!);
+
+        // If the object is undefined then it'll be an Azure CLI authentication issue.
+        if (properties === undefined) {
             return;
         }
 
         // Check to see if the application has an appIdURI. If it doesn't then we don't want to add a scope.
-        let appIdUri: string[];
-
-        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(item.objectId!, "identifierUris");
-        if (result.success === true && result.value !== undefined) {
-            appIdUri = result.value.identifierUris!;
-        } else {
-            this.triggerOnError(result.error);
-            return;
-        }
+        const appIdUri = properties.identifierUris;
 
         if (appIdUri === undefined || appIdUri.length === 0) {
             window.showWarningMessage("This application does not have an Application ID URI. Please add one before editing scopes.", "OK");
@@ -104,18 +83,11 @@ export class OAuth2PermissionScopeService extends ServiceBase {
             return;
         }
 
-        // Get the parent application so we can read the app roles.
-        const api = await this.getScopes(item.objectId!);
-
-        // If the array is undefined then it'll be an Azure CLI authentication issue.
-        if (api === undefined) {
-            return;
-        }
-
+        // Clear off the status bar message.
         clearStatusBarMessage(check!);
 
         // Capture the new app role details by passing in the existing role.
-        const scope = await this.inputScopeDetails(api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0], item.objectId!, true, signInAudience.value, api);
+        const scope = await this.inputScopeDetails(properties.api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0], item.objectId!, true, properties.signInAudience!, properties.api!);
 
         // If the user cancels the input then return undefined.
         if (scope === undefined) {
@@ -126,7 +98,92 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         const status = this.indicateChange("Updating Scope...", item);
 
         // Update the application.
-        await this.updateApplication(item.objectId!, { api: api }, status);
+        await this.updateApplication(item.objectId!, { api: properties.api }, status);
+    }
+
+    // Edits an exposed api scope value from an application registration.
+    async editValue(item: AppRegItem): Promise<void> {
+
+        // Show that we're doing something
+        const check = setStatusBarMessage("Reading Scope...");
+
+        // Get the parent application so we can read the required propoerties.
+        const properties = await this.getProperties(item.objectId!);
+
+        // If the object is undefined then it'll be an Azure CLI authentication issue.
+        if (properties === undefined) {
+            return;
+        }
+
+        // Check to see if the application has an appIdURI. If it doesn't then we don't want to add a scope.
+        const appIdUri = properties.identifierUris;
+
+        if (appIdUri === undefined || appIdUri.length === 0) {
+            window.showWarningMessage("This application does not have an Application ID URI. Please add one before editing scopes.", "OK");
+            clearStatusBarMessage(check!);
+            return;
+        }
+
+        // Clear off the status bar message.
+        clearStatusBarMessage(check!);
+
+        // Get the existsing scope.
+        const scope = properties.api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0];
+
+        switch (item.contextValue) {
+            case "SCOPE-ENABLED":
+            case "SCOPE-DISABLED":
+                // Prompt the user for the new admin consent display name.
+                const adminConsentDisplayName = await this.inputAdminConsentDisplayName("Edit Exposed API Permission (1/1)", scope.adminConsentDisplayName!);
+
+                // If escape is pressed or the new display name is empty then return undefined.
+                if (adminConsentDisplayName === undefined) {
+                    return undefined;
+                }
+
+                scope.adminConsentDisplayName = adminConsentDisplayName;
+                break;
+            case "SCOPE-VALUE":
+                const value = await this.inputValue("Edit Exposed API Permission (1/1)", scope.value!, true, properties.signInAudience!, properties.api!);
+
+                // If escape is pressed or the new name is empty then return undefined.
+                if (value === undefined) {
+                    return undefined;
+                }
+
+                scope.value = value;
+                break;
+            case "SCOPE-DESCRIPTION":
+                // Prompt the user for the new admin consent description.
+                const adminConsentDescription = await this.inputAdminConsentDescription("Edit Exposed API Permission (1/1)", scope.adminConsentDescription!);
+
+                // If escape is pressed or the new description is empty then return undefined.
+                if (adminConsentDescription === undefined) {
+                    return undefined;
+                }
+
+                scope.adminConsentDescription = adminConsentDescription;
+                break;
+            case "SCOPE-CONSENT":
+                // Prompt the user for the new allowed member types.
+                const consentType = await this.inputConsentType("Edit Exposed API Permission (1/1)");
+
+                // If escape is pressed or the new allowed member types is empty then return undefined.
+                if (consentType === undefined) {
+                    return undefined;
+                }
+
+                scope.type = consentType.value;
+                break;
+            default:
+                return;
+        }
+
+        // Set the added trigger to the status bar message.
+        const status = this.indicateChange("Updating Scope...", item);
+
+        // Update the application.
+        await this.updateApplication(item.objectId!, { api: properties.api }, status);
     }
 
     // Changes the enabled state of an exposed api scope for an application registration.
@@ -136,18 +193,18 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         const status = this.indicateChange(state === true ? "Enabling Scope..." : "Disabling Scope...", item);
 
         // Get the parent application so we can read the scopes.
-        const api = await this.getScopes(item.objectId!);
+        const properties = await this.getProperties(item.objectId!);
 
         // If the array is undefined then it'll be an Azure CLI authentication issue.
-        if (api === undefined) {
+        if (properties === undefined) {
             return;
         }
 
         // Toggle the state of the app role.
-        api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0].isEnabled = state;
+        properties.api!.oauth2PermissionScopes!.filter(r => r.id === item.value!)[0].isEnabled = state;
 
         // Update the application.
-        await this.updateApplication(item.objectId!, { api: api }, status);
+        await this.updateApplication(item.objectId!, { api: properties.api }, status);
     }
 
     // Deletes an exposed api scope from an application registration.
@@ -174,18 +231,18 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         const status = this.indicateChange("Deleting Scope...", item);
 
         // Get the parent application so we can read the app roles.
-        const api = await this.getScopes(item.objectId!);
+        const properties = await this.getProperties(item.objectId!);
 
         // If the array is undefined then it'll be an Azure CLI authentication issue.
-        if (api === undefined) {
+        if (properties === undefined) {
             return;
         }
 
         // Remove the app role from the array.
-        api!.oauth2PermissionScopes!.splice(api!.oauth2PermissionScopes!.findIndex(r => r.id === item.value!), 1);
+        properties.api!.oauth2PermissionScopes!.splice(properties.api!.oauth2PermissionScopes!.findIndex(r => r.id === item.value!), 1);
 
         // Update the application.
-        await this.updateApplication(item.objectId!, { api: api }, status);
+        await this.updateApplication(item.objectId!, { api: properties.api }, status);
     }
 
     // Updates the application registration.
@@ -194,41 +251,61 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
     }
 
-    // Gets the exposed api scopes for an application registration.
-    private async getScopes(id: string): Promise<ApiApplication | undefined> {
-        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(id, "api");
+    // Gets the required properties from the application registration.
+    private async getProperties(id: string): Promise<Application | undefined> {
+        const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(id, "api,identifierUris,signInAudience");
         if (result.success === true && result.value !== undefined) {
-            return result.value.api!;
+            return result.value;
         } else {
             this.triggerOnError(result.error);
             return undefined;
         }
     }
 
-    // Captures the details for a scope.
-    private async inputScopeDetails(scope: PermissionScope, id: string, isEditing: boolean, signInAudience: string, scopes: ApiApplication): Promise<PermissionScope | undefined> {
-
+    // Captures the value for a scope.
+    private async inputValue(title: string, existingValue: string | undefined, isEditing: boolean, signInAudience: string, scopes: ApiApplication): Promise<string | undefined> {
         // Debounce the validation function to prevent multiple calls to the Graph API.
-        const validation = async (value: string, id: string, isEditing: boolean, oldValue: string | undefined, signInAudience: string, scopes: ApiApplication) => this.validateValue(value, id, isEditing, scope.value ?? undefined, signInAudience, scopes);
+        const validation = async (value: string, isEditing: boolean, existingValue: string | undefined, signInAudience: string, scopes: ApiApplication) => this.validateValue(value, isEditing, existingValue, signInAudience, scopes);
         const debouncedValidation = debounce(validation, 500);
 
         // Prompt the user for the new value.
-        const value = await window.showInputBox({
+        return await window.showInputBox({
             prompt: "Scope name",
             placeHolder: "Enter a scope name (e.g. Files.Read)",
-            title: isEditing === true ? "Edit Exposed API Permission (1/7)" : "Add API Exposed Permission (1/7)",
+            title: title,
             ignoreFocusOut: true,
-            value: scope.value ?? undefined,
-            validateInput: async (value) => debouncedValidation(value, id, isEditing, scope.value ?? undefined, signInAudience, scopes)
+            value: existingValue,
+            validateInput: async (value) => debouncedValidation(value, isEditing, existingValue, signInAudience, scopes)
         });
+    }
 
-        // If escape is pressed or the new name is empty then return undefined.
-        if (value === undefined) {
-            return undefined;
-        }
+    // Captures the admin description for a scope.
+    private async inputAdminConsentDescription(title: string, existingValue: string | undefined): Promise<string | undefined> {
+        return await window.showInputBox({
+            prompt: "Admin consent description",
+            placeHolder: "Enter an admin consent description (e.g. Allows the app to read files on your behalf.)",
+            title: title,
+            ignoreFocusOut: true,
+            value: existingValue,
+            validateInput: async (value) => this.validateAdminDescription(value)
+        });
+    }
 
-        // Prompt the user for the new allowed member types.
-        const consentType = await window.showQuickPick(
+    // Captures the user display name for a scope.
+    private async inputAdminConsentDisplayName(title: string, existingValue: string | undefined): Promise<string | undefined> {
+        return await window.showInputBox({
+            prompt: "Admin consent display name",
+            placeHolder: "Enter an admin consent display name (e.g. Read files)",
+            title: title,
+            ignoreFocusOut: true,
+            value: existingValue,
+            validateInput: async (value) => this.validateAdminDisplayName(value)
+        });
+    }
+
+    // Captures the consent type for a scope.
+    private async inputConsentType(title: string): Promise<{ label: string; description: string; value: string; } | undefined> {
+        return await window.showQuickPick(
             [
                 {
                     label: "Administrators only",
@@ -243,9 +320,23 @@ export class OAuth2PermissionScopeService extends ServiceBase {
             ],
             {
                 placeHolder: "Select who can consent to the scope",
-                title: isEditing === true ? "Edit Exposed API Permission (2/7)" : "Add API Exposed Permission (2/7)",
+                title: title,
                 ignoreFocusOut: true
             });
+    }
+
+    // Captures the details for a scope.
+    private async inputScopeDetails(scope: PermissionScope, id: string, isEditing: boolean, signInAudience: string, scopes: ApiApplication): Promise<PermissionScope | undefined> {
+
+        const value = await this.inputValue(isEditing === true ? "Edit Exposed API Permission (1/7)" : "Add API Exposed Permission (1/7)", scope.value ?? undefined, isEditing, signInAudience, scopes);
+
+        // If escape is pressed or the new name is empty then return undefined.
+        if (value === undefined) {
+            return undefined;
+        }
+
+        // Prompt the user for the new allowed member types.
+        const consentType = await this.inputConsentType(isEditing === true ? "Edit Exposed API Permission (2/7)" : "Add API Exposed Permission (2/7)");
 
         // If escape is pressed or the new allowed member types is empty then return undefined.
         if (consentType === undefined) {
@@ -253,14 +344,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         }
 
         // Prompt the user for the new admin consent display name.
-        const adminConsentDisplayName = await window.showInputBox({
-            prompt: "Admin consent display name",
-            placeHolder: "Enter an admin consent display name (e.g. Read files)",
-            title: isEditing === true ? "Edit Exposed API Permission (3/7)" : "Add API Exposed Permission (3/7)",
-            ignoreFocusOut: true,
-            value: scope.adminConsentDisplayName ?? undefined,
-            validateInput: async (value) => this.validateAdminDisplayName(value)
-        });
+        const adminConsentDisplayName = await this.inputAdminConsentDisplayName(isEditing === true ? "Edit Exposed API Permission (3/7)" : "Add API Exposed Permission (3/7)", scope.adminConsentDisplayName ?? undefined);
 
         // If escape is pressed or the new display name is empty then return undefined.
         if (adminConsentDisplayName === undefined) {
@@ -268,14 +352,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         }
 
         // Prompt the user for the new admin consent description.
-        const adminConsentDescription = await window.showInputBox({
-            prompt: "Admin consent description",
-            placeHolder: "Enter an admin consent description (e.g. Allows the app to read files on your behalf.)",
-            title: isEditing === true ? "Edit Exposed API Permission (4/7)" : "Add API Exposed Permission (4/7)",
-            ignoreFocusOut: true,
-            value: scope.adminConsentDescription ?? undefined,
-            validateInput: async (value) => this.validateAdminDescription(value)
-        });
+        const adminConsentDescription = await this.inputAdminConsentDescription(isEditing === true ? "Edit Exposed API Permission (4/7)" : "Add API Exposed Permission (4/7)", scope.adminConsentDescription ?? undefined);
 
         // If escape is pressed or the new description is empty then return undefined.
         if (adminConsentDescription === undefined) {
@@ -375,7 +452,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     }
 
     // Validates the value of an scope.
-    private async validateValue(value: string, id: string, isEditing: boolean, oldValue: string | undefined, signInAudience: string, scopes: ApiApplication): Promise<string | undefined> {
+    private async validateValue(value: string, isEditing: boolean, existingValue: string | undefined, signInAudience: string, scopes: ApiApplication): Promise<string | undefined> {
 
         // Check the length of the value.
         switch (signInAudience) {
@@ -400,8 +477,16 @@ export class OAuth2PermissionScopeService extends ServiceBase {
             return "A scope value cannot be empty.";
         }
 
+        if (value.includes(" ")) {
+            return "A scope value cannot contain spaces.";
+        }
+
+        if (value.startsWith(".")) {
+            return "A scope value cannot start with a full stop.";
+        }
+
         // Check to see if the value already exists.
-        if (isEditing !== true || (isEditing === true && oldValue !== value)) {
+        if (isEditing !== true || (isEditing === true && existingValue !== value)) {
             if (scopes.oauth2PermissionScopes!.find(r => r.value === value) !== undefined) {
                 return "The scope value specified already exists.";
             }

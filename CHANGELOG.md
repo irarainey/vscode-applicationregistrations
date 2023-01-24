@@ -1,3 +1,9 @@
+## 0.6.0
+
+- Added functionality to edit individual app role and exposed api scope properties.
+- Improved performance of creating and editing exposed api scopes.
+- Improved validation around app roles and exposed scopes.
+  
 ## 0.5.0
 
 - Added user and directory role assignment information to tenant information screen.

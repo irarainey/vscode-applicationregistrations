@@ -7,6 +7,7 @@ import { ServiceBase } from "./service-base";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { debounce } from "ts-debounce";
 import { GraphResult } from "../types/graph-result";
+import { clearStatusBarMessage, setStatusBarMessage } from "../utils/status-bar";
 
 export class AppRoleService extends ServiceBase {
 
@@ -18,6 +19,9 @@ export class AppRoleService extends ServiceBase {
     // Adds a new app role to an application registration.
     async add(item: AppRegItem): Promise<void> {
 
+        // Show that we're doing something
+        const check = setStatusBarMessage("Reading App Roles...");
+
         // Get the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
 
@@ -25,6 +29,8 @@ export class AppRoleService extends ServiceBase {
         if (roles === undefined) {
             return;
         }
+
+        clearStatusBarMessage(check!);
 
         // Capture the new app role details by passing in an empty app role.
         const role = await this.inputRoleDetails({}, false, roles);
@@ -47,6 +53,9 @@ export class AppRoleService extends ServiceBase {
     // Edits an app role from an application registration.
     async edit(item: AppRegItem): Promise<void> {
 
+        // Show that we're doing something
+        const check = setStatusBarMessage("Reading App Role...");
+
         // Read the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
 
@@ -55,12 +64,90 @@ export class AppRoleService extends ServiceBase {
             return;
         }
 
+        clearStatusBarMessage(check!);
+
         // Capture the new app role details by passing in the existing role.
         const role = await this.inputRoleDetails(roles.filter(r => r.id === item.value!)[0], true, roles);
 
         // If the user cancels the input then return undefined.
         if (role === undefined) {
             return;
+        }
+
+        // Set the added trigger to the status bar message.
+        const status = this.indicateChange("Updating App Role...", item);
+
+        // Update the application.
+        await this.updateApplication(item.objectId!, { appRoles: roles }, status);
+    }
+
+    // Edits an app role value from an application registration.
+    async editValue(item: AppRegItem): Promise<void> {
+
+        // Show that we're doing something
+        const check = setStatusBarMessage("Reading App Role...");
+
+        // Read the existing app roles.
+        const roles = await this.getAppRoles(item.objectId!);
+
+        // If the array is undefined then it'll be an Azure CLI authentication issue.
+        if (roles === undefined) {
+            return;
+        }
+
+        clearStatusBarMessage(check!);
+
+        // Get the existing role.
+        const role = roles.filter(r => r.id === item.value!)[0];
+
+        switch (item.contextValue) {
+            case "ROLE-ENABLED":
+            case "ROLE-DISABLED":
+                // Prompt the user for the new display name.
+                const displayName = await this.inputDisplayName("Edit Display Name (1/1)", role.displayName!);
+
+                // If escape is pressed then return undefined.
+                if (displayName === undefined) {
+                    return undefined;
+                }
+
+                role.displayName = displayName;
+                break;
+            case "ROLE-VALUE":
+                // Prompt the user for the new value.
+                const value = await this.inputValue("Edit App Role Value (1/1)", true, roles, role.value!);
+
+                // If escape is pressed then return undefined.
+                if (value === undefined) {
+                    return undefined;
+                }
+
+                role.value = value;
+                break;
+            case "ROLE-DESCRIPTION":
+                // Prompt the user for the new display name.
+                const description = await this.inputDescription("Edit Description (1/1)", role.description!);
+
+                // If escape is pressed then return undefined.
+                if (description === undefined) {
+                    return undefined;
+                }
+
+                role.description = description;
+                break;
+            case "ROLE-ALLOWED":
+                // Prompt the user for the new allowed member types.
+                const allowed = await this.inputAllowedMemberTypes("Edit App Role (1/1)");
+
+                // If escape is pressed or the new allowed member types is empty then return undefined.
+                if (allowed === undefined) {
+                    return undefined;
+                }
+
+                role.allowedMemberTypes = allowed.value;
+                break;
+            default:
+                return;
         }
 
         // Set the added trigger to the status bar message.
@@ -147,60 +234,48 @@ export class AppRoleService extends ServiceBase {
         }
     }
 
-    // Captures the details for an app role.
-    private async inputRoleDetails(role: AppRole, isEditing: boolean, roles: AppRole[]): Promise<AppRole | undefined> {
+    // Captures the value
+    private async inputValue(title: string, isEditing: boolean, roles: AppRole[], existingValue: string | undefined): Promise<string | undefined> {
+        const validation = async (value: string, isEditing: boolean, existingValue: string | undefined, roles: AppRole[]) => this.validateValue(value, isEditing, existingValue, roles);
+        const debouncedValidation = debounce(validation, 500);
+        // Prompt the user for the new value.
+        return await window.showInputBox({
+            prompt: "App Role Value",
+            placeHolder: "Enter a value for the App Role",
+            title: title,
+            ignoreFocusOut: true,
+            value: existingValue,
+            validateInput: async (value) => debouncedValidation(value, isEditing, existingValue, roles)
+        });
+    }
 
-        // Prompt the user for the new display name.
-        const displayName = await window.showInputBox({
+    // Captures the display name
+    private async inputDisplayName(title: string, existingValue?: string): Promise<string | undefined> {
+        return await window.showInputBox({
             prompt: "App Role Display Name",
             placeHolder: "Enter a display name for the App Role",
             ignoreFocusOut: true,
-            title: isEditing === true ? "Edit App Role (1/5)" : "Add App Role (1/5)",
-            value: role.displayName ?? undefined,
+            title: title,
+            value: existingValue,
             validateInput: (value) => this.validateDisplayName(value)
         });
+    }
 
-        // If escape is pressed then return undefined.
-        if (displayName === undefined) {
-            return undefined;
-        }
-
-        // Debounce the validation function to prevent multiple calls to the Graph API.
-        const validation = async (value: string, isEditing: boolean, oldValue: string | undefined, roles: AppRole[]) => this.validateValue(value, isEditing, role.value ?? undefined, roles);
-        const debouncedValidation = debounce(validation, 500);
-
-        // Prompt the user for the new value.
-        const value = await window.showInputBox({
-            prompt: "App Role Value",
-            placeHolder: "Enter a value for the App Role",
-            title: isEditing === true ? "Edit App Role (2/5)" : "Add App Role (2/5)",
-            ignoreFocusOut: true,
-            value: role.value ?? undefined,
-            validateInput: async (value) => debouncedValidation(value, isEditing, role.value ?? undefined, roles)
-        });
-
-        // If escape is pressed then return undefined.
-        if (value === undefined) {
-            return undefined;
-        }
-
-        // Prompt the user for the new display name.
-        const description = await window.showInputBox({
+    // Captures the description
+    private async inputDescription(title: string, existingValue?: string): Promise<string | undefined> {
+        return await window.showInputBox({
             prompt: "App Role Description",
             placeHolder: "Enter a description for the App Role",
-            title: isEditing === true ? "Edit App Role (3/5)" : "Add App Role (3/5)",
+            title: title,
             ignoreFocusOut: true,
-            value: role.description ?? undefined,
+            value: existingValue,
             validateInput: (value) => this.validateDescription(value)
         });
+    }
 
-        // If escape is pressed then return undefined.
-        if (description === undefined) {
-            return undefined;
-        }
-
-        // Prompt the user for the new allowed member types.
-        const allowed = await window.showQuickPick(
+    // Captures the allowed member types
+    private async inputAllowedMemberTypes(title: string): Promise<{ label: string; description: string; value: string[]; } | undefined> {
+        return await window.showQuickPick(
             [
                 {
                     label: "Users/Groups",
@@ -220,9 +295,39 @@ export class AppRoleService extends ServiceBase {
             ],
             {
                 placeHolder: "Select allowed member types",
-                title: isEditing === true ? "Edit App Role (4/5)" : "Add App Role (4/5)",
+                title: title,
                 ignoreFocusOut: true
             });
+    }
+
+    // Captures the details for an app role.
+    private async inputRoleDetails(role: AppRole, isEditing: boolean, roles: AppRole[]): Promise<AppRole | undefined> {
+
+        // Prompt the user for the new display name.
+        const displayName = await this.inputDisplayName(isEditing === true ? "Edit App Role (1/5)" : "Add App Role (1/5)", role.displayName ?? undefined);
+
+        // If escape is pressed then return undefined.
+        if (displayName === undefined) {
+            return undefined;
+        }
+
+        const value = await this.inputValue(isEditing === true ? "Edit App Role (2/5)" : "Add App Role (2/5)", true, roles, role.value!);
+
+        // If escape is pressed then return undefined.
+        if (value === undefined) {
+            return undefined;
+        }
+
+        // Prompt the user for the new display name.
+        const description = await this.inputDescription(isEditing === true ? "Edit App Role (3/5)" : "Add App Role (3/5)", role.description ?? undefined);
+
+        // If escape is pressed then return undefined.
+        if (description === undefined) {
+            return undefined;
+        }
+
+        // Prompt the user for the new allowed member types.
+        const allowed = await this.inputAllowedMemberTypes(isEditing === true ? "Edit App Role (4/5)" : "Add App Role (4/5)");
 
         // If escape is pressed or the new allowed member types is empty then return undefined.
         if (allowed === undefined) {
@@ -290,6 +395,14 @@ export class AppRoleService extends ServiceBase {
         // Check the length of the display name.
         if (value.length < 1) {
             return "A role value cannot be empty.";
+        }
+
+        if (value.includes(" ")) {
+            return "A role value cannot contain spaces.";
+        }
+
+        if (value.startsWith(".")) {
+            return "A role value cannot start with a full stop.";
         }
 
         // Check to see if the value already exists.

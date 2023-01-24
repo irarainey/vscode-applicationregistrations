@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/irarainey/vscode-applicationregistrations/blob/main/README.md",
   "license": "SEE LICENSE IN LICENSE.md",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "engines": {
     "vscode": "^1.73.0"
   },
@@ -115,7 +115,15 @@
         "title": "Add"
       },
       {
+        "command": "appRegistrations.renameExposedApiScope",
+        "title": "Rename"
+      },
+      {
         "command": "appRegistrations.editExposedApiScope",
+        "title": "Edit"
+      },
+      {
+        "command": "appRegistrations.editExposedApiScopeValue",
         "title": "Edit"
       },
       {
@@ -131,11 +139,19 @@
         "title": "Disable"
       },
       {
+        "command": "appRegistrations.renameAppRole",
+        "title": "Rename"
+      },
+      {
         "command": "appRegistrations.addAppRole",
         "title": "Add"
       },
       {
         "command": "appRegistrations.editAppRole",
+        "title": "Edit"
+      },
+      {
+        "command": "appRegistrations.editAppRoleValue",
         "title": "Edit"
       },
       {
@@ -327,24 +343,34 @@
           "group": "appRegistrations@0"
         },
         {
-          "command": "appRegistrations.editExposedApiScope",
+          "command": "appRegistrations.renameExposedApiScope",
           "when": "view == appRegistrations && viewItem == SCOPE-DISABLED || viewItem == SCOPE-ENABLED",
           "group": "appRegistrations@0"
         },
         {
-          "command": "appRegistrations.deleteExposedApiScope",
+          "command": "appRegistrations.editExposedApiScope",
           "when": "view == appRegistrations && viewItem == SCOPE-DISABLED || viewItem == SCOPE-ENABLED",
           "group": "appRegistrations@1"
         },
         {
+          "command": "appRegistrations.deleteExposedApiScope",
+          "when": "view == appRegistrations && viewItem == SCOPE-DISABLED || viewItem == SCOPE-ENABLED",
+          "group": "appRegistrations@2"
+        },
+        {
           "command": "appRegistrations.enableExposedApiScope",
           "when": "view == appRegistrations && viewItem == SCOPE-DISABLED",
-          "group": "appRegistrations@2"
+          "group": "appRegistrations@3"
         },
         {
           "command": "appRegistrations.disableExposedApiScope",
           "when": "view == appRegistrations && viewItem == SCOPE-ENABLED",
-          "group": "appRegistrations@2"
+          "group": "appRegistrations@3"
+        },
+        {
+          "command": "appRegistrations.editExposedApiScopeValue",
+          "when": "view == appRegistrations && viewItem == SCOPE-VALUE || viewItem == SCOPE-DESCRIPTION || viewItem == SCOPE-CONSENT",
+          "group": "appRegistrations@0"
         },
         {
           "command": "appRegistrations.addAppRole",
@@ -352,24 +378,34 @@
           "group": "appRegistrations@0"
         },
         {
+          "command": "appRegistrations.renameAppRole",
+          "when": "view == appRegistrations && viewItem == ROLE-DISABLED || viewItem == ROLE-ENABLED",
+          "group": "appRegistrations@0"
+        },
+        {
           "command": "appRegistrations.editAppRole",
           "when": "view == appRegistrations && viewItem == ROLE-DISABLED || viewItem == ROLE-ENABLED",
+          "group": "appRegistrations@1"
+        },
+        {
+          "command": "appRegistrations.editAppRoleValue",
+          "when": "view == appRegistrations && viewItem == ROLE-VALUE || viewItem == ROLE-DESCRIPTION || viewItem == ROLE-ALLOWED",
           "group": "appRegistrations@0"
         },
         {
           "command": "appRegistrations.deleteAppRole",
           "when": "view == appRegistrations && viewItem == ROLE-DISABLED || viewItem == ROLE-ENABLED",
-          "group": "appRegistrations@1"
+          "group": "appRegistrations@2"
         },
         {
           "command": "appRegistrations.enableAppRole",
           "when": "view == appRegistrations && viewItem == ROLE-DISABLED",
-          "group": "appRegistrations@2"
+          "group": "appRegistrations@3"
         },
         {
           "command": "appRegistrations.disableAppRole",
           "when": "view == appRegistrations && viewItem == ROLE-ENABLED",
-          "group": "appRegistrations@2"
+          "group": "appRegistrations@3"
         },
         {
           "command": "appRegistrations.addRedirectUri",
