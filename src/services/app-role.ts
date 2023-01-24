@@ -7,6 +7,7 @@ import { ServiceBase } from "./service-base";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { debounce } from "ts-debounce";
 import { GraphResult } from "../types/graph-result";
+import { clearStatusBarMessage, setStatusBarMessage } from "../utils/status-bar";
 
 export class AppRoleService extends ServiceBase {
 
@@ -18,6 +19,9 @@ export class AppRoleService extends ServiceBase {
     // Adds a new app role to an application registration.
     async add(item: AppRegItem): Promise<void> {
 
+        // Show that we're doing something
+        const check = setStatusBarMessage("Reading App Roles...");
+
         // Get the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
 
@@ -25,6 +29,8 @@ export class AppRoleService extends ServiceBase {
         if (roles === undefined) {
             return;
         }
+
+        clearStatusBarMessage(check!);
 
         // Capture the new app role details by passing in an empty app role.
         const role = await this.inputRoleDetails({}, false, roles);
@@ -47,6 +53,9 @@ export class AppRoleService extends ServiceBase {
     // Edits an app role from an application registration.
     async edit(item: AppRegItem): Promise<void> {
 
+        // Show that we're doing something
+        const check = setStatusBarMessage("Reading App Role...");
+
         // Read the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
 
@@ -54,6 +63,8 @@ export class AppRoleService extends ServiceBase {
         if (roles === undefined) {
             return;
         }
+
+        clearStatusBarMessage(check!);
 
         // Capture the new app role details by passing in the existing role.
         const role = await this.inputRoleDetails(roles.filter(r => r.id === item.value!)[0], true, roles);
@@ -73,6 +84,9 @@ export class AppRoleService extends ServiceBase {
     // Edits an app role value from an application registration.
     async editValue(item: AppRegItem): Promise<void> {
 
+        // Show that we're doing something
+        const check = setStatusBarMessage("Reading App Role...");
+
         // Read the existing app roles.
         const roles = await this.getAppRoles(item.objectId!);
 
@@ -80,6 +94,8 @@ export class AppRoleService extends ServiceBase {
         if (roles === undefined) {
             return;
         }
+
+        clearStatusBarMessage(check!);
 
         // Get the existing role.
         const role = roles.filter(r => r.id === item.value!)[0];
