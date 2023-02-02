@@ -405,7 +405,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         const app: Application = result.value;
 
                         // Create the tree view item.
-                        const appRegItem = new AppRegItem({
+                        const appRegItem: AppRegItem = new AppRegItem({
                             label: app.displayName!,
                             context: "APPLICATION",
                             iconPath: path.join(__filename, "..", "..", "resources", "icons", "app.svg"),
@@ -635,7 +635,6 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 }
 
                 // // Check to see if the user is signed in and if not then prompt them to sign in
-                // this.graphRepository.isClientInitialised = false;
                 // this.graphRepository.initialise();
             }
             else {

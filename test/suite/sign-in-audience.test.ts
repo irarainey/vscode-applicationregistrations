@@ -32,6 +32,11 @@ describe("Sign In Audience Service Tests", () => {
 
     // Create common mock functions for all tests
     beforeAll(async () => {
+        vscode.window.showQuickPick = jest.fn().mockResolvedValue({
+            label: "Single Tenant",
+            description: "Accounts in this organizational directory only.",
+            value: "AzureADMyOrg"
+        });
         await treeDataProvider.render();
     });
 
