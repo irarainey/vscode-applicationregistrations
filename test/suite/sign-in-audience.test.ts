@@ -1,30 +1,84 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 import { GraphApiRepository } from "../../src/repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../../src/data/app-reg-tree-data-provider";
 import { SignInAudienceService } from "../../src/services/sign-in-audience";
+import { Application } from "@microsoft/microsoft-graph-types";
+import { GraphResult } from "../../src/types/graph-result";
+import { AppRegItem } from "../../src/models/app-reg-item";
 
+// Create Jest mocks
 jest.mock('vscode');
 jest.mock('../../src/repositories/graph-api-repository');
-jest.mock('../../src/data/app-reg-tree-data-provider');
 
-describe('Sign In Audience Tests', () => {
+// Create the test suite for sign in audience service
+describe('Sign In Audience Service Tests', () => {
 
-    const mockGraphApiRepository = new GraphApiRepository();
-    const mockAppRegTreeDataProvider = new AppRegTreeDataProvider(mockGraphApiRepository);
-    const signInAudienceService = new SignInAudienceService(mockGraphApiRepository, mockAppRegTreeDataProvider);
-  
+    // Define the object id of the mock application
+    const mockAppObjectId = "ab4e6904-6629-41c9-91d7-2ec9c7d3e46c";
+
+    // Create instances of objects used in the tests
+    const graphApiRepository = new GraphApiRepository();
+    const treeDataProvider = new AppRegTreeDataProvider(graphApiRepository);
+    const signInAudienceService = new SignInAudienceService(graphApiRepository, treeDataProvider);
+
+    // Create spies
+    const statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
+    const iconSpy = jest.spyOn(vscode, "ThemeIcon");
+    const triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(signInAudienceService), "triggerOnComplete");
+    const triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(signInAudienceService), "triggerOnError");
+
+    // Create variables used in the tests
+    let item: AppRegItem;
+
+    // Create common mock functions for all tests
+    beforeAll(async () => {
+        await treeDataProvider.render();
+    });
+
+    // Create a generic item to use in each test
+    beforeEach(() => {
+        item = { objectId: mockAppObjectId, contextValue: "AUDIENCE" };
+    });
+
     // Test to see if class can be created
-    test('Create Instance', () => {
+    test('Create class instance', () => {
         expect(signInAudienceService).toBeDefined();
+    });
+
+    // Test to see if the status bar message is changed when editing
+    test('Check status bar message and icon updated on edit', async () => {
+        const result = await signInAudienceService.edit(item);
+        expect(statusBarSpy).toHaveBeenCalled();
+        expect(iconSpy).toHaveBeenCalled();
+    });
+
+    // Test to see if trigger on complete function is called on successful edit after selecting a sign in item
+    test('Trigger complete on successful edit', async () => {
+        const result = await signInAudienceService.edit(item);
+        expect(triggerCompleteSpy).toHaveBeenCalled();
+    });
+
+    // Test to see if trigger on complete function is called on successful edit after selecting a parent item
+    test('Trigger complete on successful edit', async () => {
+        item = { objectId: mockAppObjectId, contextValue: "AUDIENCE-PARENT", children: [{ objectId: mockAppObjectId, contextValue: "AUDIENCE" }] };
+        const result = await signInAudienceService.edit(item);
+        expect(triggerCompleteSpy).toHaveBeenCalled();
+    });
+
+    // Test to see if trigger on error function is called on unsuccessful edit
+    test('Trigger error on unsuccessful edit', async () => {
+        graphApiRepository.updateApplication = jest.fn(async (id: string, application: Application): Promise<GraphResult<void>> => {
+            return { success: false };
+        });
+        const result = await signInAudienceService.edit(item);
+        expect(triggerErrorSpy).toHaveBeenCalled();
     });
 
     // Test to see if sign in audience can be changed
     test('Update Sign In Audience', async () => {
-
-        let item = { id: "1", label: "Test", objectId: "123", contextValue: "AUDIENCE-PARENT", children: [{ id: "2", objectId: "123", contextValue: "AUDIENCE-CHILD", label: "Multiple Tenants" }] };
-
         const result = await signInAudienceService.edit(item);
-
-        expect(item.label).toBe("Single Tenant");
+        const app = (await graphApiRepository.getApplicationDetailsFull(item.objectId!)).value;
+        expect(triggerCompleteSpy).toHaveBeenCalled();
+        expect(app!.signInAudience).toBe("AzureADMyOrg");
     });
 });

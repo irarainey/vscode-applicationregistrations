@@ -27,5 +27,8 @@ module.exports = {
       }
     ]
   },
-  testMatch: ["<rootDir>/test/**/*.test.ts"]
+  testMatch: ["<rootDir>/test/**/*.test.ts"],
+  modulePathIgnorePatterns: [
+    "<rootDir>/out/*"
+  ]
 };
