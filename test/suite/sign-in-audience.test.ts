@@ -47,21 +47,21 @@ describe("Sign In Audience Service Tests", () => {
 
     // Test to see if the status bar message is changed when editing
     test("Check status bar message and icon updated on edit", async () => {
-        const result = await signInAudienceService.edit(item);
+        await signInAudienceService.edit(item);
         expect(statusBarSpy).toHaveBeenCalled();
         expect(iconSpy).toHaveBeenCalled();
     });
 
     // Test to see if trigger on complete function is called on successful edit after selecting a sign in item
     test("Trigger complete on successful item edit", async () => {
-        const result = await signInAudienceService.edit(item);
+        await signInAudienceService.edit(item);
         expect(triggerCompleteSpy).toHaveBeenCalled();
     });
 
     // Test to see if trigger on complete function is called on successful edit after selecting a parent item
     test("Trigger complete on successful parent item edit", async () => {
         item = { objectId: mockAppObjectId, contextValue: "AUDIENCE-PARENT", children: [{ objectId: mockAppObjectId, contextValue: "AUDIENCE" }] };
-        const result = await signInAudienceService.edit(item);
+        await signInAudienceService.edit(item);
         expect(triggerCompleteSpy).toHaveBeenCalled();
     });
 
@@ -70,15 +70,18 @@ describe("Sign In Audience Service Tests", () => {
         graphApiRepository.updateApplication = jest.fn(async (id: string, application: Application): Promise<GraphResult<void>> => {
             return { success: false };
         });
-        const result = await signInAudienceService.edit(item);
+        await signInAudienceService.edit(item);
         expect(triggerErrorSpy).toHaveBeenCalled();
     });
 
     // Test to see if sign in audience can be changed
     test("Update Sign In Audience", async () => {
-        const result = await signInAudienceService.edit(item);
-        const app = (await graphApiRepository.getApplicationDetailsFull(item.objectId!)).value;
+        await signInAudienceService.edit(item);
+        await treeDataProvider.render();
+        const tree = await treeDataProvider.getChildren();
+        const app = tree!.find(x => x.objectId === item.objectId);
+        const signInAudience = app?.children?.find(x => x.contextValue === "AUDIENCE-PARENT");
         expect(triggerCompleteSpy).toHaveBeenCalled();
-        expect(app!.signInAudience).toBe("AzureADMyOrg");
+        expect(signInAudience!.children![0].label).toBe("Single Tenant");
     });
 });
