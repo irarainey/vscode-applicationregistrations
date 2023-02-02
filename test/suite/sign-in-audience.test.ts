@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 import { GraphApiRepository } from "../../src/repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../../src/data/app-reg-tree-data-provider";
 import { SignInAudienceService } from "../../src/services/sign-in-audience";
@@ -7,11 +7,11 @@ import { GraphResult } from "../../src/types/graph-result";
 import { AppRegItem } from "../../src/models/app-reg-item";
 
 // Create Jest mocks
-jest.mock('vscode');
-jest.mock('../../src/repositories/graph-api-repository');
+jest.mock("vscode");
+jest.mock("../../src/repositories/graph-api-repository");
 
 // Create the test suite for sign in audience service
-describe('Sign In Audience Service Tests', () => {
+describe("Sign In Audience Service Tests", () => {
 
     // Define the object id of the mock application
     const mockAppObjectId = "ab4e6904-6629-41c9-91d7-2ec9c7d3e46c";
@@ -41,32 +41,32 @@ describe('Sign In Audience Service Tests', () => {
     });
 
     // Test to see if class can be created
-    test('Create class instance', () => {
+    test("Create class instance", () => {
         expect(signInAudienceService).toBeDefined();
     });
 
     // Test to see if the status bar message is changed when editing
-    test('Check status bar message and icon updated on edit', async () => {
+    test("Check status bar message and icon updated on edit", async () => {
         const result = await signInAudienceService.edit(item);
         expect(statusBarSpy).toHaveBeenCalled();
         expect(iconSpy).toHaveBeenCalled();
     });
 
     // Test to see if trigger on complete function is called on successful edit after selecting a sign in item
-    test('Trigger complete on successful item edit', async () => {
+    test("Trigger complete on successful item edit", async () => {
         const result = await signInAudienceService.edit(item);
         expect(triggerCompleteSpy).toHaveBeenCalled();
     });
 
     // Test to see if trigger on complete function is called on successful edit after selecting a parent item
-    test('Trigger complete on successful parent item edit', async () => {
+    test("Trigger complete on successful parent item edit", async () => {
         item = { objectId: mockAppObjectId, contextValue: "AUDIENCE-PARENT", children: [{ objectId: mockAppObjectId, contextValue: "AUDIENCE" }] };
         const result = await signInAudienceService.edit(item);
         expect(triggerCompleteSpy).toHaveBeenCalled();
     });
 
     // Test to see if trigger on error function is called on unsuccessful edit
-    test('Trigger error on unsuccessful edit', async () => {
+    test("Trigger error on unsuccessful edit", async () => {
         graphApiRepository.updateApplication = jest.fn(async (id: string, application: Application): Promise<GraphResult<void>> => {
             return { success: false };
         });
@@ -75,7 +75,7 @@ describe('Sign In Audience Service Tests', () => {
     });
 
     // Test to see if sign in audience can be changed
-    test('Update Sign In Audience', async () => {
+    test("Update Sign In Audience", async () => {
         const result = await signInAudienceService.edit(item);
         const app = (await graphApiRepository.getApplicationDetailsFull(item.objectId!)).value;
         expect(triggerCompleteSpy).toHaveBeenCalled();
