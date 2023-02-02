@@ -53,13 +53,13 @@ describe('Sign In Audience Service Tests', () => {
     });
 
     // Test to see if trigger on complete function is called on successful edit after selecting a sign in item
-    test('Trigger complete on successful edit', async () => {
+    test('Trigger complete on successful item edit', async () => {
         const result = await signInAudienceService.edit(item);
         expect(triggerCompleteSpy).toHaveBeenCalled();
     });
 
     // Test to see if trigger on complete function is called on successful edit after selecting a parent item
-    test('Trigger complete on successful edit', async () => {
+    test('Trigger complete on successful parent item edit', async () => {
         item = { objectId: mockAppObjectId, contextValue: "AUDIENCE-PARENT", children: [{ objectId: mockAppObjectId, contextValue: "AUDIENCE" }] };
         const result = await signInAudienceService.edit(item);
         expect(triggerCompleteSpy).toHaveBeenCalled();
