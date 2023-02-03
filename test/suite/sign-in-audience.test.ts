@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
 import { GraphApiRepository } from "../../src/repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../../src/data/app-reg-tree-data-provider";
-import { SignInAudienceService } from "../../src/services/sign-in-audience";
 import { Application } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../../src/types/graph-result";
 import { AppRegItem } from "../../src/models/app-reg-item";
+import { SignInAudienceService } from "../../src/services/sign-in-audience";
 
 // Create Jest mocks
 jest.mock("vscode");
