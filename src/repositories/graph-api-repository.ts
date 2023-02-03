@@ -373,7 +373,7 @@ export class GraphApiRepository {
             const result: Organization = await this.client!.api(`/organization/${tenantId}`)
                 .select("id,displayName,verifiedDomains")
                 .get();
-            return { success: true, value: result };
+                return { success: true, value: result };
         } catch (error: any) {
             return { success: false, error: error };
         }
@@ -398,7 +398,7 @@ export class GraphApiRepository {
                 .filter(`principalId eq \'${id}\'`)
                 .expand("roleDefinition")
                 .get();
-            return { success: true, value: result.value };
+                return { success: true, value: result.value };
         } catch (error: any) {
             return { success: false, error: error };
         }
