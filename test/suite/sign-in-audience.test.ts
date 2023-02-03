@@ -69,6 +69,14 @@ describe("Sign In Audience Service Tests", () => {
         expect(triggerCompleteSpy).toHaveBeenCalled();
     });
 
+    // Test to see if sign in audience can be changed
+    test("Update Sign In Audience", async () => {
+        await signInAudienceService.edit(item);
+        const signInAudience = await getTreeItem(item.objectId!, "AUDIENCE-PARENT");
+        expect(triggerCompleteSpy).toHaveBeenCalled();
+        expect(signInAudience!.children![0].label).toBe("Single Tenant");
+    });
+
     // Test to see if trigger on error function is called on unsuccessful edit
     test("Trigger error on unsuccessful edit", async () => {
         graphApiRepository.updateApplication = jest.fn(async (id: string, application: Application): Promise<GraphResult<void>> => {
@@ -76,14 +84,6 @@ describe("Sign In Audience Service Tests", () => {
         });
         await signInAudienceService.edit(item);
         expect(triggerErrorSpy).toHaveBeenCalled();
-    });
-
-    // Test to see if sign in audience can be changed
-    test("Update Sign In Audience", async () => {
-        await signInAudienceService.edit(item);
-        const signInAudience = await getTreeItem(item.objectId!, "AUDIENCE-PARENT");
-        expect(triggerCompleteSpy).toHaveBeenCalled();
-        expect(signInAudience!.children![0].label).toBe("Single Tenant");
     });
 
     // Get a specific tree item
