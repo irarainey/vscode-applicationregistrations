@@ -1,3 +1,7 @@
+## 0.7.0
+
+- Refactored tree rendering trigger to facilitate better unit testing.
+
 ## 0.6.0
 
 - Added functionality to edit individual app role and exposed api scope properties.
