@@ -28,7 +28,7 @@ export class OrganizationService extends ServiceBase {
                 await this.showTenantWindow(response, status);
             })
             .catch(async (error) => {
-                this.triggerOnError(error);
+                await this.handleError(error);
             });
     }
 
@@ -38,14 +38,14 @@ export class OrganizationService extends ServiceBase {
         // Get the user information
         const user: GraphResult<User> = await this.graphRepository.getUserInformation();
         if (user.success !== true || user.value === undefined) {
-            this.triggerOnError(user.error);
+            await this.handleError(user.error);
             return;
         }
 
         // Get the assigned directory roles.
         const roles: GraphResult<RoleAssignment[]> = await this.graphRepository.getRoleAssignments(user.value.id!);
         if (roles.success !== true || roles.value === undefined) {
-            this.triggerOnError(user.error);
+            await this.handleError(user.error);
             return;
         }
 
@@ -92,7 +92,7 @@ export class OrganizationService extends ServiceBase {
                     clearStatusBarMessage(status!);
                 });
         } else {
-            this.triggerOnError(result.error);
+            await this.handleError(result.error);
             return;
         }
     }

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 export const window = {
-  setStatusBarMessage: jest.fn(),
+  setStatusBarMessage: jest.fn(() => {
+    return { dispose: jest.fn() };
+  }),
   showInformationMessage: jest.fn(),
   showErrorMessage: jest.fn(),
   showWarningMessage: jest.fn(),
@@ -44,11 +46,14 @@ export const ProviderResult = jest.fn();
 
 export const ConfigurationTarget = jest.fn();
 
+export const Disposable = jest.fn();
+
 export const vscode = {
   window,
   workspace,
   Event,
   EventEmitter,
+  Disposable,
   ThemeColor,
   ThemeIcon,
   TreeItem,

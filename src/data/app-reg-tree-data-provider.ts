@@ -4,12 +4,12 @@ import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, E
 import { Application, KeyCredential, PasswordCredential, User, AppRole, RequiredResourceAccess, PermissionScope, ServicePrincipal } from "@microsoft/microsoft-graph-types";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegItem } from "../models/app-reg-item";
-import { ErrorResult } from "../types/error-result";
 import { sort } from "fast-sort";
 import { format } from "date-fns";
 import { GraphResult } from "../types/graph-result";
 import { escapeSingleQuotesForFilter } from "../utils/escape-string";
 import { clearStatusBarMessage, setStatusBarMessage } from "../utils/status-bar";
+import { errorHandler } from "../error-handler";
 
 // Application registration tree data provider for the tree view.
 export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
@@ -26,14 +26,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     // This is the event that is fired when the tree view is refreshed.
     private onDidChangeTreeDataEvent: EventEmitter<AppRegItem | undefined | null | void> = new EventEmitter<AppRegItem | undefined | null | void>();
 
-    // A protected instance of the EventEmitter class to handle error events.
-    private onErrorEvent: EventEmitter<ErrorResult> = new EventEmitter<ErrorResult>();
-
     //Defines the event that is fired when the tree view is refreshed.
     public readonly onDidChangeTreeData: Event<AppRegItem | undefined | null | void> = this.onDidChangeTreeDataEvent.event;
-
-    // A public readonly property to expose the error event.
-    public readonly onError: Event<ErrorResult> = this.onErrorEvent.event;
 
     // A public property for the Graph Api Repository.
     public graphRepository: GraphApiRepository;
@@ -200,95 +194,95 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             case "OWNERS":
                 // Return the owners for the application
                 return this.getApplicationOwners(element)
-                    .catch((error: any) => {
-                        this.triggerOnError(error);
+                    .catch(async (error: any) => {
+                        await this.handleError(error);
                         return undefined;
                     });
             case "WEB-REDIRECT":
                 // Return the web redirect URIs for the application
                 return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "web")
-                    .then((result: GraphResult<Application>) => {
+                    .then(async (result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
-                            return this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", result.value.web!.redirectUris!);
+                            return await this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", result.value.web!.redirectUris!);
                         } else {
-                            this.triggerOnError(result.error);
+                            await this.handleError(result.error);
                             return undefined;
                         }
                     });
             case "SPA-REDIRECT":
                 // Return the SPA redirect URIs for the application
                 return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "spa")
-                    .then((result: GraphResult<Application>) => {
+                    .then(async (result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
-                            return this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", result.value.spa!.redirectUris!);
+                            return await this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", result.value.spa!.redirectUris!);
                         } else {
-                            this.triggerOnError(result.error);
+                            await this.handleError(result.error);
                             return undefined;
                         }
                     });
             case "NATIVE-REDIRECT":
                 // Return the native redirect URIs for the application
                 return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "publicClient")
-                    .then((result: GraphResult<Application>) => {
+                    .then(async (result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
-                            return this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", result.value.publicClient!.redirectUris!);
+                            return await this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", result.value.publicClient!.redirectUris!);
                         } else {
-                            this.triggerOnError(result.error);
+                            await this.handleError(result.error);
                             return undefined;
                         }
                     });
             case "PASSWORD-CREDENTIALS":
                 // Return the password credentials for the application
                 return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "passwordCredentials")
-                    .then((result: GraphResult<Application>) => {
+                    .then(async (result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
-                            return this.getApplicationPasswordCredentials(element, result.value.passwordCredentials!);
+                            return await this.getApplicationPasswordCredentials(element, result.value.passwordCredentials!);
                         } else {
-                            this.triggerOnError(result.error);
+                            await this.handleError(result.error);
                             return undefined;
                         }
                     });
             case "CERTIFICATE-CREDENTIALS":
                 // Return the key credentials for the application
                 return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "keyCredentials")
-                    .then((result: GraphResult<Application>) => {
+                    .then(async (result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
-                            return this.getApplicationKeyCredentials(element, result.value.keyCredentials!);
+                            return await this.getApplicationKeyCredentials(element, result.value.keyCredentials!);
                         } else {
-                            this.triggerOnError(result.error);
+                            await this.handleError(result.error);
                             return undefined;
                         }
                     });
             case "API-PERMISSIONS":
                 // Return the API permissions for the application
                 return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "requiredResourceAccess")
-                    .then((result: GraphResult<Application>) => {
+                    .then(async (result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
-                            return this.getApplicationApiPermissions(element, result.value.requiredResourceAccess!);
+                            return await this.getApplicationApiPermissions(element, result.value.requiredResourceAccess!);
                         } else {
-                            this.triggerOnError(result.error);
+                            await this.handleError(result.error);
                             return undefined;
                         }
                     });
             case "EXPOSED-API-PERMISSIONS":
                 // Return the exposed API permissions for the application
                 return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "api")
-                    .then((result: GraphResult<Application>) => {
+                    .then(async (result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
-                            return this.getApplicationExposedApiPermissions(element, result.value.api?.oauth2PermissionScopes!);
+                            return await this.getApplicationExposedApiPermissions(element, result.value.api?.oauth2PermissionScopes!);
                         } else {
-                            this.triggerOnError(result.error);
+                            await this.handleError(result.error);
                             return undefined;
                         }
                     });
             case "APP-ROLES":
                 // Return the app roles for the application
                 return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "appRoles")
-                    .then((result: GraphResult<Application>) => {
+                    .then(async (result: GraphResult<Application>) => {
                         if (result.success === true && result.value !== undefined) {
-                            return this.getApplicationAppRoles(element, result.value.appRoles!);
+                            return await this.getApplicationAppRoles(element, result.value.appRoles!);
                         } else {
-                            this.triggerOnError(result.error);
+                            await this.handleError(result.error);
                             return undefined;
                         }
                     });
@@ -329,7 +323,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         totalApplicationCount = result.value;
                     } else {
                         this.isUpdating = false;
-                        this.triggerOnError(result.error);
+                        await this.handleError(result.error);
                         return;
                     }
                 } else {
@@ -338,7 +332,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                         totalApplicationCount = result.value;
                     } else {
                         this.isUpdating = false;
-                        this.triggerOnError(result.error);
+                        await this.handleError(result.error);
                         return;
                     }
                 }
@@ -597,7 +591,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
                     } else {
                         this.isUpdating = false;
-                        this.triggerOnError(result.error);
+                        await this.handleError(result.error);
                         return undefined;
                     }
                 } catch (error: any) {
@@ -638,7 +632,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 // this.graphRepository.initialise();
             }
             else {
-                this.triggerOnError(error);
+                await this.handleError(error);
             }
         }
     }
@@ -668,7 +662,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             if (result.success === true && result.value !== undefined) {
                 return result.value;
             } else {
-                this.triggerOnError(result.error);
+                await this.handleError(result.error);
                 return undefined;
             }
         } else {
@@ -676,7 +670,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
             if (result.success === true && result.value !== undefined) {
                 return result.value;
             } else {
-                this.triggerOnError(result.error);
+                await this.handleError(result.error);
                 return undefined;
             }
         }
@@ -715,7 +709,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                 });
             });
         } else {
-            this.triggerOnError(result.error);
+            await this.handleError(result.error);
             return undefined;
         }
     }
@@ -855,7 +849,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                     })
                 });
             } else {
-                this.triggerOnError(result.error);
+                await this.handleError(result.error);
                 return {};
             }
         });
@@ -964,8 +958,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
     }
 
     // Trigger the event to indicate an error
-    private triggerOnError(error?: Error) {
-        this.onErrorEvent.fire({ error: error, treeDataProvider: this });
+    private async handleError(error?: Error) {
+        await errorHandler({ error: error, treeDataProvider: this });
     }
 
     // Dispose of the event listener

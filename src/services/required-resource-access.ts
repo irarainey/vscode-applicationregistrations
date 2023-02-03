@@ -48,7 +48,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         // Get the service principals that match the search criteria.
         const result: GraphResult<ServicePrincipal[]> = await this.graphRepository.findServicePrincipalsByDisplayName(apiAppSearch);
         if (result.success === false || result.value === undefined) {
-            this.triggerOnError(result.error);
+            await this.handleError(result.error);
             return;
         }
 
@@ -133,7 +133,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         // Get the service principal for the application so we can get the scopes.
         const result: GraphResult<ServicePrincipal> = await this.graphRepository.findServicePrincipalByAppId(apiIdToUse!);
         if (result.success === false || result.value === undefined) {
-            this.triggerOnError(result.error);
+            await this.handleError(result.error);
             return;
         }
 
@@ -326,7 +326,7 @@ export class RequiredResourceAccessService extends ServiceBase {
         if (result.success === true && result.value !== undefined) {
             return result.value.requiredResourceAccess!;
         } else {
-            this.triggerOnError(result.error);
+            await this.handleError(result.error);
             return undefined;
         }
     }
@@ -334,6 +334,6 @@ export class RequiredResourceAccessService extends ServiceBase {
     // Updates the application registration.
     private async updateApplication(id: string, application: Application, status: string | undefined = undefined): Promise<void> {
         const update: GraphResult<void> = await this.graphRepository.updateApplication(id, application);
-        update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
+        update.success === true ? await this.triggerRefresh(status) : await this.handleError(update.error);
     }
 }

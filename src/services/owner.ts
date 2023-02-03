@@ -42,10 +42,10 @@ export class OwnerService extends ServiceBase {
                 // Set the added trigger to the status bar message.
                 const status = this.indicateChange("Adding Owner...", item);
                 const result: GraphResult<void> = await this.graphRepository.addApplicationOwner(item.objectId!, this.userList[0].id);
-                result.success === true ? this.triggerOnComplete(status) : this.triggerOnError(result.error);
+                result.success === true ? await this.triggerRefresh(status) : await this.handleError(result.error);
             }
         } else {
-            this.triggerOnError(result.error);
+            await this.handleError(result.error);
         }
     }
 
@@ -60,7 +60,7 @@ export class OwnerService extends ServiceBase {
             // Set the added trigger to the status bar message.
             const status = this.indicateChange("Removing Owner...", item);
             const result: GraphResult<void> = await this.graphRepository.removeApplicationOwner(item.objectId!, item.userId!);
-            result.success === true ? this.triggerOnComplete(status) : this.triggerOnError(result.error);
+            result.success === true ? await this.triggerRefresh(status) : await this.handleError(result.error);
         }
     }
 
@@ -86,7 +86,7 @@ export class OwnerService extends ServiceBase {
                 this.userList = result.value;
                 identifier = "user with an email address";
             } else {
-                this.triggerOnError(result.error);
+                await this.handleError(result.error);
                 return;
             }
         } else {
@@ -96,7 +96,7 @@ export class OwnerService extends ServiceBase {
                 this.userList = result.value;
                 identifier = "name";
             } else {
-                this.triggerOnError(result.error);
+                await this.handleError(result.error);
                 return;
             }
         }

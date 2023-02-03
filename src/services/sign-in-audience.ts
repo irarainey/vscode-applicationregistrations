@@ -32,7 +32,7 @@ export class SignInAudienceService extends ServiceBase {
                 status = this.indicateChange("Updating Sign In Audience...", item);
             }
             const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { signInAudience: audience.value });
-            update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
+            update.success === true ? await this.triggerRefresh(status) : await this.handleError(update.error);
         }
     }
 }

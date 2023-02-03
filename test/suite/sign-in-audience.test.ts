@@ -24,8 +24,8 @@ describe("Sign In Audience Service Tests", () => {
     // Create spies
     const statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
     const iconSpy = jest.spyOn(vscode, "ThemeIcon");
-    const triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(signInAudienceService), "triggerOnComplete");
-    const triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(signInAudienceService), "triggerOnError");
+    const triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(signInAudienceService), "triggerRefresh");
+    const triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(signInAudienceService), "handleError");
 
     // Create variables used in the tests
     let item: AppRegItem;
@@ -37,7 +37,6 @@ describe("Sign In Audience Service Tests", () => {
             description: "Accounts in this organizational directory only.",
             value: "AzureADMyOrg"
         });
-        await treeDataProvider.render();
     });
 
     // Create a generic item to use in each test
@@ -82,11 +81,16 @@ describe("Sign In Audience Service Tests", () => {
     // Test to see if sign in audience can be changed
     test("Update Sign In Audience", async () => {
         await signInAudienceService.edit(item);
-        await treeDataProvider.render();
-        const tree = await treeDataProvider.getChildren();
-        const app = tree!.find(x => x.objectId === item.objectId);
-        const signInAudience = app?.children?.find(x => x.contextValue === "AUDIENCE-PARENT");
+        const signInAudience = await getTreeItem(item.objectId!, "AUDIENCE-PARENT");
         expect(triggerCompleteSpy).toHaveBeenCalled();
         expect(signInAudience!.children![0].label).toBe("Single Tenant");
     });
+
+    // Get a specific tree item
+    const getTreeItem = async (objectId: string, contextValue: string): Promise<AppRegItem | undefined> => {
+        const tree = await treeDataProvider.getChildren();
+        const app = tree!.find(x => x.objectId === objectId);
+        return app?.children?.find(x => x.contextValue === contextValue);
+    };    
 });
+

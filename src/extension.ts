@@ -12,7 +12,6 @@ import { PasswordCredentialService } from "./services/password-credential";
 import { RedirectUriService } from "./services/redirect-uri";
 import { RequiredResourceAccessService } from "./services/required-resource-access";
 import { SignInAudienceService } from "./services/sign-in-audience";
-import { errorHandler } from "./error-handler";
 import { copyValue } from "./utils/copy-value";
 import { setStatusBarMessage } from "./utils/status-bar";
 import { authenticate } from "./utils/cli-authentication";
@@ -47,30 +46,6 @@ export async function activate(context: ExtensionContext) {
 			await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."));
 		}
 	});
-
-	// Hook up the complete event handlers.
-	applicationService.onComplete(async (result) => await treeDataProvider.render(result));
-	appRoleService.onComplete(async (result) => await treeDataProvider.render(result));
-	keyCredentialService.onComplete(async (result) => await treeDataProvider.render(result));
-	oauth2PermissionScopeService.onComplete(async (result) => await treeDataProvider.render(result));
-	ownerService.onComplete(async (result) => await treeDataProvider.render(result));
-	passwordCredentialService.onComplete(async (result) => await treeDataProvider.render(result));
-	redirectUriService.onComplete(async (result) => await treeDataProvider.render(result));
-	requiredResourceAccessService.onComplete(async (result) => await treeDataProvider.render(result));
-	signInAudienceService.onComplete(async (result) => await treeDataProvider.render(result));
-
-	// Hook up the error event handlers.
-	treeDataProvider.onError(async (result) => await errorHandler(result));
-	applicationService.onError(async (result) => await errorHandler(result));
-	appRoleService.onError(async (result) => await errorHandler(result));
-	keyCredentialService.onError(async (result) => await errorHandler(result));
-	oauth2PermissionScopeService.onError(async (result) => await errorHandler(result));
-	organizationService.onError(async (result) => await errorHandler(result));
-	ownerService.onError(async (result) => await errorHandler(result));
-	passwordCredentialService.onError(async (result) => await errorHandler(result));
-	redirectUriService.onError(async (result) => await errorHandler(result));
-	requiredResourceAccessService.onError(async (result) => await errorHandler(result));
-	signInAudienceService.onError(async (result) => await errorHandler(result));
 
 	// Menu Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addApp`, async () => await applicationService.add()));

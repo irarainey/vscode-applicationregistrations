@@ -1,9 +1,9 @@
-import { Event, EventEmitter, Disposable, ThemeIcon } from "vscode";
+import { Disposable, ThemeIcon } from "vscode";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
-import { ErrorResult } from "../types/error-result";
 import { AppRegItem } from "../models/app-reg-item";
 import { setStatusBarMessage, clearAllStatusBarMessages } from "../utils/status-bar";
+import { errorHandler } from "../error-handler";
 
 export class ServiceBase {
 
@@ -22,32 +22,20 @@ export class ServiceBase {
     // A protected instance of the previous status bar handle.
     protected statusBarHandle: Disposable | undefined = undefined;
 
-    // A protected instance of the EventEmitter class to handle error events.
-    private onErrorEvent: EventEmitter<ErrorResult> = new EventEmitter<ErrorResult>();
-
-    // A protected instance of the EventEmitter class to handle complete events.
-    private onCompleteEvent: EventEmitter<string | undefined> = new EventEmitter<string | undefined>();
-
-    // A public readonly property to expose the error event.
-    public readonly onError: Event<ErrorResult> = this.onErrorEvent.event;
-
-    // A public readonly property to expose the complete event.
-    public readonly onComplete: Event<string | undefined> = this.onCompleteEvent.event;
-
     // The constructor for the OwnerService class.
     constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
         this.graphRepository = graphRepository;
         this.treeDataProvider = treeDataProvider;
     }
 
-    // Trigger the event to indicate an error
-    protected triggerOnError(error?: Error) {
-        this.onErrorEvent.fire({ error: error, item: this.item, treeDataProvider: this.treeDataProvider });
+    // Handle an error
+    protected async handleError(error?: Error) {
+        await errorHandler({ error: error, item: this.item, treeDataProvider: this.treeDataProvider });
     }
 
-    // Trigger the event to indicate completion
-    protected triggerOnComplete(statusId: string | undefined = undefined) {
-        this.onCompleteEvent.fire(statusId);
+    // Trigger completion by refreshing the tree
+    protected async triggerRefresh(statusId: string | undefined = undefined) {
+        await this.treeDataProvider.render(statusId);
     }
 
     // Initiates the visual change of the tree view
@@ -77,8 +65,6 @@ export class ServiceBase {
     // Dispose of anything that needs to be disposed of.
     dispose(): void {
         clearAllStatusBarMessages();
-        this.onErrorEvent.dispose();
-        this.onCompleteEvent.dispose();
         while (this.disposable.length) {
             const x = this.disposable.pop();
             if (x) {
