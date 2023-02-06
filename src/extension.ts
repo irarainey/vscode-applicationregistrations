@@ -47,6 +47,10 @@ export async function activate(context: ExtensionContext) {
 		}
 	});
 
+	// Auth Commands
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.signIn`, async () => {}));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.signOut`, async () => {}));
+
 	// Menu Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addApp`, async () => await applicationService.add()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshApps`, async () => await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."))));

@@ -249,7 +249,7 @@
       },
       {
         "command": "appRegistrations.refreshApps",
-        "title": "App Registrations: Refresh",
+        "title": "App Registrations: Refresh List",
         "icon": {
           "light": "resources/icons/light/refresh.svg",
           "dark": "resources/icons/dark/refresh.svg"
@@ -257,7 +257,7 @@
       },
       {
         "command": "appRegistrations.addApp",
-        "title": "Add",
+        "title": "App Registrations: Add New",
         "icon": {
           "light": "resources/icons/light/add.svg",
           "dark": "resources/icons/dark/add.svg"
@@ -265,7 +265,7 @@
       },
       {
         "command": "appRegistrations.filterApps",
-        "title": "Filter",
+        "title": "App Registrations: Filter List",
         "icon": {
           "light": "resources/icons/light/filter.svg",
           "dark": "resources/icons/dark/filter.svg"
@@ -273,21 +273,209 @@
       },
       {
         "command": "appRegistrations.tenantInfo",
-        "title": "Tenant Information",
+        "title": "App Registrations: Show Tenant Information",
         "icon": {
           "light": "resources/icons/light/info.svg",
           "dark": "resources/icons/dark/info.svg"
         }
+      },
+      {
+        "command": "appRegistrations.signOut",
+        "title": "App Registrations: Sign Out of Azure CLI"
+      },
+      {
+        "command": "appRegistrations.signIn",
+        "title": "App Registrations: Sign In to Azure CLI"
       }
     ],
     "menus": {
       "commandPalette": [
+        {
+          "command": "appRegistrations.refreshApps",
+          "when": "view == appRegistrations"
+        },
+        {
+          "command": "appRegistrations.addApp",
+          "when": "view == appRegistrations"
+        },
+        {
+          "command": "appRegistrations.filterApps",
+          "when": "view == appRegistrations"
+        },
+        {
+          "command": "appRegistrations.tenantInfo",
+          "when": "view == appRegistrations"
+        },
+        {
+          "command": "appRegistrations.signOut",
+          "when": "view == appRegistrations"
+        },
+        {
+          "command": "appRegistrations.signIn",
+          "when": "view == appRegistrations"
+        },
         {
           "command": "appRegistrations.uploadKeyCredential",
           "when": "false"
         },
         {
           "command": "appRegistrations.deleteKeyCredential",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.addSingleScopeToExisting",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.addSingleScope",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.removeSingleScope",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.removeApiScopes",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.addExposedApiScope",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.renameExposedApiScope",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.editExposedApiScope",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.editExposedApiScopeValue",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.deleteExposedApiScope",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.enableExposedApiScope",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.disableExposedApiScope",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.renameAppRole",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.addAppRole",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.editAppRole",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.editAppRoleValue",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.deleteAppRole",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.enableAppRole",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.disableAppRole",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.addRedirectUri",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.editRedirectUri",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.deleteRedirectUri",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.deleteAllRedirectUris",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.copyRedirectUri",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.editAppIdUri",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.copyAppIdUri",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.removeAppIdUri",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.addPasswordCredential",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.deletePasswordCredential",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.viewAppManifest",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.showEndpoints",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.renameApp",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.deleteApp",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.copyClientId",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.openAppInPortal",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.editAudience",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.copyValue",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.openUserInPortal",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.addOwner",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.removeOwner",
           "when": "false"
         }
       ],
