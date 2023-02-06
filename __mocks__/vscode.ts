@@ -6,7 +6,8 @@ export const window = {
   showInformationMessage: jest.fn(),
   showErrorMessage: jest.fn(),
   showWarningMessage: jest.fn(),
-  showQuickPick: jest.fn()
+  showQuickPick: jest.fn(),
+  showTextDocument: jest.fn()
 };
 
 export const workspace = {
@@ -23,11 +24,28 @@ export const workspace = {
           return undefined;
       }
     }
-  })
+  }),
+  TextDocument: jest.fn(),
+  openTextDocument: () => {
+    return new Promise(workspace.TextDocument);
+  },
+  registerTextDocumentContentProvider: jest.fn()
 };
 
 export class EventEmitter {
   fire() { return jest.fn(); }
+};
+
+export const Uri = {
+  parse: (value: string, strict?: boolean) => {
+    jest.fn();
+  }
+};
+
+export const env = {
+  openExternal: (value: string) => {
+    jest.fn();
+  }
 };
 
 export const Event = jest.fn();
@@ -40,13 +58,21 @@ export const TreeItem = jest.fn();
 
 export const TreeItemCollapsibleState = jest.fn();
 
-export const TreeDataProvider = jest.fn();
+export const TreeDataProvider = {
+  onDidChangeTreeDataEvent: () => ({
+    dispose: () => jest.fn()
+  })
+};
 
 export const ProviderResult = jest.fn();
 
 export const ConfigurationTarget = jest.fn();
 
 export const Disposable = jest.fn();
+
+export class TextDocumentContentProvider {
+  provideTextDocumentContent() { return "{ \"test\": \"test\" }"; }
+}
 
 export const vscode = {
   window,
@@ -60,5 +86,7 @@ export const vscode = {
   TreeItemCollapsibleState,
   TreeDataProvider,
   ProviderResult,
-  ConfigurationTarget
+  ConfigurationTarget,
+  Uri,
+  TextDocumentContentProvider
 };

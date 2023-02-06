@@ -20,14 +20,20 @@ describe("Organization Service Tests", () => {
 	const organizationService = new OrganizationService(graphApiRepository, treeDataProvider);
 
 	// Create spies
-	const statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
-    const triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(organizationService), "handleError");
+    let triggerErrorSpy: jest.SpyInstance<any, unknown[], any>;
+    let statusBarSpy: jest.SpyInstance<any, [text: string], any>;
 
 	// Create common mock functions for all tests
-	beforeAll(async () => {});
+	beforeAll(() => {
+		console.error = jest.fn();
+	});
 
-	// Create a generic item to use in each test
-	beforeEach(() => {});
+	// Clear all mocks before each test
+	beforeEach(() => {
+		jest.restoreAllMocks();
+        triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(organizationService), "handleError");
+        statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
+	});
 
 	// Test to see if class can be created
 	test("Create class instance", () => {
@@ -40,16 +46,23 @@ describe("Organization Service Tests", () => {
 		expect(statusBarSpy).toHaveBeenCalled();
 	});
 
-    // Test to see if an error is handled if no roles returned
-	test("Test roles return error", async () => {
-		graphApiRepository.getRoleAssignments = jest.fn().mockResolvedValue({ success: false });
+	// Test to see if an error is handled if no user is returned
+	test("Test user return error", async () => {
+		graphApiRepository.getUserInformation = jest.fn().mockResolvedValue({ success: false, error: new Error("Test error") });
 		await organizationService.showTenantInformation();
 		expect(triggerErrorSpy).toHaveBeenCalled();
 	});
 
-	// Test to see if an error is handled if no user is returned
-	test("Test user return error", async () => {
-		graphApiRepository.getUserInformation = jest.fn().mockResolvedValue({ success: false });
+    // Test to see if an error is handled if no roles returned
+	test("Test roles return error", async () => {
+		graphApiRepository.getRoleAssignments = jest.fn().mockResolvedValue({ success: false, error: new Error("Test error") });
+		await organizationService.showTenantInformation();
+		expect(triggerErrorSpy).toHaveBeenCalled();
+	});
+
+	// Test to see if an error is handled if no roles returned
+	test("Test tenant information return error", async () => {
+		graphApiRepository.getTenantInformation = jest.fn().mockResolvedValue({ success: false, error: new Error("Test error") });
 		await organizationService.showTenantInformation();
 		expect(triggerErrorSpy).toHaveBeenCalled();
 	});

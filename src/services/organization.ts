@@ -45,7 +45,7 @@ export class OrganizationService extends ServiceBase {
         // Get the assigned directory roles.
         const roles: GraphResult<RoleAssignment[]> = await this.graphRepository.getRoleAssignments(user.value.id!);
         if (roles.success !== true || roles.value === undefined) {
-            await this.handleError(user.error);
+            await this.handleError(roles.error);
             return;
         }
 

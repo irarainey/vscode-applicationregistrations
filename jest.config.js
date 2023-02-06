@@ -3,22 +3,8 @@ module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
   preset: "ts-jest/presets/default-esm",
-  extensionsToTreatAsEsm: ['.ts'],
-  moduleDirectories: [
-    'node_modules',
-    'src'
-  ],
-  moduleFileExtensions: [
-    "ts", 
-    "js"
-  ],
-  modulePaths: [
-    "<rootDir>",
-    "<rootDir>/node_modules"
-  ],
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1'
-  },
+  extensionsToTreatAsEsm: [".ts"],
+  moduleFileExtensions: [ "ts", "js"],
   transform: {
     '^.+\\.ts?$': [
       'ts-jest',
@@ -28,7 +14,16 @@ module.exports = {
     ]
   },
   testMatch: ["<rootDir>/test/**/*.test.ts"],
-  modulePathIgnorePatterns: [
-    "<rootDir>/out/*"
+  coverageProvider: "v8",
+  collectCoverage: true,
+  collectCoverageFrom: [
+    "<rootDir>/src/services/*.ts",
+    "<rootDir>/src/utils/status-bar.ts",
+    "<rootDir>/src/utils/copy-value.ts",
+    "<rootDir>/src/utils/cli-authentication.ts",
+    "<rootDir>/src/types/*.ts",
+    "<rootDir>/src/data/*.ts",
+    "<rootDir>/src/error-handler.ts",
+    "<rootDir>/src/constants.ts"
   ]
 };
