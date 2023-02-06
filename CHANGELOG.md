@@ -1,6 +1,7 @@
 ## 0.7.0
 
 - Refactored tree rendering trigger to facilitate better unit testing.
+- Added command filters to ensure those that aren't relevant are't shown in the palette.
 
 ## 0.6.0
 

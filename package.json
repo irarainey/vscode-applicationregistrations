@@ -249,7 +249,7 @@
       },
       {
         "command": "appRegistrations.refreshApps",
-        "title": "Refresh",
+        "title": "App Registrations: Refresh",
         "icon": {
           "light": "resources/icons/light/refresh.svg",
           "dark": "resources/icons/dark/refresh.svg"
@@ -281,6 +281,16 @@
       }
     ],
     "menus": {
+      "commandPalette": [
+        {
+          "command": "appRegistrations.uploadKeyCredential",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.deleteKeyCredential",
+          "when": "false"
+        }
+      ],
       "view/title": [
         {
           "command": "appRegistrations.filterApps",
