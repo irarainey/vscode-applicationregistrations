@@ -5,6 +5,11 @@ module.exports = {
   preset: "ts-jest/presets/default-esm",
   extensionsToTreatAsEsm: [".ts"],
   moduleFileExtensions: [ "ts", "js"],
+  modulePathIgnorePatterns: [
+    "<rootDir>/out/",
+    "<rootDir>/dist/",
+    "<rootDir>/packages/"
+  ],
   transform: {
     '^.+\\.ts?$': [
       'ts-jest',
