@@ -1,4 +1,4 @@
-name: Lint, Build & Test
+name: Lint, Compile & Test
 
 on: 
   workflow_dispatch:
@@ -11,8 +11,14 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: NPM Install
+    - name: Install NPM Packages
       run: npm install
 
-    - name: Run tests
-      run: npm run test
+    - name: Run Linter
+      run: npm run lint
+
+    - name: Compile TypeScript
+      run: npm run compile
+
+    - name: Run Unit Tests
+      run: npx jest
