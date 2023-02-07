@@ -21,13 +21,11 @@ jobs:
       run: npm run compile
 
     - name: Run Unit Tests
-      run: npx jest
-
-    - name: Jest coverage report
       uses: ArtiomTr/jest-coverage-report-action@v2.2.0
       id: coverage
       with:
         output: report-markdown
+        annotations: none
 
     - uses: marocchino/sticky-pull-request-comment@v2
       with:
