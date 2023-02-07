@@ -1,4 +1,4 @@
-import { ThemeIcon, TreeItem, TreeItemCollapsibleState } from "vscode";
+import { ThemeIcon, TreeItem, TreeItemCollapsibleState, TreeItemLabel } from "vscode";
 import { AppRegItemParams } from "../types/app-reg-item-params";
 
 // This is the data structure for the application registration tree view item
@@ -16,6 +16,7 @@ export class AppRegItem extends TreeItem {
     public state?: boolean = false;
     public resourceAppId?: string = "";
     public resourceScopeId?: string = "";
+    public label?: string | TreeItemLabel | undefined;
 
     // Constructor for the application registration tree view item
     constructor(params: AppRegItemParams) {
@@ -28,6 +29,7 @@ export class AppRegItem extends TreeItem {
         this.command = params.command;
         this.iconPath = params.iconPath;
         this.tooltip = params.tooltip;
+        this.label = params.label;
 
         // Set the remaining properties
         this.baseIcon = params.baseIcon;

@@ -48,10 +48,10 @@ export class PasswordCredentialService extends ServiceBase {
                 const update: GraphResult<PasswordCredential> = await this.graphRepository.addPasswordCredential(item.objectId!, description, expiry);
                 if (update.success === true && update.value !== undefined) {
                     env.clipboard.writeText(update.value.secretText!);
-                    this.triggerOnComplete(status);
+                    await this.triggerRefresh(status);
                     window.showInformationMessage("New password copied to clipboard.", "OK");
                 } else {
-                    this.triggerOnError(update.error);
+                    await this.handleError(update.error);
                 }
             }
         }
@@ -68,7 +68,7 @@ export class PasswordCredentialService extends ServiceBase {
             // Set the added trigger to the status bar message.
             const status = this.indicateChange("Deleting Password Credential...", item);
             const update: GraphResult<void> = await this.graphRepository.deletePasswordCredential(item.objectId!, item.value!);
-            update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
+            update.success === true ? await this.triggerRefresh(status) : await this.handleError(update.error);
         }
     }
 

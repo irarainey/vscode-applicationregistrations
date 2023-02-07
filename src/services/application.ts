@@ -45,7 +45,7 @@ export class ApplicationService extends ServiceBase {
                 // Set the added trigger to the status bar message.
                 const status = this.indicateChange("Creating Application Registration...");
                 const update: GraphResult<Application> = await this.graphRepository.createApplication({ displayName: displayName, signInAudience: signInAudience.value });
-                (update.success === true && update.value !== undefined) ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
+                (update.success === true && update.value !== undefined) ? await this.triggerRefresh(status) : await this.handleError(update.error);
             }
         }
     }
@@ -55,7 +55,7 @@ export class ApplicationService extends ServiceBase {
 
         const result: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
         if (result.success !== true || result.value === undefined) {
-            this.triggerOnError(result.error);
+            await this.handleError(result.error);
             return;
         }
 
@@ -81,7 +81,7 @@ export class ApplicationService extends ServiceBase {
 
         const result: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
         if (result.success !== true || result.value === undefined) {
-            this.triggerOnError(result.error);
+            await this.handleError(result.error);
             return;
         }
 
@@ -112,7 +112,7 @@ export class ApplicationService extends ServiceBase {
         if (answer === "Yes") {
             const status = this.indicateChange("Deleting Application Registration...", item);
             const update: GraphResult<void> = await this.graphRepository.deleteApplication(item.objectId!);
-            update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
+            update.success === true ? await this.triggerRefresh(status) : await this.handleError(update.error);
         }
     }
 
@@ -153,7 +153,7 @@ export class ApplicationService extends ServiceBase {
                             };
                         })
                         .catch(async (error) => {
-                            this.triggerOnError(error);
+                            await this.handleError(error);
                         });
                     break;
                 case "AzureADMultipleOrgs":
@@ -211,7 +211,7 @@ export class ApplicationService extends ServiceBase {
                     clearStatusBarMessage(status!);
                 });
         } else {
-            this.triggerOnError(result.error);
+            await this.handleError(result.error);
         }
     }
 
@@ -237,14 +237,14 @@ export class ApplicationService extends ServiceBase {
                     clearStatusBarMessage(status!);
                 });
         } else {
-            this.triggerOnError(result.error);
+            await this.handleError(result.error);
         }
     }
 
     // Updates the application registration.
     private async updateApplication(id: string, application: Application, status: string | undefined = undefined): Promise<void> {
         const update: GraphResult<void> = await this.graphRepository.updateApplication(id, application);
-        update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
+        update.success === true ? await this.triggerRefresh(status) : await this.handleError(update.error);
     }
 
     // Copies the application Id to the clipboard.

@@ -219,7 +219,7 @@ export class AppRoleService extends ServiceBase {
     // Updates an application registration with the new app roles.
     private async updateApplication(id: string, application: Application, status: string | undefined = undefined): Promise<void> {
         const update: GraphResult<void> = await this.graphRepository.updateApplication(id, application);
-        update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
+        update.success === true ? await this.triggerRefresh(status) : await this.handleError(update.error);
     }
 
     // Gets the app roles for an application registration.
@@ -229,7 +229,7 @@ export class AppRoleService extends ServiceBase {
             return result.value?.appRoles;
         }
         else {
-            this.triggerOnError(result.error);
+            await this.handleError(result.error);
             return undefined;
         }
     }

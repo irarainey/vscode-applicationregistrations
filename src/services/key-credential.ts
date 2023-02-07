@@ -123,7 +123,7 @@ export class KeyCredentialService extends ServiceBase {
         if (result.success === true && result.value !== undefined) {
             return result.value.keyCredentials!;
         } else {
-            this.triggerOnError(result.error);
+            await this.handleError(result.error);
             return undefined;
         }
     }
@@ -131,6 +131,6 @@ export class KeyCredentialService extends ServiceBase {
     // Updates the key credentials.
     private async updateKeyCredentials(id: string, credentials: KeyCredential[], status: string | undefined = undefined): Promise<void> {
         const update: GraphResult<void> = await this.graphRepository.updateKeyCredentials(id, credentials);
-        update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
+        update.success === true ? await this.triggerRefresh(status) : await this.handleError(update.error);
     }
 }

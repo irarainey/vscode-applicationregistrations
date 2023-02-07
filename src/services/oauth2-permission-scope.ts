@@ -248,7 +248,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
     // Updates the application registration.
     private async updateApplication(id: string, application: Application, status: string | undefined = undefined): Promise<void> {
         const update: GraphResult<void> = await this.graphRepository.updateApplication(id, application);
-        update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
+        update.success === true ? await this.triggerRefresh(status) : await this.handleError(update.error);
     }
 
     // Gets the required properties from the application registration.
@@ -257,7 +257,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
         if (result.success === true && result.value !== undefined) {
             return result.value;
         } else {
-            this.triggerOnError(result.error);
+            await this.handleError(result.error);
             return undefined;
         }
     }

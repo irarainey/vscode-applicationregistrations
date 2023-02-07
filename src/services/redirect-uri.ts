@@ -30,7 +30,7 @@ export class RedirectUriService extends ServiceBase {
 
         const signInAudience: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
         if (signInAudience.success !== true || signInAudience.value === undefined) {
-            this.triggerOnError(signInAudience.error);
+            await this.handleError(signInAudience.error);
             return;
         }
 
@@ -96,7 +96,7 @@ export class RedirectUriService extends ServiceBase {
                         newArray = resultWeb.value.web!.redirectUris!;
                         break;
                     } else {
-                        this.triggerOnError(resultWeb.error);
+                        await this.handleError(resultWeb.error);
                         return;
                     }
                 case "SPA-REDIRECT-URI":
@@ -106,7 +106,7 @@ export class RedirectUriService extends ServiceBase {
                         newArray = resultSpa.value.spa!.redirectUris!;
                         break;
                     } else {
-                        this.triggerOnError(resultSpa.error);
+                        await this.handleError(resultSpa.error);
                         return;
                     }
                 case "NATIVE-REDIRECT-URI":
@@ -116,7 +116,7 @@ export class RedirectUriService extends ServiceBase {
                         newArray = resultPublic.value.publicClient!.redirectUris!;
                         break;
                     } else {
-                        this.triggerOnError(resultPublic.error);
+                        await this.handleError(resultPublic.error);
                         return;
                     }
                 default:
@@ -193,7 +193,7 @@ export class RedirectUriService extends ServiceBase {
                     existingRedirectUris = resultWeb.value.web!.redirectUris!;
                     break;
                 } else {
-                    this.triggerOnError(resultWeb.error);
+                    await this.handleError(resultWeb.error);
                     return undefined;
                 }
             case "SPA-REDIRECT":
@@ -203,7 +203,7 @@ export class RedirectUriService extends ServiceBase {
                     existingRedirectUris = resultSpa.value.spa!.redirectUris!;
                     break;
                 } else {
-                    this.triggerOnError(resultSpa.error);
+                    await this.handleError(resultSpa.error);
                     return undefined;
                 }
             case "NATIVE-REDIRECT":
@@ -213,7 +213,7 @@ export class RedirectUriService extends ServiceBase {
                     existingRedirectUris = resultPublic.value.publicClient!.redirectUris!;
                     break;
                 } else {
-                    this.triggerOnError(resultPublic.error);
+                    await this.handleError(resultPublic.error);
                     return undefined;
                 }
             default:
@@ -240,7 +240,7 @@ export class RedirectUriService extends ServiceBase {
             });
             return existingRedirectUris;
         } else {
-            this.triggerOnError(resultWeb.error);
+            await this.handleError(resultWeb.error);
             return undefined;
         }
     }
@@ -254,15 +254,15 @@ export class RedirectUriService extends ServiceBase {
         // Determine which section to add the redirect URI to.
         if (item.contextValue! === "WEB-REDIRECT-URI" || item.contextValue! === "WEB-REDIRECT") {
             const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { web: { redirectUris: redirectUris } });
-            update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
+            update.success === true ? await this.triggerRefresh(status) : await this.handleError(update.error);
         }
         else if (item.contextValue! === "SPA-REDIRECT-URI" || item.contextValue! === "SPA-REDIRECT") {
             const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { spa: { redirectUris: redirectUris } });
-            update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
+            update.success === true ? await this.triggerRefresh(status) : await this.handleError(update.error);
         }
         else if (item.contextValue! === "NATIVE-REDIRECT-URI" || item.contextValue! === "NATIVE-REDIRECT") {
             const update: GraphResult<void> = await this.graphRepository.updateApplication(item.objectId!, { publicClient: { redirectUris: redirectUris } });
-            update.success === true ? this.triggerOnComplete(status) : this.triggerOnError(update.error);
+            update.success === true ? await this.triggerRefresh(status) : await this.handleError(update.error);
         }
     }
 
