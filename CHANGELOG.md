@@ -1,8 +1,8 @@
 ## 0.7.0
 
 - Added commands to sign in and sign out of Azure CLI from the command palette.
-- Refactored tree rendering trigger to facilitate better unit testing.
 - Added command filters to ensure those that aren't relevant are't shown in the palette.
+- Refactored tree rendering trigger to facilitate better unit testing.
 - Fixed an issue where the wrong error message was passed.
 
 ## 0.6.0

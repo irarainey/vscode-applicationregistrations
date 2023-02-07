@@ -249,7 +249,7 @@
       },
       {
         "command": "appRegistrations.refreshApps",
-        "title": "App Registrations: Refresh List",
+        "title": "Refresh",
         "icon": {
           "light": "resources/icons/light/refresh.svg",
           "dark": "resources/icons/dark/refresh.svg"
@@ -257,7 +257,7 @@
       },
       {
         "command": "appRegistrations.addApp",
-        "title": "App Registrations: Add New",
+        "title": "Add",
         "icon": {
           "light": "resources/icons/light/add.svg",
           "dark": "resources/icons/dark/add.svg"
@@ -265,7 +265,7 @@
       },
       {
         "command": "appRegistrations.filterApps",
-        "title": "App Registrations: Filter List",
+        "title": "Filter",
         "icon": {
           "light": "resources/icons/light/filter.svg",
           "dark": "resources/icons/dark/filter.svg"
@@ -273,46 +273,54 @@
       },
       {
         "command": "appRegistrations.tenantInfo",
-        "title": "App Registrations: Show Tenant Information",
+        "title": "Tenant Information",
         "icon": {
           "light": "resources/icons/light/info.svg",
           "dark": "resources/icons/dark/info.svg"
         }
       },
       {
-        "command": "appRegistrations.signOut",
-        "title": "App Registrations: Sign Out of Azure CLI"
+        "command": "appRegistrations.cmdRefreshApps",
+        "title": "Application Registrations: Refresh List"
       },
       {
-        "command": "appRegistrations.signIn",
-        "title": "App Registrations: Sign In to Azure CLI"
+        "command": "appRegistrations.cmdAddApp",
+        "title": "Application Registrations: Add New"
+      },
+      {
+        "command": "appRegistrations.cmdFilterApps",
+        "title": "Application Registrations: Filter List"
+      },
+      {
+        "command": "appRegistrations.cmdTenantInfo",
+        "title": "Application Registrations: Show Tenant Information"
+      },
+      {
+        "command": "appRegistrations.cmdSignOut",
+        "title": "Application Registrations: Sign Out of Azure CLI"
+      },
+      {
+        "command": "appRegistrations.cmdSignIn",
+        "title": "Application Registrations: Sign In to Azure CLI"
       }
     ],
     "menus": {
       "commandPalette": [
         {
           "command": "appRegistrations.refreshApps",
-          "when": "view == appRegistrations"
+          "when": "false"
         },
         {
           "command": "appRegistrations.addApp",
-          "when": "view == appRegistrations"
+          "when": "false"
         },
         {
           "command": "appRegistrations.filterApps",
-          "when": "view == appRegistrations"
+          "when": "false"
         },
         {
           "command": "appRegistrations.tenantInfo",
-          "when": "view == appRegistrations"
-        },
-        {
-          "command": "appRegistrations.signOut",
-          "when": "view == appRegistrations"
-        },
-        {
-          "command": "appRegistrations.signIn",
-          "when": "view == appRegistrations"
+          "when": "false"
         },
         {
           "command": "appRegistrations.uploadKeyCredential",
