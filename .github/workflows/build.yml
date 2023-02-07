@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  lintBuildTest:
+  Lint-Compile-Test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -21,4 +21,12 @@ jobs:
       run: npm run compile
 
     - name: Run Unit Tests
-      run: npx jest
+      uses: ArtiomTr/jest-coverage-report-action@v2.2.0
+      id: coverage
+      with:
+        output: report-markdown
+        annotations: failed-tests
+
+    - uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        message: ${{ steps.coverage.outputs.report }}
