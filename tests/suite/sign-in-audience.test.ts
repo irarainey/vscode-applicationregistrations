@@ -75,9 +75,9 @@ describe("Sign In Audience Service Tests", () => {
 
     test("Update Sign In Audience", async () => {
         await signInAudienceService.edit(item);
-        const signInAudience = await getTreeItem(item.objectId!, "AUDIENCE-PARENT");
+        const treeItem = await getTreeItem(item.objectId!, "AUDIENCE-PARENT");
         expect(triggerCompleteSpy).toHaveBeenCalled();
-        expect(signInAudience!.children![0].label).toBe("Single Tenant");
+        expect(treeItem!.children![0].label).toEqual("Single Tenant");
     });
 
     test("Trigger error on unsuccessful edit with a generic error", async () => {

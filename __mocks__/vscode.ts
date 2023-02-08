@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+
 export const window = {
   setStatusBarMessage: jest.fn(() => {
     return { dispose: jest.fn() };
@@ -42,9 +43,19 @@ export const Uri = {
   }
 };
 
+let clipboard: any;
+
 export const env = {
   openExternal: (value: string) => {
     jest.fn();
+  },
+  clipboard: {
+    writeText: (item: string) => {
+      clipboard = item;
+    },
+    readText: () => {
+      return clipboard;
+    }
   }
 };
 

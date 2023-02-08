@@ -3,7 +3,6 @@ import { GraphResult } from "../../types/graph-result";
 import { mockApplications, mockOrganizations, mockUser, mockRoleAssignments } from "./mock-graph-data";
 
 export class GraphApiRepository {
-
 	async getApplicationCountOwned(): Promise<GraphResult<number>> {
 		return { success: true, value: mockApplications.length };
 	}
@@ -26,13 +25,26 @@ export class GraphApiRepository {
 		};
 	}
 
-	async updateApplication(id: string, application: Application): Promise<GraphResult<void>> {
-		mockApplications.filter((a) => a.id === id)[0].signInAudience = application.signInAudience;
+	async updateApplication(id: string, appChange: Application): Promise<GraphResult<void>> {
+		const app = mockApplications.filter((a) => a.id === id)[0];
+
+		if (appChange.web !== undefined) {
+			app.web = { ...app.web, ...appChange.web };
+		} else if (appChange.spa !== undefined) {
+			app.spa = { ...app.spa, ...appChange.spa };
+		} else if (appChange.api !== undefined) {
+			app.api = { ...app.api, ...appChange.api };
+		} else if (appChange.publicClient !== undefined) {
+			app.publicClient = { ...app.publicClient, ...appChange.publicClient };
+		} else {
+			Object.assign(app, appChange);
+		}
+
 		return { success: true };
 	}
 
 	async getTenantInformation(tenantId: string): Promise<GraphResult<Organization>> {
-        return { success: true, value: mockOrganizations.filter((o) => o.id === tenantId)[0] };
+		return { success: true, value: mockOrganizations.filter((o) => o.id === tenantId)[0] };
 	}
 
 	async getUserInformation(): Promise<GraphResult<User>> {
@@ -40,6 +52,10 @@ export class GraphApiRepository {
 	}
 
 	async getRoleAssignments(id: string): Promise<GraphResult<RoleAssignment[]>> {
-        return { success: true, value: mockRoleAssignments.filter((r) => r.principalId === id) };
+		return { success: true, value: mockRoleAssignments.filter((r) => r.principalId === id) };
+	}
+
+	async getSignInAudience(id: string): Promise<GraphResult<string>> {
+		return { success: true, value: mockApplications.filter((a) => a.id === id)[0].signInAudience };
 	}
 }

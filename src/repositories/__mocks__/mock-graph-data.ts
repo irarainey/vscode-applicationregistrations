@@ -44,13 +44,18 @@ export const mockApplications: any[] = [
 		],
 		web: {
 			homePageUrl: null,
-			logoutUrl: null,
-			redirectUris: [],
+			logoutUrl: "https://sample.com/logout",
+			redirectUris: ["https://sample.com/callback"],
 			implicitGrantSettings: {
 				enableAccessTokenIssuance: false,
 				enableIdTokenIssuance: false
 			},
-			redirectUriSettings: []
+			redirectUriSettings: [
+				{
+					uri: "https://sample.com/callback",
+					index: null
+				}
+			]
 		},
 		spa: {
 			redirectUris: []

@@ -7,12 +7,18 @@ import { ApplicationService } from "../../src/services/application";
 // Create Jest mocks
 jest.mock("vscode");
 jest.mock("../../src/repositories/graph-api-repository");
+jest.mock("../../src/utils/exec-shell-cmd", () => {
+	return {
+		execShellCmd: jest.fn().mockResolvedValue("2307cf32-f353-4eea-a06c-2d8d4e36cdcb")
+	};
+});
 
 // Create the test suite for sign in audience service
 describe("Application Service Tests", () => {
 
     // Define the object id of the mock application
     const mockAppObjectId = "ab4e6904-6629-41c9-91d7-2ec9c7d3e46c";
+    const mockAppId = "96a2745c-6920-4149-a8b0-90339bee74f9";
 
     // Create instances of objects used in the tests
     const graphApiRepository = new GraphApiRepository();
@@ -24,6 +30,8 @@ describe("Application Service Tests", () => {
     let triggerErrorSpy: jest.SpyInstance<any, unknown[], any>;
     let statusBarSpy: jest.SpyInstance<any, [text: string], any>;
     let iconSpy: jest.SpyInstance<any, [id: string, color?: any | undefined], any>;
+    let openTextDocumentSpy: jest.SpyInstance<any, any, any>;
+    let openExternalSpy: jest.SpyInstance<Thenable<boolean>, [target: vscode.Uri], any>;
 
     // Create variables used in the tests
     let item: AppRegItem;
@@ -37,15 +45,81 @@ describe("Application Service Tests", () => {
     beforeEach(() => {
 		jest.restoreAllMocks();
         statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
+        openTextDocumentSpy = jest.spyOn(vscode.workspace, "openTextDocument");
+        openExternalSpy = jest.spyOn(vscode.env, "openExternal");
         iconSpy = jest.spyOn(vscode, "ThemeIcon");
         triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(applicationService), "triggerRefresh");
         triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(applicationService), "handleError");
-        item = { objectId: mockAppObjectId, contextValue: "AUDIENCE" };
+        item = { objectId: mockAppObjectId, appId: mockAppId, contextValue: "APPLICATION" };
     });
 
-    // Test to see if class can be created
+    afterAll(() => {
+        applicationService.dispose();
+    });
+
     test("Create class instance", () => {
         expect(applicationService).toBeDefined();
+    });
+
+    test("Show endpoints for multi-tenant app", async () => {
+        await applicationService.showEndpoints(item);
+        expect(openTextDocumentSpy).toHaveBeenCalled();
+    });
+
+    test("Show endpoints for multi-tenant and personal app", async () => {
+        graphApiRepository.getSignInAudience = jest.fn().mockResolvedValue({ success: true, value: "AzureADandPersonalMicrosoftAccount" });    
+        await applicationService.showEndpoints(item);
+        expect(openTextDocumentSpy).toHaveBeenCalled();
+    });
+
+    test("Show endpoints for consumer app", async () => {
+        graphApiRepository.getSignInAudience = jest.fn().mockResolvedValue({ success: true, value: "PersonalMicrosoftAccount" });    
+        await applicationService.showEndpoints(item);
+        expect(openTextDocumentSpy).toHaveBeenCalled();
+    });
+
+    test("Show endpoints for consumer app", async () => {
+        graphApiRepository.getSignInAudience = jest.fn().mockResolvedValue({ success: true, value: "AzureADMyOrg" });    
+        await applicationService.showEndpoints(item);
+        expect(openTextDocumentSpy).toHaveBeenCalled();
+    });
+
+    test("Show endpoints error", async () => {
+        graphApiRepository.getSignInAudience = jest.fn().mockResolvedValue({ success: false, error: new Error("Test Error") });    
+        await applicationService.showEndpoints(item);
+        expect(triggerErrorSpy).toHaveBeenCalled();
+    });
+
+    test("View manifest", async () => {
+        await applicationService.viewManifest(item);
+        expect(statusBarSpy).toHaveBeenCalled();
+        expect(openTextDocumentSpy).toHaveBeenCalled();
+    });
+
+    test("View manifest error", async () => {
+        graphApiRepository.getApplicationDetailsFull = jest.fn().mockResolvedValue({ success: false, error: new Error("Test Error") });    
+        await applicationService.viewManifest(item);
+        expect(statusBarSpy).toHaveBeenCalled();
+        expect(triggerErrorSpy).toHaveBeenCalled();
+    });
+
+    test("Copy client id", async () => {
+        applicationService.copyClientId(item);
+        expect(vscode.env.clipboard.readText()).toEqual(mockAppId);
+    });
+
+    test("Open in portal", async () => {
+        applicationService.openInPortal(item);
+        expect(openExternalSpy).toHaveBeenCalled();
+    });
+
+    test("Remove Logout URL", async () => {
+        vscode.window.showWarningMessage = jest.fn().mockResolvedValue("Yes");
+        await applicationService.removeLogoutUrl(item);
+        const treeItem = await getTreeItem(mockAppObjectId, "LOGOUT-URL-PARENT");
+        expect(statusBarSpy).toHaveBeenCalled();
+        expect(triggerCompleteSpy).toHaveBeenCalled();
+        expect(treeItem!.children![0].label).toEqual("Not set");
     });
 
     // Get a specific tree item
