@@ -39,6 +39,10 @@ Please ensure your Azure CLI is authenticated to the correct tenant using `az lo
 
 The access token used for this extension uses the scope `Directory.AccessAsUser.All`. This means that it will use the Azure RBAC directory roles assigned to the authenticated user, and hence requires the user to be assigned a role which allows for application management. More details on this scope can be found on this [Microsoft Graph Permission Explorer](https://graphpermissions.merill.net/permission/Directory.AccessAsUser.All).
 
+Additionally a number of manual commands are available for top level application management. These include the ability to sign in to a different tenant, sign out, refresh or filter the application list, add a new application, or show the current tenant information. These commands can be accessed via the command palette.
+
+![Commands](resources/images/commands.png)
+
 ## Eventual Consistency
 Azure Active Directory stores multiple copies of data to handle large read volumes and provide high availability. When directory objects are created or updated, changes will eventually be applied to all the copies. This means that occasionally after making changes they may not initially be reflected in the application list. It can take anything from a few seconds to a few minutes for all copies to be updated, hence the term **Eventual**.
 
@@ -76,11 +80,10 @@ There are a number of user settings to control the behaviour of this extension. 
 ## Functionality In Progress
 The following functionality has not yet been implemented, but is on the backlog for addition in future releases. If any of this functionality is required you can right-click the application and open in the portal blade to manage them. If you have any suggestions for useful functionality please get in touch.
 
+* Implicit flow settings
+* Public flow settings
 * Pre-authorized applications
 * Android / iOS Redirect URIs
-* Public flow settings
-* Implicit flow settings
-* Front-channel logout URL
 * Optional token claims
 * Federation credentials
 * Deleted applications

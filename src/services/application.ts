@@ -76,6 +76,26 @@ export class ApplicationService extends ServiceBase {
         }
     }
 
+    // Edit a front-channel logout url.
+    async editLogoutUrl(item: AppRegItem): Promise<void> {
+
+        // Prompt the user for the new uri.
+        const uri = await window.showInputBox({
+            placeHolder: "Front-channel Logout URL",
+            prompt: "Set Front-channel Logout URL",
+            value: item.value! === "Not set" ? "" : item.value!,
+            title: "Edit Front-channel Logout URL",
+            ignoreFocusOut: true,
+            validateInput: (value) => this.validateLogoutUrl(value)
+        });
+
+        // If the new application id uri is not undefined then update the application.
+        if (uri !== undefined) {
+            const status = this.indicateChange("Setting Front-channel Logout URL...", item);
+            await this.updateApplication(item.objectId!, { web: { logoutUrl: uri } }, status);
+        }
+    }
+
     // Renames an application registration.
     async rename(item: AppRegItem): Promise<void> {
 
@@ -116,16 +136,29 @@ export class ApplicationService extends ServiceBase {
         }
     }
 
-    // Deletes an application registration.
+    // Removes an App Id Uri.
     async removeAppIdUri(item: AppRegItem): Promise<void> {
 
-        // Prompt the user to confirm the deletion.
+        // Prompt the user to confirm the removal.
         const answer = await window.showWarningMessage("Do you want to remove the Application ID URI?", "Yes", "No");
 
-        // If the user confirms the deletion then delete the application.
+        // If the user confirms the removal then remove it.
         if (answer === "Yes") {
             const status = this.indicateChange("Removing Application ID URI...", item);
             await this.updateApplication(item.objectId!, { identifierUris: [] }, status);
+        }
+    }
+
+    // Removes a Logout Url
+    async removeLogoutUrl(item: AppRegItem): Promise<void> {
+
+        // Prompt the user to confirm the removal.
+        const answer = await window.showWarningMessage("Do you want to remove the Front-channel Logout URL?", "Yes", "No");
+
+        // If the user confirms the removal then remove it.
+        if (answer === "Yes") {
+            const status = this.indicateChange("Removing Front-channel Logout URL...", item);
+            await this.updateApplication(item.objectId!, { web: { logoutUrl: null } }, status);
         }
     }
 
@@ -319,6 +352,19 @@ export class ApplicationService extends ServiceBase {
                 break;
             default:
                 break;
+        }
+
+        return undefined;
+    }
+
+    // Validates the logout url.
+    private validateLogoutUrl(uri: string): string | undefined {
+
+        if (uri.startsWith("https://") === false) {
+            return "The Logout URL is not valid. It must start with https://.";
+        }
+        if (uri.length > 256) {
+            return "The Logout URL is not valid. A URL cannot be longer than 256 characters.";
         }
 
         return undefined;
