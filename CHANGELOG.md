@@ -1,3 +1,7 @@
+## 0.7.1
+
+- Fixed an issue copying the front-channel logout url.
+
 ## 0.7.0
 
 - Added commands to sign in and sign out of Azure CLI from the command palette.

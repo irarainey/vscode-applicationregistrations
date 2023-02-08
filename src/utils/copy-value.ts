@@ -9,6 +9,7 @@ export const copyValue = (item: AppRegItem) => {
             || item.contextValue === "SPA-REDIRECT-URI"
             || item.contextValue === "NATIVE-REDIRECT-URI"
             || item.contextValue === "APPID-URI"
+            || item.contextValue === "LOGOUT-URL"
             ? item.value!
             : item.children![0].value!);
 };
