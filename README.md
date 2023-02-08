@@ -80,7 +80,6 @@ The following functionality has not yet been implemented, but is on the backlog 
 * Android / iOS Redirect URIs
 * Public flow settings
 * Implicit flow settings
-* Front-channel logout URL
 * Optional token claims
 * Federation credentials
 * Deleted applications

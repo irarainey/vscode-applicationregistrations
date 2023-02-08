@@ -196,6 +196,18 @@
         "title": "Remove"
       },
       {
+        "command": "appRegistrations.editLogoutUrl",
+        "title": "Edit"
+      },
+      {
+        "command": "appRegistrations.copyLogoutUrl",
+        "title": "Copy"
+      },
+      {
+        "command": "appRegistrations.removeLogoutUrl",
+        "title": "Remove"
+      },
+      {
         "command": "appRegistrations.addPasswordCredential",
         "title": "Add"
       },
@@ -306,6 +318,18 @@
     ],
     "menus": {
       "commandPalette": [
+        {
+          "command": "appRegistrations.editLogoutUrl",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.copyLogoutUrl",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.removeLogoutUrl",
+          "when": "false"
+        },
         {
           "command": "appRegistrations.refreshApps",
           "when": "false"
@@ -702,7 +726,7 @@
         },
         {
           "command": "appRegistrations.editAppIdUri",
-          "when": "view == appRegistrations && viewItem == APPID-URI || viewItem == APPID-URI-PARENT",
+          "when": "view == appRegistrations && viewItem == APPID-URI || viewItem == APPID-URI-PARENT || viewItem == APPID-URI-EMPTY",
           "group": "appRegistrations@0"
         },
         {
@@ -713,6 +737,21 @@
         {
           "command": "appRegistrations.removeAppIdUri",
           "when": "view == appRegistrations && viewItem == APPID-URI",
+          "group": "appRegistrations@2"
+        },
+        {
+          "command": "appRegistrations.editLogoutUrl",
+          "when": "view == appRegistrations && viewItem == LOGOUT-URL || viewItem == LOGOUT-URL-PARENT || viewItem == LOGOUT-URL-EMPTY",
+          "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.copyLogoutUrl",
+          "when": "view == appRegistrations && viewItem == LOGOUT-URL",
+          "group": "appRegistrations@1"
+        },
+        {
+          "command": "appRegistrations.removeLogoutUrl",
+          "when": "view == appRegistrations && viewItem == LOGOUT-URL",
           "group": "appRegistrations@2"
         }
       ]

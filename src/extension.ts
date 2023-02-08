@@ -94,6 +94,11 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeAppIdUri`, async (item) => await applicationService.removeAppIdUri(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyAppIdUri`, (item) => copyValue(item)));
 
+	// Logout URL Commands
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editLogoutUrl`, async (item) => await applicationService.editLogoutUrl(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeLogoutUrl`, async (item) => await applicationService.removeLogoutUrl(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyLogoutUrl`, (item) => copyValue(item)));
+
 	// Password Credentials Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addPasswordCredential`, async (item) => await passwordCredentialService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deletePasswordCredential`, async (item) => await passwordCredentialService.delete(item)));

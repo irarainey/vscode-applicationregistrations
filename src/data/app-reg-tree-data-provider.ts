@@ -446,7 +446,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                     value: app.identifierUris![0] === undefined ? "Not set" : app.identifierUris![0],
                                     appId: app.appId!,
                                     objectId: app.id!,
-                                    context: "APPID-URI",
+                                    context: app.identifierUris![0] !== undefined ? "APPID-URI" : "APPID-URI-EMPTY",
                                     iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                                     baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                                     tooltip: "The Application Id URI, this is set when an application is used as a resource app. The URI acts as the prefix for the scopes you'll reference in your API's code, and must be globally unique."
@@ -470,6 +470,28 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
                                     baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
                                     objectId: app.id!,
                                     tooltip: "The Sign In Audience determines whether the application can be used by accounts in the same Azure AD tenant or accounts in any Azure AD tenant."
+                                })
+                            ]
+                        }));
+
+                        // Logout URL
+                        appRegItem.children!.push(new AppRegItem({
+                            label: "Front-channel Logout URL",
+                            context: "LOGOUT-URL-PARENT",
+                            iconPath: new ThemeIcon("sign-out"),
+                            baseIcon: new ThemeIcon("sign-out"),
+                            objectId: app.id!,
+                            value: app.web!.logoutUrl! === undefined || app.web!.logoutUrl! === "" || app.web!.logoutUrl! === null ? "Not set" : app.web!.logoutUrl!,
+                            tooltip: "The URL to logout of the application.",
+                            children: [
+                                new AppRegItem({
+                                    label: app.web!.logoutUrl! === undefined || app.web!.logoutUrl! === "" || app.web!.logoutUrl! === null ? "Not set" : app.web!.logoutUrl!,
+                                    context: app.web!.logoutUrl! === undefined || app.web!.logoutUrl! === "" || app.web!.logoutUrl! === null ? "LOGOUT-URL-EMPTY" : "LOGOUT-URL",
+                                    iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                    baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+                                    objectId: app.id!,
+                                    value: app.web!.logoutUrl! === undefined || app.web!.logoutUrl! === "" || app.web!.logoutUrl! === null ? "Not set" : app.web!.logoutUrl!,
+                                    tooltip: "The URL to logout of the application."
                                 })
                             ]
                         }));
