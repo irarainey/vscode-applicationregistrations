@@ -1,7 +1,7 @@
 out
 dist
 node_modules
-packages/
+packages
 .vscode-test/
 *.vsix
 coverage
