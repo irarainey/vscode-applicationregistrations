@@ -30,6 +30,7 @@
     "Azure",
     "Application Registrations"
   ],
+  "activationEvents": [],
   "main": "./dist/extension.js",
   "extensionDependencies": [
     "ms-vscode.vscode-node-azure-pack"
