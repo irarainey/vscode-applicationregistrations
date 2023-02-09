@@ -5,7 +5,6 @@ import { clearAllStatusBarMessages } from "./utils/status-bar";
 
 // Define the error handler function.
 export const errorHandler = async (result: ErrorResult) => {
-
 	// Clear all status bar messages.
 	clearAllStatusBarMessages();
 
@@ -33,10 +32,7 @@ export const errorHandler = async (result: ErrorResult) => {
 
 		// Determine if the error is due to trying to change the sign in audience.
 		if (result.error.message.includes("signInAudience")) {
-			const result = await window.showErrorMessage(
-				`An error occurred while attempting to change the Sign In Audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at ${SIGNIN_AUDIENCE_DOCUMENTATION_URI}.`,
-				...["OK", "Open Documentation"]
-			);
+			const result = await window.showErrorMessage(`An error occurred while attempting to change the Sign In Audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at ${SIGNIN_AUDIENCE_DOCUMENTATION_URI}.`, ...["OK", "Open Documentation"]);
 
 			if (result === "Open Documentation") {
 				env.openExternal(Uri.parse(SIGNIN_AUDIENCE_DOCUMENTATION_URI));

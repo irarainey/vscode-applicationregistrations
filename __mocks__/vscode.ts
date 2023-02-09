@@ -85,6 +85,10 @@ export class TextDocumentContentProvider {
   provideTextDocumentContent() { return "{ \"test\": \"test\" }"; }
 }
 
+export const MessageOptions = jest.fn();
+
+export const MessageItem = jest.fn();
+
 export const vscode = {
   window,
   workspace,
@@ -99,5 +103,7 @@ export const vscode = {
   ProviderResult,
   ConfigurationTarget,
   Uri,
-  TextDocumentContentProvider
+  TextDocumentContentProvider,
+  MessageOptions,
+  MessageItem
 };

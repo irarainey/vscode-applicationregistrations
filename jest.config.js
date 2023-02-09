@@ -23,6 +23,7 @@ module.exports = {
   collectCoverage: true,
   collectCoverageFrom: [
     "<rootDir>/src/services/*.ts",
+    "<rootDir>/src/utils/validation.ts",
     "<rootDir>/src/utils/status-bar.ts",
     "<rootDir>/src/utils/copy-value.ts",
     "<rootDir>/src/utils/escape-string.ts",

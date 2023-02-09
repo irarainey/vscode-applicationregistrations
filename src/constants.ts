@@ -20,43 +20,30 @@ export const DIRECTORY_OBJECTS_URI = "https://graph.microsoft.com/v1.0/directory
 export const BASE_ENDPOINT = "https://login.microsoftonline.com/";
 
 // A list of properties to ignore when updating an application registration
-export const PROPERTIES_TO_IGNORE_ON_UPDATE = [
-    "appId",
-    "publisherDomain",
-    "passwordCredentials",
-    "deletedDateTime",
-    "disabledByMicrosoftStatus",
-    "createdDateTime",
-    "serviceManagementReference",
-    "parentalControlSettings",
-    "keyCredentials",
-    "groupMembershipClaims",
-    "tags",
-    "tokenEncryptionKeyId"
-];
+export const PROPERTIES_TO_IGNORE_ON_UPDATE = ["appId", "publisherDomain", "passwordCredentials", "deletedDateTime", "disabledByMicrosoftStatus", "createdDateTime", "serviceManagementReference", "parentalControlSettings", "keyCredentials", "groupMembershipClaims", "tags", "tokenEncryptionKeyId"];
 
 // A list of sign in audience options
 export const SIGNIN_AUDIENCE_OPTIONS = [
-    {
-        label: "Single Tenant",
-        description: "Accounts in this organizational directory only.",
-        value: "AzureADMyOrg"
-    },
-    {
-        label: "Multiple Tenants",
-        description: "Accounts in any organizational directory.",
-        value: "AzureADMultipleOrgs"
-    },
-    {
-        label: "Multiple Tenants and Personal Accounts",
-        description: "Azure AD and personal Microsoft accounts (e.g. Skype, Xbox).",
-        value: "AzureADandPersonalMicrosoftAccount"
-    },
-    {
-        label: "Personal Accounts",
-        description: "Personal Microsoft accounts only.",
-        value: "PersonalMicrosoftAccount"
-    }
+	{
+		label: "Single Tenant",
+		description: "Accounts in this organizational directory only.",
+		value: "AzureADMyOrg"
+	},
+	{
+		label: "Multiple Tenants",
+		description: "Accounts in any organizational directory.",
+		value: "AzureADMultipleOrgs"
+	},
+	{
+		label: "Multiple Tenants and Personal Accounts",
+		description: "Azure AD and personal Microsoft accounts (e.g. Skype, Xbox).",
+		value: "AzureADandPersonalMicrosoftAccount"
+	},
+	{
+		label: "Personal Accounts",
+		description: "Personal Microsoft accounts only.",
+		value: "PersonalMicrosoftAccount"
+	}
 ];
 
 // URI to the documentation for sign in audience

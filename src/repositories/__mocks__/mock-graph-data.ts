@@ -1,3 +1,4 @@
+// This file contains mock data for the tests
 export const mockApplications: any[] = [
 	{
 		id: "ab4e6904-6629-41c9-91d7-2ec9c7d3e46c",
@@ -5,7 +6,7 @@ export const mockApplications: any[] = [
 		createdDateTime: "2023-01-01T00:00:00Z",
 		displayName: "First Test App",
 		description: null,
-		identifierUris: [],
+		identifierUris: ["https://firsttestapp.com"],
 		notes: null,
 		signInAudience: "AzureADMultipleOrgs",
 		api: {

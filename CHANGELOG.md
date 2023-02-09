@@ -1,3 +1,7 @@
+## 0.8.0
+
+- TBD
+
 ## 0.7.1
 
 - Fixed an issue copying the front-channel logout url.
