@@ -1,5 +1,9 @@
-import { ApiApplication, AppRole } from "@microsoft/microsoft-graph-types";
+import { ApiApplication, AppRole, User } from "@microsoft/microsoft-graph-types";
 import { addYears, isAfter, isBefore, isDate } from "date-fns";
+import { errorHandler } from "../error-handler";
+import { OwnerList } from "../models/owner-list";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
+import { GraphResult } from "../types/graph-result";
 
 // Validates the redirect URI as per https://learn.microsoft.com/en-us/azure/active-directory/develop/reply-url
 export const validateRedirectUri = (uri: string, context: string, existingRedirectUris: string[], isEditing: boolean, oldValue: string | undefined): string | undefined => {
@@ -259,6 +263,55 @@ export const validateLogoutUrl = (uri: string): string | undefined => {
 	}
 	if (uri.length > 256) {
 		return "The Logout URL is not valid. A URL cannot be longer than 256 characters.";
+	}
+
+	return undefined;
+};
+
+// Validates the owner name or email address.
+export const validateOwner = async (owner: string, existing: User[], graphRepository: GraphApiRepository, owners: OwnerList): Promise<string | undefined> => {
+	// Check if the owner name is empty.
+	if (owner === undefined || owner === null || owner.length === 0) {
+		return undefined;
+	}
+
+	owners.users = undefined;
+	let identifier: string = "";
+	if (owner.indexOf("@") > -1) {
+		// Try to find the user by email.
+		const result: GraphResult<User[]> = await graphRepository.findUsersByEmail(owner);
+		if (result.success === true && result.value !== undefined) {
+			owners.users = result.value;
+			identifier = "user with an email address";
+		} else {
+			await errorHandler({ error: result.error });
+			return;
+		}
+	} else {
+		// Try to find the user by name.
+		const result: GraphResult<User[]> = await graphRepository.findUsersByName(owner);
+		if (result.success === true && result.value !== undefined) {
+			owners.users = result.value;
+			identifier = "name";
+		} else {
+			await errorHandler({ error: result.error });
+			return;
+		}
+	}
+
+	if (owners.users.length === 0) {
+		// User not found
+		return `No ${identifier} beginning with ${owner} can be found in your directory.`;
+	} else if (owners.users.length > 1) {
+		// More than one user found
+		return `More than one user with the ${identifier} beginning with ${owner} exists in your directory.`;
+	}
+
+	// Check if the user is already an owner.
+	for (let i = 0; i < existing.length; i++) {
+		if (existing[i].id === owners.users[0].id) {
+			return `${owner} is already an owner of this application.`;
+		}
 	}
 
 	return undefined;

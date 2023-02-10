@@ -1,6 +1,6 @@
 import { Application, Organization, User, RoleAssignment } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../../types/graph-result";
-import { mockApplications, mockOrganizations, mockUser, mockRoleAssignments } from "./mock-graph-data";
+import { mockApplications, mockOrganizations, mockUser, mockRoleAssignments, mockUsers } from "./mock-graph-data";
 
 export class GraphApiRepository {
 	async getApplicationCountOwned(): Promise<GraphResult<number>> {
@@ -43,11 +43,13 @@ export class GraphApiRepository {
 		return { success: true };
 	}
 
-	async createApplication(_application: Application): Promise<GraphResult<Application>> {
-		return { success: true, value: { displayName: "Add Application Name" } };
+	async createApplication(application: Application): Promise<GraphResult<Application>> {
+		return { success: true, value: { displayName: application.displayName } };
 	}
 
 	async addApplicationOwner(id: string, userId: string): Promise<GraphResult<void>> {
+		const app: Application = mockApplications.filter((a) => a.id === id)[0];
+		app.owners!.push(mockUsers.filter((u) => u.id === userId)[0]);
 		return { success: true };
 	}
 

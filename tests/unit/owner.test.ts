@@ -3,7 +3,7 @@ import { GraphApiRepository } from "../../src/repositories/graph-api-repository"
 import { AppRegTreeDataProvider } from "../../src/data/app-reg-tree-data-provider";
 import { AppRegItem } from "../../src/models/app-reg-item";
 import { OwnerService } from "../../src/services/owner";
-import { mockAppId, mockAppObjectId, mockUserId, seedMockData } from "../../src/repositories/__mocks__/mock-graph-data";
+import { mockAppId, mockAppObjectId, mockSecondAppObjectId, mockSecondUserId, mockUserId, seedMockData } from "../../src/repositories/__mocks__/mock-graph-data";
 import { getTopLevelTreeItem } from "./utils";
 
 // Create Jest mocks
@@ -91,11 +91,37 @@ describe("Owner Service Tests", () => {
 		expect(triggerErrorSpy).toHaveBeenCalled();
 	});
 
-	// test("Add owner", async () => {
-	// 	await ownerService.add(item);
-	// 	expect(statusBarSpy).toHaveBeenCalled();
-	// 	expect(triggerCompleteSpy).toHaveBeenCalled();
-	// });
+	test("Add owner successfully", async () => {
+		// Arrange
+		item = { objectId: mockSecondAppObjectId, contextValue: "OWNERS" };
+		vscode.window.showInputBox = jest.fn().mockResolvedValue("Second User");
+		ownerService.setUserList([{ id: mockSecondUserId }]);
+
+		// Act
+		await ownerService.add(item);
+
+		// Assert
+		const treeItem = await getTopLevelTreeItem(mockSecondAppObjectId, treeDataProvider, "OWNERS");
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerCompleteSpy).toHaveBeenCalled();
+		expect(treeItem!.children!.length).toEqual(2);
+		expect(treeItem!.children![1].userId).toEqual(mockSecondUserId);
+	});
+
+	test("Add owner with add error", async () => {
+		// Arrange
+		item = { objectId: mockSecondAppObjectId, contextValue: "OWNERS" };
+		vscode.window.showInputBox = jest.fn().mockResolvedValue("Second User");
+		jest.spyOn(graphApiRepository, "addApplicationOwner").mockImplementation(async (_id: string, _userId: string) => ({ success: false, error: new Error("Test Error") }));
+		ownerService.setUserList([{ id: mockSecondUserId }]);
+
+		// Act
+		await ownerService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalled();
+	});
 
 	test("Add owner with error getting existing owners", async () => {
 		// Arrange
