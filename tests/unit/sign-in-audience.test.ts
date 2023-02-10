@@ -4,7 +4,8 @@ import { AppRegTreeDataProvider } from "../../src/data/app-reg-tree-data-provide
 import { AppRegItem } from "../../src/models/app-reg-item";
 import { SignInAudienceService } from "../../src/services/sign-in-audience";
 import { Application } from "@microsoft/microsoft-graph-types";
-import { mockAppObjectId } from "./constants";
+import { mockAppObjectId, seedMockData } from "../../src/repositories/__mocks__/mock-graph-data";
+import { getTopLevelTreeItem } from "./utils";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -26,9 +27,11 @@ describe("Sign In Audience Service Tests", () => {
 	// Create variables used in the tests
 	let item: AppRegItem;
 
-	// Create common mock functions for all tests
 	beforeAll(async () => {
+		// Suppress console output
 		console.error = jest.fn();
+
+		// Mock the showQuickPick function
 		vscode.window.showQuickPick = jest.fn().mockResolvedValue({
 			label: "Single Tenant",
 			description: "Accounts in this organizational directory only.",
@@ -36,84 +39,125 @@ describe("Sign In Audience Service Tests", () => {
 		});
 	});
 
-	// Create a generic item to use in each test
 	beforeEach(() => {
+		// Reset mock data
+		seedMockData();
+
+		//Restore the default mock implementations
 		jest.restoreAllMocks();
+
+		// Define spies on the functions to be tested
 		triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(signInAudienceService), "triggerRefresh");
 		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(signInAudienceService), "handleError");
 		statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
 		iconSpy = jest.spyOn(vscode, "ThemeIcon");
+
+		// Define the base item to be used in the tests
 		item = { objectId: mockAppObjectId, contextValue: "AUDIENCE" };
 	});
 
 	afterAll(() => {
+		// Dispose of the service
 		signInAudienceService.dispose();
 	});
 
 	test("Create class instance", () => {
+		// Assert that the service was instantiated
 		expect(signInAudienceService).toBeDefined();
 	});
 
 	test("Check status bar message and icon updated on edit", async () => {
+		// Act
 		await signInAudienceService.edit(item);
+
+		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
 	});
 
 	test("Trigger complete on successful item edit", async () => {
+		// Act
 		await signInAudienceService.edit(item);
+
+		// Assert
 		expect(triggerCompleteSpy).toHaveBeenCalled();
 	});
 
 	test("Trigger complete on successful parent item edit", async () => {
+		// Arrange
 		item = { ...item, contextValue: "AUDIENCE-PARENT", children: [{ objectId: mockAppObjectId, contextValue: "AUDIENCE" }] };
+
+		// Act
 		await signInAudienceService.edit(item);
+
+		// Assert
 		expect(triggerCompleteSpy).toHaveBeenCalled();
 	});
 
 	test("Update Sign In Audience", async () => {
+		// Act
 		await signInAudienceService.edit(item);
-		const treeItem = await getTopLevelTreeItem(item.objectId!, "AUDIENCE-PARENT");
+
+		// Assert
+		const treeItem = await getTopLevelTreeItem(item.objectId!, treeDataProvider, "AUDIENCE-PARENT");
 		expect(triggerCompleteSpy).toHaveBeenCalled();
 		expect(treeItem!.children![0].label).toEqual("Single Tenant");
 	});
 
 	test("Trigger error on unsuccessful edit with a generic error", async () => {
+		// Arrange
 		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("Test Error") }));
+
+		// Act
 		await signInAudienceService.edit(item);
+
+		// Assert
 		expect(triggerErrorSpy).toHaveBeenCalled();
 	});
 
 	test("Trigger error on unsuccessful edit with an authentication error", async () => {
+		// Arrange
 		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("az login") }));
+
+		// Act
 		await signInAudienceService.edit(item);
+
+		// Assert
 		expect(triggerErrorSpy).toHaveBeenCalled();
 	});
 
 	test("Trigger error on unsuccessful edit with an authentication error", async () => {
+		// Arrange
 		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("az account set") }));
+
+		// Act
 		await signInAudienceService.edit(item);
+
+		// Assert
 		expect(triggerErrorSpy).toHaveBeenCalled();
 	});
 
 	test("Trigger error on unsuccessful edit with a sign in audience error and open documentation clicked", async () => {
-		jest.spyOn(vscode.window, "showErrorMessage").mockReturnValue({ then: (callback: any) => callback("Open Documentation")});
+		// Arrange
+		jest.spyOn(vscode.window, "showErrorMessage").mockReturnValue({ then: (callback: any) => callback("Open Documentation") });
 		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("signInAudience") }));
+
+		// Act
 		await signInAudienceService.edit(item);
+
+		// Assert
 		expect(triggerErrorSpy).toHaveBeenCalled();
 	});
 
 	test("Trigger error on unsuccessful edit with a sign in audience error", async () => {
-		jest.spyOn(vscode.window, "showErrorMessage").mockReturnValue({ then: (callback: any) => callback("OK")});
+		// Arrange
+		jest.spyOn(vscode.window, "showErrorMessage").mockReturnValue({ then: (callback: any) => callback("OK") });
 		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("signInAudience") }));
+
+		// Act
 		await signInAudienceService.edit(item);
+
+		// Assert
 		expect(triggerErrorSpy).toHaveBeenCalled();
 	});
-
-	// Get a specific top level tree item
-	const getTopLevelTreeItem = async (objectId: string, contextValue: string): Promise<AppRegItem | undefined> => {
-		const tree = await treeDataProvider.getChildren();
-		const app = tree!.find((x) => x.objectId === objectId);
-		return app?.children?.find((x) => x.contextValue === contextValue);
-	};
 });

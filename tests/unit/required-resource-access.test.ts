@@ -3,6 +3,7 @@ import { GraphApiRepository } from "../../src/repositories/graph-api-repository"
 import { AppRegTreeDataProvider } from "../../src/data/app-reg-tree-data-provider";
 import { AppRegItem } from "../../src/models/app-reg-item";
 import { RequiredResourceAccessService } from "../../src/services/required-resource-access";
+import { mockAppObjectId, seedMockData } from "../../src/repositories/__mocks__/mock-graph-data";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -10,9 +11,6 @@ jest.mock("../../src/repositories/graph-api-repository");
 
 // Create the test suite for sign in audience service
 describe("Required Resource Access Service Tests", () => {
-	// Define the object id of the mock application
-	const mockAppObjectId = "ab4e6904-6629-41c9-91d7-2ec9c7d3e46c";
-
 	// Create instances of objects used in the tests
 	const graphApiRepository = new GraphApiRepository();
 	const treeDataProvider = new AppRegTreeDataProvider(graphApiRepository);
@@ -27,13 +25,12 @@ describe("Required Resource Access Service Tests", () => {
 	// Create variables used in the tests
 	let item: AppRegItem;
 
-	// Create common mock functions for all tests
 	beforeAll(async () => {
 		console.error = jest.fn();
 	});
 
-	// Create a generic item to use in each test
 	beforeEach(() => {
+		seedMockData();
 		jest.restoreAllMocks();
 		statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
 		iconSpy = jest.spyOn(vscode, "ThemeIcon");
@@ -42,13 +39,12 @@ describe("Required Resource Access Service Tests", () => {
 		item = { objectId: mockAppObjectId, contextValue: "AUDIENCE" };
 	});
 
-	// Test to see if class can be created
 	test("Create class instance", () => {
 		expect(requiredResourceAccessService).toBeDefined();
 	});
 
-	// Get a specific tree item
-	const getTreeItem = async (objectId: string, contextValue: string): Promise<AppRegItem | undefined> => {
+	// Get a specific top level tree item
+	const getTopLevelTreeItem = async (objectId: string, contextValue: string): Promise<AppRegItem | undefined> => {
 		const tree = await treeDataProvider.getChildren();
 		const app = tree!.find((x) => x.objectId === objectId);
 		return app?.children?.find((x) => x.contextValue === contextValue);

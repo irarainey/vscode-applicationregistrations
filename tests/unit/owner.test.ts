@@ -3,6 +3,8 @@ import { GraphApiRepository } from "../../src/repositories/graph-api-repository"
 import { AppRegTreeDataProvider } from "../../src/data/app-reg-tree-data-provider";
 import { AppRegItem } from "../../src/models/app-reg-item";
 import { OwnerService } from "../../src/services/owner";
+import { mockAppId, mockAppObjectId, mockUserId, seedMockData } from "../../src/repositories/__mocks__/mock-graph-data";
+import { getTopLevelTreeItem } from "./utils";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -10,9 +12,6 @@ jest.mock("../../src/repositories/graph-api-repository");
 
 // Create the test suite for sign in audience service
 describe("Owner Service Tests", () => {
-	// Define the object id of the mock application
-	const mockAppObjectId = "ab4e6904-6629-41c9-91d7-2ec9c7d3e46c";
-
 	// Create instances of objects used in the tests
 	const graphApiRepository = new GraphApiRepository();
 	const treeDataProvider = new AppRegTreeDataProvider(graphApiRepository);
@@ -23,34 +22,90 @@ describe("Owner Service Tests", () => {
 	let triggerErrorSpy: jest.SpyInstance<any, unknown[], any>;
 	let statusBarSpy: jest.SpyInstance<any, [text: string], any>;
 	let iconSpy: jest.SpyInstance<any, [id: string, color?: any | undefined], any>;
+	let openExternalSpy: jest.SpyInstance<Thenable<boolean>, [target: vscode.Uri], any>;
 
-	// Create variables used in the tests
-	let item: AppRegItem;
+	// The item to be tested
+	let item: AppRegItem = { objectId: mockAppObjectId, appId: mockAppId, userId: mockUserId, contextValue: "OWNER" };
 
-	// Create common mock functions for all tests
 	beforeAll(async () => {
+		// Suppress console output
 		console.error = jest.fn();
 	});
 
-	// Create a generic item to use in each test
 	beforeEach(() => {
+		// Reset mock data
+		seedMockData();
+
+		// Restore the default mock implementations
 		jest.restoreAllMocks();
+
+		// Define a standard mock implementation for the showWarningMessage function
+		vscode.window.showWarningMessage = jest.fn().mockResolvedValue("Yes");
+
+		// Define spies on the functions to be tested
 		statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
 		iconSpy = jest.spyOn(vscode, "ThemeIcon");
 		triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(ownerService), "triggerRefresh");
 		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(ownerService), "handleError");
-		item = { objectId: mockAppObjectId, contextValue: "AUDIENCE" };
+		openExternalSpy = jest.spyOn(vscode.env, "openExternal");
 	});
 
-	// Test to see if class can be created
+	afterAll(() => {
+		// Dispose of the owner service
+		ownerService.dispose();
+	});
+
 	test("Create class instance", () => {
+		// Assert that the owner service is instantiated
 		expect(ownerService).toBeDefined();
 	});
 
-	// Get a specific tree item
-	const getTreeItem = async (objectId: string, contextValue: string): Promise<AppRegItem | undefined> => {
-		const tree = await treeDataProvider.getChildren();
-		const app = tree!.find((x) => x.objectId === objectId);
-		return app?.children?.find((x) => x.contextValue === contextValue);
-	};
+	test("Open in portal", async () => {
+		// Act
+		ownerService.openInPortal(item);
+
+		// Assert
+		expect(openExternalSpy).toHaveBeenCalled();
+	});
+
+	test("Remove owner", async () => {
+		// Act
+		await ownerService.remove(item);
+
+		// Assert
+		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "OWNERS");
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerCompleteSpy).toHaveBeenCalled();
+		expect(treeItem!.children!.length).toEqual(1);
+	});
+
+	test("Remove owner with error", async () => {
+		// Arrange
+		jest.spyOn(graphApiRepository, "removeApplicationOwner").mockImplementation(async (_id: string, _userId: string) => ({ success: false, error: new Error("Test Error") }));
+
+		// Act
+		await ownerService.remove(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalled();
+	});
+
+	// test("Add owner", async () => {
+	// 	await ownerService.add(item);
+	// 	expect(statusBarSpy).toHaveBeenCalled();
+	// 	expect(triggerCompleteSpy).toHaveBeenCalled();
+	// });
+
+	test("Add owner with error getting existing owners", async () => {
+		// Arrange
+		jest.spyOn(graphApiRepository, "getApplicationOwners").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test Error") }));
+
+		// Act
+		await ownerService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalled();
+	});
 });

@@ -1,5 +1,22 @@
 // This file contains mock data for the tests
-export const mockApplications: any[] = [
+export const mockTenantId = "c7b3da28-01b8-46d3-9523-d1b24cbbde76";
+export const mockAppObjectId = "ab4e6904-6629-41c9-91d7-2ec9c7d3e46c";
+export const mockAppId = "96a2745c-6920-4149-a8b0-90339bee74f9";
+export const mockUserId = "277c79dd-2e4d-40f0-9d9b-eff644ed74e8";
+
+export let mockApplications: any[];
+export let mockUser: any[];
+export let mockOrganizations: any[];
+export let mockRoleAssignments: any[];
+
+export const seedMockData = () => {
+	mockApplications = JSON.parse(JSON.stringify(seedApplications));
+	mockUser = JSON.parse(JSON.stringify(seedUser));
+	mockOrganizations = JSON.parse(JSON.stringify(seedOrganizations));
+	mockRoleAssignments = JSON.parse(JSON.stringify(seedRoleAssignments));
+};
+
+const seedApplications: any[] = [
 	{
 		id: "ab4e6904-6629-41c9-91d7-2ec9c7d3e46c",
 		appId: "96a2745c-6920-4149-a8b0-90339bee74f9",
@@ -64,9 +81,15 @@ export const mockApplications: any[] = [
 		owners: [
 			{
 				id: "277c79dd-2e4d-40f0-9d9b-eff644ed74e8",
-				displayName: "Sample User",
-				userPrincipalName: "sample@user.com",
-				mail: "sample@user.com"
+				displayName: "First User",
+				userPrincipalName: "first@user.com",
+				mail: "first@user.com"
+			},
+			{
+				id: "b204cef1-baa1-4284-8ae1-2285a609ba35",
+				displayName: "Second User",
+				userPrincipalName: "second@user.com",
+				mail: "second@user.com"
 			}
 		]
 	},
@@ -109,24 +132,30 @@ export const mockApplications: any[] = [
 		owners: [
 			{
 				id: "277c79dd-2e4d-40f0-9d9b-eff644ed74e8",
-				displayName: "Sample User",
-				userPrincipalName: "sample@user.com",
-				mail: "sample@user.com"
+				displayName: "First User",
+				userPrincipalName: "first@user.com",
+				mail: "first@user.com"
+			},
+			{
+				id: "b204cef1-baa1-4284-8ae1-2285a609ba35",
+				displayName: "Second User",
+				userPrincipalName: "second@user.com",
+				mail: "second@user.com"
 			}
 		]
 	}
 ];
 
-export const mockUser: any = {
+const seedUser: any = {
 	id: "277c79dd-2e4d-40f0-9d9b-eff644ed74e8",
-	displayName: "Sample User",
-	givenName: "Sample",
-	mail: "sample@user.com",
+	displayName: "First User",
+	givenName: "First",
+	mail: "first@user.com",
 	surname: "User",
-	userPrincipalName: "sample@user.com"
+	userPrincipalName: "first@user.com"
 };
 
-export const mockOrganizations: any[] = [
+const seedOrganizations: any[] = [
 	{
 		id: "c7b3da28-01b8-46d3-9523-d1b24cbbde76",
 		displayName: "Sample Tenant",
@@ -137,7 +166,7 @@ export const mockOrganizations: any[] = [
 	}
 ];
 
-export const mockRoleAssignments: any[] = [
+const seedRoleAssignments: any[] = [
 	{
 		principalId: "277c79dd-2e4d-40f0-9d9b-eff644ed74e8",
 		roleDefinition: {

@@ -3,7 +3,7 @@ import * as execShellCmdModule from "../../src/utils/exec-shell-cmd";
 import { GraphApiRepository } from "../../src/repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../../src/data/app-reg-tree-data-provider";
 import { OrganizationService } from "../../src/services/organization";
-import { mockTenantId } from "./constants";
+import { mockTenantId, seedMockData } from "../../src/repositories/__mocks__/mock-graph-data";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -21,60 +21,85 @@ describe("Organization Service Tests", () => {
 	let triggerErrorSpy: jest.SpyInstance<any, unknown[], any>;
 	let statusBarSpy: jest.SpyInstance<any, [text: string], any>;
 
-	// Create common mock functions for all tests
 	beforeAll(() => {
+		// Suppress console output
 		console.error = jest.fn();
 	});
 
-	// Clear all mocks before each test
 	beforeEach(() => {
+		// Reset mock data
+		seedMockData();
+
+		//Restore the default mock implementations
 		jest.restoreAllMocks();
+
+		// Define a mock implementation for the execShellCmd function
 		jest.spyOn(execShellCmdModule, "execShellCmd").mockImplementation(async (_cmd: string) => mockTenantId);
+
+		// Define spies on the functions to be tested
 		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(organizationService), "handleError");
 		statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
 	});
 
 	afterAll(() => {
+		// Dispose of the service
 		organizationService.dispose();
 	});
 
-	// Test to see if class can be created
 	test("Create class instance", () => {
+		// Assert that the class instance is instantiated
 		expect(organizationService).toBeDefined();
 	});
 
-	// Test to see if the status bar message is changed when requesting tenant information
 	test("Check status bar message updated on request", async () => {
+		// Act
 		await organizationService.showTenantInformation();
+
+		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
 	});
 
-	// Test to see if the status bar message is changed when requesting tenant information
 	test("CLI returns error", async () => {
-		jest.spyOn(execShellCmdModule, "execShellCmd").mockImplementation(async (_cmd: string) => { throw new Error("Test error"); });
+		// Arrange
+		jest.spyOn(execShellCmdModule, "execShellCmd").mockImplementation(async (_cmd: string) => {	throw new Error("Test error");});
+
+		// Act
 		await organizationService.showTenantInformation();
+
+		// Assert
 		expect(triggerErrorSpy).toHaveBeenCalled();
 	});
 
-	// Test to see if an error is handled if no user is returned
 	test("User return error", async () => {
+		// Arrange
 		jest.spyOn(graphApiRepository, "getUserInformation").mockImplementation(async () => ({ success: false, error: new Error("Test error") }));
+
+		// Act
 		await organizationService.showTenantInformation();
+
+		// Assert
 		expect(triggerErrorSpy).toHaveBeenCalled();
 	});
 
-	// Test to see if an error is handled if no roles returned
 	test("Roles return error", async () => {
+		// Arrange
 		jest.spyOn(graphApiRepository, "getRoleAssignments").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test error") }));
+
+		// Act
 		await organizationService.showTenantInformation();
+
+		// Assert
 		expect(triggerErrorSpy).toHaveBeenCalled();
 	});
 
-	// Test to see if an error is handled if no roles returned
 	test("Tenant information return error", async () => {
+		// Arrange
 		jest.spyOn(graphApiRepository, "getTenantInformation").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test error") }));
+
+		// Act
 		await organizationService.showTenantInformation();
+
+		// Assert
 		expect(triggerErrorSpy).toHaveBeenCalled();
 	});
 });
-

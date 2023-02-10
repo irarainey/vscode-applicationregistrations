@@ -47,8 +47,22 @@ export class GraphApiRepository {
 		return { success: true, value: { displayName: "Add Application Name" } };
 	}
 
-	async deleteApplication(_id: string): Promise<GraphResult<void>> {
-		// Not going to actually remove the item as it causes issues with the mock data
+	async addApplicationOwner(id: string, userId: string): Promise<GraphResult<void>> {
+		return { success: true };
+	}
+
+	async getApplicationOwners(id: string): Promise<GraphResult<User[]>> {
+		return { success: true, value: mockApplications.filter((a) => a.id === id)[0].owners };
+	}
+
+	async removeApplicationOwner(id: string, userId: string): Promise<GraphResult<void>> {
+		const app: Application = mockApplications.filter((a) => a.id === id)[0];
+		app.owners!.splice(app.owners!.findIndex((o) => o.id === userId), 1);
+		return { success: true };
+	}
+
+	async deleteApplication(id: string): Promise<GraphResult<void>> {
+		mockApplications.splice(mockApplications.findIndex((a) => a.id === id), 1);
 		return { success: true };
 	}
 
@@ -57,7 +71,7 @@ export class GraphApiRepository {
 	}
 
 	async getUserInformation(): Promise<GraphResult<User>> {
-		return { success: true, value: mockUser };
+		return { success: true, value: mockUser as User };
 	}
 
 	async getRoleAssignments(id: string): Promise<GraphResult<RoleAssignment[]>> {

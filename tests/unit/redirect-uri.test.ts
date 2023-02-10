@@ -3,6 +3,7 @@ import { GraphApiRepository } from "../../src/repositories/graph-api-repository"
 import { AppRegTreeDataProvider } from "../../src/data/app-reg-tree-data-provider";
 import { AppRegItem } from "../../src/models/app-reg-item";
 import { RedirectUriService } from "../../src/services/redirect-uri";
+import { mockAppObjectId, seedMockData } from "../../src/repositories/__mocks__/mock-graph-data";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -27,13 +28,12 @@ describe("Redirect URI Service Tests", () => {
 	// Create variables used in the tests
 	let item: AppRegItem;
 
-	// Create common mock functions for all tests
 	beforeAll(async () => {
 		console.error = jest.fn();
 	});
 
-	// Create a generic item to use in each test
 	beforeEach(() => {
+		seedMockData();
 		jest.restoreAllMocks();
 		statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
 		iconSpy = jest.spyOn(vscode, "ThemeIcon");
@@ -42,13 +42,12 @@ describe("Redirect URI Service Tests", () => {
 		item = { objectId: mockAppObjectId, contextValue: "AUDIENCE" };
 	});
 
-	// Test to see if class can be created
 	test("Create class instance", () => {
 		expect(redirectUriService).toBeDefined();
 	});
 
-	// Get a specific tree item
-	const getTreeItem = async (objectId: string, contextValue: string): Promise<AppRegItem | undefined> => {
+	// Get a specific top level tree item
+	const getTopLevelTreeItem = async (objectId: string, contextValue: string): Promise<AppRegItem | undefined> => {
 		const tree = await treeDataProvider.getChildren();
 		const app = tree!.find((x) => x.objectId === objectId);
 		return app?.children?.find((x) => x.contextValue === contextValue);
