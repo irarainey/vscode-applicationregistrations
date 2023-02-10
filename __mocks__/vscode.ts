@@ -8,11 +8,16 @@ export const window = {
   showErrorMessage: jest.fn(),
   showWarningMessage: jest.fn(),
   showQuickPick: jest.fn(),
-  showTextDocument: jest.fn()
+  showTextDocument: jest.fn(),
+  showInputBox: jest.fn(() => {
+    return {
+      validateInput: jest.fn()
+    };
+  })
 };
 
 export const workspace = {
-  getConfiguration: (value: string) => ({
+  getConfiguration: (_value: string) => ({
     get: (key: string) => {
       switch (key) {
         case "useEventualConsistency":
@@ -34,11 +39,12 @@ export const workspace = {
 };
 
 export class EventEmitter {
+  event = jest.fn();
   fire() { return jest.fn(); }
 };
 
 export const Uri = {
-  parse: (value: string, strict?: boolean) => {
+  parse: (_value: string, _strict?: boolean) => {
     jest.fn();
   }
 };
@@ -46,7 +52,7 @@ export const Uri = {
 let clipboard: any;
 
 export const env = {
-  openExternal: (value: string) => {
+  openExternal: (_value: string) => {
     jest.fn();
   },
   clipboard: {
@@ -82,7 +88,11 @@ export const ConfigurationTarget = jest.fn();
 export const Disposable = jest.fn();
 
 export class TextDocumentContentProvider {
-  provideTextDocumentContent() { return "{ \"test\": \"test\" }"; }
+  onDidChangeEmitter = new EventEmitter();
+  onDidChange = this.onDidChangeEmitter.event;
+  provideTextDocumentContent(): string {
+    return "content";
+  }
 }
 
 export const MessageOptions = jest.fn();

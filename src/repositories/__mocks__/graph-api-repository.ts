@@ -7,7 +7,7 @@ export class GraphApiRepository {
 		return { success: true, value: mockApplications.length };
 	}
 
-	async getApplicationListOwned(filter?: string): Promise<GraphResult<Application[]>> {
+	async getApplicationListOwned(_filter?: string): Promise<GraphResult<Application[]>> {
 		return { success: true, value: mockApplications };
 	}
 
@@ -18,7 +18,7 @@ export class GraphApiRepository {
 		};
 	}
 
-	async getApplicationDetailsPartial(id: string, select: string, expandOwners: boolean = false): Promise<GraphResult<Application>> {
+	async getApplicationDetailsPartial(id: string, _select: string, _expandOwners: boolean = false): Promise<GraphResult<Application>> {
 		return {
 			success: true,
 			value: mockApplications.filter((a) => a.id === id)[0]
@@ -40,6 +40,15 @@ export class GraphApiRepository {
 			Object.assign(app, appChange);
 		}
 
+		return { success: true };
+	}
+
+	async createApplication(_application: Application): Promise<GraphResult<Application>> {
+		return { success: true, value: { displayName: "Add Application Name" } };
+	}
+
+	async deleteApplication(_id: string): Promise<GraphResult<void>> {
+		// Not going to actually remove the item as it causes issues with the mock data
 		return { success: true };
 	}
 

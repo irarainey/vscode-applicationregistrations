@@ -5,7 +5,6 @@ import { AppRegItem } from "../../src/models/app-reg-item";
 import { SignInAudienceService } from "../../src/services/sign-in-audience";
 import { Application } from "@microsoft/microsoft-graph-types";
 import { mockAppObjectId } from "./constants";
-import { MessageItem, MessageOptions } from "vscode";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -67,7 +66,7 @@ describe("Sign In Audience Service Tests", () => {
 	});
 
 	test("Trigger complete on successful parent item edit", async () => {
-		item = { objectId: mockAppObjectId, contextValue: "AUDIENCE-PARENT", children: [{ objectId: mockAppObjectId, contextValue: "AUDIENCE" }] };
+		item = { ...item, contextValue: "AUDIENCE-PARENT", children: [{ objectId: mockAppObjectId, contextValue: "AUDIENCE" }] };
 		await signInAudienceService.edit(item);
 		expect(triggerCompleteSpy).toHaveBeenCalled();
 	});
@@ -98,14 +97,14 @@ describe("Sign In Audience Service Tests", () => {
 	});
 
 	test("Trigger error on unsuccessful edit with a sign in audience error and open documentation clicked", async () => {
-		jest.spyOn(vscode.window, "showErrorMessage").mockImplementation(async (_message: string, _options: MessageOptions, ..._items: MessageItem[]) => ({ title: "Open Documentation" }));
+		jest.spyOn(vscode.window, "showErrorMessage").mockReturnValue({ then: (callback: any) => callback("Open Documentation")});
 		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("signInAudience") }));
 		await signInAudienceService.edit(item);
 		expect(triggerErrorSpy).toHaveBeenCalled();
 	});
 
 	test("Trigger error on unsuccessful edit with a sign in audience error", async () => {
-		jest.spyOn(vscode.window, "showErrorMessage").mockImplementation(async (_message: string, _options: MessageOptions, ..._items: MessageItem[]) => ({ title: "OK" }));
+		jest.spyOn(vscode.window, "showErrorMessage").mockReturnValue({ then: (callback: any) => callback("OK")});
 		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("signInAudience") }));
 		await signInAudienceService.edit(item);
 		expect(triggerErrorSpy).toHaveBeenCalled();

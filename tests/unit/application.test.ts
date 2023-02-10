@@ -6,6 +6,7 @@ import { AppRegItem } from "../../src/models/app-reg-item";
 import { ApplicationService } from "../../src/services/application";
 import { Application } from "@microsoft/microsoft-graph-types";
 import { mockAppId, mockAppObjectId, mockTenantId } from "./constants";
+import { validateApplicationDisplayName } from "../../src/utils/validation";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -79,8 +80,23 @@ describe("Application Service Tests", () => {
 		expect(openTextDocumentSpy).toHaveBeenCalled();
 	});
 
-	test("Show endpoints error", async () => {
+	test("Show endpoints for unknown app type", async () => {
+		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "Unknown" }));
+		await applicationService.showEndpoints(item);
+		expect(openTextDocumentSpy).toHaveBeenCalled();
+	});
+
+	test("Show endpoints with sign in audience error", async () => {
 		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test Error") }));
+		await applicationService.showEndpoints(item);
+		expect(triggerErrorSpy).toHaveBeenCalled();
+	});
+
+	test("Show endpoints with Az CLI error", async () => {
+		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "AzureADMyOrg" }));
+		jest.spyOn(execShellCmdUtil, "execShellCmd").mockImplementation(async (_cmd: string) => {
+			throw new Error("Test Error");
+		});
 		await applicationService.showEndpoints(item);
 		expect(triggerErrorSpy).toHaveBeenCalled();
 	});
@@ -109,7 +125,7 @@ describe("Application Service Tests", () => {
 	});
 
 	test("Edit Logout URL with unset value", async () => {
-		item = { objectId: mockAppObjectId, appId: mockAppId, value: "Not set", contextValue: "LOGOUT-URL" };
+		item = { ...item, value: "Not set", contextValue: "LOGOUT-URL" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue("https://test.com/logout");
 		await applicationService.editLogoutUrl(item);
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, "LOGOUT-URL-PARENT");
@@ -119,13 +135,43 @@ describe("Application Service Tests", () => {
 	});
 
 	test("Edit Logout URL with existing value", async () => {
-		item = { objectId: mockAppObjectId, appId: mockAppId, value: "https://oldtest.com/logout", contextValue: "LOGOUT-URL" };
+		item = { ...item, value: "https://oldtest.com/logout", contextValue: "LOGOUT-URL" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue("https://test.com/logout");
 		await applicationService.editLogoutUrl(item);
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, "LOGOUT-URL-PARENT");
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(triggerCompleteSpy).toHaveBeenCalled();
 		expect(treeItem!.children![0].label).toEqual("https://test.com/logout");
+	});
+
+	test("Edit App Id Uri with unset value", async () => {
+		item = { ...item, value: "Not set", contextValue: "APPID-URI" };
+		vscode.window.showInputBox = jest.fn().mockResolvedValue("api://test.com");
+		await applicationService.editAppIdUri(item);
+		const treeItem = await getTopLevelTreeItem(mockAppObjectId, "APPID-URI-PARENT");
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerCompleteSpy).toHaveBeenCalled();
+		expect(treeItem!.children![0].label).toEqual("api://test.com");
+	});
+
+	test("Edit App Id Uri with existing value", async () => {
+		item = { ...item, value: "api://oldtest.com", contextValue: "APPID-URI" };
+		vscode.window.showInputBox = jest.fn().mockResolvedValue("api://test.com");
+		await applicationService.editAppIdUri(item);
+		const treeItem = await getTopLevelTreeItem(mockAppObjectId, "APPID-URI-PARENT");
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerCompleteSpy).toHaveBeenCalled();
+		expect(treeItem!.children![0].label).toEqual("api://test.com");
+	});
+
+	test("Edit App Id Uri sign in error", async () => {
+		item = { ...item, value: "api://oldtest.com", contextValue: "APPID-URI" };
+		vscode.window.showInputBox = jest.fn().mockResolvedValue("api://test.com");
+		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test Error") }));
+		await applicationService.editAppIdUri(item);
+		const treeItem = await getTopLevelTreeItem(mockAppObjectId, "APPID-URI-PARENT");
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalled();
 	});
 
 	test("Remove Logout URL", async () => {
@@ -150,10 +196,64 @@ describe("Application Service Tests", () => {
 		expect(treeItem!.children![0].label).toEqual("Not set");
 	});
 
+	test("Delete application successfully", async () => {
+		await applicationService.delete(item);
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerCompleteSpy).toHaveBeenCalled();
+	});
+
+	test("Delete application with error", async () => {
+		jest.spyOn(graphApiRepository, "deleteApplication").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test Error") }));
+		await applicationService.delete(item);
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalled();
+	});
+
+	test("Rename application successfully", async () => {
+		vscode.window.showInputBox = jest.fn().mockResolvedValue("New Application Name");
+		await applicationService.rename(item);
+		const treeItem = await getTopLevelTreeItem(mockAppObjectId);
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerCompleteSpy).toHaveBeenCalled();
+		expect(treeItem?.label).toEqual("New Application Name");
+	});
+
+	test("Rename application with update error", async () => {
+		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("Test Error") }));
+		vscode.window.showInputBox = jest.fn().mockResolvedValue("New Application Name");
+		await applicationService.rename(item);
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalled();
+	});
+
+	test("Rename application with sign in error", async () => {
+		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test Error") }));
+		await applicationService.rename(item);
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalled();
+	});
+
+	test("Add application successfully", async () => {
+		vscode.window.showQuickPick = jest.fn().mockResolvedValue({ value: "AzureADMyOrg" });
+		vscode.window.showInputBox = jest.fn().mockResolvedValue("Add Application Name");
+		await applicationService.add();
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerCompleteSpy).toHaveBeenCalled();
+	});
+
+	test("Add application with creation error", async () => {
+		jest.spyOn(graphApiRepository, "createApplication").mockImplementation(async () => ({ success: false, error: new Error("Test Error") }));
+		vscode.window.showQuickPick = jest.fn().mockResolvedValue({ value: "AzureADMyOrg" });
+		vscode.window.showInputBox = jest.fn().mockResolvedValue("Add Application Name");
+		await applicationService.add();
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalled();
+	});
+
 	// Get a specific top level tree item
-	const getTopLevelTreeItem = async (objectId: string, contextValue: string): Promise<AppRegItem | undefined> => {
+	const getTopLevelTreeItem = async (objectId: string, contextValue?: string): Promise<AppRegItem | undefined> => {
 		const tree = await treeDataProvider.getChildren();
 		const app = tree!.find((x) => x.objectId === objectId);
-		return app?.children?.find((x) => x.contextValue === contextValue);
+		return contextValue === undefined ? app : app?.children?.find((x) => x.contextValue === contextValue);
 	};
 });
