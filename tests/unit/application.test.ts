@@ -13,7 +13,7 @@ jest.mock("vscode");
 jest.mock("../../src/repositories/graph-api-repository");
 jest.mock("../../src/utils/exec-shell-cmd");
 
-// Create the test suite for sign in audience service
+// Create the test suite for application service
 describe("Application Service Tests", () => {
 	// Create instances of objects used in the tests
 	const graphApiRepository = new GraphApiRepository();

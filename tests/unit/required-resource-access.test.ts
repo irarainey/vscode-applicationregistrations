@@ -9,7 +9,7 @@ import { mockAppObjectId, seedMockData } from "../../src/repositories/__mocks__/
 jest.mock("vscode");
 jest.mock("../../src/repositories/graph-api-repository");
 
-// Create the test suite for sign in audience service
+// Create the test suite for required resource access service
 describe("Required Resource Access Service Tests", () => {
 	// Create instances of objects used in the tests
 	const graphApiRepository = new GraphApiRepository();
@@ -26,27 +26,34 @@ describe("Required Resource Access Service Tests", () => {
 	let item: AppRegItem;
 
 	beforeAll(async () => {
+		// Suppress console output
 		console.error = jest.fn();
 	});
 
 	beforeEach(() => {
+		// Reset mock data
 		seedMockData();
+
+		//Restore the default mock implementations
 		jest.restoreAllMocks();
+
+		// Define spies on the functions to be tested
 		statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
 		iconSpy = jest.spyOn(vscode, "ThemeIcon");
 		triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(requiredResourceAccessService), "triggerRefresh");
 		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(requiredResourceAccessService), "handleError");
-		item = { objectId: mockAppObjectId, contextValue: "AUDIENCE" };
+
+		// The item to be tested
+		item = { objectId: mockAppObjectId, contextValue: "API-PERMISSIONS" };
+	});
+
+	afterAll(() => {
+		// Dispose of the application service
+		requiredResourceAccessService.dispose();
 	});
 
 	test("Create class instance", () => {
+		// Assert class has been instantiated
 		expect(requiredResourceAccessService).toBeDefined();
 	});
-
-	// Get a specific top level tree item
-	const getTopLevelTreeItem = async (objectId: string, contextValue: string): Promise<AppRegItem | undefined> => {
-		const tree = await treeDataProvider.getChildren();
-		const app = tree!.find((x) => x.objectId === objectId);
-		return app?.children?.find((x) => x.contextValue === contextValue);
-	};
 });

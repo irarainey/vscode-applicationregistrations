@@ -9,7 +9,7 @@ import { mockAppObjectId, seedMockData } from "../../src/repositories/__mocks__/
 jest.mock("vscode");
 jest.mock("../../src/repositories/graph-api-repository");
 
-// Create the test suite for sign in audience service
+// Create the test suite for oauth2 permission scope service
 describe("OAuth2 Permission Scope Service Tests", () => {
 	// Create instances of objects used in the tests
 	const graphApiRepository = new GraphApiRepository();
@@ -26,28 +26,34 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 	let item: AppRegItem;
 
 	beforeAll(async () => {
+		// Suppress console output
 		console.error = jest.fn();
 	});
 
 	beforeEach(() => {
+		// Reset mock data
 		seedMockData();
+
+		//Restore the default mock implementations
 		jest.restoreAllMocks();
+
+		// Define spies on the functions to be tested
 		statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
 		iconSpy = jest.spyOn(vscode, "ThemeIcon");
 		triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(oauth2PermissionScopeService), "triggerRefresh");
 		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(oauth2PermissionScopeService), "handleError");
-		item = { objectId: mockAppObjectId, contextValue: "AUDIENCE" };
+
+		// The item to be tested
+		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
 	});
 
-	// Test to see if class can be created
+	afterAll(() => {
+		// Dispose of the application service
+		oauth2PermissionScopeService.dispose();
+	});
+
 	test("Create class instance", () => {
+		// Assert class has been instantiated
 		expect(oauth2PermissionScopeService).toBeDefined();
 	});
-
-	// Get a specific top level tree item
-	const getTopLevelTreeItem = async (objectId: string, contextValue: string): Promise<AppRegItem | undefined> => {
-		const tree = await treeDataProvider.getChildren();
-		const app = tree!.find((x) => x.objectId === objectId);
-		return app?.children?.find((x) => x.contextValue === contextValue);
-	};
 });
