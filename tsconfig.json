@@ -19,8 +19,6 @@
     "node_modules", 
     "out",
     "packages",
-    "src/repositories/__mocks__",
-    "src/tests",
     "babel.config.js",
     "jest.config.js"
   ]

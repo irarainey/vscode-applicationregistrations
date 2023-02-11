@@ -4,7 +4,7 @@ import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { OwnerService } from "../services/owner";
 import { mockAppId, mockAppObjectId, mockSecondAppObjectId, mockSecondUserId, mockUserId, seedMockData } from "./test-data";
-import { getTopLevelTreeItem } from "./utils";
+import { getTopLevelTreeItem } from "./test-utils";
 
 // Create Jest mocks
 jest.mock("vscode");

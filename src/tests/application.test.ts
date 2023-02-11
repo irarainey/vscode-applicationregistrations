@@ -6,7 +6,7 @@ import { AppRegItem } from "../models/app-reg-item";
 import { ApplicationService } from "../services/application";
 import { Application } from "@microsoft/microsoft-graph-types";
 import { mockAppId, mockAppObjectId, mockTenantId, seedMockData } from "./test-data";
-import { getTopLevelTreeItem } from "./utils";
+import { getTopLevelTreeItem } from "./test-utils";
 
 // Create Jest mocks
 jest.mock("vscode");
