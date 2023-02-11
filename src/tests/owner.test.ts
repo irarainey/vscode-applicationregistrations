@@ -3,7 +3,7 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { OwnerService } from "../services/owner";
-import { mockAppId, mockAppObjectId, mockSecondAppObjectId, mockSecondUserId, mockUserId, seedMockData } from "../repositories/__mocks__/test-data";
+import { mockAppId, mockAppObjectId, mockSecondAppObjectId, mockSecondUserId, mockUserId, seedMockData } from "./test-data";
 import { getTopLevelTreeItem } from "./utils";
 
 // Create Jest mocks

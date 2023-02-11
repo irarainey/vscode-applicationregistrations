@@ -5,7 +5,7 @@ import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ApplicationService } from "../services/application";
 import { Application } from "@microsoft/microsoft-graph-types";
-import { mockAppId, mockAppObjectId, mockTenantId, seedMockData } from "../repositories/__mocks__/test-data";
+import { mockAppId, mockAppObjectId, mockTenantId, seedMockData } from "./test-data";
 import { getTopLevelTreeItem } from "./utils";
 
 // Create Jest mocks
