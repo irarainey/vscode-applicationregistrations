@@ -8,19 +8,19 @@
       "DOM"
     ],
     "allowJs": true,
-    "sourceMap": true,
-    "rootDir": "src",
+    "sourceMap": false,
+    "rootDir": ".",
     "strict": true
   },
   "exclude": [
-    "node_modules", 
+    "__mocks__",
+    "coverage",
     "dist", 
+    "node_modules", 
     "out",
     "packages",
-    "coverage",
-    "tests",
     "resources",
-    "__mocks__",
+    "tests",
     "babel.config.js",
     "jest.config.js"
   ]

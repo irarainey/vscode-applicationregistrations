@@ -6,8 +6,8 @@ module.exports = {
   extensionsToTreatAsEsm: [".ts"],
   moduleFileExtensions: [ "ts", "js"],
   modulePathIgnorePatterns: [
-    "<rootDir>/out/",
     "<rootDir>/dist/",
+    "<rootDir>/out/",
     "<rootDir>/packages/"
   ],
   transform: {
@@ -23,13 +23,13 @@ module.exports = {
   collectCoverage: true,
   collectCoverageFrom: [
     "<rootDir>/src/services/*.ts",
+    "<rootDir>/src/data/*.ts",
+    "<rootDir>/src/models/*.ts",
     "<rootDir>/src/utils/validation.ts",
     "<rootDir>/src/utils/status-bar.ts",
     "<rootDir>/src/utils/copy-value.ts",
     "<rootDir>/src/utils/escape-string.ts",
     "<rootDir>/src/utils/cli-authentication.ts",
-    "<rootDir>/src/data/*.ts",
-    "<rootDir>/src/models/*.ts",
     "<rootDir>/src/error-handler.ts",
     "<rootDir>/src/constants.ts"
   ]
