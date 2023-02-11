@@ -17,12 +17,7 @@ export class PasswordCredentialService extends ServiceBase {
 	// Adds a new password credential.
 	async add(item: AppRegItem): Promise<void> {
 		// Prompt the user for the description.
-		const description = await window.showInputBox({
-			placeHolder: "Password description",
-			prompt: "Set new password credential description",
-			title: "Add Password Credential (1/2)",
-			ignoreFocusOut: true
-		});
+		const description = await this.inputDescription();
 
 		// If the description is not undefined then add.
 		if (description !== undefined) {
@@ -30,14 +25,7 @@ export class PasswordCredentialService extends ServiceBase {
 			expiryDate.setDate(expiryDate.getDate() + 90);
 
 			// Prompt the user for the description.
-			const expiry = await window.showInputBox({
-				placeHolder: "Password expiry",
-				prompt: "Set password expiry date",
-				value: format(new Date(expiryDate), "yyyy-MM-dd"),
-				title: "Add Password Credential (2/2)",
-				ignoreFocusOut: true,
-				validateInput: (value) => validatePasswordCredentialExpiryDate(value)
-			});
+			const expiry = await this.inputExpiryDate(expiryDate);
 
 			if (expiry !== undefined) {
 				// Set the added trigger to the status bar message.
@@ -66,5 +54,27 @@ export class PasswordCredentialService extends ServiceBase {
 			const update: GraphResult<void> = await this.graphRepository.deletePasswordCredential(item.objectId!, item.value!);
 			update.success === true ? await this.triggerRefresh(status) : await this.handleError(update.error);
 		}
+	}
+
+	// Prompts the user for a password credential description.
+	async inputDescription() {
+		return await window.showInputBox({
+			placeHolder: "Password description",
+			prompt: "Set new password credential description",
+			title: "Add Password Credential (1/2)",
+			ignoreFocusOut: true
+		});
+	}
+
+	// Prompts the user for a password credential expiry date.
+	async inputExpiryDate(expiryDate: Date) {
+		return await window.showInputBox({
+			placeHolder: "Password expiry",
+			prompt: "Set password expiry date",
+			value: format(new Date(expiryDate), "yyyy-MM-dd"),
+			title: "Add Password Credential (2/2)",
+			ignoreFocusOut: true,
+			validateInput: (value) => validatePasswordCredentialExpiryDate(value)
+		});
 	}
 }

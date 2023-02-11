@@ -3,7 +3,9 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { PasswordCredentialService } from "../services/password-credential";
-import { mockAppObjectId, seedMockData } from "./test-data";
+import { mockAppObjectId, mockNewPasswordKeyId, seedMockData } from "./test-data";
+import { getTopLevelTreeItem } from "./test-utils";
+import { format } from "date-fns";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -37,6 +39,10 @@ describe("Password Credential Service Tests", () => {
 		//Restore the default mock implementations
 		jest.restoreAllMocks();
 
+		// Define a standard mock implementation for the dialog functions
+		vscode.window.showWarningMessage = jest.fn().mockResolvedValue("Yes");
+		vscode.window.showInputBox = jest.fn().mockResolvedValue("Test Input");
+
 		// Define spies on the functions to be tested
 		statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
 		iconSpy = jest.spyOn(vscode, "ThemeIcon");
@@ -57,15 +63,59 @@ describe("Password Credential Service Tests", () => {
 		expect(passwordCredentialService).toBeDefined();
 	});
 
-	// test("Delete password credential successfully", async () => {
-	// 	// Act
-	// 	await passwordCredentialService.delete(item);
+	test("Delete password credential successfully", async () => {
+		// Act
+		await passwordCredentialService.delete(item);
 
-	// 	// Assert
-	// 	const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider);
-	// 	expect(statusBarSpy).toHaveBeenCalled();
-	// 	expect(triggerCompleteSpy).toHaveBeenCalled();
-	// 	expect(treeItem).toBeUndefined();
-	// });
+		// Assert
+		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "PASSWORD-CREDENTIALS");
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(iconSpy).toHaveBeenCalled();
+		expect(triggerCompleteSpy).toHaveBeenCalled();
+		expect(treeItem?.children?.length).toEqual(0);
+	});
 
+	test("Delete password credential with error", async () => {
+		// Arrange
+		jest.spyOn(graphApiRepository, "deletePasswordCredential").mockImplementation(async () => ({ success: false, error: new Error("Test Error") }));
+
+		// Act
+		await passwordCredentialService.delete(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalled();
+	});
+
+	test("Add password credential successfully", async () => {
+		// Arrange
+		jest.spyOn(passwordCredentialService, "inputDescription").mockImplementation(async () => ("Test Description"));
+		jest.spyOn(passwordCredentialService, "inputExpiryDate").mockImplementation(async (expiryDate: Date) => (format(new Date(expiryDate), "yyyy-MM-dd")));
+
+		// Act
+		await passwordCredentialService.add(item);
+
+		// Assert
+		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "PASSWORD-CREDENTIALS");
+		const passwordItem = treeItem?.children?.find((item) => item.value === mockNewPasswordKeyId);
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(iconSpy).toHaveBeenCalled();
+		expect(triggerCompleteSpy).toHaveBeenCalled();
+		expect(vscode.env.clipboard.readText()).toEqual("NEWPASSWORD");
+		expect(passwordItem).toBeDefined();
+		expect(passwordItem?.children?.length).toEqual(3);
+		expect(treeItem?.children?.length).toEqual(2);
+	});
+
+	test("Add password credential with error", async () => {
+		// Arrange
+		jest.spyOn(graphApiRepository, "addPasswordCredential").mockImplementation(async () => ({ success: false, error: new Error("Test Error") }));
+
+		// Act
+		await passwordCredentialService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalled();
+	});
 });

@@ -1,6 +1,6 @@
-import { Application, Organization, User, RoleAssignment } from "@microsoft/microsoft-graph-types";
+import { Application, Organization, User, RoleAssignment, PasswordCredential } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../../types/graph-result";
-import { mockApplications, mockOrganizations, mockUser, mockRoleAssignments, mockUsers } from "../../tests/test-data";
+import { mockApplications, mockOrganizations, mockUser, mockRoleAssignments, mockUsers, mockNewPasswordKeyId } from "../../tests/test-data";
 
 export class GraphApiRepository {
 	async getApplicationCountOwned(): Promise<GraphResult<number>> {
@@ -82,5 +82,26 @@ export class GraphApiRepository {
 
 	async getSignInAudience(id: string): Promise<GraphResult<string>> {
 		return { success: true, value: mockApplications.filter((a) => a.id === id)[0].signInAudience };
+	}
+
+	async addPasswordCredential(id: string, description: string, expiry: string): Promise<GraphResult<PasswordCredential>> {
+		const passwordCredential: PasswordCredential = {
+			keyId: mockNewPasswordKeyId,
+			displayName: description,
+			customKeyIdentifier: null,
+			endDateTime: expiry,
+			hint: "newPassword",
+			secretText: "NEWPASSWORD",
+			startDateTime: "2023-01-01T00:00:00"
+		};
+		const app: Application = mockApplications.filter((a) => a.id === id)[0];
+		app.passwordCredentials!.push(passwordCredential);
+		return { success: true, value: passwordCredential };
+	}
+
+	async deletePasswordCredential(id: string, passwordId: string): Promise<GraphResult<void>> {
+		const app: Application = mockApplications.filter((a) => a.id === id)[0];
+		app.passwordCredentials!.splice(app.passwordCredentials!.findIndex((o) => o.keyId === passwordId), 1);
+		return { success: true };
 	}
 }

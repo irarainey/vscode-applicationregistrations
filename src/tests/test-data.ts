@@ -188,6 +188,7 @@ const seedRoleAssignments: any[] = [
 ];
 
 export const mockTenantId = "c7b3da28-01b8-46d3-9523-d1b24cbbde76";
+export const mockNewPasswordKeyId = "a7da2abf-da93-4bad-bf0b-6d9ee0d3e8ec";
 export const mockAppObjectId = seedApplications[0].id;
 export const mockSecondAppObjectId = seedApplications[1].id;
 export const mockAppId = seedApplications[0].appId;

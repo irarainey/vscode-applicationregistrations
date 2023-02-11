@@ -20,6 +20,7 @@ describe("Organization Service Tests", () => {
 	// Create spies
 	let triggerErrorSpy: jest.SpyInstance<any, unknown[], any>;
 	let statusBarSpy: jest.SpyInstance<any, [text: string], any>;
+	let openTextDocumentSpy: jest.SpyInstance<any, any, any>;
 
 	beforeAll(() => {
 		// Suppress console output
@@ -39,6 +40,7 @@ describe("Organization Service Tests", () => {
 		// Define spies on the functions to be tested
 		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(organizationService), "handleError");
 		statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
+		openTextDocumentSpy = jest.spyOn(vscode.workspace, "openTextDocument");
 	});
 
 	afterAll(() => {
@@ -51,12 +53,13 @@ describe("Organization Service Tests", () => {
 		expect(organizationService).toBeDefined();
 	});
 
-	test("Check status bar message updated on request", async () => {
+	test("Check status bar message updated on request and open text document is called", async () => {
 		// Act
 		await organizationService.showTenantInformation();
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
+		expect(openTextDocumentSpy).toHaveBeenCalled();
 	});
 
 	test("CLI returns error", async () => {

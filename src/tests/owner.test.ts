@@ -75,6 +75,7 @@ describe("Owner Service Tests", () => {
 		// Assert
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "OWNERS");
 		expect(statusBarSpy).toHaveBeenCalled();
+		expect(iconSpy).toHaveBeenCalled();
 		expect(triggerCompleteSpy).toHaveBeenCalled();
 		expect(treeItem!.children!.length).toEqual(1);
 	});
@@ -103,6 +104,7 @@ describe("Owner Service Tests", () => {
 		// Assert
 		const treeItem = await getTopLevelTreeItem(mockSecondAppObjectId, treeDataProvider, "OWNERS");
 		expect(statusBarSpy).toHaveBeenCalled();
+		expect(iconSpy).toHaveBeenCalled();
 		expect(triggerCompleteSpy).toHaveBeenCalled();
 		expect(treeItem!.children!.length).toEqual(2);
 		expect(treeItem!.children![1].userId).toEqual(mockSecondUserId);

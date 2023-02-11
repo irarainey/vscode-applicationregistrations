@@ -66,24 +66,19 @@ describe("Sign In Audience Service Tests", () => {
 		expect(signInAudienceService).toBeDefined();
 	});
 
-	test("Check status bar message and icon updated on edit", async () => {
+	test("Successful edit of sign in audience", async () => {
 		// Act
 		await signInAudienceService.edit(item);
 
 		// Assert
+		const treeItem = await getTopLevelTreeItem(item.objectId!, treeDataProvider, "AUDIENCE-PARENT");
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
-	});
-
-	test("Trigger complete on successful item edit", async () => {
-		// Act
-		await signInAudienceService.edit(item);
-
-		// Assert
 		expect(triggerCompleteSpy).toHaveBeenCalled();
+		expect(treeItem!.children![0].label).toEqual("Single Tenant");
 	});
 
-	test("Trigger complete on successful parent item edit", async () => {
+	test("Successful parent item edit of sign in audience", async () => {
 		// Arrange
 		item = { ...item, contextValue: "AUDIENCE-PARENT", children: [{ objectId: mockAppObjectId, contextValue: "AUDIENCE" }] };
 
@@ -91,15 +86,9 @@ describe("Sign In Audience Service Tests", () => {
 		await signInAudienceService.edit(item);
 
 		// Assert
-		expect(triggerCompleteSpy).toHaveBeenCalled();
-	});
-
-	test("Update Sign In Audience", async () => {
-		// Act
-		await signInAudienceService.edit(item);
-
-		// Assert
 		const treeItem = await getTopLevelTreeItem(item.objectId!, treeDataProvider, "AUDIENCE-PARENT");
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(iconSpy).toHaveBeenCalled();
 		expect(triggerCompleteSpy).toHaveBeenCalled();
 		expect(treeItem!.children![0].label).toEqual("Single Tenant");
 	});

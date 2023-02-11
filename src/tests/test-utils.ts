@@ -13,6 +13,9 @@ export const getTopLevelTreeItem = async (objectId: string, treeDataProvider: Ap
 		case "OWNERS":
 			element = { objectId, contextValue: "OWNERS" };
 			break;
+		case "PASSWORD-CREDENTIALS":
+			element = { objectId, contextValue: "PASSWORD-CREDENTIALS" };
+			break;
 		default:
 			element = undefined;
 			break;
