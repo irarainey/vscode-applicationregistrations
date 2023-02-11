@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { PORTAL_APP_URI, SIGNIN_AUDIENCE_OPTIONS, BASE_ENDPOINT, CLI_TENANT_CMD } from "../constants";
 import { window, env, Uri, TextDocumentContentProvider, EventEmitter, workspace } from "vscode";
-import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
+import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
 import { GraphApiRepository } from "../repositories/graph-api-repository";

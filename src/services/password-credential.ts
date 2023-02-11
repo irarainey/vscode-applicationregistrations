@@ -1,5 +1,5 @@
 import { env, window } from "vscode";
-import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
+import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
 import { GraphApiRepository } from "../repositories/graph-api-repository";

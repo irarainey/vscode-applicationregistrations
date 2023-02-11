@@ -1,20 +1,20 @@
 import * as vscode from "vscode";
-import { GraphApiRepository } from "../../src/repositories/graph-api-repository";
-import { AppRegTreeDataProvider } from "../../src/data/app-reg-tree-data-provider";
-import { AppRegItem } from "../../src/models/app-reg-item";
-import { RedirectUriService } from "../../src/services/redirect-uri";
-import { mockAppObjectId, seedMockData } from "../../src/repositories/__mocks__/mock-graph-data";
+import { GraphApiRepository } from "../src/repositories/graph-api-repository";
+import { AppRegTreeDataProvider } from "../src/data/tree-data-provider";
+import { AppRegItem } from "../src/models/app-reg-item";
+import { OAuth2PermissionScopeService } from "../src/services/oauth2-permission-scope";
+import { mockAppObjectId, seedMockData } from "../src/repositories/__mocks__/test-data";
 
 // Create Jest mocks
 jest.mock("vscode");
-jest.mock("../../src/repositories/graph-api-repository");
+jest.mock("../src/repositories/graph-api-repository");
 
-// Create the test suite for redirect uri service
-describe("Redirect URI Service Tests", () => {
+// Create the test suite for oauth2 permission scope service
+describe("OAuth2 Permission Scope Service Tests", () => {
 	// Create instances of objects used in the tests
 	const graphApiRepository = new GraphApiRepository();
 	const treeDataProvider = new AppRegTreeDataProvider(graphApiRepository);
-	const redirectUriService = new RedirectUriService(graphApiRepository, treeDataProvider);
+	const oauth2PermissionScopeService = new OAuth2PermissionScopeService(graphApiRepository, treeDataProvider);
 
 	// Create spy variables
 	let triggerCompleteSpy: jest.SpyInstance<any, unknown[], any>;
@@ -40,20 +40,20 @@ describe("Redirect URI Service Tests", () => {
 		// Define spies on the functions to be tested
 		statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
 		iconSpy = jest.spyOn(vscode, "ThemeIcon");
-		triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(redirectUriService), "triggerRefresh");
-		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(redirectUriService), "handleError");
+		triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(oauth2PermissionScopeService), "triggerRefresh");
+		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(oauth2PermissionScopeService), "handleError");
 
 		// The item to be tested
-		item = { objectId: mockAppObjectId, contextValue: "WEB-REDIRECT" };
+		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
 	});
 
 	afterAll(() => {
 		// Dispose of the application service
-		redirectUriService.dispose();
+		oauth2PermissionScopeService.dispose();
 	});
 
 	test("Create class instance", () => {
 		// Assert class has been instantiated
-		expect(redirectUriService).toBeDefined();
+		expect(oauth2PermissionScopeService).toBeDefined();
 	});
 });

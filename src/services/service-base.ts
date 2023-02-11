@@ -1,6 +1,6 @@
 import { Disposable, ThemeIcon } from "vscode";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
-import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
+import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { setStatusBarMessage, clearAllStatusBarMessages } from "../utils/status-bar";
 import { errorHandler } from "../error-handler";

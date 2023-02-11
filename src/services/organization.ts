@@ -1,7 +1,7 @@
 import { window, Uri, TextDocumentContentProvider, EventEmitter, workspace } from "vscode";
 import { CLI_TENANT_CMD } from "../constants";
 import { ServiceBase } from "./service-base";
-import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
+import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { execShellCmd } from "../utils/exec-shell-cmd";
 import { GraphResult } from "../types/graph-result";

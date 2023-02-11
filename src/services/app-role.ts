@@ -1,5 +1,5 @@
 import { window } from "vscode";
-import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
+import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { AppRole, Application } from "@microsoft/microsoft-graph-types";
 import { v4 as uuidv4 } from "uuid";

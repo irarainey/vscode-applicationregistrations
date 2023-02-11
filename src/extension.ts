@@ -1,7 +1,7 @@
 import { commands, window, workspace, ExtensionContext } from "vscode";
 import { VIEW_NAME } from "./constants";
 import { GraphApiRepository } from "./repositories/graph-api-repository";
-import { AppRegTreeDataProvider } from "./data/app-reg-tree-data-provider";
+import { AppRegTreeDataProvider } from "./data/tree-data-provider";
 import { ApplicationService } from "./services/application";
 import { AppRoleService } from "./services/app-role";
 import { KeyCredentialService } from "./services/key-credential";

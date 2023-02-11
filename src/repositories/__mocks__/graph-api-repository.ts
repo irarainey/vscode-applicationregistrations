@@ -1,6 +1,6 @@
 import { Application, Organization, User, RoleAssignment } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../../types/graph-result";
-import { mockApplications, mockOrganizations, mockUser, mockRoleAssignments, mockUsers } from "./mock-graph-data";
+import { mockApplications, mockOrganizations, mockUser, mockRoleAssignments, mockUsers } from "./test-data";
 
 export class GraphApiRepository {
 	async getApplicationCountOwned(): Promise<GraphResult<number>> {
