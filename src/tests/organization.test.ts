@@ -1,14 +1,14 @@
 import * as vscode from "vscode";
-import * as execShellCmdModule from "../src/utils/exec-shell-cmd";
-import { GraphApiRepository } from "../src/repositories/graph-api-repository";
-import { AppRegTreeDataProvider } from "../src/data/tree-data-provider";
-import { OrganizationService } from "../src/services/organization";
-import { mockTenantId, seedMockData } from "../src/repositories/__mocks__/test-data";
+import * as execShellCmdModule from "../utils/exec-shell-cmd";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
+import { AppRegTreeDataProvider } from "../data/tree-data-provider";
+import { OrganizationService } from "../services/organization";
+import { mockTenantId, seedMockData } from "../repositories/__mocks__/test-data";
 
 // Create Jest mocks
 jest.mock("vscode");
-jest.mock("../src/repositories/graph-api-repository");
-jest.mock("../src/utils/exec-shell-cmd");
+jest.mock("../repositories/graph-api-repository");
+jest.mock("../utils/exec-shell-cmd");
 
 // Create the test suite for sign in audience service
 describe("Organization Service Tests", () => {

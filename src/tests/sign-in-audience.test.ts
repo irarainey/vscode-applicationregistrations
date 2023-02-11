@@ -1,15 +1,15 @@
 import * as vscode from "vscode";
-import { GraphApiRepository } from "../src/repositories/graph-api-repository";
-import { AppRegTreeDataProvider } from "../src/data/tree-data-provider";
-import { AppRegItem } from "../src/models/app-reg-item";
-import { SignInAudienceService } from "../src/services/sign-in-audience";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
+import { AppRegTreeDataProvider } from "../data/tree-data-provider";
+import { AppRegItem } from "../models/app-reg-item";
+import { SignInAudienceService } from "../services/sign-in-audience";
 import { Application } from "@microsoft/microsoft-graph-types";
-import { mockAppObjectId, seedMockData } from "../src/repositories/__mocks__/test-data";
+import { mockAppObjectId, seedMockData } from "../repositories/__mocks__/test-data";
 import { getTopLevelTreeItem } from "./utils";
 
 // Create Jest mocks
 jest.mock("vscode");
-jest.mock("../src/repositories/graph-api-repository");
+jest.mock("../repositories/graph-api-repository");
 
 // Create the test suite for sign in audience service
 describe("Sign In Audience Service Tests", () => {

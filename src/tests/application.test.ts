@@ -1,17 +1,17 @@
 import * as vscode from "vscode";
-import * as execShellCmdUtil from "../src/utils/exec-shell-cmd";
-import { GraphApiRepository } from "../src/repositories/graph-api-repository";
-import { AppRegTreeDataProvider } from "../src/data/tree-data-provider";
-import { AppRegItem } from "../src/models/app-reg-item";
-import { ApplicationService } from "../src/services/application";
+import * as execShellCmdUtil from "../utils/exec-shell-cmd";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
+import { AppRegTreeDataProvider } from "../data/tree-data-provider";
+import { AppRegItem } from "../models/app-reg-item";
+import { ApplicationService } from "../services/application";
 import { Application } from "@microsoft/microsoft-graph-types";
-import { mockAppId, mockAppObjectId, mockTenantId, seedMockData } from "../src/repositories/__mocks__/test-data";
+import { mockAppId, mockAppObjectId, mockTenantId, seedMockData } from "../repositories/__mocks__/test-data";
 import { getTopLevelTreeItem } from "./utils";
 
 // Create Jest mocks
 jest.mock("vscode");
-jest.mock("../src/repositories/graph-api-repository");
-jest.mock("../src/utils/exec-shell-cmd");
+jest.mock("../repositories/graph-api-repository");
+jest.mock("../utils/exec-shell-cmd");
 
 // Create the test suite for application service
 describe("Application Service Tests", () => {

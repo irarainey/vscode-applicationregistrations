@@ -1,20 +1,20 @@
 import * as vscode from "vscode";
-import { GraphApiRepository } from "../src/repositories/graph-api-repository";
-import { AppRegTreeDataProvider } from "../src/data/tree-data-provider";
-import { AppRegItem } from "../src/models/app-reg-item";
-import { AppRoleService } from "../src/services/app-role";
-import { mockAppObjectId, seedMockData } from "../src/repositories/__mocks__/test-data";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
+import { AppRegTreeDataProvider } from "../data/tree-data-provider";
+import { AppRegItem } from "../models/app-reg-item";
+import { OAuth2PermissionScopeService } from "../services/oauth2-permission-scope";
+import { mockAppObjectId, seedMockData } from "../repositories/__mocks__/test-data";
 
 // Create Jest mocks
 jest.mock("vscode");
-jest.mock("../src/repositories/graph-api-repository");
+jest.mock("../repositories/graph-api-repository");
 
-// Create the test suite for app role service
-describe("App Role Service Tests", () => {
+// Create the test suite for oauth2 permission scope service
+describe("OAuth2 Permission Scope Service Tests", () => {
 	// Create instances of objects used in the tests
 	const graphApiRepository = new GraphApiRepository();
 	const treeDataProvider = new AppRegTreeDataProvider(graphApiRepository);
-	const appRoleService = new AppRoleService(graphApiRepository, treeDataProvider);
+	const oauth2PermissionScopeService = new OAuth2PermissionScopeService(graphApiRepository, treeDataProvider);
 
 	// Create spy variables
 	let triggerCompleteSpy: jest.SpyInstance<any, unknown[], any>;
@@ -40,20 +40,20 @@ describe("App Role Service Tests", () => {
 		// Define spies on the functions to be tested
 		statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
 		iconSpy = jest.spyOn(vscode, "ThemeIcon");
-		triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(appRoleService), "triggerRefresh");
-		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(appRoleService), "handleError");
+		triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(oauth2PermissionScopeService), "triggerRefresh");
+		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(oauth2PermissionScopeService), "handleError");
 
-		// Define the base item to be used in the tests
-		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES" };
+		// The item to be tested
+		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
 	});
 
 	afterAll(() => {
 		// Dispose of the application service
-		appRoleService.dispose();
+		oauth2PermissionScopeService.dispose();
 	});
 
 	test("Create class instance", () => {
 		// Assert class has been instantiated
-		expect(appRoleService).toBeDefined();
+		expect(oauth2PermissionScopeService).toBeDefined();
 	});
 });

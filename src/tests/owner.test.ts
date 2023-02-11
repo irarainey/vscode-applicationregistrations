@@ -1,14 +1,14 @@
 import * as vscode from "vscode";
-import { GraphApiRepository } from "../src/repositories/graph-api-repository";
-import { AppRegTreeDataProvider } from "../src/data/tree-data-provider";
-import { AppRegItem } from "../src/models/app-reg-item";
-import { OwnerService } from "../src/services/owner";
-import { mockAppId, mockAppObjectId, mockSecondAppObjectId, mockSecondUserId, mockUserId, seedMockData } from "../src/repositories/__mocks__/test-data";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
+import { AppRegTreeDataProvider } from "../data/tree-data-provider";
+import { AppRegItem } from "../models/app-reg-item";
+import { OwnerService } from "../services/owner";
+import { mockAppId, mockAppObjectId, mockSecondAppObjectId, mockSecondUserId, mockUserId, seedMockData } from "../repositories/__mocks__/test-data";
 import { getTopLevelTreeItem } from "./utils";
 
 // Create Jest mocks
 jest.mock("vscode");
-jest.mock("../src/repositories/graph-api-repository");
+jest.mock("../repositories/graph-api-repository");
 
 // Create the test suite for sign in audience service
 describe("Owner Service Tests", () => {

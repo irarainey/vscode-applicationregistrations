@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
-import { GraphApiRepository } from "../src/repositories/graph-api-repository";
-import { AppRegTreeDataProvider } from "../src/data/tree-data-provider";
-import { AppRegItem } from "../src/models/app-reg-item";
-import { KeyCredentialService } from "../src/services/key-credential";
-import { mockAppObjectId, seedMockData } from "../src/repositories/__mocks__/test-data";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
+import { AppRegTreeDataProvider } from "../data/tree-data-provider";
+import { AppRegItem } from "../models/app-reg-item";
+import { KeyCredentialService } from "../services/key-credential";
+import { mockAppObjectId, seedMockData } from "../repositories/__mocks__/test-data";
 
 // Create Jest mocks
 jest.mock("vscode");
-jest.mock("../src/repositories/graph-api-repository");
+jest.mock("../repositories/graph-api-repository");
 
 // Create the test suite for key credential service
 describe("Key Credential Service Tests", () => {

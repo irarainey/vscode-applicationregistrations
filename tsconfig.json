@@ -9,7 +9,7 @@
     ],
     "allowJs": true,
     "sourceMap": false,
-    "rootDir": ".",
+    "rootDir": "src",
     "strict": true
   },
   "exclude": [

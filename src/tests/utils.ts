@@ -1,5 +1,5 @@
-import { AppRegTreeDataProvider } from "../src/data/tree-data-provider";
-import { AppRegItem } from "../src/models/app-reg-item";
+import { AppRegTreeDataProvider } from "../data/tree-data-provider";
+import { AppRegItem } from "../models/app-reg-item";
 
 export const getTopLevelTreeItem = async (objectId: string, treeDataProvider: AppRegTreeDataProvider, contextValue?: string): Promise<AppRegItem | undefined> => {
 	let element: AppRegItem | undefined;

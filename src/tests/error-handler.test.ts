@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
-import { GraphApiRepository } from "../src/repositories/graph-api-repository";
-import { AppRegTreeDataProvider } from "../src/data/tree-data-provider";
-import * as errorHandlerModule from "../src/error-handler";
-import { AppRegItem } from "../src/models/app-reg-item";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
+import { AppRegTreeDataProvider } from "../data/tree-data-provider";
+import * as errorHandlerModule from "../error-handler";
+import { AppRegItem } from "../models/app-reg-item";
 
 // Create Jest mocks
 jest.mock("vscode");

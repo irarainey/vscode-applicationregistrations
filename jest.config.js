@@ -18,7 +18,7 @@ module.exports = {
       }
     ]
   },
-  testMatch: ["<rootDir>/tests/*.test.ts"],
+  testMatch: ["<rootDir>/src/tests/*.test.ts"],
   coverageProvider: "v8",
   collectCoverage: true,
   collectCoverageFrom: [

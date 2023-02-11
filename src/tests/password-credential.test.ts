@@ -1,14 +1,13 @@
 import * as vscode from "vscode";
-import { GraphApiRepository } from "../src/repositories/graph-api-repository";
-import { AppRegTreeDataProvider } from "../src/data/tree-data-provider";
-import { AppRegItem } from "../src/models/app-reg-item";
-import { PasswordCredentialService } from "../src/services/password-credential";
-import { mockAppObjectId, seedMockData } from "../src/repositories/__mocks__/test-data";
-import { getTopLevelTreeItem } from "./utils";
+import { GraphApiRepository } from "../repositories/graph-api-repository";
+import { AppRegTreeDataProvider } from "../data/tree-data-provider";
+import { AppRegItem } from "../models/app-reg-item";
+import { PasswordCredentialService } from "../services/password-credential";
+import { mockAppObjectId, seedMockData } from "../repositories/__mocks__/test-data";
 
 // Create Jest mocks
 jest.mock("vscode");
-jest.mock("../src/repositories/graph-api-repository");
+jest.mock("../repositories/graph-api-repository");
 
 // Create the test suite for password credential service
 describe("Password Credential Service Tests", () => {
