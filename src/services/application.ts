@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { PORTAL_APP_URI, SIGNIN_AUDIENCE_OPTIONS, BASE_ENDPOINT, CLI_TENANT_CMD } from "../constants";
+import { AZURE_PORTAL_APP_ROOT, AZURE_PORTAL_APP_PATH, SIGNIN_AUDIENCE_OPTIONS, BASE_ENDPOINT } from "../constants";
 import { window, env, Uri, TextDocumentContentProvider, EventEmitter, workspace } from "vscode";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
@@ -8,14 +8,17 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { Application } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../types/graph-result";
 import { clearStatusBarMessage } from "../utils/status-bar";
-import { execShellCmd } from "../utils/exec-shell-cmd";
 import { v4 as uuidv4 } from "uuid";
+import { AccountProvider } from "../data/account-provider";
 
 export class ApplicationService extends ServiceBase {
 
+    private accountProvider: AccountProvider;
+
     // The constructor for the ApplicationService class.
-    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider, accountProvider: AccountProvider) {
         super(graphRepository, treeDataProvider);
+        this.accountProvider = accountProvider;
     }
 
     // Creates a new application registration.
@@ -172,9 +175,9 @@ export class ApplicationService extends ServiceBase {
             // Create the endpoints.
             switch (result.value) {
                 case "AzureADMyOrg":
-                    await execShellCmd(CLI_TENANT_CMD)
-                        .then(async (response) => {
-                            response = response.replace(/(\r\n)/gm, "");
+                    await this.accountProvider.getAccountInformation()
+                        .then(async (accountInformation) => {
+                            const response = accountInformation.tenantId.replace(/(\r\n)/gm, "");
                             endpoints = {
                                 "OAuth 2.0 Authorization Endpoint": `${BASE_ENDPOINT}${response}/oauth2/v2.0/authorize`,
                                 "OAuth 2.0 Token Endpoint": `${BASE_ENDPOINT}${response}/oauth2/v2.0/token`,
@@ -286,8 +289,16 @@ export class ApplicationService extends ServiceBase {
     }
 
     // Opens the application registration in the Azure Portal.
-    openInPortal(item: AppRegItem): void {
-        env.openExternal(Uri.parse(`${PORTAL_APP_URI}${item.appId}`));
+    async openInAzurePortal(item: AppRegItem): Promise<void> {
+        const accountInformation = await this.accountProvider.getAccountInformation();
+        let uriText = "";
+        if (accountInformation.tenantId){
+            uriText = `${AZURE_PORTAL_APP_ROOT}/${accountInformation.tenantId}${AZURE_PORTAL_APP_PATH}${item.appId}`;
+        }
+        else{
+            uriText = `${AZURE_PORTAL_APP_ROOT}${AZURE_PORTAL_APP_PATH}${item.appId}`;
+        }
+        env.openExternal(Uri.parse(uriText));
     }
 
     // Validates the display name of the application.

@@ -1,19 +1,21 @@
 import { window, Uri, TextDocumentContentProvider, EventEmitter, workspace } from "vscode";
-import { CLI_TENANT_CMD } from "../constants";
 import { ServiceBase } from "./service-base";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
-import { execShellCmd } from "../utils/exec-shell-cmd";
 import { GraphResult } from "../types/graph-result";
 import { Organization, User, RoleAssignment } from "@microsoft/microsoft-graph-types";
 import { clearStatusBarMessage } from "../utils/status-bar";
 import { v4 as uuidv4 } from "uuid";
+import { AccountProvider } from "../data/account-provider";
 
 export class OrganizationService extends ServiceBase {
 
+    private accountProvider: AccountProvider;
+
     // The constructor for the OwnerService class.
-    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider, accountProvider: AccountProvider) {
         super(graphRepository, treeDataProvider);
+        this.accountProvider = accountProvider;
     }
 
     // Shows the tenant information.
@@ -22,10 +24,9 @@ export class OrganizationService extends ServiceBase {
         // Set the status bar message.
         const status = this.indicateChange("Loading Tenant Information...");
 
-        // Execute the az cli command to get the tenant id
-        await execShellCmd(CLI_TENANT_CMD)
+        await this.accountProvider.getAccountInformation()
             .then(async (response) => {
-                await this.showTenantWindow(response, status);
+                await this.showTenantWindow(response.tenantId, status);
             })
             .catch(async (error) => {
                 await this.handleError(error);
@@ -34,7 +35,6 @@ export class OrganizationService extends ServiceBase {
 
     // Shows the tenant information in a new read-only window.
     private async showTenantWindow(tenantId: string, status: string | undefined): Promise<void> {
-
         // Get the user information
         const user: GraphResult<User> = await this.graphRepository.getUserInformation();
         if (user.success !== true || user.value === undefined) {

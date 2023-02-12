@@ -1,5 +1,5 @@
 import { window, env, Uri } from "vscode";
-import { PORTAL_USER_URI } from "../constants";
+import { AZURE_PORTAL_APP_ROOT, AZURE_PORTAL_USER_PATH } from "../constants";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
@@ -7,15 +7,19 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { User } from "@microsoft/microsoft-graph-types";
 import { debounce } from "ts-debounce";
 import { GraphResult } from "../types/graph-result";
+import { AccountProvider } from "../data/account-provider";
 
 export class OwnerService extends ServiceBase {
+
+    private accountProvider : AccountProvider;
 
     // The list of users in the directory.
     private userList: any = undefined;
 
     // The constructor for the OwnerService class.
-    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider, accountProvider : AccountProvider) {
         super(graphRepository, treeDataProvider);
+        this.accountProvider = accountProvider;
     }
 
     // Adds a new owner to an application registration.
@@ -65,8 +69,16 @@ export class OwnerService extends ServiceBase {
     }
 
     // Opens the user in the Azure Portal.
-    openInPortal(item: AppRegItem): void {
-        env.openExternal(Uri.parse(`${PORTAL_USER_URI}${item.userId}`));
+    async openInAzurePortal(item: AppRegItem): Promise<void> {
+        const accountInformation = await this.accountProvider.getAccountInformation();
+        let uriText = "";
+        if (accountInformation.tenantId){
+            uriText = `${AZURE_PORTAL_APP_ROOT}/${accountInformation.tenantId}${AZURE_PORTAL_USER_PATH}${item.userId}`;
+        }
+        else{
+            uriText = `${AZURE_PORTAL_APP_ROOT}${AZURE_PORTAL_USER_PATH}${item.userId}`;
+        }
+        env.openExternal(Uri.parse(uriText));
     }
 
     // Validates the owner name or email address.

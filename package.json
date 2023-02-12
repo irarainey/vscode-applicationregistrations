@@ -237,8 +237,8 @@
         "title": "Copy Client ID"
       },
       {
-        "command": "appRegistrations.openAppInPortal",
-        "title": "Open In Portal"
+        "command": "appRegistrations.openAppInAzurePortal",
+        "title": "Open In Azure Portal"
       },
       {
         "command": "appRegistrations.editAudience",
@@ -249,8 +249,8 @@
         "title": "Copy"
       },
       {
-        "command": "appRegistrations.openUserInPortal",
-        "title": "Open In Portal"
+        "command": "appRegistrations.openUserInAzurePortal",
+        "title": "Open In Azure Portal"
       },
       {
         "command": "appRegistrations.addOwner",
@@ -488,7 +488,7 @@
           "when": "false"
         },
         {
-          "command": "appRegistrations.openAppInPortal",
+          "command": "appRegistrations.openAppInAzurePortal",
           "when": "false"
         },
         {
@@ -500,7 +500,7 @@
           "when": "false"
         },
         {
-          "command": "appRegistrations.openUserInPortal",
+          "command": "appRegistrations.openUserInAzurePortal",
           "when": "false"
         },
         {
@@ -691,7 +691,7 @@
           "group": "appRegistrations@3"
         },
         {
-          "command": "appRegistrations.openAppInPortal",
+          "command": "appRegistrations.openAppInAzurePortal",
           "when": "view == appRegistrations && viewItem == APPLICATION",
           "group": "appRegistrations@4"
         },
@@ -706,7 +706,7 @@
           "group": "appRegistrations@1"
         },
         {
-          "command": "appRegistrations.openUserInPortal",
+          "command": "appRegistrations.openUserInAzurePortal",
           "when": "view == appRegistrations && viewItem == OWNER",
           "group": "appRegistrations@2"
         },
