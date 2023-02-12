@@ -1,5 +1,5 @@
-import { window, env, Uri } from "vscode";
-import { AZURE_PORTAL_APP_ROOT, ENTRA_PORTAL_APP_ROOT, AZURE_AND_ENTRA_PORTAL_USER_PATH } from "../constants";
+import { window, env, Uri, workspace } from "vscode";
+import { AZURE_PORTAL_ROOT, ENTRA_PORTAL_ROOT, AZURE_AND_ENTRA_PORTAL_USER_PATH } from "../constants";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
@@ -70,26 +70,37 @@ export class OwnerService extends ServiceBase {
 
     // Opens the user in the Azure Portal.
     async openInAzurePortal(item: AppRegItem): Promise<void> {
-        const accountInformation = await this.accountProvider.getAccountInformation();
-        let uriText = "";
-        if (accountInformation.tenantId){
-            uriText = `${AZURE_PORTAL_APP_ROOT}/${accountInformation.tenantId}${AZURE_AND_ENTRA_PORTAL_USER_PATH}${item.userId}`;
-        }
-        else{
-            uriText = `${AZURE_PORTAL_APP_ROOT}${AZURE_AND_ENTRA_PORTAL_USER_PATH}${item.userId}`;
-        }
-        env.openExternal(Uri.parse(uriText));
+        return this.openInPortal(AZURE_PORTAL_ROOT, item);
     }
 
     // Opens the user in the Entra Portal.
     async openInEntraPortal(item: AppRegItem): Promise<void> {
-        const accountInformation = await this.accountProvider.getAccountInformation();
-        let uriText = "";
-        if (accountInformation.tenantId){
-            uriText = `${ENTRA_PORTAL_APP_ROOT}/${accountInformation.tenantId}${AZURE_AND_ENTRA_PORTAL_USER_PATH}${item.userId}`;
+        // Determine if using the Entra portal is enabled.
+        const isEntraEnabled = workspace.getConfiguration("applicationRegistrations").get("includeEntraPortal") as boolean;
+
+        if (isEntraEnabled){
+            return this.openInPortal(ENTRA_PORTAL_ROOT, item);
         }
         else{
-            uriText = `${ENTRA_PORTAL_APP_ROOT}${AZURE_AND_ENTRA_PORTAL_USER_PATH}${item.userId}`;
+            throw new Error("Entra Portal operations are not enabled in the workspace settings.");
+        }
+    }
+
+    private async openInPortal(portalRoot: string, item: AppRegItem): Promise<void>{
+        // Determine if "omit tenant ID from portal requests" has been set.
+        const omitTenantIdFromPortalRequests = workspace.getConfiguration("applicationRegistrations").get("omitTenantIdFromPortalRequests") as boolean;
+
+        let uriText = "";
+        if (omitTenantIdFromPortalRequests === false){
+            const accountInformation = await this.accountProvider.getAccountInformation();
+            if (accountInformation.tenantId){
+                uriText = `${portalRoot}/${accountInformation.tenantId}${AZURE_AND_ENTRA_PORTAL_USER_PATH}${item.userId}`;
+            }
+        }
+
+        // Check if uriText has been set to anything meaningful yet. If not, then set it w/o a tenant ID.
+        if (typeof(uriText) === "string" && uriText.trim().length === 0){
+            uriText = `${portalRoot}${AZURE_AND_ENTRA_PORTAL_USER_PATH}${item.userId}`;
         }
         env.openExternal(Uri.parse(uriText));
     }

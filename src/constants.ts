@@ -8,13 +8,13 @@ export const SIGNIN_COMMAND_TEXT = "Sign in to Azure CLI";
 export const SCOPE = "https://graph.microsoft.com/.default";
 
 // URI Roots for the Azure Portal variations
-export const AZURE_PORTAL_APP_ROOT = "https://portal.azure.com";
-export const AZURE_PORTAL_APP_ROOT_USGOV = "https://portal.azure.us";
-export const AZURE_PORTAL_APP_ROOT_CHINA = "https://portal.azure.cn";
+export const AZURE_PORTAL_ROOT = "https://portal.azure.com";
+export const AZURE_PORTAL_ROOT_USGOV = "https://portal.azure.us";
+export const AZURE_PORTAL_ROOT_CHINA = "https://portal.azure.cn";
 // TODO - consider approach to take for Azure portal access in national clouds: https://learn.microsoft.com/graph/deployments#app-registration-and-token-service-root-endpoints
 
 // URI Roots for the Entra Portal variations
-export const ENTRA_PORTAL_APP_ROOT = "https://entra.microsoft.com";
+export const ENTRA_PORTAL_ROOT = "https://entra.microsoft.com";
 // TODO - determine (if available) Entra portal access in national clouds
 
 // The URI path to the Application Registration blade in the Azure & Entra Portals

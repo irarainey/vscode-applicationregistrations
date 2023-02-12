@@ -105,9 +105,9 @@ export class GraphApiRepository {
     // Returns ids and names for all owned application registrations
     async getApplicationListOwned(filter?: string): Promise<GraphResult<Application[]>> {
         try {
-            const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
+            const useEventualConsistency = workspace.getConfiguration("applicationRegistrations").get("useEventualConsistency") as boolean;
             if (useEventualConsistency === true) {
-                const maximumApplicationsShown = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsShown") as number;
+                const maximumApplicationsShown = workspace.getConfiguration("applicationRegistrations").get("maximumApplicationsShown") as number;
                 const result: any = await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
                     .filter(filter === undefined ? "" : filter)
                     .header("ConsistencyLevel", "eventual")
@@ -118,7 +118,7 @@ export class GraphApiRepository {
                     .get();
                 return { success: true, value: result.value };
             } else {
-                const maximumQueryApps = workspace.getConfiguration("applicationregistrations").get("maximumQueryApps") as number;
+                const maximumQueryApps = workspace.getConfiguration("applicationRegistrations").get("maximumQueryApps") as number;
                 const result: any = await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
                     .top(maximumQueryApps)
                     .select("id,displayName")
@@ -134,9 +134,9 @@ export class GraphApiRepository {
     // Returns ids and names for all application registrations
     async getApplicationListAll(filter?: string): Promise<GraphResult<Application[]>> {
         try {
-            const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
+            const useEventualConsistency = workspace.getConfiguration("applicationRegistrations").get("useEventualConsistency") as boolean;
             if (useEventualConsistency === true) {
-                const maximumApplicationsShown = workspace.getConfiguration("applicationregistrations").get("maximumApplicationsShown") as number;
+                const maximumApplicationsShown = workspace.getConfiguration("applicationRegistrations").get("maximumApplicationsShown") as number;
                 const result: any = await this.client!.api("/applications/")
                     .filter(filter === undefined ? "" : filter)
                     .header("ConsistencyLevel", "eventual")
@@ -147,7 +147,7 @@ export class GraphApiRepository {
                     .get();
                 return { success: true, value: result.value };
             } else {
-                const maximumQueryApps = workspace.getConfiguration("applicationregistrations").get("maximumQueryApps") as number;
+                const maximumQueryApps = workspace.getConfiguration("applicationRegistrations").get("maximumQueryApps") as number;
                 const result: any = await this.client!.api("/applications/")
                     .top(maximumQueryApps)
                     .select("id,displayName")

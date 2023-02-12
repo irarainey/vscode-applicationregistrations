@@ -42,7 +42,7 @@ const signInAudienceService = new SignInAudienceService(graphRepository, treeDat
 export async function activate(context: ExtensionContext) {
 	// Hook up the configuration setting change handlers.
 	workspace.onDidChangeConfiguration(async (event) => {
-		if (event.affectsConfiguration("applicationregistrations.showOwnedApplicationsOnly") || event.affectsConfiguration("applicationregistrations.maximumQueryApps") || event.affectsConfiguration("applicationregistrations.maximumApplicationsShown") || event.affectsConfiguration("applicationregistrations.useEventualConsistency")) {
+		if (event.affectsConfiguration("applicationRegistrations.showOwnedApplicationsOnly") || event.affectsConfiguration("applicationRegistrations.maximumQueryApps") || event.affectsConfiguration("applicationRegistrations.maximumApplicationsShown") || event.affectsConfiguration("applicationRegistrations.useEventualConsistency")) {
 			await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."));
 		}
 	});
