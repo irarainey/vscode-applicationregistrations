@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { AZURE_PORTAL_APP_ROOT, AZURE_PORTAL_APP_PATH, SIGNIN_AUDIENCE_OPTIONS, BASE_ENDPOINT } from "../constants";
+import { AZURE_PORTAL_APP_ROOT, ENTRA_PORTAL_APP_ROOT, AZURE_AND_ENTRA_PORTAL_APP_PATH, SIGNIN_AUDIENCE_OPTIONS, BASE_ENDPOINT } from "../constants";
 import { window, env, Uri, TextDocumentContentProvider, EventEmitter, workspace } from "vscode";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
@@ -293,10 +293,23 @@ export class ApplicationService extends ServiceBase {
         const accountInformation = await this.accountProvider.getAccountInformation();
         let uriText = "";
         if (accountInformation.tenantId){
-            uriText = `${AZURE_PORTAL_APP_ROOT}/${accountInformation.tenantId}${AZURE_PORTAL_APP_PATH}${item.appId}`;
+            uriText = `${AZURE_PORTAL_APP_ROOT}/${accountInformation.tenantId}${AZURE_AND_ENTRA_PORTAL_APP_PATH}${item.appId}`;
         }
         else{
-            uriText = `${AZURE_PORTAL_APP_ROOT}${AZURE_PORTAL_APP_PATH}${item.appId}`;
+            uriText = `${AZURE_PORTAL_APP_ROOT}${AZURE_AND_ENTRA_PORTAL_APP_PATH}${item.appId}`;
+        }
+        env.openExternal(Uri.parse(uriText));
+    }
+
+    // Opens the application registration in the Entra Portal.
+    async openInEntraPortal(item: AppRegItem): Promise<void> {
+        const accountInformation = await this.accountProvider.getAccountInformation();
+        let uriText = "";
+        if (accountInformation.tenantId){
+            uriText = `${ENTRA_PORTAL_APP_ROOT}/${accountInformation.tenantId}${AZURE_AND_ENTRA_PORTAL_APP_PATH}${item.appId}`;
+        }
+        else{
+            uriText = `${ENTRA_PORTAL_APP_ROOT}${AZURE_AND_ENTRA_PORTAL_APP_PATH}${item.appId}`;
         }
         env.openExternal(Uri.parse(uriText));
     }

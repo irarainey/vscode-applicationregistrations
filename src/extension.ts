@@ -68,6 +68,7 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyClientId`, (item) => applicationService.copyClientId(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.showEndpoints`, (item) => applicationService.showEndpoints(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openAppInAzurePortal`, async (item) => await applicationService.openInAzurePortal(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openAppInEntraPortal`, async (item) => await applicationService.openInEntraPortal(item)));
 
 	// App Role Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAppRole`, async (item) => await appRoleService.add(item)));
@@ -125,6 +126,7 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addOwner`, async (item) => await ownerService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeOwner`, async (item) => await ownerService.remove(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openUserInAzurePortal`, async (item) => await ownerService.openInAzurePortal(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openUserInEntraPortal`, async (item) => await ownerService.openInEntraPortal(item)));
 
 	// Common Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyValue`, (item) => copyValue(item)));

@@ -1,5 +1,5 @@
 import { window, env, Uri } from "vscode";
-import { AZURE_PORTAL_APP_ROOT, AZURE_PORTAL_USER_PATH } from "../constants";
+import { AZURE_PORTAL_APP_ROOT, ENTRA_PORTAL_APP_ROOT, AZURE_AND_ENTRA_PORTAL_USER_PATH } from "../constants";
 import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
@@ -73,10 +73,23 @@ export class OwnerService extends ServiceBase {
         const accountInformation = await this.accountProvider.getAccountInformation();
         let uriText = "";
         if (accountInformation.tenantId){
-            uriText = `${AZURE_PORTAL_APP_ROOT}/${accountInformation.tenantId}${AZURE_PORTAL_USER_PATH}${item.userId}`;
+            uriText = `${AZURE_PORTAL_APP_ROOT}/${accountInformation.tenantId}${AZURE_AND_ENTRA_PORTAL_USER_PATH}${item.userId}`;
         }
         else{
-            uriText = `${AZURE_PORTAL_APP_ROOT}${AZURE_PORTAL_USER_PATH}${item.userId}`;
+            uriText = `${AZURE_PORTAL_APP_ROOT}${AZURE_AND_ENTRA_PORTAL_USER_PATH}${item.userId}`;
+        }
+        env.openExternal(Uri.parse(uriText));
+    }
+
+    // Opens the user in the Entra Portal.
+    async openInEntraPortal(item: AppRegItem): Promise<void> {
+        const accountInformation = await this.accountProvider.getAccountInformation();
+        let uriText = "";
+        if (accountInformation.tenantId){
+            uriText = `${ENTRA_PORTAL_APP_ROOT}/${accountInformation.tenantId}${AZURE_AND_ENTRA_PORTAL_USER_PATH}${item.userId}`;
+        }
+        else{
+            uriText = `${ENTRA_PORTAL_APP_ROOT}${AZURE_AND_ENTRA_PORTAL_USER_PATH}${item.userId}`;
         }
         env.openExternal(Uri.parse(uriText));
     }

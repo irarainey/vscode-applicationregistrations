@@ -11,15 +11,17 @@ export const SCOPE = "https://graph.microsoft.com/.default";
 export const AZURE_PORTAL_APP_ROOT = "https://portal.azure.com";
 export const AZURE_PORTAL_APP_ROOT_USGOV = "https://portal.azure.us";
 export const AZURE_PORTAL_APP_ROOT_CHINA = "https://portal.azure.cn";
-// TODO - consider approach to take for portal access in national clouds: https://learn.microsoft.com/graph/deployments#app-registration-and-token-service-root-endpoints
+// TODO - consider approach to take for Azure portal access in national clouds: https://learn.microsoft.com/graph/deployments#app-registration-and-token-service-root-endpoints
 
-// The URI path to the Application Registration blade in the Azure Portal
-export const AZURE_PORTAL_APP_PATH = "/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/";
-// export const PORTAL_APP_URI = "https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/";
+// URI Roots for the Entra Portal variations
+export const ENTRA_PORTAL_APP_ROOT = "https://entra.microsoft.com";
+// TODO - determine (if available) Entra portal access in national clouds
 
-// The URI path to the User blade in the Azure Portal
-export const AZURE_PORTAL_USER_PATH = "/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/";
-// export const PORTAL_USER_URI = "https://portal.azure.com/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/";
+// The URI path to the Application Registration blade in the Azure & Entra Portals
+export const AZURE_AND_ENTRA_PORTAL_APP_PATH = "/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/";
+
+// The URI path to the User blade in the Azure & Entra Portals
+export const AZURE_AND_ENTRA_PORTAL_USER_PATH = "/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/";
 
 // The URI to access directory objects in the Microsoft Graph API
 export const DIRECTORY_OBJECTS_URI = "https://graph.microsoft.com/v1.0/directoryObjects/";
