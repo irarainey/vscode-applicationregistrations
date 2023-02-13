@@ -3,6 +3,7 @@ import { GraphApiRepository } from "../../src/repositories/graph-api-repository"
 import { AppRegTreeDataProvider } from "../../src/data/app-reg-tree-data-provider";
 import { AppRegItem } from "../../src/models/app-reg-item";
 import { OwnerService } from "../../src/services/owner";
+import { AzureCliAccountProvider } from "../../src/data/azure-cli-account-provider";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -17,7 +18,8 @@ describe("Owner Service Tests", () => {
     // Create instances of objects used in the tests
     const graphApiRepository = new GraphApiRepository();
     const treeDataProvider = new AppRegTreeDataProvider(graphApiRepository);
-    const ownerService = new OwnerService(graphApiRepository, treeDataProvider);
+    const accountProvider = new AzureCliAccountProvider();
+    const ownerService = new OwnerService(graphApiRepository, treeDataProvider, accountProvider);
 
     // Create spy variables
     let triggerCompleteSpy: jest.SpyInstance<any, unknown[], any>;

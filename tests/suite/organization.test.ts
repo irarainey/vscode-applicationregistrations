@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { GraphApiRepository } from "../../src/repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../../src/data/app-reg-tree-data-provider";
 import { OrganizationService } from "../../src/services/organization";
+import { AzureCliAccountProvider } from "../../src/data/azure-cli-account-provider";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -17,7 +18,8 @@ describe("Organization Service Tests", () => {
 	// Create instances of objects used in the tests
 	const graphApiRepository = new GraphApiRepository();
 	const treeDataProvider = new AppRegTreeDataProvider(graphApiRepository);
-	const organizationService = new OrganizationService(graphApiRepository, treeDataProvider);
+	const accountProvider = new AzureCliAccountProvider();
+	const organizationService = new OrganizationService(graphApiRepository, treeDataProvider, accountProvider);
 
 	// Create spies
     let triggerErrorSpy: jest.SpyInstance<any, unknown[], any>;
