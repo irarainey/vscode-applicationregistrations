@@ -1,68 +1,70 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 export const window = {
-  setStatusBarMessage: jest.fn(() => {
-    return { dispose: jest.fn() };
-  }),
-  showInformationMessage: jest.fn(),
-  showErrorMessage: jest.fn(),
-  showWarningMessage: jest.fn(),
-  showQuickPick: jest.fn(),
-  showTextDocument: jest.fn(),
-  showInputBox: jest.fn(() => {
-    return {
-      validateInput: jest.fn()
-    };
-  })
+	setStatusBarMessage: jest.fn(() => {
+		return { dispose: jest.fn() };
+	}),
+	showInformationMessage: jest.fn(),
+	showErrorMessage: jest.fn(),
+	showWarningMessage: jest.fn(),
+	showQuickPick: jest.fn(),
+	showTextDocument: jest.fn(),
+	showInputBox: jest.fn(() => {
+		return {
+			validateInput: jest.fn()
+		};
+	})
 };
 
 export const workspace = {
-  getConfiguration: (_value: string) => ({
-    get: (key: string) => {
-      switch (key) {
-        case "useEventualConsistency":
-          return true;
-        case "showApplicationCountWarning":
-          return false;
-        case "showOwnedApplicationsOnly":
-          return true;
-        default:
-          return undefined;
-      }
-    }
-  }),
-  TextDocument: jest.fn(),
-  openTextDocument: () => {
-    return new Promise(workspace.TextDocument);
-  },
-  registerTextDocumentContentProvider: jest.fn()
+	getConfiguration: (_value: string) => ({
+		get: (key: string) => {
+			switch (key) {
+				case "useEventualConsistency":
+					return true;
+				case "showApplicationCountWarning":
+					return false;
+				case "showOwnedApplicationsOnly":
+					return true;
+				default:
+					return undefined;
+			}
+		}
+	}),
+	TextDocument: jest.fn(),
+	openTextDocument: () => {
+		return new Promise(workspace.TextDocument);
+	},
+	registerTextDocumentContentProvider: jest.fn()
 };
 
 export class EventEmitter {
-  event = jest.fn();
-  fire() { return jest.fn(); }
-};
+	event = jest.fn();
+	fire() {
+		return jest.fn();
+	}
+}
 
 export const Uri = {
-  parse: (_value: string, _strict?: boolean) => {
-    jest.fn();
-  }
+	parse: (_value: string, _strict?: boolean) => {
+		jest.fn();
+	}
 };
 
 let clipboard: any;
 
 export const env = {
-  openExternal: (_value: string) => {
-    jest.fn();
-  },
-  clipboard: {
-    writeText: (item: string) => {
-      clipboard = item;
-    },
-    readText: () => {
-      return clipboard;
-    }
-  }
+	openExternal: (_value: string) => {
+		jest.fn();
+	},
+	clipboard: {
+		writeText: (item: string) => {
+			clipboard = item;
+		},
+		readText: () => {
+			return clipboard;
+		}
+	}
 };
 
 export const Event = jest.fn();
@@ -76,23 +78,27 @@ export const TreeItem = jest.fn();
 export const TreeItemCollapsibleState = jest.fn();
 
 export const TreeDataProvider = {
-  onDidChangeTreeDataEvent: () => ({
-    dispose: () => jest.fn()
-  })
+	onDidChangeTreeDataEvent: () => ({
+		dispose: () => jest.fn()
+	})
 };
 
 export const ProviderResult = jest.fn();
 
 export const ConfigurationTarget = jest.fn();
 
-export const Disposable = jest.fn();
+export class Disposable {
+	dispose(): any {
+		return jest.fn();
+	}
+}
 
 export class TextDocumentContentProvider {
-  onDidChangeEmitter = new EventEmitter();
-  onDidChange = this.onDidChangeEmitter.event;
-  provideTextDocumentContent(): string {
-    return "content";
-  }
+	onDidChangeEmitter = new EventEmitter();
+	onDidChange = this.onDidChangeEmitter.event;
+	provideTextDocumentContent(): string {
+		return "content";
+	}
 }
 
 export const MessageOptions = jest.fn();
@@ -100,20 +106,20 @@ export const MessageOptions = jest.fn();
 export const MessageItem = jest.fn();
 
 export const vscode = {
-  window,
-  workspace,
-  Event,
-  EventEmitter,
-  Disposable,
-  ThemeColor,
-  ThemeIcon,
-  TreeItem,
-  TreeItemCollapsibleState,
-  TreeDataProvider,
-  ProviderResult,
-  ConfigurationTarget,
-  Uri,
-  TextDocumentContentProvider,
-  MessageOptions,
-  MessageItem
+	window,
+	workspace,
+	Event,
+	EventEmitter,
+	Disposable,
+	ThemeColor,
+	ThemeIcon,
+	TreeItem,
+	TreeItemCollapsibleState,
+	TreeDataProvider,
+	ProviderResult,
+	ConfigurationTarget,
+	Uri,
+	TextDocumentContentProvider,
+	MessageOptions,
+	MessageItem
 };
