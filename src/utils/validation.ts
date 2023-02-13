@@ -41,7 +41,7 @@ export const validatePasswordCredentialExpiryDate = (expiry: string): string | u
 	const maximumExpireDate = addYears(new Date(), 2);
 
 	//Check if the expiry date is a valid date.
-	if (isDate(expiryDate)) {
+	if (Number.isNaN(expiryDate)) {
 		return "Expiry must be a valid date.";
 	}
 

@@ -25,7 +25,7 @@ export class PasswordCredentialService extends ServiceBase {
 			expiryDate.setDate(expiryDate.getDate() + 90);
 
 			// Prompt the user for the description.
-			const expiry = await this.inputExpiryDate(expiryDate);
+			const expiry = await this.inputExpiryDate(expiryDate, validatePasswordCredentialExpiryDate);
 
 			if (expiry !== undefined) {
 				// Set the added trigger to the status bar message.
@@ -67,14 +67,14 @@ export class PasswordCredentialService extends ServiceBase {
 	}
 
 	// Prompts the user for a password credential expiry date.
-	async inputExpiryDate(expiryDate: Date) {
+	async inputExpiryDate(expiryDate: Date, validation: (value: string) => string | undefined) {
 		return await window.showInputBox({
 			placeHolder: "Password expiry",
 			prompt: "Set password expiry date",
 			value: format(new Date(expiryDate), "yyyy-MM-dd"),
 			title: "Add Password Credential (2/2)",
 			ignoreFocusOut: true,
-			validateInput: (value) => validatePasswordCredentialExpiryDate(value)
+			validateInput: (value) => validation(value)
 		});
 	}
 }

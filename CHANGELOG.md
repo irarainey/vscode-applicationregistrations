@@ -1,6 +1,6 @@
 ## 0.8.0
 
-- TBD
+- Fixed an issue validating expiry dates for password credentials.
 
 ## 0.7.1
 
