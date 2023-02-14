@@ -394,6 +394,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 						// Create the tree view item.
 						const appRegItem: AppRegItem = new AppRegItem({
 							label: app.displayName!,
+							value: app.displayName!,
 							context: "APPLICATION",
 							iconPath: path.join(__filename, "..", "..", "resources", "icons", "app.svg"),
 							baseIcon: path.join(__filename, "..", "..", "resources", "icons", "app.svg"),

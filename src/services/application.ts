@@ -29,15 +29,9 @@ export class ApplicationService extends ServiceBase {
 
 		if (signInAudience !== undefined) {
 			// Prompt the user for the application name.
-			const displayName = await window.showInputBox({
-				placeHolder: "Application name",
-				prompt: "Create new Application Registration",
-				title: "Add New Application (2/2)",
-				ignoreFocusOut: true,
-				validateInput: (value) => validateApplicationDisplayName(value, signInAudience.value)
-			});
+			const displayName = await this.inputDisplayNameForNew(signInAudience.value, validateApplicationDisplayName);
 
-			// If the application name is not undefined then prompt the user for the sign in audience.
+			// If the application name is not undefined then create the application.
 			if (displayName !== undefined) {
 				// Set the added trigger to the status bar message.
 				const status = this.indicateChange("Creating Application Registration...");
@@ -56,14 +50,7 @@ export class ApplicationService extends ServiceBase {
 		}
 
 		// Prompt the user for the new uri.
-		const uri = await window.showInputBox({
-			placeHolder: "Application ID URI",
-			prompt: "Set Application ID URI",
-			value: item.value! === "Not set" ? `api://${item.appId!}` : item.value!,
-			title: "Edit Application ID URI",
-			ignoreFocusOut: true,
-			validateInput: (value) => validateAppIdUri(value, result.value!)
-		});
+		const uri = await this.inputAppIdUri(item, result.value, validateAppIdUri);
 
 		// If the new application id uri is not undefined then update the application.
 		if (uri !== undefined) {
@@ -75,14 +62,7 @@ export class ApplicationService extends ServiceBase {
 	// Edit a front-channel logout url.
 	async editLogoutUrl(item: AppRegItem): Promise<void> {
 		// Prompt the user for the new uri.
-		const uri = await window.showInputBox({
-			placeHolder: "Front-channel Logout URL",
-			prompt: "Set Front-channel Logout URL",
-			value: item.value! === "Not set" ? "" : item.value!,
-			title: "Edit Front-channel Logout URL",
-			ignoreFocusOut: true,
-			validateInput: (value) => validateLogoutUrl(value)
-		});
+		const uri = await this.inputLogoutUrl(item, validateLogoutUrl);
 
 		// If the new application id uri is not undefined then update the application.
 		if (uri !== undefined) {
@@ -100,14 +80,7 @@ export class ApplicationService extends ServiceBase {
 		}
 
 		// Prompt the user for the new application name.
-		const displayName = await window.showInputBox({
-			placeHolder: "Application name",
-			prompt: "Rename application with new display name",
-			value: item.label?.toString(),
-			title: "Rename Application",
-			ignoreFocusOut: true,
-			validateInput: (value) => validateApplicationDisplayName(value, result.value!)
-		});
+		const displayName = await this.inputDisplayNameForRename(item.value!, result.value, validateApplicationDisplayName);
 
 		// If the new application name is not undefined then update the application.
 		if (displayName !== undefined) {
@@ -270,5 +243,52 @@ export class ApplicationService extends ServiceBase {
 	// Opens the application registration in the Azure Portal.
 	openInPortal(item: AppRegItem): void {
 		env.openExternal(Uri.parse(`${PORTAL_APP_URI}${item.appId}`));
+	}
+
+	// Input box for creating a new application registration display name.
+	async inputDisplayNameForNew(signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined): Promise<string | undefined> {
+		return await window.showInputBox({
+			placeHolder: "Application name",
+			prompt: "Create new Application Registration",
+			title: "Add New Application (2/2)",
+			ignoreFocusOut: true,
+			validateInput: (value) => validation(value, signInAudience)
+		});
+	}
+
+	// Input box for renaming an application registration display name.
+	async inputDisplayNameForRename(appName: string, signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined): Promise<string | undefined> {
+		return await window.showInputBox({
+			placeHolder: "Application name",
+			prompt: "Rename application with new display name",
+			value: appName,
+			title: "Rename Application",
+			ignoreFocusOut: true,
+			validateInput: (value) => validation(value, signInAudience)
+		});
+	}
+
+	// Input box for editing an application registration App Id URI.
+	async inputAppIdUri(item: AppRegItem, signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined): Promise<string | undefined> {
+		return await window.showInputBox({
+			placeHolder: "Application ID URI",
+			prompt: "Set Application ID URI",
+			value: item.value! === "Not set" ? `api://${item.appId!}` : item.value!,
+			title: "Edit Application ID URI",
+			ignoreFocusOut: true,
+			validateInput: (value) => validation(value, signInAudience)
+		});
+	}
+
+	// Input box for editing an application registration Logout URL.
+	async inputLogoutUrl(item: AppRegItem, validation: (value: string) => string | undefined): Promise<string | undefined> {
+		return await window.showInputBox({
+			placeHolder: "Front-channel Logout URL",
+			prompt: "Set Front-channel Logout URL",
+			value: item.value! === "Not set" ? "" : item.value!,
+			title: "Edit Front-channel Logout URL",
+			ignoreFocusOut: true,
+			validateInput: (value) => validation(value)
+		});
 	}
 }

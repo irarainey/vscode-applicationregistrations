@@ -197,22 +197,10 @@ export const validateApplicationDisplayName = (name: string, signInAudience: str
 	if (name.length < 1) {
 		return "An application name must be at least one character.";
 	}
-
-	switch (signInAudience) {
-		case "AzureADMyOrg":
-		case "AzureADMultipleOrgs":
-			if (name.length > 120) {
-				return "An application name cannot be longer than 120 characters.";
-			}
-			break;
-		case "AzureADandPersonalMicrosoftAccount":
-		case "PersonalMicrosoftAccount":
-			if (name.length > 90) {
-				return "An application name cannot be longer than 90 characters.";
-			}
-			break;
-		default:
-			break;
+	if ((signInAudience === "AzureADMyOrg" || signInAudience === "AzureADMultipleOrgs") && name.length > 120) {
+		return "An application name cannot be longer than 120 characters.";
+	} else if ((signInAudience === "AzureADandPersonalMicrosoftAccount" || signInAudience === "PersonalMicrosoftAccount") && name.length > 90) {
+		return "An application name cannot be longer than 90 characters.";
 	}
 
 	return undefined;
@@ -224,33 +212,26 @@ export const validateAppIdUri = (uri: string, signInAudience: string): string | 
 		return "The Application ID URI cannot end with a trailing slash.";
 	}
 
-	switch (signInAudience) {
-		case "AzureADMyOrg":
-		case "AzureADMultipleOrgs":
-			if (uri.includes("://") === false || uri.startsWith("://") === true) {
-				return "The Application ID URI is not valid. It must start with http://, https://, api://, MS-APPX://, or customScheme://.";
-			}
-			if (uri.includes("*") === true) {
-				return "Wildcards are not supported.";
-			}
-			if (uri.length > 255) {
-				return "The Application ID URI is not valid. A URI cannot be longer than 255 characters.";
-			}
-			break;
-		case "AzureADandPersonalMicrosoftAccount":
-		case "PersonalMicrosoftAccount":
-			if (uri.includes("://") === false || (uri.startsWith("api://") === false && uri.startsWith("https://") === false && uri.startsWith("http://") === true)) {
-				return "The Application ID URI is not valid. It must start with http://, https://, or api://.";
-			}
-			if (uri.includes("?") === true || uri.includes("#") === true || uri.includes("*") === true) {
-				return "Wildcards, fragments, and query strings are not supported.";
-			}
-			if (uri.length > 120) {
-				return "The Application ID URI is not valid. A URI cannot be longer than 120 characters.";
-			}
-			break;
-		default:
-			break;
+	if (signInAudience === "AzureADMyOrg" || signInAudience === "AzureADMultipleOrgs") {
+		if (uri.includes("://") === false || uri.startsWith("://") === true) {
+			return "The Application ID URI is not valid. It must start with http://, https://, api://, MS-APPX://, or customScheme://.";
+		}
+		if (uri.includes("*") === true) {
+			return "Wildcards are not supported.";
+		}
+		if (uri.length > 255) {
+			return "The Application ID URI is not valid. A URI cannot be longer than 255 characters.";
+		}
+	} else if (signInAudience === "AzureADandPersonalMicrosoftAccount" || signInAudience === "PersonalMicrosoftAccount") {
+		if (uri.startsWith("api://") === false && uri.startsWith("https://") === false && uri.startsWith("http://") === false) {
+			return "The Application ID URI is not valid. It must start with http://, https://, or api://.";
+		}
+		if (uri.includes("?") === true || uri.includes("#") === true || uri.includes("*") === true) {
+			return "Wildcards, fragments, and query strings are not supported.";
+		}
+		if (uri.length > 120) {
+			return "The Application ID URI is not valid. A URI cannot be longer than 120 characters.";
+		}
 	}
 
 	return undefined;

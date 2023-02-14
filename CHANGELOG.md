@@ -1,6 +1,7 @@
 ## 0.8.0
 
 - Fixed an issue validating expiry dates for password credentials.
+- Fixed an issue validating App Id Uris for consumer accounts.
 
 ## 0.7.1
 
