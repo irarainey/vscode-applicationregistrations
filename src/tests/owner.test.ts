@@ -5,6 +5,7 @@ import { AppRegItem } from "../models/app-reg-item";
 import { OwnerService } from "../services/owner";
 import { mockAppId, mockAppObjectId, mockSecondAppObjectId, mockSecondUserId, mockUserId, seedMockData } from "./test-data";
 import { getTopLevelTreeItem } from "./test-utils";
+import { AzureCliAccountProvider } from "../utils/azure-cli-account-provider";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -15,7 +16,8 @@ describe("Owner Service Tests", () => {
 	// Create instances of objects used in the tests
 	const graphApiRepository = new GraphApiRepository();
 	const treeDataProvider = new AppRegTreeDataProvider(graphApiRepository);
-	const ownerService = new OwnerService(graphApiRepository, treeDataProvider);
+	const accountProvider = new AzureCliAccountProvider();
+	const ownerService = new OwnerService(graphApiRepository, treeDataProvider, accountProvider);
 
 	// Create spy variables
 	let triggerCompleteSpy: jest.SpyInstance<any, unknown[], any>;
@@ -62,7 +64,7 @@ describe("Owner Service Tests", () => {
 
 	test("Open in portal", async () => {
 		// Act
-		ownerService.openInPortal(item);
+		ownerService.openInAzurePortal(item);
 
 		// Assert
 		expect(openExternalSpy).toHaveBeenCalled();

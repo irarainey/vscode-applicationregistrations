@@ -145,7 +145,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 		}
 
 		// Determine if eventual consistency is enabled.
-		const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
+		const useEventualConsistency = workspace.getConfiguration("applicationRegistrations").get("useEventualConsistency") as boolean;
 
 		// If eventual consistency is disabled then we cannot apply the filter
 		if (useEventualConsistency === false) {
@@ -302,13 +302,13 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 			this.isUpdating = true;
 
 			// Get the configuration settings.
-			const useEventualConsistency = workspace.getConfiguration("applicationregistrations").get("useEventualConsistency") as boolean;
-			const showApplicationCountWarning = workspace.getConfiguration("applicationregistrations").get("showApplicationCountWarning") as boolean;
+			const useEventualConsistency = workspace.getConfiguration("applicationRegistrations").get("useEventualConsistency") as boolean;
+			const showApplicationCountWarning = workspace.getConfiguration("applicationRegistrations").get("showApplicationCountWarning") as boolean;
 
 			// Determine if the warning message should be displayed.
 			if (showApplicationCountWarning === true) {
 				let totalApplicationCount: number = 0;
-				const showOwnedApplicationsOnly = workspace.getConfiguration("applicationregistrations").get("showOwnedApplicationsOnly") as boolean;
+				const showOwnedApplicationsOnly = workspace.getConfiguration("applicationRegistrations").get("showOwnedApplicationsOnly") as boolean;
 
 				// Get the total number of applications in the tenant based on the filter settings.
 				if (showOwnedApplicationsOnly) {
@@ -336,10 +336,10 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 					window.showWarningMessage(`You have enabled eventual consistency for Graph API calls but only have ${totalApplicationCount} applications in your tenant. You would likely benefit from disabling eventual consistency in user settings. Would you like to do this now?`, "Yes", "No", "Disable Warning").then((result) => {
 						// If the user selects "Disable Warning" then disable the warning message.
 						if (result === "Disable Warning") {
-							workspace.getConfiguration("applicationregistrations").update("showApplicationCountWarning", false, ConfigurationTarget.Global);
+							workspace.getConfiguration("applicationRegistrations").update("showApplicationCountWarning", false, ConfigurationTarget.Global);
 							// If the user selects "Yes" then disable eventual consistency.
 						} else if (result === "Yes") {
-							workspace.getConfiguration("applicationregistrations").update("useEventualConsistency", false, ConfigurationTarget.Global);
+							workspace.getConfiguration("applicationRegistrations").update("useEventualConsistency", false, ConfigurationTarget.Global);
 						}
 					});
 					// If the total number of applications is greater than 200 and eventual consistency is disabled then display a warning message.
@@ -347,10 +347,10 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 					window.showWarningMessage(`You do not have enabled eventual consistency enabled for Graph API calls and have ${totalApplicationCount} applications in your tenant. You would likely benefit from enabling eventual consistency in user settings. Would you like to do this now?`, "Yes", "No", "Disable Warning").then((result) => {
 						// If the user selects "Disable Warning" then disable the warning message.
 						if (result === "Disable Warning") {
-							workspace.getConfiguration("applicationregistrations").update("showApplicationCountWarning", false, ConfigurationTarget.Global);
+							workspace.getConfiguration("applicationRegistrations").update("showApplicationCountWarning", false, ConfigurationTarget.Global);
 							// If the user selects "Yes" then enable eventual consistency.
 						} else if (result === "Yes") {
-							workspace.getConfiguration("applicationregistrations").update("useEventualConsistency", true, ConfigurationTarget.Global);
+							workspace.getConfiguration("applicationRegistrations").update("useEventualConsistency", true, ConfigurationTarget.Global);
 						}
 					});
 				}
@@ -690,7 +690,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 	// Returns application list depending on the user setting
 	private async getApplicationList(): Promise<Application[] | undefined> {
 		// Get the user setting to determine whether to show all applications or just the ones owned by the user
-		const showOwnedApplicationsOnly = workspace.getConfiguration("applicationregistrations").get("showOwnedApplicationsOnly") as boolean;
+		const showOwnedApplicationsOnly = workspace.getConfiguration("applicationRegistrations").get("showOwnedApplicationsOnly") as boolean;
 		if (showOwnedApplicationsOnly === true) {
 			const result: GraphResult<Application[]> = await this.graphRepository.getApplicationListOwned(this.filterCommand);
 			if (result.success === true && result.value !== undefined) {

@@ -5,6 +5,8 @@ import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { OrganizationService } from "../services/organization";
 import { mockTenantId, seedMockData } from "./test-data";
 import { TextDocumentContentProvider } from "vscode";
+import { AzureCliAccountProvider } from "../utils/azure-cli-account-provider";
+import { AccountInformation } from "../models/account-information";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -15,8 +17,9 @@ jest.mock("../utils/exec-shell-cmd");
 describe("Organization Service Tests", () => {
 	// Create instances of objects used in the tests
 	const graphApiRepository = new GraphApiRepository();
+	const accountProvider = new AzureCliAccountProvider();
 	const treeDataProvider = new AppRegTreeDataProvider(graphApiRepository);
-	const organizationService = new OrganizationService(graphApiRepository, treeDataProvider);
+	const organizationService = new OrganizationService(graphApiRepository, treeDataProvider, accountProvider);
 
 	// Create spies
 	let triggerErrorSpy: jest.SpyInstance<any, unknown[], any>;
@@ -58,7 +61,8 @@ describe("Organization Service Tests", () => {
 		// Arrange
 		const registerTextDocumentContentProviderSpy = jest.spyOn(vscode.workspace, "registerTextDocumentContentProvider").mockImplementation((_scheme: string, _provider: TextDocumentContentProvider) => {
 			return { dispose: jest.fn() };
-		  });
+		});
+		jest.spyOn(accountProvider, "getAccountInformation").mockImplementation(async () => ({ tenantId: mockTenantId } as any));
 
 		// Act
 		await organizationService.showTenantInformation();
@@ -71,7 +75,9 @@ describe("Organization Service Tests", () => {
 
 	test("CLI returns error", async () => {
 		// Arrange
-		jest.spyOn(execShellCmdModule, "execShellCmd").mockImplementation(async (_cmd: string) => {	throw new Error("Test error");});
+		jest.spyOn(execShellCmdModule, "execShellCmd").mockImplementation(async (_cmd: string) => {
+			throw new Error("Test error");
+		});
 
 		// Act
 		await organizationService.showTenantInformation();

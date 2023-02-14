@@ -14,7 +14,11 @@ import { RequiredResourceAccessService } from "./services/required-resource-acce
 import { SignInAudienceService } from "./services/sign-in-audience";
 import { copyValue } from "./utils/copy-value";
 import { setStatusBarMessage } from "./utils/status-bar";
-import { signInToCli, signOutFromCli } from "./utils/cli-authentication";
+import { signInUser, signOutUser } from "./utils/authentication";
+import { AzureCliAccountProvider } from "./utils/azure-cli-account-provider";
+
+// Create a new instance of the Azure CLI Account Provider
+const accountProvider = new AzureCliAccountProvider();
 
 // Create a new instance of the Graph Api Repository.
 const graphRepository = new GraphApiRepository();
@@ -23,12 +27,12 @@ const graphRepository = new GraphApiRepository();
 const treeDataProvider = new AppRegTreeDataProvider(graphRepository);
 
 // Create new instances of the services classes.
-const applicationService = new ApplicationService(graphRepository, treeDataProvider);
+const applicationService = new ApplicationService(graphRepository, treeDataProvider, accountProvider);
 const appRoleService = new AppRoleService(graphRepository, treeDataProvider);
 const keyCredentialService = new KeyCredentialService(graphRepository, treeDataProvider);
 const oauth2PermissionScopeService = new OAuth2PermissionScopeService(graphRepository, treeDataProvider);
-const organizationService = new OrganizationService(graphRepository, treeDataProvider);
-const ownerService = new OwnerService(graphRepository, treeDataProvider);
+const organizationService = new OrganizationService(graphRepository, treeDataProvider, accountProvider);
+const ownerService = new OwnerService(graphRepository, treeDataProvider, accountProvider);
 const passwordCredentialService = new PasswordCredentialService(graphRepository, treeDataProvider);
 const redirectUriService = new RedirectUriService(graphRepository, treeDataProvider);
 const requiredResourceAccessService = new RequiredResourceAccessService(graphRepository, treeDataProvider);
@@ -38,14 +42,19 @@ const signInAudienceService = new SignInAudienceService(graphRepository, treeDat
 export async function activate(context: ExtensionContext) {
 	// Hook up the configuration setting change handlers.
 	workspace.onDidChangeConfiguration(async (event) => {
-		if (event.affectsConfiguration("applicationregistrations.showOwnedApplicationsOnly") || event.affectsConfiguration("applicationregistrations.maximumQueryApps") || event.affectsConfiguration("applicationregistrations.maximumApplicationsShown") || event.affectsConfiguration("applicationregistrations.useEventualConsistency")) {
+		if (event.affectsConfiguration("applicationRegistrations.showOwnedApplicationsOnly") || 
+		event.affectsConfiguration("applicationRegistrations.includeEntraPortal") || 
+		event.affectsConfiguration("applicationRegistrations.omitTenantIdFromPortalRequests") || 
+		event.affectsConfiguration("applicationRegistrations.maximumQueryApps") || 
+		event.affectsConfiguration("applicationRegistrations.maximumApplicationsShown") || 
+		event.affectsConfiguration("applicationRegistrations.useEventualConsistency")) {
 			await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."));
 		}
 	});
 
 	// Command Palette Commands
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdSignIn`, async () => await signInToCli(treeDataProvider)));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdSignOut`, async () => await signOutFromCli(treeDataProvider)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdSignIn`, async () => await signInUser(treeDataProvider, accountProvider)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdSignOut`, async () => await signOutUser(treeDataProvider, accountProvider)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdAddApp`, async () => await applicationService.add()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdRefreshApps`, async () => await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."))));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdFilterApps`, async () => await treeDataProvider.filter()));
@@ -63,7 +72,8 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.viewAppManifest`, async (item) => await applicationService.viewManifest(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyClientId`, (item) => applicationService.copyClientId(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.showEndpoints`, (item) => applicationService.showEndpoints(item)));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openAppInPortal`, (item) => applicationService.openInPortal(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openAppInAzurePortal`, async (item) => await applicationService.openInAzurePortal(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openAppInEntraPortal`, async (item) => await applicationService.openInEntraPortal(item)));
 
 	// App Role Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAppRole`, async (item) => await appRoleService.add(item)));
@@ -120,11 +130,12 @@ export async function activate(context: ExtensionContext) {
 	// Owner Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addOwner`, async (item) => await ownerService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeOwner`, async (item) => await ownerService.remove(item)));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openUserInPortal`, (item) => ownerService.openInPortal(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openUserInAzurePortal`, async (item) => await ownerService.openInAzurePortal(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openUserInEntraPortal`, async (item) => await ownerService.openInEntraPortal(item)));
 
 	// Common Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyValue`, (item) => copyValue(item)));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.signInToAzure`, async () => await signInToCli(treeDataProvider)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.signInToAzure`, async () => await signInUser(treeDataProvider, accountProvider)));
 
 	// Register the tree data provider.
 	window.registerTreeDataProvider(VIEW_NAME, treeDataProvider);

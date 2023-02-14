@@ -1,5 +1,6 @@
 ## 0.8.0
 
+- Added functionality to open the user or application in the Entra portal.
 - Fixed an issue validating expiry dates for password credentials.
 - Fixed an issue validating App Id Uris for consumer accounts.
 

@@ -39,7 +39,7 @@
     "configuration": {
       "title": "Azure Application Registrations",
       "properties": {
-        "applicationregistrations.maximumApplicationsShown": {
+        "applicationRegistrations.maximumApplicationsShown": {
           "type": "number",
           "description": "The maximum number of application registrations to be shown in the view.",
           "default": 40,
@@ -47,31 +47,43 @@
           "maximum": 200,
           "order": 0
         },
-        "applicationregistrations.showOwnedApplicationsOnly": {
+        "applicationRegistrations.showOwnedApplicationsOnly": {
           "type": "boolean",
           "description": "Show only applications owned by the current user.",
           "default": true,
           "order": 1
         },
-        "applicationregistrations.useEventualConsistency": {
+        "applicationRegistrations.useEventualConsistency": {
           "type": "boolean",
           "description": "Use the eventual consistency header on Graph API calls for generating the application list. Enable this if you are working with a large number of applications.",
           "default": true,
           "order": 2
         },
-        "applicationregistrations.showApplicationCountWarning": {
+        "applicationRegistrations.showApplicationCountWarning": {
           "type": "boolean",
           "description": "Displays a warning when loading the application list if it is detected that you could benefit from a change in the eventual consistency setting.",
           "default": true,
           "order": 3
         },
-        "applicationregistrations.maximumQueryApps": {
+        "applicationRegistrations.maximumQueryApps": {
           "type": "number",
           "description": "Maximum Graph API query size when not working with eventual consistency. Lower this number to improve performance when you don't have a large number of applications, but bear in mind that without eventual consistency Graph API results are not sorted so setting this below your total applications means you might not see all expected applications.",
           "default": 100,
           "minimum": 1,
           "maximum": 200,
           "order": 4
+        },
+        "applicationRegistrations.includeEntraPortal": {
+          "type": "boolean",
+          "description": "Includes Open in Entra Portal alongside options to open applications or users in the Azure portal.",
+          "default": true,
+          "order": 5
+        },     
+        "applicationRegistrations.omitTenantIdFromPortalRequests": {
+          "type": "boolean",
+          "description": "Disables the inclusion of tenant IDs in portal URLs when opening applications or users in the Azure and/or Entra portals. Including the tenant ID in the portal URLs can help when you have logged into the extension with a non-default tenant and try to open items in the portals.",
+          "default": false,
+          "order": 6
         }
       }
     },
@@ -237,9 +249,13 @@
         "title": "Copy Client ID"
       },
       {
-        "command": "appRegistrations.openAppInPortal",
-        "title": "Open In Portal"
+        "command": "appRegistrations.openAppInAzurePortal",
+        "title": "Open In Azure Portal"
       },
+      {
+        "command": "appRegistrations.openAppInEntraPortal",
+        "title": "Open In Entra Portal"
+      },      
       {
         "command": "appRegistrations.editAudience",
         "title": "Edit"
@@ -249,9 +265,13 @@
         "title": "Copy"
       },
       {
-        "command": "appRegistrations.openUserInPortal",
-        "title": "Open In Portal"
+        "command": "appRegistrations.openUserInAzurePortal",
+        "title": "Open In Azure Portal"
       },
+      {
+        "command": "appRegistrations.openUserInEntraPortal",
+        "title": "Open In Entra Portal"
+      },      
       {
         "command": "appRegistrations.addOwner",
         "title": "Add"
@@ -488,9 +508,13 @@
           "when": "false"
         },
         {
-          "command": "appRegistrations.openAppInPortal",
+          "command": "appRegistrations.openAppInAzurePortal",
           "when": "false"
         },
+        {
+          "command": "appRegistrations.openAppInEntraPortal",
+          "when": "false"
+        },        
         {
           "command": "appRegistrations.editAudience",
           "when": "false"
@@ -500,9 +524,13 @@
           "when": "false"
         },
         {
-          "command": "appRegistrations.openUserInPortal",
+          "command": "appRegistrations.openUserInAzurePortal",
           "when": "false"
         },
+        {
+          "command": "appRegistrations.openUserInEntraPortal",
+          "when": "false"
+        },        
         {
           "command": "appRegistrations.addOwner",
           "when": "false"
@@ -691,10 +719,15 @@
           "group": "appRegistrations@3"
         },
         {
-          "command": "appRegistrations.openAppInPortal",
+          "command": "appRegistrations.openAppInAzurePortal",
           "when": "view == appRegistrations && viewItem == APPLICATION",
           "group": "appRegistrations@4"
         },
+        {
+          "command": "appRegistrations.openAppInEntraPortal",
+          "when": "view == appRegistrations && viewItem == APPLICATION && config.applicationRegistrations.includeEntraPortal",
+          "group": "appRegistrations@4"
+        },        
         {
           "command": "appRegistrations.addOwner",
           "when": "view == appRegistrations && viewItem == OWNERS",
@@ -706,10 +739,15 @@
           "group": "appRegistrations@1"
         },
         {
-          "command": "appRegistrations.openUserInPortal",
+          "command": "appRegistrations.openUserInAzurePortal",
           "when": "view == appRegistrations && viewItem == OWNER",
           "group": "appRegistrations@2"
         },
+        {
+          "command": "appRegistrations.openUserInEntraPortal",
+          "when": "view == appRegistrations && viewItem == OWNER && config.applicationRegistrations.includeEntraPortal",
+          "group": "appRegistrations@2"
+        },        
         {
           "command": "appRegistrations.viewAppManifest",
           "when": "view == appRegistrations && viewItem == APPLICATION",
