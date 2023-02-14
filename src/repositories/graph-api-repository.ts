@@ -6,7 +6,6 @@ import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-grap
 import { AzureCliCredential } from "@azure/identity";
 import { Application, KeyCredential, User, PasswordCredential, ServicePrincipal, Organization, RoleAssignment } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../types/graph-result";
-import { escapeSingleQuotesForFilter, escapeSingleQuotesForSearch } from "../utils/escape-string";
 
 // This is the client for the Microsoft Graph API
 export class GraphApiRepository {
@@ -279,7 +278,7 @@ export class GraphApiRepository {
 	async findUsersByName(name: string): Promise<GraphResult<User[]>> {
 		try {
 			const result: any = await this.client!.api("/users")
-				.filter(`startswith(displayName, '${escapeSingleQuotesForFilter(name)}')`)
+				.filter(`startswith(displayName, '${name.replace(/'/g, "''")}')`)
 				.get();
 			return { success: true, value: result.value };
 		} catch (error: any) {
@@ -291,7 +290,7 @@ export class GraphApiRepository {
 	async findUsersByEmail(name: string): Promise<GraphResult<User[]>> {
 		try {
 			const result: any = await this.client!.api("/users")
-				.filter(`startswith(mail, '${escapeSingleQuotesForFilter(name)}')`)
+				.filter(`startswith(mail, '${name.replace(/'/g, "''")}')`)
 				.get();
 			return { success: true, value: result.value };
 		} catch (error: any) {
@@ -315,7 +314,7 @@ export class GraphApiRepository {
 			const result: any = await this.client!.api("servicePrincipals")
 				.header("ConsistencyLevel", "eventual")
 				.count(true)
-				.search(`"displayName:${escapeSingleQuotesForSearch(name)}"`)
+				.search(`"displayName:${name}"`)
 				.select("appId,appDisplayName,appDescription")
 				.get();
 			return { success: true, value: result.value };
