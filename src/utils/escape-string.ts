@@ -3,5 +3,5 @@ export const escapeSingleQuotesForFilter = (str: string) => {
 };
 
 export const escapeSingleQuotesForSearch = (str: string) => {
-	return str.replace(/'/g, "'");
+	return str.replace(/'/g, "\'");
 };
