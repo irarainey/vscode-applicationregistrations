@@ -8,6 +8,7 @@ import { ApplicationService } from "../services/application";
 import { Application } from "@microsoft/microsoft-graph-types";
 import { mockAppId, mockAppObjectId, mockTenantId, seedMockData } from "./test-data";
 import { getTopLevelTreeItem } from "./test-utils";
+import { AzureCliAccountProvider } from "../utils/azure-cli-account-provider";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -19,7 +20,8 @@ describe("Application Service Tests", () => {
 	// Create instances of objects used in the tests
 	const graphApiRepository = new GraphApiRepository();
 	const treeDataProvider = new AppRegTreeDataProvider(graphApiRepository);
-	const applicationService = new ApplicationService(graphApiRepository, treeDataProvider);
+	const accountProvider = new AzureCliAccountProvider();
+	const applicationService = new ApplicationService(graphApiRepository, treeDataProvider, accountProvider);
 
 	// Create spy variables
 	let triggerCompleteSpy: jest.SpyInstance<any, unknown[], any>;
@@ -136,7 +138,9 @@ describe("Application Service Tests", () => {
 	test("Show endpoints with Az CLI error", async () => {
 		// Arrange
 		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "AzureADMyOrg" }));
-		jest.spyOn(execShellCmdUtil, "execShellCmd").mockImplementation(async (_cmd: string) => { throw new Error("Test Error"); });
+		jest.spyOn(execShellCmdUtil, "execShellCmd").mockImplementation(async (_cmd: string) => {
+			throw new Error("Test Error");
+		});
 
 		// Act
 		await applicationService.showEndpoints(item);
@@ -174,9 +178,9 @@ describe("Application Service Tests", () => {
 		expect(vscode.env.clipboard.readText()).toEqual(mockAppId);
 	});
 
-	test("Open in portal", async () => {
+	test("Open in Azure portal", async () => {
 		// Act
-		applicationService.openInPortal(item);
+		applicationService.openInAzurePortal(item);
 
 		// Assert
 		expect(openExternalSpy).toHaveBeenCalled();

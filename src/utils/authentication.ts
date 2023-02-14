@@ -1,13 +1,13 @@
 import { window } from "vscode";
-import { execShellCmd } from "../utils/exec-shell-cmd";
-import { setStatusBarMessage } from "../utils/status-bar";
+import { setStatusBarMessage } from "./status-bar";
 import { errorHandler } from "../error-handler";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
+import { AccountProvider } from "../types/account-provider";
 
-// Invokes the Azure CLI sign-in command to authenticate the user.
-export const signInToCli = async (treeDataProvider: AppRegTreeDataProvider) => {
+// Authenticate the user.
+export const signInUser = async (treeDataProvider: AppRegTreeDataProvider, accountProvider: AccountProvider) => {
 	await treeDataProvider.render(undefined, "AUTHENTICATING");
-	const status = await authenticate();
+	const status = await authenticate(accountProvider);
 
 	// The user pressed cancel.
 	if (status === undefined) {
@@ -39,9 +39,10 @@ export const signInToCli = async (treeDataProvider: AppRegTreeDataProvider) => {
 	await treeDataProvider.render(setStatusBarMessage("Loading Application Registrations..."), "AUTHENTICATED");
 };
 
-// Invokes the Azure CLI sign-out command to sign the user out.
-export const signOutFromCli = async (treeDataProvider: AppRegTreeDataProvider) => {
-	const status = await execShellCmd("az logout")
+// Uses the AccountProvider instance to sign out the current user.
+export const signOutUser = async (treeDataProvider: AppRegTreeDataProvider, accountProvider: AccountProvider) => {
+	await accountProvider
+		.logoutUser()
 		.then(async () => {
 			await treeDataProvider.render(undefined, "SIGN-IN");
 		})
@@ -50,8 +51,8 @@ export const signOutFromCli = async (treeDataProvider: AppRegTreeDataProvider) =
 		});
 };
 
-// Invokes the Azure CLI sign-in command to authenticate the user.
-const authenticate = async (): Promise<boolean | undefined> => {
+// Uses the AccountProvider instance to authenticate the user.
+const authenticate = async (accountProvider: AccountProvider): Promise<boolean | undefined> => {
 	// Prompt the user for the tenant name or Id.
 	const tenant = await window.showInputBox({
 		placeHolder: "Tenant Name or ID",
@@ -65,20 +66,6 @@ const authenticate = async (): Promise<boolean | undefined> => {
 		return undefined;
 	}
 
-	// Build the command to invoke the Azure CLI sign-in command.
-	let command = "az login";
-	if (tenant.length > 0) {
-		command += ` --tenant ${tenant}`;
-	}
-
-	// Execute the command.
-	const status = await execShellCmd(command)
-		.then(() => {
-			return true;
-		})
-		.catch(() => {
-			return false;
-		});
-
+	const status = await accountProvider.loginUser(tenant);
 	return status;
 };

@@ -1,5 +1,5 @@
-import { window, env, Uri } from "vscode";
-import { PORTAL_USER_URI } from "../constants";
+import { window, env, Uri, workspace } from "vscode";
+import { AZURE_PORTAL_ROOT, ENTRA_PORTAL_ROOT, AZURE_AND_ENTRA_PORTAL_USER_PATH } from "../constants";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
@@ -9,14 +9,20 @@ import { debounce } from "ts-debounce";
 import { GraphResult } from "../types/graph-result";
 import { validateOwner } from "../utils/validation";
 import { OwnerList } from "../models/owner-list";
+import { AccountProvider } from "../types/account-provider";
 
 export class OwnerService extends ServiceBase {
+
+	// The account provider.
+    private accountProvider : AccountProvider;
+
 	// The list of users in the directory.
 	private owners = new OwnerList();
 
 	// The constructor for the OwnerService class.
-	constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
+	constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider, accountProvider : AccountProvider) {
 		super(graphRepository, treeDataProvider);
+        this.accountProvider = accountProvider;
 	}
 
 	// Sets the user list.
@@ -68,8 +74,41 @@ export class OwnerService extends ServiceBase {
 		}
 	}
 
-	// Opens the user in the Azure Portal.
-	openInPortal(item: AppRegItem): void {
-		env.openExternal(Uri.parse(`${PORTAL_USER_URI}${item.userId}`));
-	}
+    // Opens the user in the Azure Portal.
+    async openInAzurePortal(item: AppRegItem): Promise<void> {
+        return this.openInPortal(AZURE_PORTAL_ROOT, item);
+    }
+
+    // Opens the user in the Entra Portal.
+    async openInEntraPortal(item: AppRegItem): Promise<void> {
+        // Determine if using the Entra portal is enabled.
+        const isEntraEnabled = workspace.getConfiguration("applicationRegistrations").get("includeEntraPortal") as boolean;
+
+        if (isEntraEnabled){
+            return this.openInPortal(ENTRA_PORTAL_ROOT, item);
+        }
+        else{
+            throw new Error("Entra Portal operations are not enabled in the workspace settings.");
+        }
+    }
+
+    // Opens the user in the Azure or Entra Portal.
+    private async openInPortal(portalRoot: string, item: AppRegItem): Promise<void>{
+        // Determine if "omit tenant ID from portal requests" has been set.
+        const omitTenantIdFromPortalRequests = workspace.getConfiguration("applicationRegistrations").get("omitTenantIdFromPortalRequests") as boolean;
+
+        let uriText = "";
+        if (omitTenantIdFromPortalRequests === false){
+            const accountInformation = await this.accountProvider.getAccountInformation();
+            if (accountInformation.tenantId){
+                uriText = `${portalRoot}/${accountInformation.tenantId}${AZURE_AND_ENTRA_PORTAL_USER_PATH}${item.userId}`;
+            }
+        }
+
+        // Check if uriText has been set to anything meaningful yet. If not, then set it w/o a tenant ID.
+        if (typeof(uriText) === "string" && uriText.trim().length === 0){
+            uriText = `${portalRoot}${AZURE_AND_ENTRA_PORTAL_USER_PATH}${item.userId}`;
+        }
+        env.openExternal(Uri.parse(uriText));
+    }
 }

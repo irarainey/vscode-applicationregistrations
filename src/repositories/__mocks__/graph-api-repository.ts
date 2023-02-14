@@ -59,12 +59,18 @@ export class GraphApiRepository {
 
 	async removeApplicationOwner(id: string, userId: string): Promise<GraphResult<void>> {
 		const app: Application = mockApplications.filter((a) => a.id === id)[0];
-		app.owners!.splice(app.owners!.findIndex((o) => o.id === userId), 1);
+		app.owners!.splice(
+			app.owners!.findIndex((o) => o.id === userId),
+			1
+		);
 		return { success: true };
 	}
 
 	async deleteApplication(id: string): Promise<GraphResult<void>> {
-		mockApplications.splice(mockApplications.findIndex((a) => a.id === id), 1);
+		mockApplications.splice(
+			mockApplications.findIndex((a) => a.id === id),
+			1
+		);
 		return { success: true };
 	}
 
@@ -101,7 +107,10 @@ export class GraphApiRepository {
 
 	async deletePasswordCredential(id: string, passwordId: string): Promise<GraphResult<void>> {
 		const app: Application = mockApplications.filter((a) => a.id === id)[0];
-		app.passwordCredentials!.splice(app.passwordCredentials!.findIndex((o) => o.keyId === passwordId), 1);
+		app.passwordCredentials!.splice(
+			app.passwordCredentials!.findIndex((o) => o.keyId === passwordId),
+			1
+		);
 		return { success: true };
 	}
 }

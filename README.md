@@ -74,6 +74,10 @@ There are a number of user settings to control the behaviour of this extension. 
     * With this enabled the total number of applications you have in your tenant will be counted and a warning will be displayed if it is determined your **Use Eventual Consistency** setting is not set to the optimal value for your best experience. Default value is `true`.
 * **Maximum Query Apps**
     * This controls how many applications Graph API will request in an initial query to build the list when **_not_** using eventual consistency. If working with a small number of applications reducing this number can improve performance. Be aware though that due to the nature of Graph API and client-side ordering, reducing this to below **Maximum Applications Shown** could result in not seeing the applications you expect in the right order. Default value is `100`.
+* **Include Entra Portal**
+    * Includes Open in Entra Portal alongside options to open applications or users in the Azure portal. Default value is `true`.
+* **Omit Tenant ID from Portal Requests**
+    * Disables the inclusion of tenant IDs in portal URLs when opening applications or users in the Azure and/or Entra portals. Including the tenant ID in the portal URLs can help when you have logged into the extension with a non-default tenant and try to open items in the portals. Default value is `false`.
 
 ![User Settings](resources/images/settings.png)
 

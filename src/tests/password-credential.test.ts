@@ -90,12 +90,12 @@ describe("Password Credential Service Tests", () => {
 
 	test("Add password credential successfully", async () => {
 		// Arrange
-		jest.spyOn(passwordCredentialService, "inputDescription").mockImplementation(async () => ("Test Description"));
+		jest.spyOn(passwordCredentialService, "inputDescription").mockImplementation(async () => "Test Description");
 		jest.spyOn(passwordCredentialService, "inputExpiryDate").mockImplementation(async (expiryDate: Date, validation: (value: string) => string | undefined) => {
 			const expiry = format(expiryDate, "yyyy-MM-dd");
 			return validation(expiry) === undefined ? expiry : undefined;
 		});
-		
+
 		// Act
 		await passwordCredentialService.add(item);
 
@@ -114,13 +114,13 @@ describe("Password Credential Service Tests", () => {
 	test("Add password credential with incorrect date validation error", async () => {
 		// Arrange
 		const validationSpy = jest.spyOn(validation, "validatePasswordCredentialExpiryDate");
-		jest.spyOn(passwordCredentialService, "inputDescription").mockImplementation(async () => ("Test Description"));
+		jest.spyOn(passwordCredentialService, "inputDescription").mockImplementation(async () => "Test Description");
 		jest.spyOn(passwordCredentialService, "inputExpiryDate").mockImplementation(async (_expiryDate: Date, validation: (value: string) => string | undefined) => {
 			const result = validation("NOTADATE");
 			expect(result).toBe("Expiry must be a valid date.");
 			return result;
 		});
-		
+
 		// Act
 		await passwordCredentialService.add(item);
 
@@ -132,13 +132,13 @@ describe("Password Credential Service Tests", () => {
 	test("Add password credential with past date validation error", async () => {
 		// Arrange
 		const validationSpy = jest.spyOn(validation, "validatePasswordCredentialExpiryDate");
-		jest.spyOn(passwordCredentialService, "inputDescription").mockImplementation(async () => ("Test Description"));
+		jest.spyOn(passwordCredentialService, "inputDescription").mockImplementation(async () => "Test Description");
 		jest.spyOn(passwordCredentialService, "inputExpiryDate").mockImplementation(async (_expiryDate: Date, validation: (value: string) => string | undefined) => {
 			const result = validation("2000-01-01");
 			expect(result).toBe("Expiry must be in the future.");
 			return result;
 		});
-		
+
 		// Act
 		await passwordCredentialService.add(item);
 
@@ -150,13 +150,13 @@ describe("Password Credential Service Tests", () => {
 	test("Add password credential with future date validation error", async () => {
 		// Arrange
 		const validationSpy = jest.spyOn(validation, "validatePasswordCredentialExpiryDate");
-		jest.spyOn(passwordCredentialService, "inputDescription").mockImplementation(async () => ("Test Description"));
+		jest.spyOn(passwordCredentialService, "inputDescription").mockImplementation(async () => "Test Description");
 		jest.spyOn(passwordCredentialService, "inputExpiryDate").mockImplementation(async (_expiryDate: Date, validation: (value: string) => string | undefined) => {
 			const result = validation("3000-01-01");
 			expect(result).toBe("Expiry must be less than 2 years in the future.");
 			return result;
 		});
-		
+
 		// Act
 		await passwordCredentialService.add(item);
 
