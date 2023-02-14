@@ -4,7 +4,7 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { PasswordCredentialService } from "../services/password-credential";
-import { mockAppObjectId, mockNewPasswordKeyId, seedMockData } from "./test-data";
+import { mockAppObjectId, mockNewPasswordKeyId, seedMockData } from "./data/test-data";
 import { getTopLevelTreeItem } from "./test-utils";
 import { format } from "date-fns";
 

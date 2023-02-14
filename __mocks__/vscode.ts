@@ -4,6 +4,7 @@ export const window = {
 	setStatusBarMessage: jest.fn(() => {
 		return { dispose: jest.fn() };
 	}),
+	showOpenDialog: jest.fn(),
 	showInformationMessage: jest.fn(),
 	showErrorMessage: jest.fn(),
 	showWarningMessage: jest.fn(),
@@ -48,6 +49,9 @@ export class EventEmitter {
 export const Uri = {
 	parse: (_value: string, _strict?: boolean) => {
 		jest.fn();
+	},
+	file: (value: string) => {
+		return { path: value, scheme: "file", fragment: "", query: "", fsPath: value };
 	}
 };
 

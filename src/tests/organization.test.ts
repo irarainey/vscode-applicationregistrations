@@ -3,7 +3,7 @@ import * as execShellCmdModule from "../utils/exec-shell-cmd";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { OrganizationService } from "../services/organization";
-import { mockTenantId, seedMockData } from "./test-data";
+import { mockTenantId, seedMockData } from "./data/test-data";
 import { TextDocumentContentProvider } from "vscode";
 import { AzureCliAccountProvider } from "../utils/azure-cli-account-provider";
 import { AccountInformation } from "../models/account-information";

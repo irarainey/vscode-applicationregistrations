@@ -1,6 +1,6 @@
-import { Application, Organization, User, RoleAssignment, PasswordCredential } from "@microsoft/microsoft-graph-types";
+import { Application, Organization, User, RoleAssignment, PasswordCredential, KeyCredential } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../../types/graph-result";
-import { mockApplications, mockOrganizations, mockUser, mockRoleAssignments, mockUsers, mockNewPasswordKeyId } from "../../tests/test-data";
+import { mockApplications, mockOrganizations, mockUser, mockRoleAssignments, mockUsers, mockNewPasswordKeyId } from "../../tests/data/test-data";
 
 export class GraphApiRepository {
 	async getApplicationCountOwned(): Promise<GraphResult<number>> {
@@ -111,6 +111,18 @@ export class GraphApiRepository {
 			app.passwordCredentials!.findIndex((o) => o.keyId === passwordId),
 			1
 		);
+		return { success: true };
+	}
+
+	async updateKeyCredentials(id: string, credentials: KeyCredential[]): Promise<GraphResult<void>> {
+		credentials.forEach((obj) => {
+			if (obj.startDateTime === undefined) {
+				obj.startDateTime = new Date().toISOString();
+				obj.endDateTime = new Date().toISOString();
+			}
+		});
+		const app: Application = mockApplications.filter((a) => a.id === id)[0];
+		app.keyCredentials = credentials;
 		return { success: true };
 	}
 }
