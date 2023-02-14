@@ -31,7 +31,28 @@ const seedApplications: any[] = [
 			preAuthorizedApplications: []
 		},
 		appRoles: [],
-		keyCredentials: [],
+		keyCredentials: [
+			{
+				customKeyIdentifier: "F56DC6F6E469B781F8BA664DF842788E5D197F24",
+				displayName: "CN=test1.com",
+				endDateTime: "2025-01-01T00:00:00Z",
+				key: null,
+				keyId: "865b1dbb-5c6d-4e9c-81a3-474af6556bc3",
+				startDateTime: "2023-01-01T00:00:00Z",
+				type: "AsymmetricX509Cert",
+				usage: "Verify"
+			},
+			{
+				customKeyIdentifier: "E46DC6F6E469B781F8BA664DF842788E5D197F24",
+				displayName: "CN=test2.com",
+				endDateTime: "2024-01-01T00:00:00Z",
+				key: null,
+				keyId: "ec5db659-6c18-4803-a172-77a6e0dbdb6e",
+				startDateTime: "2022-01-01T00:00:00Z",
+				type: "AsymmetricX509Cert",
+				usage: "Verify"
+			}
+		],
 		passwordCredentials: [
 			{
 				customKeyIdentifier: null,
@@ -186,6 +207,29 @@ const seedRoleAssignments: any[] = [
 		}
 	}
 ];
+
+export const mockPemCertificate = `-----BEGIN CERTIFICATE-----
+	MIIDkTCCAnmgAwIBAgIUeuJnMCKaW8S9+Kw51mez+s1JAK0wDQYJKoZIhvcNAQEL
+	BQAwWDELMAkGA1UEBhMCVUsxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
+	GEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDERMA8GA1UEAwwIdGVzdC5jb20wHhcN
+	MjMwMjE0MTU0NzM1WhcNMzMwMjExMTU0NzM1WjBYMQswCQYDVQQGEwJVSzETMBEG
+	A1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0cyBQdHkg
+	THRkMREwDwYDVQQDDAh0ZXN0LmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
+	AQoCggEBAMD921ZyHxy8imjXAjpY0NkgjbUbkDsWfSsCH4jrPF8EUfib4tRBRehA
+	82FOjWR8blKMU9nGngGbX/X6CEv9qVM6dzcyieSMHbPYdOKGUo4dJEpEnFY371D6
+	9adQ0TUuHJ2p3Y1wmQfK7G70WGnPgrwmTOCs8Es2+PwjSJxX4PR2ipGmw8OKb9dQ
+	PfXe+odLs4ek1ucnSi84AQu6yR8ZII7Wf3lGZ3DVmaWKjPZUJO9Di0jjIVe8JxfE
+	WuQDpIdHttbjWKABEQdCAP1mwsU2EXJwf+yC3QGkewGVXHdIpF9MfUYmQ2/ivE9X
+	XtKp2URnD7RwpWtg37OlRJ4esq4+5JsCAwEAAaNTMFEwHQYDVR0OBBYEFGBkZKMW
+	kvxDPCPYzH4aoZGhMEVyMB8GA1UdIwQYMBaAFGBkZKMWkvxDPCPYzH4aoZGhMEVy
+	MA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBALDXmQ+bpT4IxEF6
+	KB6aWPIMLRBfTgyIpFFVckZlygFOdxt0akGYAixSy6NxnDtVwEUjOxxCQzxDbAzk
+	HAJs8fJfpdDnjym2FJAMUX1lE5Au9/u6IRuEpoOFAbSwJG7Z/faVUSX0VM/+YWo4
+	LPl8uL0LCVSAu4MSo2sxGStJaBPRUNDBCviSs1B1FTejVO01LH0iSJnFOHbVZaZF
+	hUxQ8Ym1fB+8Ml5H49eqPutGwj1sybj1wH434uS99TSH0vNlb81QOo2kwRAqiaim
+	3fWYhZsV9VHS/7gSsYBOktuSGCsEA8QE4nloJKG1RwlaVDcq6bs8Tj1GNHkqfZqF
+	x1sLjRM=
+	-----END CERTIFICATE-----`;
 
 export const mockTenantId = "c7b3da28-01b8-46d3-9523-d1b24cbbde76";
 export const mockNewPasswordKeyId = "a7da2abf-da93-4bad-bf0b-6d9ee0d3e8ec";

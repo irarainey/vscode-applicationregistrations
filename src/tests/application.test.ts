@@ -6,7 +6,7 @@ import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ApplicationService } from "../services/application";
 import { Application } from "@microsoft/microsoft-graph-types";
-import { mockAppId, mockAppObjectId, mockTenantId, seedMockData } from "./test-data";
+import { mockAppId, mockAppObjectId, mockTenantId, seedMockData } from "./data/test-data";
 import { getTopLevelTreeItem } from "./test-utils";
 import { AzureCliAccountProvider } from "../utils/azure-cli-account-provider";
 
