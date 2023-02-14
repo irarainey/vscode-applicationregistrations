@@ -25,11 +25,9 @@ module.exports = {
     "<rootDir>/src/services/*.ts",
     "<rootDir>/src/data/*.ts",
     "<rootDir>/src/models/*.ts",
-    "<rootDir>/src/utils/validation.ts",
-    "<rootDir>/src/utils/status-bar.ts",
-    "<rootDir>/src/utils/copy-value.ts",
-    "<rootDir>/src/utils/cli-authentication.ts",
+    "<rootDir>/src/utils/*.ts",
     "<rootDir>/src/error-handler.ts",
-    "<rootDir>/src/constants.ts"
+    "<rootDir>/src/constants.ts",
+    "!<rootDir>/src/utils/exec-shell-cmd.ts"
   ]
 };
