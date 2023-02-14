@@ -13,13 +13,12 @@
     "strict": true
   },
   "exclude": [
-    "node_modules", 
+    "__mocks__",
+    "coverage",
     "dist", 
+    "node_modules", 
     "out",
     "packages",
-    "coverage",
-    "tests",
-    "__mocks__",
     "babel.config.js",
     "jest.config.js"
   ]

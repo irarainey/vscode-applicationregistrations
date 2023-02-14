@@ -1,11 +1,26 @@
-export const mockApplications: any[] = [
+// This file contains mock data for the tests
+export let mockApplications: any[];
+export let mockUser: any;
+export let mockUsers: any[];
+export let mockOrganizations: any[];
+export let mockRoleAssignments: any[];
+
+export const seedMockData = () => {
+	mockApplications = JSON.parse(JSON.stringify(seedApplications));
+	mockUser = JSON.parse(JSON.stringify(seedUser));
+	mockUsers = JSON.parse(JSON.stringify(seedUsers));
+	mockOrganizations = JSON.parse(JSON.stringify(seedOrganizations));
+	mockRoleAssignments = JSON.parse(JSON.stringify(seedRoleAssignments));
+};
+
+const seedApplications: any[] = [
 	{
 		id: "ab4e6904-6629-41c9-91d7-2ec9c7d3e46c",
 		appId: "96a2745c-6920-4149-a8b0-90339bee74f9",
 		createdDateTime: "2023-01-01T00:00:00Z",
 		displayName: "First Test App",
 		description: null,
-		identifierUris: [],
+		identifierUris: ["https://firsttestapp.com"],
 		notes: null,
 		signInAudience: "AzureADMultipleOrgs",
 		api: {
@@ -44,13 +59,18 @@ export const mockApplications: any[] = [
 		],
 		web: {
 			homePageUrl: null,
-			logoutUrl: null,
-			redirectUris: [],
+			logoutUrl: "https://sample.com/logout",
+			redirectUris: ["https://sample.com/callback"],
 			implicitGrantSettings: {
 				enableAccessTokenIssuance: false,
 				enableIdTokenIssuance: false
 			},
-			redirectUriSettings: []
+			redirectUriSettings: [
+				{
+					uri: "https://sample.com/callback",
+					index: null
+				}
+			]
 		},
 		spa: {
 			redirectUris: []
@@ -58,9 +78,15 @@ export const mockApplications: any[] = [
 		owners: [
 			{
 				id: "277c79dd-2e4d-40f0-9d9b-eff644ed74e8",
-				displayName: "Sample User",
-				userPrincipalName: "sample@user.com",
-				mail: "sample@user.com"
+				displayName: "First User",
+				userPrincipalName: "first@user.com",
+				mail: "first@user.com"
+			},
+			{
+				id: "b204cef1-baa1-4284-8ae1-2285a609ba35",
+				displayName: "Second User",
+				userPrincipalName: "second@user.com",
+				mail: "second@user.com"
 			}
 		]
 	},
@@ -103,24 +129,43 @@ export const mockApplications: any[] = [
 		owners: [
 			{
 				id: "277c79dd-2e4d-40f0-9d9b-eff644ed74e8",
-				displayName: "Sample User",
-				userPrincipalName: "sample@user.com",
-				mail: "sample@user.com"
+				displayName: "First User",
+				userPrincipalName: "first@user.com",
+				mail: "first@user.com"
 			}
 		]
 	}
 ];
 
-export const mockUser: any = {
+const seedUser: any = {
 	id: "277c79dd-2e4d-40f0-9d9b-eff644ed74e8",
-	displayName: "Sample User",
-	givenName: "Sample",
-	mail: "sample@user.com",
+	displayName: "First User",
+	givenName: "First",
+	mail: "first@user.com",
 	surname: "User",
-	userPrincipalName: "sample@user.com"
+	userPrincipalName: "first@user.com"
 };
 
-export const mockOrganizations: any[] = [
+const seedUsers: any[] = [
+	{
+		id: "277c79dd-2e4d-40f0-9d9b-eff644ed74e8",
+		displayName: "First User",
+		givenName: "First",
+		mail: "first@user.com",
+		surname: "User",
+		userPrincipalName: "first@user.com"
+	},
+	{
+		id: "b204cef1-baa1-4284-8ae1-2285a609ba35",
+		displayName: "Second User",
+		givenName: "Second",
+		mail: "second@user.com",
+		surname: "User",
+		userPrincipalName: "second@user.com"
+	}
+];
+
+const seedOrganizations: any[] = [
 	{
 		id: "c7b3da28-01b8-46d3-9523-d1b24cbbde76",
 		displayName: "Sample Tenant",
@@ -131,7 +176,7 @@ export const mockOrganizations: any[] = [
 	}
 ];
 
-export const mockRoleAssignments: any[] = [
+const seedRoleAssignments: any[] = [
 	{
 		principalId: "277c79dd-2e4d-40f0-9d9b-eff644ed74e8",
 		roleDefinition: {
@@ -141,3 +186,12 @@ export const mockRoleAssignments: any[] = [
 		}
 	}
 ];
+
+export const mockTenantId = "c7b3da28-01b8-46d3-9523-d1b24cbbde76";
+export const mockNewPasswordKeyId = "a7da2abf-da93-4bad-bf0b-6d9ee0d3e8ec";
+export const mockAppObjectId = seedApplications[0].id;
+export const mockSecondAppObjectId = seedApplications[1].id;
+export const mockAppId = seedApplications[0].appId;
+export const mockSecondAppId = seedApplications[1].appId;
+export const mockUserId = seedUsers[0].id;
+export const mockSecondUserId = seedUsers[1].id;

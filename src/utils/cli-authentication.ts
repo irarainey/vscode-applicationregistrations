@@ -2,7 +2,7 @@ import { window } from "vscode";
 import { execShellCmd } from "../utils/exec-shell-cmd";
 import { setStatusBarMessage } from "../utils/status-bar";
 import { errorHandler } from "../error-handler";
-import { AppRegTreeDataProvider } from "../data/app-reg-tree-data-provider";
+import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 
 // Invokes the Azure CLI sign-in command to authenticate the user.
 export const signInToCli = async (treeDataProvider: AppRegTreeDataProvider) => {

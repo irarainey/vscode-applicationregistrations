@@ -7,7 +7,6 @@ import { AppRegItem } from "../models/app-reg-item";
 import { sort } from "fast-sort";
 import { format } from "date-fns";
 import { GraphResult } from "../types/graph-result";
-import { escapeSingleQuotesForFilter } from "../utils/escape-string";
 import { clearStatusBarMessage, setStatusBarMessage } from "../utils/status-bar";
 import { errorHandler } from "../error-handler";
 
@@ -172,7 +171,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 		} else if (newFilter !== "" && newFilter !== this.filterText) {
 			// If the filter text is not empty then set the filter command and filter text.
 			this.filterText = newFilter!;
-			this.filterCommand = `startswith(displayName, \'${escapeSingleQuotesForFilter(newFilter)}\')`;
+			this.filterCommand = `startswith(displayName, \'${newFilter.replace(/'/g, "''")}\')`;
 			await this.render(setStatusBarMessage("Filtering Application Registrations..."));
 		}
 	}
@@ -394,6 +393,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 						// Create the tree view item.
 						const appRegItem: AppRegItem = new AppRegItem({
 							label: app.displayName!,
+							value: app.displayName!,
 							context: "APPLICATION",
 							iconPath: path.join(__filename, "..", "..", "resources", "icons", "app.svg"),
 							baseIcon: path.join(__filename, "..", "..", "resources", "icons", "app.svg"),
