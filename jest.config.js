@@ -28,7 +28,6 @@ module.exports = {
     "<rootDir>/src/utils/validation.ts",
     "<rootDir>/src/utils/status-bar.ts",
     "<rootDir>/src/utils/copy-value.ts",
-    "<rootDir>/src/utils/escape-string.ts",
     "<rootDir>/src/utils/cli-authentication.ts",
     "<rootDir>/src/error-handler.ts",
     "<rootDir>/src/constants.ts"
