@@ -6,7 +6,6 @@ import { OrganizationService } from "../services/organization";
 import { mockTenantId, seedMockData } from "./data/test-data";
 import { TextDocumentContentProvider } from "vscode";
 import { AzureCliAccountProvider } from "../utils/azure-cli-account-provider";
-import { AccountInformation } from "../models/account-information";
 
 // Create Jest mocks
 jest.mock("vscode");

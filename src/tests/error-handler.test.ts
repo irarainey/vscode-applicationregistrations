@@ -35,7 +35,7 @@ describe("Error Handler Tests", () => {
 
 	test("Reset icons on error", async () => {
 		// Act
-		errorHandlerModule.errorHandler({ error: new Error("Test Error"), item: { iconPath: "spinner", baseIcon: "base" }, treeDataProvider: treeDataProvider });
+		await errorHandlerModule.errorHandler({ error: new Error("Test Error"), item: { iconPath: "spinner", baseIcon: "base" }, treeDataProvider: treeDataProvider });
 
 		// Assert
 		expect(triggerOnDidChangeTreeDataSpy).toHaveBeenCalled();
@@ -43,7 +43,7 @@ describe("Error Handler Tests", () => {
 
 	test("AZ CLI error", async () => {
 		// Act
-		errorHandlerModule.errorHandler({ error: new Error("az login"), item: { iconPath: "spinner", baseIcon: "base" }, treeDataProvider: treeDataProvider });
+		await errorHandlerModule.errorHandler({ error: new Error("az login"), item: { iconPath: "spinner", baseIcon: "base" }, treeDataProvider: treeDataProvider });
 
 		// Assert
 		const tree = await treeDataProvider.getChildren();
@@ -54,7 +54,7 @@ describe("Error Handler Tests", () => {
 
 	test("Azure subscription error", async () => {
 		// Act
-		errorHandlerModule.errorHandler({ error: new Error("az account set"), item: { iconPath: "spinner", baseIcon: "base" }, treeDataProvider: treeDataProvider });
+		await errorHandlerModule.errorHandler({ error: new Error("az account set"), item: { iconPath: "spinner", baseIcon: "base" }, treeDataProvider: treeDataProvider });
 
 		// Assert
 		const tree = await treeDataProvider.getChildren();
@@ -65,7 +65,7 @@ describe("Error Handler Tests", () => {
 
 	test("Azure subscription error without tree data provider", async () => {
 		// Act
-		errorHandlerModule.errorHandler({ error: new Error("az account set"), item: { iconPath: "spinner", baseIcon: "base" }, treeDataProvider: undefined });
+		await errorHandlerModule.errorHandler({ error: new Error("az account set"), item: { iconPath: "spinner", baseIcon: "base" }, treeDataProvider: undefined });
 
 		// Assert
 		expect(showErrorMessageSpy).toHaveBeenCalled();
@@ -76,7 +76,7 @@ describe("Error Handler Tests", () => {
 		jest.spyOn(vscode.window, "showErrorMessage").mockReturnValue({ then: (callback: any) => callback("Open Documentation") });
 
 		// Act
-		errorHandlerModule.errorHandler({ error: new Error("signInAudience"), item: { iconPath: "spinner", baseIcon: "base" }, treeDataProvider: treeDataProvider });
+		await errorHandlerModule.errorHandler({ error: new Error("signInAudience"), item: { iconPath: "spinner", baseIcon: "base" }, treeDataProvider: treeDataProvider });
 
 		// Assert
 		expect(showErrorMessageSpy).toHaveBeenCalled();

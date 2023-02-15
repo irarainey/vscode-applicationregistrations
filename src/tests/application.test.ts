@@ -191,6 +191,18 @@ describe("Application Service Tests", () => {
 		expect(returnValue).toEqual(true);
 	});
 
+	test("Open in Azure portal without tenant id", async () => {
+		// Arrange
+		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => { return { get: (key: string) => { return key === "omitTenantIdFromPortalRequests" ? true : undefined; } } as any; });
+
+		// Act
+		const returnValue = await applicationService.openInAzurePortal(item);
+
+		// Assert
+		expect(openExternalSpy).toHaveBeenCalledWith(vscode.Uri.parse(`${AZURE_PORTAL_ROOT}${AZURE_AND_ENTRA_PORTAL_APP_PATH}${mockAppId}`));
+		expect(returnValue).toEqual(true);
+	});
+
 	test("Open in Entra portal", async () => {
 		// Arrange
 		jest.spyOn(accountProvider, "getAccountInformation").mockImplementation(async () => ({ tenantId: mockTenantId } as any));
