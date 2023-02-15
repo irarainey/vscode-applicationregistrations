@@ -9,6 +9,7 @@ import { Application } from "@microsoft/microsoft-graph-types";
 import { mockAppId, mockAppObjectId, mockTenantId, seedMockData } from "./data/test-data";
 import { getTopLevelTreeItem } from "./test-utils";
 import { AzureCliAccountProvider } from "../utils/azure-cli-account-provider";
+import { AZURE_AND_ENTRA_PORTAL_APP_PATH, AZURE_PORTAL_ROOT, ENTRA_PORTAL_ROOT } from "../constants";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -179,11 +180,27 @@ describe("Application Service Tests", () => {
 	});
 
 	test("Open in Azure portal", async () => {
+		// Arrange
+		jest.spyOn(accountProvider, "getAccountInformation").mockImplementation(async () => ({ tenantId: mockTenantId } as any));
+
 		// Act
-		applicationService.openInAzurePortal(item);
+		const returnValue = await applicationService.openInAzurePortal(item);
 
 		// Assert
-		expect(openExternalSpy).toHaveBeenCalled();
+		expect(openExternalSpy).toHaveBeenCalledWith(vscode.Uri.parse(`${AZURE_PORTAL_ROOT}/${mockTenantId}${AZURE_AND_ENTRA_PORTAL_APP_PATH}${mockAppId}`));
+		expect(returnValue).toEqual(true);
+	});
+
+	test("Open in Entra portal", async () => {
+		// Arrange
+		jest.spyOn(accountProvider, "getAccountInformation").mockImplementation(async () => ({ tenantId: mockTenantId } as any));
+
+		// Act
+		const returnValue = await applicationService.openInEntraPortal(item);
+
+		// Assert
+		expect(openExternalSpy).toHaveBeenCalledWith(vscode.Uri.parse(`${ENTRA_PORTAL_ROOT}/${mockTenantId}${AZURE_AND_ENTRA_PORTAL_APP_PATH}${mockAppId}`));
+		expect(returnValue).toEqual(true);
 	});
 
 	test("Edit Logout URL with unset value", async () => {

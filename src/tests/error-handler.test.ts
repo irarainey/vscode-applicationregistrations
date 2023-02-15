@@ -14,12 +14,9 @@ describe("Error Handler Tests", () => {
 	const treeDataProvider = new AppRegTreeDataProvider(graphApiRepository);
 
 	// Create spies
-	let statusBarSpy: jest.SpyInstance<any, [text: string], any>;
-	let openExternalSpy: jest.SpyInstance<Thenable<boolean>, [target: vscode.Uri], any>;
 	let triggerOnDidChangeTreeDataSpy: jest.SpyInstance<void, [item?: AppRegItem | undefined], any>;
 	let treeViewRenderSpy: jest.SpyInstance<Promise<void>, [status?: string | undefined, type?: string | undefined], any>;
 	let showErrorMessageSpy: jest.SpyInstance<Thenable<vscode.MessageItem | undefined>, [message: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]], any>;
-	let uriParseSpy: jest.SpyInstance<vscode.Uri, [value: string, strict?: boolean | undefined], any>;
 
 	beforeAll(() => {
 		// Suppress console output
@@ -31,12 +28,9 @@ describe("Error Handler Tests", () => {
 		jest.restoreAllMocks();
 
 		// Define spies on the functions to be tested
-		statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
-		openExternalSpy = jest.spyOn(vscode.env, "openExternal");
 		triggerOnDidChangeTreeDataSpy = jest.spyOn(treeDataProvider, "triggerOnDidChangeTreeData");
 		showErrorMessageSpy = jest.spyOn(vscode.window, "showErrorMessage");
 		treeViewRenderSpy = jest.spyOn(treeDataProvider, "render");
-		uriParseSpy = jest.spyOn(vscode.Uri, "parse");
 	});
 
 	test("Reset icons on error", async () => {

@@ -35,7 +35,7 @@ export const errorHandler = async (result: ErrorResult) => {
 			const result = await window.showErrorMessage(`An error occurred while attempting to change the Sign In Audience. This is likely because some properties of the application are not supported by the new sign in audience. Please consult the Azure AD documentation for more information at ${SIGNIN_AUDIENCE_DOCUMENTATION_URI}.`, ...["OK", "Open Documentation"]);
 
 			if (result === "Open Documentation") {
-				env.openExternal(Uri.parse(SIGNIN_AUDIENCE_DOCUMENTATION_URI));
+				await env.openExternal(Uri.parse(SIGNIN_AUDIENCE_DOCUMENTATION_URI));
 				return;
 			}
 
