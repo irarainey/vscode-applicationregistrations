@@ -1,6 +1,7 @@
 ## 0.8.0
 
 - Added functionality to open the user or application in the Entra portal.
+- Refactored redirect uri editing and creation to reduce Graph API calls.
 - Fixed an issue validating expiry dates for password credentials.
 - Fixed an issue validating App Id Uris for consumer accounts.
 
