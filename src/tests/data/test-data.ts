@@ -65,7 +65,7 @@ const seedApplications: any[] = [
 			}
 		],
 		publicClient: {
-			redirectUris: []
+			redirectUris: ["https://mobile.com"]
 		},
 		requiredResourceAccess: [
 			{
@@ -94,7 +94,7 @@ const seedApplications: any[] = [
 			]
 		},
 		spa: {
-			redirectUris: []
+			redirectUris: ["https://spa.com"]
 		},
 		owners: [
 			{

@@ -50,18 +50,10 @@ export class RedirectUriService extends ServiceBase {
 					return;
 				}
 				break;
-			default:
-				break;
 		}
 
 		// Prompt the user for the new redirect URI.
-		const redirectUri = await window.showInputBox({
-			placeHolder: "Enter Redirect URI",
-			prompt: "Add a new Redirect URI to the application",
-			title: "Add Redirect URI",
-			ignoreFocusOut: true,
-			validateInput: (value) => validateRedirectUri(value, item.contextValue!, allExistingRedirectUris!, false, undefined)
-		});
+		const redirectUri = await this.inputRedirectUri(item, allExistingRedirectUris!, validateRedirectUri);
 
 		// If the redirect URI is not empty then add it to the application.
 		if (redirectUri !== undefined && redirectUri.length > 0) {
@@ -117,9 +109,6 @@ export class RedirectUriService extends ServiceBase {
 						await this.handleError(resultPublic.error);
 						return;
 					}
-				default:
-					// Do nothing.
-					break;
 			}
 
 			// Update the application.
@@ -150,14 +139,7 @@ export class RedirectUriService extends ServiceBase {
 		}
 
 		// Prompt the user for the new redirect URI.
-		const redirectUri = await window.showInputBox({
-			placeHolder: "Redirect URI",
-			prompt: "Provide a new Redirect URI for the application",
-			value: item.label!.toString(),
-			title: "Edit Redirect URI",
-			ignoreFocusOut: true,
-			validateInput: (value) => validateRedirectUri(value, item.contextValue!, allExistingRedirectUris!, true, item.label!.toString())
-		});
+		const redirectUri = await this.inputRedirectUri(item, allExistingRedirectUris!, validateRedirectUri);
 
 		// If the new application name is not empty then update the application.
 		if (redirectUri !== undefined && redirectUri !== item.label!.toString()) {
@@ -174,6 +156,19 @@ export class RedirectUriService extends ServiceBase {
 				await this.updateRedirectUris(item, existingRedirectUris);
 			}
 		}
+	}
+
+	// Prompts the user for a redirect uri.
+	async inputRedirectUri(item: AppRegItem, existingRedirectUris: string[], validation: (uri: string, context: string, existingRedirectUris: string[], isEditing: boolean, oldValue: string | undefined) => string | undefined) {
+		const isEditing = item.contextValue?.includes("URI");
+		return await window.showInputBox({
+			placeHolder: "Redirect URI",
+			prompt: "Provide a new Redirect URI for the application",
+			value: isEditing ? item.label!.toString() : undefined,
+			title: isEditing ? "Edit Redirect URI" : "Add Redirect URI",
+			ignoreFocusOut: true,
+			validateInput: (value) => validation(value, item.contextValue!, existingRedirectUris, isEditing!, (isEditing ? item.label!.toString() : undefined))
+		});
 	}
 
 	// Gets the existing redirect URIs for an application.
@@ -211,9 +206,6 @@ export class RedirectUriService extends ServiceBase {
 					await this.handleError(resultPublic.error);
 					return undefined;
 				}
-			default:
-				// Do nothing.
-				break;
 		}
 
 		return existingRedirectUris;
