@@ -11,13 +11,12 @@ export const getTopLevelTreeItem = async (objectId: string, treeDataProvider: Ap
 			element = undefined;
 			break;
 		case "OWNERS":
-			element = { objectId, contextValue: "OWNERS" };
-			break;
 		case "PASSWORD-CREDENTIALS":
-			element = { objectId, contextValue: "PASSWORD-CREDENTIALS" };
-			break;
 		case "CERTIFICATE-CREDENTIALS":
-			element = { objectId, contextValue: "CERTIFICATE-CREDENTIALS" };
+		case "WEB-REDIRECT":
+		case "SPA-REDIRECT":
+		case "NATIVE-REDIRECT":
+			element = { objectId, contextValue };
 			break;
 		default:
 			element = undefined;

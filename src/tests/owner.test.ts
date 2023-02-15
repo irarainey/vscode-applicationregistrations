@@ -3,9 +3,10 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { OwnerService } from "../services/owner";
-import { mockAppId, mockAppObjectId, mockSecondAppObjectId, mockSecondUserId, mockUserId, seedMockData } from "./data/test-data";
+import { mockAppId, mockAppObjectId, mockSecondAppObjectId, mockSecondUserId, mockTenantId, mockUserId, seedMockData } from "./data/test-data";
 import { getTopLevelTreeItem } from "./test-utils";
 import { AzureCliAccountProvider } from "../utils/azure-cli-account-provider";
+import { AZURE_AND_ENTRA_PORTAL_USER_PATH, AZURE_PORTAL_ROOT, ENTRA_PORTAL_ROOT } from "../constants";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -62,12 +63,28 @@ describe("Owner Service Tests", () => {
 		expect(ownerService).toBeDefined();
 	});
 
-	test("Open in portal", async () => {
+	test("Open in Azure portal", async () => {
+		// Arrange
+		jest.spyOn(accountProvider, "getAccountInformation").mockImplementation(async () => ({ tenantId: mockTenantId } as any));
+
 		// Act
-		ownerService.openInAzurePortal(item);
+		const returnValue = await ownerService.openInAzurePortal(item);
 
 		// Assert
-		expect(openExternalSpy).toHaveBeenCalled();
+		expect(openExternalSpy).toHaveBeenCalledWith(vscode.Uri.parse(`${AZURE_PORTAL_ROOT}/${mockTenantId}${AZURE_AND_ENTRA_PORTAL_USER_PATH}${mockUserId}`));
+		expect(returnValue).toEqual(true);
+	});
+
+	test("Open in Entra portal", async () => {
+		// Arrange
+		jest.spyOn(accountProvider, "getAccountInformation").mockImplementation(async () => ({ tenantId: mockTenantId } as any));
+
+		// Act
+		const returnValue = await ownerService.openInEntraPortal(item);
+
+		// Assert
+		expect(openExternalSpy).toHaveBeenCalledWith(vscode.Uri.parse(`${ENTRA_PORTAL_ROOT}/${mockTenantId}${AZURE_AND_ENTRA_PORTAL_USER_PATH}${mockUserId}`));
+		expect(returnValue).toEqual(true);
 	});
 
 	test("Remove owner", async () => {

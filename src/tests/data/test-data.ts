@@ -4,6 +4,7 @@ export let mockUser: any;
 export let mockUsers: any[];
 export let mockOrganizations: any[];
 export let mockRoleAssignments: any[];
+export let mockRedirectUris: any;
 
 export const seedMockData = () => {
 	mockApplications = JSON.parse(JSON.stringify(seedApplications));
@@ -11,6 +12,7 @@ export const seedMockData = () => {
 	mockUsers = JSON.parse(JSON.stringify(seedUsers));
 	mockOrganizations = JSON.parse(JSON.stringify(seedOrganizations));
 	mockRoleAssignments = JSON.parse(JSON.stringify(seedRoleAssignments));
+	mockRedirectUris = JSON.parse(JSON.stringify(seedRedirectUris));
 };
 
 const seedApplications: any[] = [
@@ -65,7 +67,7 @@ const seedApplications: any[] = [
 			}
 		],
 		publicClient: {
-			redirectUris: []
+			redirectUris: ["https://mobile.com"]
 		},
 		requiredResourceAccess: [
 			{
@@ -94,7 +96,7 @@ const seedApplications: any[] = [
 			]
 		},
 		spa: {
-			redirectUris: []
+			redirectUris: ["https://spa.com"]
 		},
 		owners: [
 			{
@@ -157,6 +159,18 @@ const seedApplications: any[] = [
 		]
 	}
 ];
+
+const seedRedirectUris: any = {
+	web: {
+		redirectUris: Array.from({ length: 100 }, (_, i) => `https://web${i}.com`)
+	},
+	publicClient: {
+		redirectUris: Array.from({ length: 100 }, (_, i) => `https://native${i}.com`)
+	},
+	spa: {
+		redirectUris: Array.from({ length: 56 }, (_, i) => `https://spa${i}.com`)
+	}
+};
 
 const seedUser: any = {
 	id: "277c79dd-2e4d-40f0-9d9b-eff644ed74e8",

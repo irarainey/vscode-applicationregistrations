@@ -27,6 +27,10 @@ export const workspace = {
 					return false;
 				case "showOwnedApplicationsOnly":
 					return true;
+				case "includeEntraPortal":
+					return true;
+				case "omitTenantIdFromPortalRequests":
+					return false;
 				default:
 					return undefined;
 			}
@@ -47,8 +51,8 @@ export class EventEmitter {
 }
 
 export const Uri = {
-	parse: (_value: string, _strict?: boolean) => {
-		jest.fn();
+	parse: (value: string, _strict?: boolean) => {
+		return { path: value, scheme: "https", fragment: "", query: "", fsPath: value };
 	},
 	file: (value: string) => {
 		return { path: value, scheme: "file", fragment: "", query: "", fsPath: value };
@@ -58,8 +62,8 @@ export const Uri = {
 let clipboard: any;
 
 export const env = {
-	openExternal: (_value: string) => {
-		jest.fn();
+	openExternal: async (_value: string) => {
+		return true;
 	},
 	clipboard: {
 		writeText: (item: string) => {
