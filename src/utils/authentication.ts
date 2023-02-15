@@ -66,6 +66,6 @@ const authenticate = async (accountProvider: AccountProvider): Promise<boolean |
 		return undefined;
 	}
 
-	const status = await accountProvider.loginUser(tenant);
-	return status;
+	// Return the state of the authentication.
+	return await accountProvider.loginUser(tenant);
 };

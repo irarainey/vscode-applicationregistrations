@@ -14,9 +14,6 @@ describe("Copy Value Tests", () => {
 	beforeEach(() => {
 		//Restore the default mock implementations
 		jest.restoreAllMocks();
-
-		// Define the base item to be used in the tests
-		item = { contextValue: "COPY", value: "test" };
 	});
 
 	test("Copy value successfully", () => {
