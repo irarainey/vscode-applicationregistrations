@@ -9,7 +9,8 @@ export const signInUser = async (treeDataProvider: AppRegTreeDataProvider, accou
 	await treeDataProvider.render(undefined, "AUTHENTICATING");
 	const status = await authenticate(accountProvider);
 
-	// The user pressed cancel.
+	// The user pressed cancel so we will try to re-authenticate with any existing credentials.
+	// If they aren't authenticated then the user will be prompted to sign in.
 	if (status === undefined) {
 		// Set the tree view to initialising.
 		await treeDataProvider.render(undefined, "INITIALISING");
