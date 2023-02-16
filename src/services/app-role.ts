@@ -143,8 +143,6 @@ export class AppRoleService extends ServiceBase {
 
 				role.allowedMemberTypes = allowed.value;
 				break;
-			default:
-				return;
 		}
 
 		// Set the added trigger to the status bar message.

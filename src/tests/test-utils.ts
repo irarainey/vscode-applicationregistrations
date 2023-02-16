@@ -16,6 +16,9 @@ export const getTopLevelTreeItem = async (objectId: string, treeDataProvider: Ap
 		case "WEB-REDIRECT":
 		case "SPA-REDIRECT":
 		case "NATIVE-REDIRECT":
+		case "APP-ROLES":
+		case "EXPOSED-API-PERMISSIONS":
+		case "API-PERMISSIONS":
 			element = { objectId, contextValue };
 			break;
 		default:

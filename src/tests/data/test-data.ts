@@ -32,7 +32,31 @@ const seedApplications: any[] = [
 			oauth2PermissionScopes: [],
 			preAuthorizedApplications: []
 		},
-		appRoles: [],
+		appRoles: [
+			{
+				"allowedMemberTypes": [
+					"User",
+					"Application"
+				],
+				"description": "Allows the writing of files",
+				"displayName": "Write Files",
+				"id": "d93e3770-dccc-44d7-9146-f4dc9abb43f9",
+				"isEnabled": true,
+				"origin": "Application",
+				"value": "Files.Write"
+			},
+			{
+				"allowedMemberTypes": [
+					"User"
+				],
+				"description": "Allows the reading of files",
+				"displayName": "Read Files",
+				"id": "cd9bf494-5cfb-4a26-8597-d3daad89e446",
+				"isEnabled": true,
+				"origin": "Application",
+				"value": "Files.Read"
+			}
+		],
 		keyCredentials: [
 			{
 				customKeyIdentifier: "F56DC6F6E469B781F8BA664DF842788E5D197F24",
@@ -253,3 +277,4 @@ export const mockAppId = seedApplications[0].appId;
 export const mockSecondAppId = seedApplications[1].appId;
 export const mockUserId = seedUsers[0].id;
 export const mockSecondUserId = seedUsers[1].id;
+export const mockAppRoleId = seedApplications[0].appRoles[0].id;
