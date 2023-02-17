@@ -1,6 +1,6 @@
-import { Application, Organization, User, RoleAssignment, PasswordCredential, KeyCredential } from "@microsoft/microsoft-graph-types";
+import { Application, Organization, User, RoleAssignment, PasswordCredential, KeyCredential, ServicePrincipal } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../../types/graph-result";
-import { mockApplications, mockOrganizations, mockUser, mockRoleAssignments, mockUsers, mockNewPasswordKeyId } from "../../tests/data/test-data";
+import { mockApplications, mockOrganizations, mockUser, mockRoleAssignments, mockUsers, mockNewPasswordKeyId, mockServicePrincipals } from "../../tests/data/test-data";
 
 export class GraphApiRepository {
 	async getApplicationCountOwned(): Promise<GraphResult<number>> {
@@ -124,5 +124,15 @@ export class GraphApiRepository {
 		const app: Application = mockApplications.filter((a) => a.id === id)[0];
 		app.keyCredentials = credentials;
 		return { success: true };
+	}
+
+	async findServicePrincipalByAppId(id: string): Promise<GraphResult<ServicePrincipal>> {
+		const result = JSON.parse(JSON.stringify(mockServicePrincipals.filter((s) => s.appId === id)[0]));
+		return { success: true, value: result };
+	}
+
+	async findServicePrincipalsByDisplayName(name: string): Promise<GraphResult<ServicePrincipal[]>> {
+		const result: any[] = JSON.parse(JSON.stringify(mockServicePrincipals.filter((s) => s.displayName === name)));
+		return { success: true, value: result };
 	}
 }

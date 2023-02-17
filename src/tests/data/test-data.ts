@@ -5,6 +5,7 @@ export let mockUsers: any[];
 export let mockOrganizations: any[];
 export let mockRoleAssignments: any[];
 export let mockRedirectUris: any;
+export let mockServicePrincipals: any[];
 
 export const seedMockData = () => {
 	mockApplications = JSON.parse(JSON.stringify(seedApplications));
@@ -13,6 +14,7 @@ export const seedMockData = () => {
 	mockOrganizations = JSON.parse(JSON.stringify(seedOrganizations));
 	mockRoleAssignments = JSON.parse(JSON.stringify(seedRoleAssignments));
 	mockRedirectUris = JSON.parse(JSON.stringify(seedRedirectUris));
+	mockServicePrincipals = JSON.parse(JSON.stringify(seedServicePrincipals));
 };
 
 const seedApplications: any[] = [
@@ -34,27 +36,22 @@ const seedApplications: any[] = [
 		},
 		appRoles: [
 			{
-				"allowedMemberTypes": [
-					"User",
-					"Application"
-				],
-				"description": "Allows the writing of files",
-				"displayName": "Write Files",
-				"id": "d93e3770-dccc-44d7-9146-f4dc9abb43f9",
-				"isEnabled": true,
-				"origin": "Application",
-				"value": "Files.Write"
+				allowedMemberTypes: ["User", "Application"],
+				description: "Allows the writing of files",
+				displayName: "Write Files",
+				id: "d93e3770-dccc-44d7-9146-f4dc9abb43f9",
+				isEnabled: true,
+				origin: "Application",
+				value: "Files.Write"
 			},
 			{
-				"allowedMemberTypes": [
-					"User"
-				],
-				"description": "Allows the reading of files",
-				"displayName": "Read Files",
-				"id": "cd9bf494-5cfb-4a26-8597-d3daad89e446",
-				"isEnabled": true,
-				"origin": "Application",
-				"value": "Files.Read"
+				allowedMemberTypes: ["User"],
+				description: "Allows the reading of files",
+				displayName: "Read Files",
+				id: "cd9bf494-5cfb-4a26-8597-d3daad89e446",
+				isEnabled: true,
+				origin: "Application",
+				value: "Files.Read"
 			}
 		],
 		keyCredentials: [
@@ -98,8 +95,33 @@ const seedApplications: any[] = [
 				resourceAppId: "00000003-0000-0000-c000-000000000000",
 				resourceAccess: [
 					{
-						id: "e1fe6dd8-ba31-4d61-89e7-88639da4683d",
+						id: "570282fd-fa5c-430d-a7fd-fc8dc98a9dca",
 						type: "Scope"
+					},
+					{
+						id: "e383f46e-2787-4529-855e-0e479a3ffac0",
+						type: "Scope"
+					},
+					{
+						id: "810c84a8-4a9e-49e6-bf7d-12d183f40d01",
+						type: "Role"
+					}
+				]
+			},
+			{
+				resourceAppId: "1173dc06-edfc-40fc-980c-ff7d7ceb144d",
+				resourceAccess: [
+					{
+						id: "ef080234-1cd3-4945-9462-0d8901fd327a",
+						type: "Scope"
+					},
+					{
+						id: "f9ae202f-8d70-47a9-b1f4-78ba9d9d906f",
+						type: "Scope"
+					},
+					{
+						id: "8f583345-62f3-4c1e-aac2-a85584d380d3",
+						type: "Role"
 					}
 				]
 			}
@@ -246,6 +268,137 @@ const seedRoleAssignments: any[] = [
 	}
 ];
 
+export const seedServicePrincipals = [
+	{
+		id: "2b60636f-bc43-4069-9644-bc4108f43407",
+		appDisplayName: "Microsoft Graph",
+		appId: "00000003-0000-0000-c000-000000000000",
+		displayName: "Microsoft Graph",
+		appRoles: [
+			{
+				allowedMemberTypes: ["Application"],
+				description: "Allows the app to read mail in all mailboxes without a signed-in user.",
+				displayName: "Read mail in all mailboxes",
+				id: "810c84a8-4a9e-49e6-bf7d-12d183f40d01",
+				isEnabled: true,
+				origin: "Application",
+				value: "Mail.Read"
+			},
+			{
+				allowedMemberTypes: ["Application"],
+				description: "Allows the app to send mail as any user without a signed-in user.",
+				displayName: "Send mail as any user",
+				id: "b633e1c5-b582-4048-a93e-9f11b44c7e96",
+				isEnabled: true,
+				origin: "Application",
+				value: "Mail.Send"
+			}
+		],
+		oauth2PermissionScopes: [
+			{
+				adminConsentDescription: "Allows the app to read the signed-in user's mailbox.",
+				adminConsentDisplayName: "Read user mail ",
+				id: "570282fd-fa5c-430d-a7fd-fc8dc98a9dca",
+				isEnabled: true,
+				type: "User",
+				userConsentDescription: "Allows the app to read email in your mailbox. ",
+				userConsentDisplayName: "Read your mail ",
+				value: "Mail.Read"
+			},
+			{
+				adminConsentDescription: "Allows the app to send mail as users in the organization. ",
+				adminConsentDisplayName: "Send mail as a user ",
+				id: "e383f46e-2787-4529-855e-0e479a3ffac0",
+				isEnabled: true,
+				type: "User",
+				userConsentDescription: "Allows the app to send mail as you. ",
+				userConsentDisplayName: "Send mail as you ",
+				value: "Mail.Send"
+			},
+			{
+				adminConsentDescription: "Allows the app to read events in user calendars . ",
+				adminConsentDisplayName: "Read user calendars ",
+				id: "465a38f9-76ea-45b9-9f34-9e8b0d4b0b42",
+				isEnabled: true,
+				type: "User",
+				userConsentDescription: "Allows the app to read events in your calendars. ",
+				userConsentDisplayName: "Read your calendars ",
+				value: "Calendars.Read"
+			}
+		]
+	},
+	{
+		id: "f82e47c3-ac80-4662-986b-c64e2204e20d",
+		appDisplayName: "Bert's Cookies API",
+		appId: "1173dc06-edfc-40fc-980c-ff7d7ceb144d",
+		displayName: "Bert's Cookies API",
+		appRoles: [
+			{
+				allowedMemberTypes: ["User"],
+				description: "Staff who work in the store",
+				displayName: "Store Staff",
+				id: "8f583345-62f3-4c1e-aac2-a85584d380d3",
+				isEnabled: true,
+				origin: "Application",
+				value: "Staff.Store"
+			}
+		],
+		oauth2PermissionScopes: [
+			{
+				adminConsentDescription: "Allows users to sell cookies",
+				adminConsentDisplayName: "Sell cookies",
+				id: "ef080234-1cd3-4945-9462-0d8901fd327a",
+				isEnabled: true,
+				type: "User",
+				userConsentDescription: null,
+				userConsentDisplayName: null,
+				value: "Cookies.Sell"
+			},
+			{
+				adminConsentDescription: "Allows users to eat cookies",
+				adminConsentDisplayName: "Eat cookies",
+				id: "f9ae202f-8d70-47a9-b1f4-78ba9d9d906f",
+				isEnabled: true,
+				type: "Admin",
+				userConsentDescription: null,
+				userConsentDisplayName: null,
+				value: "Cookies.Eat"
+			}
+		]
+	},
+	{
+		id: "7f808afc-8ba4-409e-90cd-27a2f7f9a1f8",
+		appDisplayName: "Random Api",
+		appId: "0cad2264-23c3-4366-8c28-805aaeda257b",
+		displayName: "Random Api",
+		appRoles: [],
+		oauth2PermissionScopes: [
+			{
+				adminConsentDescription: "Something",
+				adminConsentDisplayName: "Something",
+				id: "82062f02-7837-45e6-a497-4938246ceb5c",
+				isEnabled: true,
+				type: "Admin",
+				userConsentDescription: null,
+				userConsentDisplayName: null,
+				value: "Do.Something"
+			}
+		]
+	}
+];
+
+export const mockTenantId = "c7b3da28-01b8-46d3-9523-d1b24cbbde76";
+export const mockNewPasswordKeyId = "a7da2abf-da93-4bad-bf0b-6d9ee0d3e8ec";
+export const mockGraphApiAppId = "00000003-0000-0000-c000-000000000000";
+export const mockApiScopeId = seedApplications[0].requiredResourceAccess[0].resourceAppId;
+export const mockAppObjectId = seedApplications[0].id;
+export const mockSecondAppObjectId = seedApplications[1].id;
+export const mockAppId = seedApplications[0].appId;
+export const mockSecondAppId = seedApplications[1].appId;
+export const mockUserId = seedUsers[0].id;
+export const mockSecondUserId = seedUsers[1].id;
+export const mockAppRoleId = seedApplications[0].appRoles[0].id;
+
 export const mockPemCertificate = `-----BEGIN CERTIFICATE-----
 	MIIDkTCCAnmgAwIBAgIUeuJnMCKaW8S9+Kw51mez+s1JAK0wDQYJKoZIhvcNAQEL
 	BQAwWDELMAkGA1UEBhMCVUsxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
@@ -269,12 +422,3 @@ export const mockPemCertificate = `-----BEGIN CERTIFICATE-----
 	x1sLjRM=
 	-----END CERTIFICATE-----`;
 
-export const mockTenantId = "c7b3da28-01b8-46d3-9523-d1b24cbbde76";
-export const mockNewPasswordKeyId = "a7da2abf-da93-4bad-bf0b-6d9ee0d3e8ec";
-export const mockAppObjectId = seedApplications[0].id;
-export const mockSecondAppObjectId = seedApplications[1].id;
-export const mockAppId = seedApplications[0].appId;
-export const mockSecondAppId = seedApplications[1].appId;
-export const mockUserId = seedUsers[0].id;
-export const mockSecondUserId = seedUsers[1].id;
-export const mockAppRoleId = seedApplications[0].appRoles[0].id;

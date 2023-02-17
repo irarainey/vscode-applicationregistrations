@@ -87,7 +87,7 @@ export class RequiredResourceAccessService extends ServiceBase {
 		}
 
 		//Now we have the API application ID we can call the addToExisting method.
-		this.addToExisting(item, allowed.value, allowed.label);
+		await this.addToExisting(item, allowed.value, allowed.label);
 	}
 
 	// Adds the selected scope from an existing API to an application registration.
