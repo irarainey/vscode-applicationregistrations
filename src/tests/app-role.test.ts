@@ -1,10 +1,12 @@
 import * as vscode from "vscode";
+import * as validation from "../utils/validation";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { AppRoleService } from "../services/app-role";
 import { mockAppObjectId, mockAppRoleId, seedMockData } from "./data/test-data";
 import { getTopLevelTreeItem } from "./test-utils";
+import { AppRole } from "@microsoft/microsoft-graph-types";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -127,7 +129,7 @@ describe("App Role Service Tests", () => {
 	test("Delete disabled app role with no existing roles returned", async () => {
 		// Arrange
 		item = { objectId: mockAppObjectId, contextValue: "ROLE-ENABLED", value: mockAppRoleId, state: false, label: "Test Role" };
-		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error: new Error("Test Error") }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error: new Error("Test Error") }));
 		const warningSpy = jest.spyOn(vscode.window, "showWarningMessage").mockResolvedValue("Yes" as any);
 
 		// Act
@@ -135,6 +137,7 @@ describe("App Role Service Tests", () => {
 
 		// Assert
 		expect(warningSpy).toHaveBeenCalledWith(`Do you want to delete the App Role ${item.label}?`, "Yes", "No");
+		expect(graphSpy).toHaveBeenCalled();
 		treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APP-ROLES");
 		expect(treeItem?.children?.length).toEqual(2);
@@ -143,12 +146,13 @@ describe("App Role Service Tests", () => {
 	test("Disable enabled app role but no existing roles returned", async () => {
 		// Arrange
 		item = { objectId: mockAppObjectId, contextValue: "ROLE-ENABLED", value: mockAppRoleId, state: true, label: "Test Role" };
-		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error: new Error("Test Error") }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error: new Error("Test Error") }));
 
 		// Act
 		await appRoleService.changeState(item, false);
 
 		// Assert
+		expect(graphSpy).toHaveBeenCalled();
 		treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APP-ROLES");
 		expect(treeItem?.children?.length).toEqual(2);
@@ -187,7 +191,7 @@ describe("App Role Service Tests", () => {
 	test("Edit value but no roles returned", async () => {
 		// Arrange
 		item = { objectId: mockAppObjectId, contextValue: "ROLE-ENABLED", value: mockAppRoleId, state: false, label: "Test Role" };
-		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error: new Error("Test Error") }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error: new Error("Test Error") }));
 		jest.spyOn(vscode.window, "showInputBox").mockResolvedValue("New Role" as any);
 
 		// Act
@@ -195,6 +199,7 @@ describe("App Role Service Tests", () => {
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
+		expect(graphSpy).toHaveBeenCalled();
 	});
 
 	test("Edit display name", async () => {
@@ -284,7 +289,7 @@ describe("App Role Service Tests", () => {
 	test("Edit role allowed types to users", async () => {
 		// Arrange
 		item = { objectId: mockAppObjectId, contextValue: "ROLE-ALLOWED", value: mockAppRoleId, label: "Allowed: Applications" };
-		jest.spyOn(vscode.window, "showQuickPick").mockResolvedValue({ label: "Users/Groups", value: ["User"]} as any);
+		jest.spyOn(vscode.window, "showQuickPick").mockResolvedValue({ label: "Users/Groups", value: ["User"] } as any);
 
 		// Act
 		await appRoleService.editValue(item);
@@ -299,7 +304,7 @@ describe("App Role Service Tests", () => {
 	test("Edit role allowed types to users and applications", async () => {
 		// Arrange
 		item = { objectId: mockAppObjectId, contextValue: "ROLE-ALLOWED", value: mockAppRoleId, label: "Allowed: Applications" };
-		jest.spyOn(vscode.window, "showQuickPick").mockResolvedValue({ label: "Users/Groups", value: ["Application", "User"]} as any);
+		jest.spyOn(vscode.window, "showQuickPick").mockResolvedValue({ label: "Users/Groups", value: ["Application", "User"] } as any);
 
 		// Act
 		await appRoleService.editValue(item);
@@ -314,7 +319,7 @@ describe("App Role Service Tests", () => {
 	test("Edit role allowed types to applications", async () => {
 		// Arrange
 		item = { objectId: mockAppObjectId, contextValue: "ROLE-ALLOWED", value: mockAppRoleId, label: "Allowed: Users/Groups" };
-		jest.spyOn(vscode.window, "showQuickPick").mockResolvedValue({ label: "Users/Groups", value: ["Application"]} as any);
+		jest.spyOn(vscode.window, "showQuickPick").mockResolvedValue({ label: "Users/Groups", value: ["Application"] } as any);
 
 		// Act
 		await appRoleService.editValue(item);
@@ -337,6 +342,435 @@ describe("App Role Service Tests", () => {
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(vscode.window.showQuickPick).toHaveBeenCalled();
+	});
+
+	test("Add new role but fail to get existing roles", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error: new Error("Test Error") }));
+
+		// Act
+		await appRoleService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(graphSpy).toHaveBeenCalled();
+	});
+
+	test("Add new role but cancel pressed on first input", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox").mockResolvedValue(undefined);
+
+		// Act
+		await appRoleService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toHaveBeenCalled();
+	});
+
+	test("Add new role but cancel pressed on second input", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox").mockResolvedValue(undefined).mockResolvedValueOnce("Test Role");
+
+		// Act
+		await appRoleService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+	});
+
+	test("Add new role but cancel pressed on third input", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox").mockResolvedValue(undefined).mockResolvedValueOnce("Test Role").mockResolvedValueOnce("Test.Role");
+
+		// Act
+		await appRoleService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+	});
+
+	test("Add new role but cancel pressed on fourth input", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce("Test Role")
+			.mockResolvedValueOnce("Test.Role")
+			.mockResolvedValueOnce("Test Description");
+		const quickPickSpy = jest.spyOn(vscode.window, "showQuickPick")
+			.mockResolvedValue(undefined);
+
+		// Act
+		await appRoleService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(quickPickSpy).toBeCalled();
+	});
+
+	test("Add new role but cancel pressed on fifth input", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce("Test Role")
+			.mockResolvedValueOnce("Test.Role")
+			.mockResolvedValueOnce("Test Description");
+		const quickPickSpy = jest.spyOn(vscode.window, "showQuickPick")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce({ label: "Users/Groups", value: ["Application", "User"] } as any);
+
+		// Act
+		await appRoleService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(quickPickSpy).toBeCalled();
+	});
+
+	test("Add new role successfully", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined);
+		const quickPickSpy = jest.spyOn(vscode.window, "showQuickPick")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce({ label: "Users/Groups", value: ["Application", "User"] } as any)
+			.mockResolvedValueOnce({ label: "Enabled", value: true } as any);
+		jest.spyOn(appRoleService, "inputDisplayName").mockImplementation(async (_title: string, _existingValue: string | undefined, validation: (value: string) => string | undefined) => {
+			const result = validation("Test Add Role");
+			expect(result).toBeUndefined();
+			return "Test Add Role";
+		});
+		jest.spyOn(appRoleService, "inputValue").mockImplementation(async (_title: string, _isEditing: boolean, _roles: AppRole[], _existingValue: string | undefined, validation: (value: string, isEditing: boolean, oldValue: string | undefined, roles: AppRole[]) => string | undefined) => {
+			const result = validation("Test.Role", false, undefined, []);
+			expect(result).toBeUndefined();
+			return "Test.Role";
+		});
+		jest.spyOn(appRoleService, "inputDescription").mockImplementation(async (_title: string, _existingValue: string | undefined, validation: (value: string) => string | undefined) => {
+			const result = validation("Test Description");
+			expect(result).toBeUndefined();
+			return "Test Description";
+		});
+
+		// Act
+		await appRoleService.add(item);
+
+		// Assert
+		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APP-ROLES");
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(iconSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(quickPickSpy).toBeCalled();
+		expect(treeItem?.children!.length).toEqual(3);
+		expect(treeItem?.children![2].label).toEqual("Test Add Role");
+	});
+
+	test("Add new role with display name too short error", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox").mockResolvedValue("");
+		const validationSpy = jest.spyOn(validation, "validateAppRoleDisplayName");
+		jest.spyOn(appRoleService, "inputDisplayName").mockImplementation(async (_title: string, _existingValue: string | undefined, validation: (value: string) => string | undefined) => {
+			const result = validation("");
+			expect(result).toBe("A display name cannot be empty.");
+			return undefined;
+		});
+
+		// Act
+		await appRoleService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Add new role with display name too long error", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox").mockResolvedValue("");
+		const validationSpy = jest.spyOn(validation, "validateAppRoleDisplayName");
+		jest.spyOn(appRoleService, "inputDisplayName").mockImplementation(async (_title: string, _existingValue: string | undefined, validation: (value: string) => string | undefined) => {
+			const result = validation("X".padEnd(101, "X"));
+			expect(result).toBe("A display name cannot be longer than 100 characters.");
+			return undefined;
+		});
+
+		// Act
+		await appRoleService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Add new role with description too short error", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValue("Test Role")
+			.mockResolvedValue("Test.Role");
+		const validationSpy = jest.spyOn(validation, "validateAppRoleDescription");
+		jest.spyOn(appRoleService, "inputDescription").mockImplementation(async (_title: string, _existingValue: string | undefined, validation: (value: string) => string | undefined) => {
+			const result = validation("");
+			expect(result).toBe("A description cannot be empty.");
+			return undefined;
+		});
+
+		// Act
+		await appRoleService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Add new role with value too long error", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValue("Test Role");
+		const validationSpy = jest.spyOn(validation, "validateAppRoleValue");
+		jest.spyOn(appRoleService, "inputValue").mockImplementation(async (_title: string, _isEditing: boolean, _roles: AppRole[], _existingValue: string | undefined, validation: (value: string, isEditing: boolean, oldValue: string | undefined, roles: AppRole[]) => string | undefined) => {
+			const result = validation("X".padEnd(251, "X"), false, undefined, []);
+			expect(result).toBe("A role value cannot be longer than 250 characters.");
+			return undefined;
+		});
+
+		// Act
+		await appRoleService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Add new role with value contains error", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValue("Test Role");
+		const validationSpy = jest.spyOn(validation, "validateAppRoleValue");
+		jest.spyOn(appRoleService, "inputValue").mockImplementation(async (_title: string, _isEditing: boolean, _roles: AppRole[], _existingValue: string | undefined, validation: (value: string, isEditing: boolean, oldValue: string | undefined, roles: AppRole[]) => string | undefined) => {
+			const result = validation("", false, undefined, []);
+			expect(result).toBe("A role value cannot be empty.");
+			return undefined;
+		});
+
+		// Act
+		await appRoleService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Add new role with value contains space error", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValue("Test Role");
+		const validationSpy = jest.spyOn(validation, "validateAppRoleValue");
+		jest.spyOn(appRoleService, "inputValue").mockImplementation(async (_title: string, _isEditing: boolean, _roles: AppRole[], _existingValue: string | undefined, validation: (value: string, isEditing: boolean, oldValue: string | undefined, roles: AppRole[]) => string | undefined) => {
+			const result = validation("TEST VALUE", false, undefined, []);
+			expect(result).toBe("A role value cannot contain spaces.");
+			return undefined;
+		});
+
+		// Act
+		await appRoleService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Add new role with value starts with full stop error", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValue("Test Role");
+		const validationSpy = jest.spyOn(validation, "validateAppRoleValue");
+		jest.spyOn(appRoleService, "inputValue").mockImplementation(async (_title: string, _isEditing: boolean, _roles: AppRole[], _existingValue: string | undefined, validation: (value: string, isEditing: boolean, oldValue: string | undefined, roles: AppRole[]) => string | undefined) => {
+			const result = validation(".TEST.VALUE", false, undefined, []);
+			expect(result).toBe("A role value cannot start with a full stop.");
+			return undefined;
+		});
+
+		// Act
+		await appRoleService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Edit role with duplicate value error", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValue("Test Role");
+		const validationSpy = jest.spyOn(validation, "validateAppRoleValue");
+		jest.spyOn(appRoleService, "inputValue").mockImplementation(async (_title: string, _isEditing: boolean, _roles: AppRole[], _existingValue: string | undefined, validation: (value: string, isEditing: boolean, oldValue: string | undefined, roles: AppRole[]) => string | undefined) => {
+			const result = validation("New.Value", true, "Old.Value", [{ value: "New.Value" }]);
+			expect(result).toBe("The role value specified already exists.");
+			return undefined;
+		});
+
+		// Act
+		await appRoleService.edit(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Edit role successfully", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "ROLE-ENABLED", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce("New Write Files Role")
+			.mockResolvedValueOnce("Test.Role")
+			.mockResolvedValueOnce("Test Description");
+		const quickPickSpy = jest.spyOn(vscode.window, "showQuickPick")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce({ label: "Users/Groups", value: ["Application", "User"] } as any)
+			.mockResolvedValueOnce({ label: "Enabled", value: true } as any);
+	
+		// Act
+		await appRoleService.edit(item);
+
+		// Assert
+		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APP-ROLES");
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(iconSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(quickPickSpy).toBeCalled();
+		expect(treeItem?.children!.length).toEqual(2);
+		expect(treeItem?.children![0].label).toEqual("New Write Files Role");
+	});
+
+	test("Edit role with no existing app roles error", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "ROLE-ENABLED", value: mockAppRoleId };
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error: new Error("Test Error") }));
+
+		// Act
+		await appRoleService.edit(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(iconSpy).toHaveBeenCalled();
+		expect(graphSpy).toHaveBeenCalled();
+	});
+
+	test("Edit role but cancel pressed on first input", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox").mockResolvedValue(undefined);
+
+		// Act
+		await appRoleService.edit(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toHaveBeenCalled();
+	});
+
+	test("Edit role but cancel pressed on second input", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce("Test Role");
+
+		// Act
+		await appRoleService.edit(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+	});
+
+	test("Edit role but cancel pressed on third input", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce("Test Role")
+			.mockResolvedValueOnce("Test.Role");
+
+		// Act
+		await appRoleService.edit(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+	});
+
+	test("Edit role but cancel pressed on fourth input", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce("Test Role")
+			.mockResolvedValueOnce("Test.Role")
+			.mockResolvedValueOnce("Test Description");
+		const quickPickSpy = jest.spyOn(vscode.window, "showQuickPick")
+			.mockResolvedValue(undefined);
+
+		// Act
+		await appRoleService.edit(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(quickPickSpy).toBeCalled();
+	});
+
+	test("Edit role but cancel pressed on fifth input", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce("Test Role")
+			.mockResolvedValueOnce("Test.Role")
+			.mockResolvedValueOnce("Test Description");
+		const quickPickSpy = jest.spyOn(vscode.window, "showQuickPick")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce({ label: "Users/Groups", value: ["Application", "User"] } as any);
+
+		// Act
+		await appRoleService.edit(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(quickPickSpy).toBeCalled();
 	});
 
 });

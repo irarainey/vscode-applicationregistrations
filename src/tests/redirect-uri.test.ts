@@ -98,13 +98,14 @@ describe("Redirect URI Service Tests", () => {
 	test("Delete web redirect with get existing error", async () => {
 		// Arrange
 		const error = new Error("Delete web redirect with get existing error");
-		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
 		item = { objectId: mockAppObjectId, contextValue: "WEB-REDIRECT-URI", label: "https://sample.com/callback" };
 
 		// Act
 		await redirectUriService.delete(item);
 
 		// Assert
+		expect(graphSpy).toHaveBeenCalled();
 		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 		expect(treeSpy).toHaveBeenCalledTimes(0);
 	});
@@ -142,13 +143,14 @@ describe("Redirect URI Service Tests", () => {
 	test("Delete spa redirect with get existing error", async () => {
 		// Arrange
 		const error = new Error("Delete spa redirect with get existing error");
-		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
 		item = { objectId: mockAppObjectId, contextValue: "SPA-REDIRECT-URI", label: "https://spa.com" };
 
 		// Act
 		await redirectUriService.delete(item);
 
 		// Assert
+		expect(graphSpy).toHaveBeenCalled();
 		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 		expect(treeSpy).toHaveBeenCalledTimes(0);
 	});
@@ -186,13 +188,14 @@ describe("Redirect URI Service Tests", () => {
 	test("Delete native redirect with get existing error", async () => {
 		// Arrange
 		const error = new Error("Delete native redirect with get existing error");
-		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
 		item = { objectId: mockAppObjectId, contextValue: "NATIVE-REDIRECT-URI", label: "https://mobile.com" };
 
 		// Act
 		await redirectUriService.delete(item);
 
 		// Assert
+		expect(graphSpy).toHaveBeenCalled();
 		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 		expect(treeSpy).toHaveBeenCalledTimes(0);
 	});
@@ -216,13 +219,14 @@ describe("Redirect URI Service Tests", () => {
 	test("Edit web redirect no existing uris error", async () => {
 		// Arrange
 		const error = new Error("Edit web redirect no existing uris error");
-		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
 		item = { objectId: mockAppObjectId, contextValue: "WEB-REDIRECT-URI", label: "https://sample.com/callback" };
 
 		// Act
 		await redirectUriService.edit(item);
 
 		// Assert
+		expect(graphSpy).toHaveBeenCalled();
 		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 		expect(treeSpy).toHaveBeenCalledTimes(0);
 	});
@@ -261,7 +265,7 @@ describe("Redirect URI Service Tests", () => {
 	test("Edit spa redirect no existing uris error", async () => {
 		// Arrange
 		const error = new Error("Edit spa redirect no existing uris error");
-		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
 		vscode.window.showInputBox = jest.fn().mockResolvedValue("https://newspa.com");
 		item = { objectId: mockAppObjectId, contextValue: "SPA-REDIRECT-URI", label: "https://spa.com" };
 
@@ -269,6 +273,7 @@ describe("Redirect URI Service Tests", () => {
 		await redirectUriService.edit(item);
 
 		// Assert
+		expect(graphSpy).toHaveBeenCalled();
 		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 		expect(treeSpy).toHaveBeenCalledTimes(0);
 	});
@@ -308,7 +313,7 @@ describe("Redirect URI Service Tests", () => {
 	test("Edit native redirect no existing uris error", async () => {
 		// Arrange
 		const error = new Error("Edit native redirect no existing uris error");
-		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
 		item = { objectId: mockAppObjectId, contextValue: "NATIVE-REDIRECT-URI", label: "https://mobile.com" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue("https://newmobile.com");
 
@@ -316,6 +321,7 @@ describe("Redirect URI Service Tests", () => {
 		await redirectUriService.edit(item);
 
 		// Assert
+		expect(graphSpy).toHaveBeenCalled();
 		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 		expect(treeSpy).toHaveBeenCalledTimes(0);
 	});
@@ -501,13 +507,14 @@ describe("Redirect URI Service Tests", () => {
 		// Arrange
 		item = { objectId: mockAppObjectId, contextValue: "WEB-REDIRECT" };
 		const warningSpy = jest.spyOn(vscode.window, "showWarningMessage");
-		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string, _select: string, _expandOwners?: boolean | undefined) => ({ success: true, value: mockRedirectUris }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string, _select: string, _expandOwners?: boolean | undefined) => ({ success: true, value: mockRedirectUris }));
 		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "AzureADMyOrg" }));
 
 		// Act
 		await redirectUriService.add(item);
 
 		// Assert
+		expect(graphSpy).toHaveBeenCalled();
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
 		expect(warningSpy).toHaveBeenCalledWith("You cannot add any more Redirect URIs. The maximum for this application type is 256.", "OK");
@@ -517,13 +524,14 @@ describe("Redirect URI Service Tests", () => {
 		// Arrange
 		item = { objectId: mockAppObjectId, contextValue: "WEB-REDIRECT" };
 		const warningSpy = jest.spyOn(vscode.window, "showWarningMessage");
-		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string, _select: string, _expandOwners?: boolean | undefined) => ({ success: true, value: mockRedirectUris }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string, _select: string, _expandOwners?: boolean | undefined) => ({ success: true, value: mockRedirectUris }));
 		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "AzureADandPersonalMicrosoftAccount" }));
 
 		// Act
 		await redirectUriService.add(item);
 
 		// Assert
+		expect(graphSpy).toHaveBeenCalled();
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
 		expect(warningSpy).toHaveBeenCalledWith("You cannot add any more Redirect URIs. The maximum for this application type is 100.", "OK");
@@ -549,14 +557,14 @@ describe("Redirect URI Service Tests", () => {
 	test("Add web redirect with no existing uris error", async () => {
 		// Arrange
 		const error = new Error("Add web redirect with no existing uris error");
-		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
 		item = { objectId: mockAppObjectId, contextValue: "WEB-REDIRECT" };
 
 		// Act
 		await redirectUriService.add(item);
 
 		// Assert
-		// Assert
+		expect(graphSpy).toHaveBeenCalled();
 		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 		expect(treeSpy).toHaveBeenCalledTimes(0);
 	});
