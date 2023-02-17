@@ -3,7 +3,6 @@ export class AccountInformation {
 	tenantId: string; // The tenant ID
 	homeTenantId: string; // The home tenant ID
 	environmentName: string; // The current cloud type - AzureCloud, AzureChinaCloud, AzureUSGovernment, AzureGermanCloud
-
 	subscriptionName: string; // The subscription name
 	subscriptionId: string; // The subscription ID
 

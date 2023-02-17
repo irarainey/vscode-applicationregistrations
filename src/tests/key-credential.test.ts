@@ -78,12 +78,13 @@ describe("Key Credential Service Tests", () => {
 
 	test("Delete key credential with get key error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async () => ({ success: false, error: new Error("Test Error") }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async () => ({ success: false, error: new Error("Test Error") }));
 
 		// Act
 		await keyCredentialService.delete(item);
 
 		// Assert
+		expect(graphSpy).toHaveBeenCalled();
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(triggerErrorSpy).toHaveBeenCalled();
 	});

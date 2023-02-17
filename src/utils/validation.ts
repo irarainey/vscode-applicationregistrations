@@ -152,7 +152,7 @@ export const validateAppRoleDisplayName = (displayName: string): string | undefi
 };
 
 // Validates the value of an app role.
-export const validateAppRoleValue = async (value: string, isEditing: boolean, oldValue: string | undefined, roles: AppRole[]): Promise<string | undefined> => {
+export const validateAppRoleValue = (value: string, isEditing: boolean, oldValue: string | undefined, roles: AppRole[]): string | undefined => {
 	// Check the length of the value.
 	if (value.length > 250) {
 		return "A role value cannot be longer than 250 characters.";
