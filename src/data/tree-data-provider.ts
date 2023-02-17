@@ -126,9 +126,6 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 			case "APPLICATIONS":
 				await this.populateTreeData(status);
 				break;
-			default:
-				// Do nothing.
-				break;
 		}
 	}
 
@@ -858,6 +855,12 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 						let tooltip = undefined;
 						let scope = undefined;
 						if (resourceAccess.type === "Scope") {
+
+							const tmp = result.value!.oauth2PermissionScopes;
+							const tmp2 = resourceAccess.id;
+							const tmp3 = result.value!.oauth2PermissionScopes!.find((scope) => scope.id === resourceAccess.id);
+
+
 							scope = result.value!.oauth2PermissionScopes!.find((scope) => scope.id === resourceAccess.id)!.value!;
 							scopeLabel = `Delegated: ${scope}`;
 							tooltip = result.value!.oauth2PermissionScopes!.find((scope) => scope.id === resourceAccess.id)!.adminConsentDescription;
