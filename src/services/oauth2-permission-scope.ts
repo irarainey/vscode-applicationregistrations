@@ -42,7 +42,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		clearStatusBarMessage(check!);
 
 		// Capture the new scope details by passing in an empty scope.
-		const scope = await this.inputScopeDetails({}, item.objectId!, false, properties.signInAudience!, properties.api!);
+		const scope = await this.inputScopeDetails({}, item.objectId!, false, properties.signInAudience!, properties.api!, validateScopeUserDisplayName);
 
 		// If the user cancels the input then return undefined.
 		if (scope === undefined) {
@@ -85,7 +85,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		clearStatusBarMessage(check!);
 
 		// Capture the new app role details by passing in the existing role.
-		const scope = await this.inputScopeDetails(properties.api!.oauth2PermissionScopes!.filter((r) => r.id === item.value!)[0], item.objectId!, true, properties.signInAudience!, properties.api!);
+		const scope = await this.inputScopeDetails(properties.api!.oauth2PermissionScopes!.filter((r) => r.id === item.value!)[0], item.objectId!, true, properties.signInAudience!, properties.api!, validateScopeUserDisplayName);
 
 		// If the user cancels the input then return undefined.
 		if (scope === undefined) {
@@ -131,7 +131,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 			case "SCOPE-ENABLED":
 			case "SCOPE-DISABLED":
 				// Prompt the user for the new admin consent display name.
-				const adminConsentDisplayName = await this.inputAdminConsentDisplayName("Edit Exposed API Permission (1/1)", scope.adminConsentDisplayName!);
+				const adminConsentDisplayName = await this.inputAdminConsentDisplayName("Edit Exposed API Permission (1/1)", scope.adminConsentDisplayName!, validateScopeAdminDisplayName);
 
 				// If escape is pressed or the new display name is empty then return undefined.
 				if (adminConsentDisplayName === undefined) {
@@ -141,7 +141,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 				scope.adminConsentDisplayName = adminConsentDisplayName;
 				break;
 			case "SCOPE-VALUE":
-				const value = await this.inputValue("Edit Exposed API Permission (1/1)", scope.value!, true, properties.signInAudience!, properties.api!);
+				const value = await this.inputValue("Edit Exposed API Permission (1/1)", scope.value!, true, properties.signInAudience!, properties.api!, validateScopeValue);
 
 				// If escape is pressed or the new name is empty then return undefined.
 				if (value === undefined) {
@@ -152,7 +152,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 				break;
 			case "SCOPE-DESCRIPTION":
 				// Prompt the user for the new admin consent description.
-				const adminConsentDescription = await this.inputAdminConsentDescription("Edit Exposed API Permission (1/1)", scope.adminConsentDescription!);
+				const adminConsentDescription = await this.inputAdminConsentDescription("Edit Exposed API Permission (1/1)", scope.adminConsentDescription!, validateScopeAdminDescription);
 
 				// If escape is pressed or the new description is empty then return undefined.
 				if (adminConsentDescription === undefined) {
@@ -243,22 +243,10 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		await this.updateApplication(item.objectId!, { api: properties.api }, status);
 	}
 
-	// Gets the required properties from the application registration.
-	private async getProperties(id: string): Promise<Application | undefined> {
-		const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(id, "api,identifierUris,signInAudience");
-		if (result.success === true && result.value !== undefined) {
-			return result.value;
-		} else {
-			await this.handleError(result.error);
-			return undefined;
-		}
-	}
-
 	// Captures the value for a scope.
-	private async inputValue(title: string, existingValue: string | undefined, isEditing: boolean, signInAudience: string, scopes: ApiApplication): Promise<string | undefined> {
+	async inputValue(title: string, existingValue: string | undefined, isEditing: boolean, signInAudience: string, scopes: ApiApplication, validate: (value: string, isEditing: boolean, existingValue: string | undefined, signInAudience: string, scopes: ApiApplication) => string | undefined): Promise<string | undefined> {
 		// Debounce the validation function to prevent multiple calls to the Graph API.
-		const validation = async (value: string, isEditing: boolean, existingValue: string | undefined, signInAudience: string, scopes: ApiApplication) => validateScopeValue(value, isEditing, existingValue, signInAudience, scopes);
-		const debouncedValidation = debounce(validation, 500);
+		const debouncedValidation = debounce(validate, 500);
 
 		// Prompt the user for the new value.
 		return await window.showInputBox({
@@ -272,31 +260,31 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 	}
 
 	// Captures the admin description for a scope.
-	private async inputAdminConsentDescription(title: string, existingValue: string | undefined): Promise<string | undefined> {
+	async inputAdminConsentDescription(title: string, existingValue: string | undefined, validate: (description: string) => string | undefined): Promise<string | undefined> {
 		return await window.showInputBox({
 			prompt: "Admin consent description",
 			placeHolder: "Enter an admin consent description (e.g. Allows the app to read files on your behalf.)",
 			title: title,
 			ignoreFocusOut: true,
 			value: existingValue,
-			validateInput: async (value) => validateScopeAdminDescription(value)
+			validateInput: async (value) => validate(value)
 		});
 	}
 
 	// Captures the user display name for a scope.
-	private async inputAdminConsentDisplayName(title: string, existingValue: string | undefined): Promise<string | undefined> {
+	async inputAdminConsentDisplayName(title: string, existingValue: string | undefined, validate: (displayName: string) => string | undefined): Promise<string | undefined> {
 		return await window.showInputBox({
 			prompt: "Admin consent display name",
 			placeHolder: "Enter an admin consent display name (e.g. Read files)",
 			title: title,
 			ignoreFocusOut: true,
 			value: existingValue,
-			validateInput: async (value) => validateScopeAdminDisplayName(value)
+			validateInput: async (value) => validate(value)
 		});
 	}
 
 	// Captures the consent type for a scope.
-	private async inputConsentType(title: string): Promise<{ label: string; description: string; value: string } | undefined> {
+	async inputConsentType(title: string): Promise<{ label: string; description: string; value: string } | undefined> {
 		return await window.showQuickPick(
 			[
 				{
@@ -319,8 +307,8 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 	}
 
 	// Captures the details for a scope.
-	private async inputScopeDetails(scope: PermissionScope, id: string, isEditing: boolean, signInAudience: string, scopes: ApiApplication): Promise<PermissionScope | undefined> {
-		const value = await this.inputValue(isEditing === true ? "Edit Exposed API Permission (1/7)" : "Add API Exposed Permission (1/7)", scope.value ?? undefined, isEditing, signInAudience, scopes);
+	async inputScopeDetails(scope: PermissionScope, id: string, isEditing: boolean, signInAudience: string, scopes: ApiApplication, validate: (displayName: string) => string | undefined): Promise<PermissionScope | undefined> {
+		const value = await this.inputValue(isEditing === true ? "Edit Exposed API Permission (1/7)" : "Add API Exposed Permission (1/7)", scope.value ?? undefined, isEditing, signInAudience, scopes, validateScopeValue);
 
 		// If escape is pressed or the new name is empty then return undefined.
 		if (value === undefined) {
@@ -336,7 +324,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		}
 
 		// Prompt the user for the new admin consent display name.
-		const adminConsentDisplayName = await this.inputAdminConsentDisplayName(isEditing === true ? "Edit Exposed API Permission (3/7)" : "Add API Exposed Permission (3/7)", scope.adminConsentDisplayName ?? undefined);
+		const adminConsentDisplayName = await this.inputAdminConsentDisplayName(isEditing === true ? "Edit Exposed API Permission (3/7)" : "Add API Exposed Permission (3/7)", scope.adminConsentDisplayName ?? undefined, validateScopeAdminDisplayName);
 
 		// If escape is pressed or the new display name is empty then return undefined.
 		if (adminConsentDisplayName === undefined) {
@@ -344,7 +332,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		}
 
 		// Prompt the user for the new admin consent description.
-		const adminConsentDescription = await this.inputAdminConsentDescription(isEditing === true ? "Edit Exposed API Permission (4/7)" : "Add API Exposed Permission (4/7)", scope.adminConsentDescription ?? undefined);
+		const adminConsentDescription = await this.inputAdminConsentDescription(isEditing === true ? "Edit Exposed API Permission (4/7)" : "Add API Exposed Permission (4/7)", scope.adminConsentDescription ?? undefined, validateScopeAdminDescription);
 
 		// If escape is pressed or the new description is empty then return undefined.
 		if (adminConsentDescription === undefined) {
@@ -358,7 +346,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 			title: isEditing === true ? "Edit Exposed API Permission (5/7)" : "Add API Exposed Permission (5/7)",
 			ignoreFocusOut: true,
 			value: scope.userConsentDisplayName ?? undefined,
-			validateInput: async (value) => validateScopeUserDisplayName(value)
+			validateInput: async (value) => validate(value)
 		});
 
 		// If escape is pressed or the new user consent display name is empty then return undefined.
@@ -415,5 +403,16 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		scope.value = value;
 
 		return scope;
+	}
+
+	// Gets the required properties from the application registration.
+	private async getProperties(id: string): Promise<Application | undefined> {
+		const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(id, "api,identifierUris,signInAudience");
+		if (result.success === true && result.value !== undefined) {
+			return result.value;
+		} else {
+			await this.handleError(result.error);
+			return undefined;
+		}
 	}
 }

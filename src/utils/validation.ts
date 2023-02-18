@@ -84,7 +84,7 @@ export const validateScopeUserDisplayName = (displayName: string): string | unde
 };
 
 // Validates the value of an scope.
-export const validateScopeValue = async (value: string, isEditing: boolean, existingValue: string | undefined, signInAudience: string, scopes: ApiApplication): Promise<string | undefined> => {
+export const validateScopeValue = (value: string, isEditing: boolean, existingValue: string | undefined, signInAudience: string, scopes: ApiApplication): string | undefined => {
 	// Check the length of the value.
 	switch (signInAudience) {
 		case "AzureADMyOrg":
