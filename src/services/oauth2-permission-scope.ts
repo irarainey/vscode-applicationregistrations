@@ -172,8 +172,6 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
 				scope.type = consentType.value;
 				break;
-			default:
-				return;
 		}
 
 		// Set the added trigger to the status bar message.
