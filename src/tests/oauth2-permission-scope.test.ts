@@ -1,11 +1,12 @@
 import * as vscode from "vscode";
+import * as validation from "../utils/validation";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { OAuth2PermissionScopeService } from "../services/oauth2-permission-scope";
 import { mockApplications, mockAppObjectId, mockExposedApiId, seedMockData } from "./data/test-data";
 import { getTopLevelTreeItem } from "./test-utils";
-import exp = require("constants");
+import { ApiApplication } from "@microsoft/microsoft-graph-types";
 
 // Create Jest mocks
 jest.mock("vscode");
@@ -568,19 +569,44 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 
 	test("Add new scope successfully", async () => {
 		// Arrange
+		const newScopeValue = "Add.Scope";
+		const newScopeAdminDisplayName = "Add Scope";
+		const newScopeAdminDescription = "Add Description";
+		const newScopeUserDisplayName = "User Add Display Name";
+		const newScopeUserDescription = "User Add Description";
 		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
 		jest.spyOn(vscode.window, "showInputBox")
 			.mockResolvedValue(undefined)
-			.mockResolvedValueOnce("Add.Scope" as any)
-			.mockResolvedValueOnce("Add Scope" as any)
-			.mockResolvedValueOnce("New Add Description" as any)
-			.mockResolvedValueOnce("New User Add Display Name" as any)
-			.mockResolvedValueOnce("New User Add Description" as any);
+			.mockResolvedValueOnce(newScopeUserDescription as any);
 
 		jest.spyOn(vscode.window, "showQuickPick")
 			.mockResolvedValue(undefined)
 			.mockResolvedValueOnce({ label: "Administrators only", value: "Admin" } as any)
 			.mockResolvedValueOnce({ label: "Enabled", value: true } as any);
+
+		jest.spyOn(oauth2PermissionScopeService, "inputValue").mockImplementation(async (_title: string, _existingValue: string | undefined, _isEditing: boolean, _signInAudience: string, _scopes: ApiApplication, validate: (value: string, isEditing: boolean, existingValue: string | undefined, signInAudience: string, scopes: ApiApplication) => string | undefined) => {
+			const result = validate(newScopeValue, false, undefined, "AzureADMyOrg", mockApplications[0].api);
+			expect(result).toBeUndefined();
+			return newScopeValue;
+		});
+	
+		jest.spyOn(oauth2PermissionScopeService, "inputAdminConsentDisplayName").mockImplementation(async (_title: string, _existingValue: string | undefined, validate: (displayName: string) => string | undefined) => {
+			const result = validate(newScopeAdminDisplayName);
+			expect(result).toBeUndefined();
+			return newScopeAdminDisplayName;
+		});
+
+		jest.spyOn(oauth2PermissionScopeService, "inputAdminConsentDescription").mockImplementation(async (_title: string, _existingValue: string | undefined, validate: (description: string) => string | undefined) => {
+			const result = validate(newScopeAdminDescription);
+			expect(result).toBeUndefined();
+			return newScopeAdminDescription;
+		});
+
+		jest.spyOn(oauth2PermissionScopeService, "inputUserConsentDisplayName").mockImplementation(async (_title: string, _existingValue: string | undefined, validate: (displayName: string) => string | undefined) => {
+			const result = validate(newScopeUserDisplayName);
+			expect(result).toBeUndefined();
+			return newScopeUserDisplayName;
+		});
 
 		// Act
 		await oauth2PermissionScopeService.add(item);
@@ -590,9 +616,9 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
 		expect(treeItem?.children!.length).toEqual(3);
-		expect(treeItem?.children![2].label).toEqual("Add Scope");
-		expect(treeItem?.children![2].children![0].label).toEqual("Scope: Add.Scope");
-		expect(treeItem?.children![2].children![1].label).toEqual("Description: New Add Description");
+		expect(treeItem?.children![2].label).toEqual(newScopeAdminDisplayName);
+		expect(treeItem?.children![2].children![0].label).toEqual(`Scope: ${newScopeValue}`);
+		expect(treeItem?.children![2].children![1].label).toEqual(`Description: ${newScopeAdminDescription}`);
 		expect(treeItem?.children![2].children![2].label).toEqual("Consent: Admins Only");
 		expect(treeItem?.children![2].children![3].label).toEqual("Enabled: Yes");
 	});
@@ -641,5 +667,227 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		expect(iconSpy).toHaveBeenCalled();
 		expect(treeItem?.children!.length).toEqual(2);
 	});
+
+	test("Add new scope with admin display name too long error", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce("Add.Scope" as any);
+		jest.spyOn(vscode.window, "showQuickPick")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce({ label: "Administrators only", value: "Admin" } as any);
 	
+		const validationSpy = jest.spyOn(validation, "validateScopeAdminDisplayName");
+		jest.spyOn(oauth2PermissionScopeService, "inputAdminConsentDisplayName").mockImplementation(async (_title: string, _existingValue: string | undefined, validate: (displayName: string) => string | undefined) => {
+			const result = validate("X".padEnd(101, "X"));
+			expect(result).toBe("An admin consent display name cannot be longer than 100 characters.");
+			return undefined;
+		});
+
+		// Act
+		await oauth2PermissionScopeService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Add new scope with user display name too long error", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce("New.Scope" as any)
+			.mockResolvedValueOnce("New Scope" as any)
+			.mockResolvedValueOnce("New Description" as any);
+		jest.spyOn(vscode.window, "showQuickPick")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce({ label: "Administrators only", value: "Admin" } as any);
+	
+		const validationSpy = jest.spyOn(validation, "validateScopeUserDisplayName");
+		jest.spyOn(oauth2PermissionScopeService, "inputUserConsentDisplayName").mockImplementation(async (_title: string, _existingValue: string | undefined, validate: (displayName: string) => string | undefined) => {
+			const result = validate("X".padEnd(101, "X"));
+			expect(result).toBe("An user consent display name cannot be longer than 100 characters.");
+			return undefined;
+		});
+
+		// Act
+		await oauth2PermissionScopeService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Add new scope with admin display name too short error", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce("Add.Scope" as any);
+		jest.spyOn(vscode.window, "showQuickPick")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce({ label: "Administrators only", value: "Admin" } as any);
+	
+		const validationSpy = jest.spyOn(validation, "validateScopeAdminDisplayName");
+		jest.spyOn(oauth2PermissionScopeService, "inputAdminConsentDisplayName").mockImplementation(async (_title: string, _existingValue: string | undefined, validate: (displayName: string) => string | undefined) => {
+			const result = validate("");
+			expect(result).toBe("An admin consent display name cannot be empty.");
+			return undefined;
+		});
+
+		// Act
+		await oauth2PermissionScopeService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Add new scope with admin description too short error", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
+		const inputSpy = jest.spyOn(vscode.window, "showInputBox")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce("Add.Scope" as any)
+			.mockResolvedValueOnce("Add Scope" as any);
+		jest.spyOn(vscode.window, "showQuickPick")
+			.mockResolvedValue(undefined)
+			.mockResolvedValueOnce({ label: "Administrators only", value: "Admin" } as any);
+	
+		const validationSpy = jest.spyOn(validation, "validateScopeAdminDescription");
+		jest.spyOn(oauth2PermissionScopeService, "inputAdminConsentDescription").mockImplementation(async (_title: string, _existingValue: string | undefined, validate: (displayName: string) => string | undefined) => {
+			const result = validate("");
+			expect(result).toBe("An admin consent description cannot be empty.");
+			return undefined;
+		});
+
+		// Act
+		await oauth2PermissionScopeService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(inputSpy).toBeCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Add new scope with scope value too long for AAD audiences error", async () => {
+		// Arrange
+		const errorMessage = "A value cannot be longer than 120 characters.";
+		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
+		const validationSpy = jest.spyOn(validation, "validateScopeValue");
+		jest.spyOn(oauth2PermissionScopeService, "inputValue").mockImplementation(async (_title: string, _existingValue: string | undefined, _isEditing: boolean, _signInAudience: string, _scopes: ApiApplication, validate: (value: string, isEditing: boolean, existingValue: string | undefined, signInAudience: string, scopes: ApiApplication) => string | undefined) => {
+			const result = validate("X.X".padEnd(121, "X"), false, undefined, "AzureADMyOrg", { oauth2PermissionScopes: [] });
+			expect(result).toBe(errorMessage);
+			return errorMessage;
+		});
+
+		// Act
+		await oauth2PermissionScopeService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Add new scope with scope value too long for consumer audiences error", async () => {
+		// Arrange
+		const errorMessage = "A value cannot be longer than 40 characters.";
+		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
+		const validationSpy = jest.spyOn(validation, "validateScopeValue");
+		jest.spyOn(oauth2PermissionScopeService, "inputValue").mockImplementation(async (_title: string, _existingValue: string | undefined, _isEditing: boolean, _signInAudience: string, _scopes: ApiApplication, validate: (value: string, isEditing: boolean, existingValue: string | undefined, signInAudience: string, scopes: ApiApplication) => string | undefined) => {
+			const result = validate("X.X".padEnd(41, "X"), false, undefined, "AzureADandPersonalMicrosoftAccount", { oauth2PermissionScopes: [] });
+			expect(result).toBe(errorMessage);
+			return errorMessage;
+		});
+
+		// Act
+		await oauth2PermissionScopeService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Add new scope with scope value too short error", async () => {
+		// Arrange
+		const errorMessage = "A scope value cannot be empty.";
+		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
+		const validationSpy = jest.spyOn(validation, "validateScopeValue");
+		jest.spyOn(oauth2PermissionScopeService, "inputValue").mockImplementation(async (_title: string, _existingValue: string | undefined, _isEditing: boolean, _signInAudience: string, _scopes: ApiApplication, validate: (value: string, isEditing: boolean, existingValue: string | undefined, signInAudience: string, scopes: ApiApplication) => string | undefined) => {
+			const result = validate("", false, undefined, "AzureADMyOrg", { oauth2PermissionScopes: [] });
+			expect(result).toBe(errorMessage);
+			return errorMessage;
+		});
+
+		// Act
+		await oauth2PermissionScopeService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Add new scope with scope value with space error", async () => {
+		// Arrange
+		const errorMessage = "A scope value cannot contain spaces.";
+		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
+		const validationSpy = jest.spyOn(validation, "validateScopeValue");
+		jest.spyOn(oauth2PermissionScopeService, "inputValue").mockImplementation(async (_title: string, _existingValue: string | undefined, _isEditing: boolean, _signInAudience: string, _scopes: ApiApplication, validate: (value: string, isEditing: boolean, existingValue: string | undefined, signInAudience: string, scopes: ApiApplication) => string | undefined) => {
+			const result = validate("TEST SCOPE", false, undefined, "AzureADMyOrg", { oauth2PermissionScopes: [] });
+			expect(result).toBe(errorMessage);
+			return errorMessage;
+		});
+
+		// Act
+		await oauth2PermissionScopeService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Add new scope with scope value start with full stop error", async () => {
+		// Arrange
+		const errorMessage = "A scope value cannot start with a full stop.";
+		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
+		const validationSpy = jest.spyOn(validation, "validateScopeValue");
+		jest.spyOn(oauth2PermissionScopeService, "inputValue").mockImplementation(async (_title: string, _existingValue: string | undefined, _isEditing: boolean, _signInAudience: string, _scopes: ApiApplication, validate: (value: string, isEditing: boolean, existingValue: string | undefined, signInAudience: string, scopes: ApiApplication) => string | undefined) => {
+			const result = validate(".TEST.SCOPE", false, undefined, "AzureADMyOrg", { oauth2PermissionScopes: [] });
+			expect(result).toBe(errorMessage);
+			return errorMessage;
+		});
+
+		// Act
+		await oauth2PermissionScopeService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(validationSpy).toBeCalled();
+	});
+
+	test("Add new scope with scope exist value error", async () => {
+		// Arrange
+		const errorMessage = "The scope value specified already exists.";
+		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
+		const validationSpy = jest.spyOn(validation, "validateScopeValue");
+		jest.spyOn(oauth2PermissionScopeService, "inputValue").mockImplementation(async (_title: string, _existingValue: string | undefined, _isEditing: boolean, _signInAudience: string, _scopes: ApiApplication, validate: (value: string, isEditing: boolean, existingValue: string | undefined, signInAudience: string, scopes: ApiApplication) => string | undefined) => {
+			const result = validate("Sample.One", true, undefined, "AzureADMyOrg", mockApplications[0].api);
+			expect(result).toBe(errorMessage);
+			return errorMessage;
+		});
+
+		// Act
+		await oauth2PermissionScopeService.add(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(validationSpy).toBeCalled();
+	});
+	
+
 });

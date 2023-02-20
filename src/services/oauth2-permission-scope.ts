@@ -42,7 +42,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		clearStatusBarMessage(check!);
 
 		// Capture the new scope details by passing in an empty scope.
-		const scope = await this.inputScopeDetails({}, item.objectId!, false, properties.signInAudience!, properties.api!, validateScopeUserDisplayName);
+		const scope = await this.inputScopeDetails({}, item.objectId!, false, properties.signInAudience!, properties.api!);
 
 		// If the user cancels the input then return undefined.
 		if (scope === undefined) {
@@ -85,7 +85,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		clearStatusBarMessage(check!);
 
 		// Capture the new app role details by passing in the existing role.
-		const scope = await this.inputScopeDetails(properties.api!.oauth2PermissionScopes!.filter((r) => r.id === item.value!)[0], item.objectId!, true, properties.signInAudience!, properties.api!, validateScopeUserDisplayName);
+		const scope = await this.inputScopeDetails(properties.api!.oauth2PermissionScopes!.filter((r) => r.id === item.value!)[0], item.objectId!, true, properties.signInAudience!, properties.api!);
 
 		// If the user cancels the input then return undefined.
 		if (scope === undefined) {
@@ -269,11 +269,23 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		});
 	}
 
-	// Captures the user display name for a scope.
+	// Captures the admin display name for a scope.
 	async inputAdminConsentDisplayName(title: string, existingValue: string | undefined, validate: (displayName: string) => string | undefined): Promise<string | undefined> {
 		return await window.showInputBox({
 			prompt: "Admin consent display name",
 			placeHolder: "Enter an admin consent display name (e.g. Read files)",
+			title: title,
+			ignoreFocusOut: true,
+			value: existingValue,
+			validateInput: async (value) => validate(value)
+		});
+	}
+
+	// Captures the user display name for a scope.
+	async inputUserConsentDisplayName(title: string, existingValue: string | undefined, validate: (displayName: string) => string | undefined): Promise<string | undefined> {
+		return await window.showInputBox({
+			prompt: "User consent display name",
+			placeHolder: "Enter an optional user consent display name (e.g. Read your files)",
 			title: title,
 			ignoreFocusOut: true,
 			value: existingValue,
@@ -305,7 +317,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 	}
 
 	// Captures the details for a scope.
-	async inputScopeDetails(scope: PermissionScope, id: string, isEditing: boolean, signInAudience: string, scopes: ApiApplication, validate: (displayName: string) => string | undefined): Promise<PermissionScope | undefined> {
+	async inputScopeDetails(scope: PermissionScope, id: string, isEditing: boolean, signInAudience: string, scopes: ApiApplication): Promise<PermissionScope | undefined> {
 		const value = await this.inputValue(isEditing === true ? "Edit Exposed API Permission (1/7)" : "Add API Exposed Permission (1/7)", scope.value ?? undefined, isEditing, signInAudience, scopes, validateScopeValue);
 
 		// If escape is pressed or the new name is empty then return undefined.
@@ -338,14 +350,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		}
 
 		// Prompt the user for the new user consent display name.
-		const userConsentDisplayName = await window.showInputBox({
-			prompt: "User consent display name",
-			placeHolder: "Enter an optional user consent display name (e.g. Read your files)",
-			title: isEditing === true ? "Edit Exposed API Permission (5/7)" : "Add API Exposed Permission (5/7)",
-			ignoreFocusOut: true,
-			value: scope.userConsentDisplayName ?? undefined,
-			validateInput: async (value) => validate(value)
-		});
+		const userConsentDisplayName = await this.inputUserConsentDisplayName(isEditing === true ? "Edit Exposed API Permission (5/7)" : "Add API Exposed Permission (5/7)", scope.userConsentDisplayName ?? undefined, validateScopeUserDisplayName);
 
 		// If escape is pressed or the new user consent display name is empty then return undefined.
 		if (userConsentDisplayName === undefined) {

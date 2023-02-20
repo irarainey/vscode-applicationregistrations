@@ -62,12 +62,12 @@ export const validatePasswordCredentialExpiryDate = (expiry: string): string | u
 export const validateScopeAdminDisplayName = (displayName: string): string | undefined => {
 	// Check the length of the display name.
 	if (displayName.length > 100) {
-		return "An admin display name cannot be longer than 100 characters.";
+		return "An admin consent display name cannot be longer than 100 characters.";
 	}
 
 	// Check the length of the display name.
 	if (displayName.length < 1) {
-		return "An admin display name cannot be empty.";
+		return "An admin consent display name cannot be empty.";
 	}
 
 	return undefined;
@@ -77,7 +77,7 @@ export const validateScopeAdminDisplayName = (displayName: string): string | und
 export const validateScopeUserDisplayName = (displayName: string): string | undefined => {
 	// Check the length of the display name.
 	if (displayName.length > 100) {
-		return "An admin display name cannot be longer than 100 characters.";
+		return "An user consent display name cannot be longer than 100 characters.";
 	}
 
 	return undefined;
@@ -98,9 +98,6 @@ export const validateScopeValue = (value: string, isEditing: boolean, existingVa
 			if (value.length > 40) {
 				return "A value cannot be longer than 40 characters.";
 			}
-			break;
-		default:
-			break;
 	}
 
 	// Check the length of the value.
