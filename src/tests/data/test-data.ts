@@ -31,7 +31,28 @@ const seedApplications: any[] = [
 			acceptMappedClaims: null,
 			knownClientApplications: [],
 			requestedAccessTokenVersion: null,
-			oauth2PermissionScopes: [],
+			oauth2PermissionScopes: [
+				{
+					adminConsentDescription: "Sample description one",
+					adminConsentDisplayName: "Sample Scope One",
+					id: "2af52627-d1b4-408e-b188-ccca2a5cd33c",
+					isEnabled: true,
+					type: "User",
+					userConsentDescription: null,
+					userConsentDisplayName: null,
+					value: "Sample.One"
+				},
+				{
+					adminConsentDescription: "Sample description two",
+					adminConsentDisplayName: "Sample Scope Two",
+					id: "97956368-899b-4e0b-b51e-61743cb60f36",
+					isEnabled: true,
+					type: "Admin",
+					userConsentDescription: null,
+					userConsentDisplayName: null,
+					value: "Sample.Two"
+				}
+			],
 			preAuthorizedApplications: []
 		},
 		appRoles: [
@@ -390,6 +411,7 @@ export const seedServicePrincipals = [
 export const mockTenantId = "c7b3da28-01b8-46d3-9523-d1b24cbbde76";
 export const mockNewPasswordKeyId = "a7da2abf-da93-4bad-bf0b-6d9ee0d3e8ec";
 export const mockGraphApiAppId = "00000003-0000-0000-c000-000000000000";
+export const mockExposedApiId = seedApplications[0].api.oauth2PermissionScopes[0].id;
 export const mockApiScopeId = seedApplications[0].requiredResourceAccess[0].resourceAppId;
 export const mockAppObjectId = seedApplications[0].id;
 export const mockSecondAppObjectId = seedApplications[1].id;
@@ -421,4 +443,3 @@ export const mockPemCertificate = `-----BEGIN CERTIFICATE-----
 	3fWYhZsV9VHS/7gSsYBOktuSGCsEA8QE4nloJKG1RwlaVDcq6bs8Tj1GNHkqfZqF
 	x1sLjRM=
 	-----END CERTIFICATE-----`;
-
