@@ -43,7 +43,7 @@ describe("Authentication Tests", () => {
 		jest.spyOn(execShellCmdUtil, "execShellCmd").mockImplementation(async (_cmd: string) => mockTenantId);
 		jest.spyOn(vscode.window, "showInputBox").mockResolvedValue(undefined);
 		jest.spyOn(treeDataProvider.graphRepository, "initialise").mockResolvedValue(true);
-		jest.spyOn(statusBarUtils, "setStatusBarMessage").mockImplementation((_message: string, _spinner: boolean = true) => "1d399f60-5249-4232-80d3-7a3546eeb62b");
+		jest.spyOn(statusBarUtils, "setStatusBarMessage").mockImplementation((_message: string) => "1d399f60-5249-4232-80d3-7a3546eeb62b");
 
 		// Act
 		await authenticationUtil.signInUser(treeDataProvider, accountProvider);
@@ -76,7 +76,7 @@ describe("Authentication Tests", () => {
 		jest.spyOn(execShellCmdUtil, "execShellCmd").mockImplementation(async (_cmd: string) => mockTenantId);
 		jest.spyOn(vscode.window, "showInputBox").mockResolvedValue(mockTenantId);
 		jest.spyOn(treeDataProvider.graphRepository, "initialise").mockResolvedValue(true);
-		jest.spyOn(statusBarUtils, "setStatusBarMessage").mockImplementation((_message: string, _spinner: boolean = true) => "1d399f60-5249-4232-80d3-7a3546eeb62b");
+		jest.spyOn(statusBarUtils, "setStatusBarMessage").mockImplementation((_message: string) => "1d399f60-5249-4232-80d3-7a3546eeb62b");
 
 		// Act
 		await authenticationUtil.signInUser(treeDataProvider, accountProvider);
@@ -91,7 +91,7 @@ describe("Authentication Tests", () => {
 		const treeSpy = jest.spyOn(treeDataProvider, "render");
 		jest.spyOn(execShellCmdUtil, "execShellCmd").mockImplementation(async (_cmd: string) => mockTenantId);
 		jest.spyOn(vscode.window, "showInputBox").mockResolvedValue(mockTenantId);
-		jest.spyOn(statusBarUtils, "setStatusBarMessage").mockImplementation((_message: string, _spinner: boolean = true) => "1d399f60-5249-4232-80d3-7a3546eeb62b");
+		jest.spyOn(statusBarUtils, "setStatusBarMessage").mockImplementation((_message: string) => "1d399f60-5249-4232-80d3-7a3546eeb62b");
 
 		// Act
 		await authenticationUtil.signInUser(treeDataProvider, accountProvider);
@@ -108,7 +108,7 @@ describe("Authentication Tests", () => {
 			throw new Error("Error");
 		});
 		jest.spyOn(vscode.window, "showInputBox").mockResolvedValue(mockTenantId);
-		jest.spyOn(statusBarUtils, "setStatusBarMessage").mockImplementation((_message: string, _spinner: boolean = true) => "1d399f60-5249-4232-80d3-7a3546eeb62b");
+		jest.spyOn(statusBarUtils, "setStatusBarMessage").mockImplementation((_message: string) => "1d399f60-5249-4232-80d3-7a3546eeb62b");
 
 		// Act
 		await authenticationUtil.signInUser(treeDataProvider, accountProvider);

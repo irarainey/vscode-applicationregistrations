@@ -8,6 +8,7 @@ import { sort } from "fast-sort";
 import { debounce } from "ts-debounce";
 import { GraphResult } from "../types/graph-result";
 import { clearStatusBarMessage } from "../utils/status-bar";
+import { validateDebouncedInput } from "../utils/validation";
 
 export class RequiredResourceAccessService extends ServiceBase {
 	// The constructor for the RequiredResourceAccessService class.
@@ -18,13 +19,7 @@ export class RequiredResourceAccessService extends ServiceBase {
 	// Adds the selected scope to an application registration.
 	async add(item: AppRegItem): Promise<void> {
 		// Debounce the validation function to prevent multiple calls to the Graph API.
-		const validation = (value: string) => {
-			if (value.length < 3) {
-				return "You must enter at least partial name of the API Application to filter the list. A minimum of 3 characters is required.";
-			}
-			return;
-		};
-		const debouncedValidation = debounce(validation, 500);
+		const debouncedValidation = debounce(validateDebouncedInput, 500);
 
 		// Prompt the user for the new value.
 		const apiAppSearch = await window.showInputBox({

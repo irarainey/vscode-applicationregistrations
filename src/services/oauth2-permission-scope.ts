@@ -56,7 +56,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		properties.api!.oauth2PermissionScopes!.push(scope);
 
 		// Update the application.
-		await this.updateApplication(item.objectId!, { api: properties.api }, status);
+		await this.updateApplication(item.objectId!, { api: properties.api }, status, "EXPOSED-API-PERMISSIONS");
 	}
 
 	// Edits an exposed api scope from an application registration.
@@ -96,7 +96,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		const status = this.indicateChange("Updating Scope...", item);
 
 		// Update the application.
-		await this.updateApplication(item.objectId!, { api: properties.api }, status);
+		await this.updateApplication(item.objectId!, { api: properties.api }, status, "EXPOSED-API-PERMISSIONS");
 	}
 
 	// Edits an exposed api scope value from an application registration.
@@ -178,7 +178,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		const status = this.indicateChange("Updating Scope...", item);
 
 		// Update the application.
-		await this.updateApplication(item.objectId!, { api: properties.api }, status);
+		await this.updateApplication(item.objectId!, { api: properties.api }, status, "EXPOSED-API-PERMISSIONS");
 	}
 
 	// Changes the enabled state of an exposed api scope for an application registration.
@@ -198,7 +198,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		properties.api!.oauth2PermissionScopes!.filter((r) => r.id === item.value!)[0].isEnabled = state;
 
 		// Update the application.
-		await this.updateApplication(item.objectId!, { api: properties.api }, status);
+		await this.updateApplication(item.objectId!, { api: properties.api }, status, "EXPOSED-API-PERMISSIONS");
 	}
 
 	// Deletes an exposed api scope from an application registration.
@@ -238,7 +238,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		);
 
 		// Update the application.
-		await this.updateApplication(item.objectId!, { api: properties.api }, status);
+		await this.updateApplication(item.objectId!, { api: properties.api }, status, "EXPOSED-API-PERMISSIONS");
 	}
 
 	// Captures the value for a scope.

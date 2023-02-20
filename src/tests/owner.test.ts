@@ -3,7 +3,7 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { OwnerService } from "../services/owner";
-import { mockAppId, mockAppObjectId, mockSecondAppObjectId, mockSecondUserId, mockTenantId, mockUserId, seedMockData } from "./data/test-data";
+import { mockAppId, mockApplications, mockAppObjectId, mockSecondAppObjectId, mockSecondUserId, mockTenantId, mockUserId, seedMockData } from "./data/test-data";
 import { getTopLevelTreeItem } from "./test-utils";
 import { AzureCliAccountProvider } from "../utils/azure-cli-account-provider";
 import { AZURE_AND_ENTRA_PORTAL_USER_PATH, AZURE_PORTAL_ROOT, ENTRA_PORTAL_ROOT } from "../constants";
@@ -23,6 +23,7 @@ describe("Owner Service Tests", () => {
 	// Create spy variables
 	let triggerCompleteSpy: jest.SpyInstance<any, unknown[], any>;
 	let triggerErrorSpy: jest.SpyInstance<any, unknown[], any>;
+	let triggerTreeErrorSpy: jest.SpyInstance<any, unknown[], any>;
 	let statusBarSpy: jest.SpyInstance<any, [text: string], any>;
 	let iconSpy: jest.SpyInstance<any, [id: string, color?: any | undefined], any>;
 	let openExternalSpy: jest.SpyInstance<Thenable<boolean>, [target: vscode.Uri], any>;
@@ -50,6 +51,7 @@ describe("Owner Service Tests", () => {
 		iconSpy = jest.spyOn(vscode, "ThemeIcon");
 		triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(ownerService), "triggerRefresh");
 		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(ownerService), "handleError");
+		triggerTreeErrorSpy = jest.spyOn(Object.getPrototypeOf(treeDataProvider), "handleError");
 		openExternalSpy = jest.spyOn(vscode.env, "openExternal");
 	});
 
@@ -146,13 +148,28 @@ describe("Owner Service Tests", () => {
 
 	test("Add owner with error getting existing owners", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "getApplicationOwners").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("Add owner with error getting existing owners");
+		jest.spyOn(graphApiRepository, "getApplicationOwners").mockImplementation(async (_id: string) => ({ success: false, error }));
 
 		// Act
 		await ownerService.add(item);
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
+	});
+
+	test("Error getting owner children", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "OWNERS" };
+		const error = new Error("Error getting owner children");
+		jest.spyOn(graphApiRepository, "getApplicationOwners").mockImplementation(async (_id: string) => ({ success: false, error }));
+
+		// Act
+		await treeDataProvider.render();
+		await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "OWNERS");
+
+		// Assert
+		expect(triggerTreeErrorSpy).toHaveBeenCalledWith(error);
 	});
 });

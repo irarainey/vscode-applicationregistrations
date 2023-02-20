@@ -46,7 +46,7 @@ export class AppRoleService extends ServiceBase {
 		roles.push(role);
 
 		// Update the application.
-		await this.updateApplication(item.objectId!, { appRoles: roles }, status);
+		await this.updateApplication(item.objectId!, { appRoles: roles }, status, "APP-ROLES");
 	}
 
 	// Edits an app role from an application registration.
@@ -76,7 +76,7 @@ export class AppRoleService extends ServiceBase {
 		const status = this.indicateChange("Updating App Role...", item);
 
 		// Update the application.
-		await this.updateApplication(item.objectId!, { appRoles: roles }, status);
+		await this.updateApplication(item.objectId!, { appRoles: roles }, status, "APP-ROLES");
 	}
 
 	// Edits an app role value from an application registration.
@@ -149,7 +149,7 @@ export class AppRoleService extends ServiceBase {
 		const status = this.indicateChange("Updating App Role...", item);
 
 		// Update the application.
-		await this.updateApplication(item.objectId!, { appRoles: roles }, status);
+		await this.updateApplication(item.objectId!, { appRoles: roles }, status, "APP-ROLES");
 	}
 
 	// Changes the enabled state of an app role from an application registration.
@@ -169,7 +169,7 @@ export class AppRoleService extends ServiceBase {
 		roles.filter((r) => r.id === item.value!)[0].isEnabled = state;
 
 		// Update the application.
-		await this.updateApplication(item.objectId!, { appRoles: roles }, status);
+		await this.updateApplication(item.objectId!, { appRoles: roles }, status, "APP-ROLES");
 	}
 
 	// Deletes an app role from an application registration.
@@ -209,7 +209,7 @@ export class AppRoleService extends ServiceBase {
 		);
 
 		// Update the application.
-		await this.updateApplication(item.objectId!, { appRoles: roles }, status);
+		await this.updateApplication(item.objectId!, { appRoles: roles }, status, "APP-ROLES");
 	}
 
 	// Captures the display name

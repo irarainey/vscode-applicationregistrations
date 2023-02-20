@@ -22,6 +22,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 	// Create spy variables
 	let triggerCompleteSpy: jest.SpyInstance<any, unknown[], any>;
 	let triggerErrorSpy: jest.SpyInstance<any, unknown[], any>;
+	let triggerTreeErrorSpy: jest.SpyInstance<any, unknown[], any>;
 	let statusBarSpy: jest.SpyInstance<any, [text: string], any>;
 	let iconSpy: jest.SpyInstance<any, [id: string, color?: any | undefined], any>;
 
@@ -48,6 +49,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		iconSpy = jest.spyOn(vscode, "ThemeIcon");
 		triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(oauth2PermissionScopeService), "triggerRefresh");
 		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(oauth2PermissionScopeService), "handleError");
+		triggerTreeErrorSpy = jest.spyOn(Object.getPrototypeOf(treeDataProvider), "handleError");
 
 		// The item to be tested
 		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
@@ -89,7 +91,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		await oauth2PermissionScopeService.delete(item);
 
 		// Assert
-		treeDataProvider.render();
+		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(warningSpy).toHaveBeenCalledWith(`Do you want to delete the Scope ${item.label}?`, "Yes", "No");
 		expect(treeItem?.children?.length).toEqual(2);
@@ -167,7 +169,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		await oauth2PermissionScopeService.changeState(item, false);
 
 		// Assert
-		treeDataProvider.render();
+		await treeDataProvider.render();
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
@@ -182,7 +184,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		await oauth2PermissionScopeService.changeState(item, true);
 
 		// Assert
-		treeDataProvider.render();
+		await treeDataProvider.render();
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
@@ -371,7 +373,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(vscode.window.showInputBox).toHaveBeenCalled();
-		treeDataProvider.render();
+		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(treeItem?.children![0].children![0].label).toEqual("Scope: Sample.One");
 		expect(treeItem?.children![0].children![1].label).toEqual("Description: Sample description one");
@@ -395,7 +397,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(vscode.window.showInputBox).toHaveBeenCalled();
-		treeDataProvider.render();
+		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(treeItem?.children![0].children![0].label).toEqual("Scope: Sample.One");
 		expect(treeItem?.children![0].children![1].label).toEqual("Description: Sample description one");
@@ -420,7 +422,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(vscode.window.showInputBox).toHaveBeenCalled();
-		treeDataProvider.render();
+		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(treeItem?.children![0].children![0].label).toEqual("Scope: Sample.One");
 		expect(treeItem?.children![0].children![1].label).toEqual("Description: Sample description one");
@@ -446,7 +448,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(vscode.window.showInputBox).toHaveBeenCalled();
-		treeDataProvider.render();
+		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(treeItem?.children![0].children![0].label).toEqual("Scope: Sample.One");
 		expect(treeItem?.children![0].children![1].label).toEqual("Description: Sample description one");
@@ -473,7 +475,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(vscode.window.showInputBox).toHaveBeenCalled();
-		treeDataProvider.render();
+		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(treeItem?.children![0].children![0].label).toEqual("Scope: Sample.One");
 		expect(treeItem?.children![0].children![1].label).toEqual("Description: Sample description one");
@@ -501,7 +503,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(vscode.window.showInputBox).toHaveBeenCalled();
-		treeDataProvider.render();
+		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(treeItem?.children![0].children![0].label).toEqual("Scope: Sample.One");
 		expect(treeItem?.children![0].children![1].label).toEqual("Description: Sample description one");
@@ -530,7 +532,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(vscode.window.showInputBox).toHaveBeenCalled();
-		treeDataProvider.render();
+		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(treeItem?.children![0].children![0].label).toEqual("Scope: Sample.One");
 		expect(treeItem?.children![0].children![1].label).toEqual("Description: Sample description one");
@@ -889,5 +891,22 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		expect(validationSpy).toBeCalled();
 	});
 	
+	test("Error getting exposed api permission children", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
+		const error = new Error("Error getting exposed api permission children");
+		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (id: string, select: string) => {
+			if (select === "api") {
+				return { success: false, error };
+			}
+			return mockApplications.find((app) => app.id === id);
+		});
 
+		// Act
+		await treeDataProvider.render();
+		await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
+
+		// Assert
+		expect(triggerTreeErrorSpy).toHaveBeenCalledWith(error);
+	});
 });

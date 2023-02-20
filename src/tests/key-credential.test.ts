@@ -4,7 +4,7 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { KeyCredentialService } from "../services/key-credential";
-import { mockAppObjectId, mockPemCertificate, seedMockData } from "./data/test-data";
+import { mockApplications, mockAppObjectId, mockPemCertificate, seedMockData } from "./data/test-data";
 import { getTopLevelTreeItem } from "./test-utils";
 import { TextDocument, Uri } from "vscode";
 
@@ -22,6 +22,7 @@ describe("Key Credential Service Tests", () => {
 	// Create spy variables
 	let triggerCompleteSpy: jest.SpyInstance<any, unknown[], any>;
 	let triggerErrorSpy: jest.SpyInstance<any, unknown[], any>;
+	let triggerTreeErrorSpy: jest.SpyInstance<any, unknown[], any>;
 	let statusBarSpy: jest.SpyInstance<any, [text: string], any>;
 	let iconSpy: jest.SpyInstance<any, [id: string, color?: any | undefined], any>;
 
@@ -49,6 +50,7 @@ describe("Key Credential Service Tests", () => {
 		iconSpy = jest.spyOn(vscode, "ThemeIcon");
 		triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(keyCredentialService), "triggerRefresh");
 		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(keyCredentialService), "handleError");
+		triggerTreeErrorSpy = jest.spyOn(Object.getPrototypeOf(treeDataProvider), "handleError");
 
 		// The item to be tested
 		item = { objectId: mockAppObjectId, contextValue: "CERTIFICATE", keyId: "865b1dbb-5c6d-4e9c-81a3-474af6556bc3" };
@@ -237,5 +239,24 @@ describe("Key Credential Service Tests", () => {
 
 		// Assert
 		expect(inputSpy).toHaveBeenCalled();
+	});
+
+	test("Error getting certificate credential children", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "CERTIFICATE-CREDENTIALS" };
+		const error = new Error("Error getting certificate credential children");
+		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (id: string, select: string) => {
+			if (select === "keyCredentials") {
+				return { success: false, error };
+			}
+			return mockApplications.find((app) => app.id === id);
+		});
+
+		// Act
+		await treeDataProvider.render();
+		await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "CERTIFICATE-CREDENTIALS");
+
+		// Assert
+		expect(triggerTreeErrorSpy).toHaveBeenCalledWith(error);
 	});
 });

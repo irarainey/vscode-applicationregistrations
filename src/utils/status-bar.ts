@@ -3,8 +3,8 @@ import { v4 as uuidv4 } from "uuid";
 
 export let statusBarItems: [string, Disposable][] = [];
 
-export const setStatusBarMessage = (message: string, spinner: boolean = true): string => {
-	const handle = window.setStatusBarMessage(`${spinner === true ? "$(loading~spin)  " : ""}${message}`);
+export const setStatusBarMessage = (message: string): string => {
+	const handle = window.setStatusBarMessage(`$(loading~spin)  ${message}`);
 	const id = uuidv4();
 	statusBarItems.push([id, handle]);
 	return id;

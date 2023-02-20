@@ -194,10 +194,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 		switch (element.contextValue) {
 			case "OWNERS":
 				// Return the owners for the application
-				return this.getApplicationOwners(element).catch(async (error: any) => {
-					await this.handleError(error);
-					return undefined;
-				});
+				return Promise.resolve(this.getApplicationOwners(element));
 			case "WEB-REDIRECT":
 				// Return the web redirect URIs for the application
 				return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "web").then(async (result: GraphResult<Application>) => {
@@ -281,6 +278,22 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 			default:
 				// Nothing specific so return the statically defined children
 				return element.children;
+		}
+	}
+
+	// Returns the sign-in audience
+	getSignInAudience(audience: string): string {
+		switch (audience) {
+			case "AzureADMyOrg":
+				return "Single Tenant";
+			case "AzureADMultipleOrgs":
+				return "Multiple Tenants";
+			case "AzureADandPersonalMicrosoftAccount":
+				return "Multiple Tenants and Personal Microsoft Accounts";
+			case "PersonalMicrosoftAccount":
+				return "Personal Microsoft Accounts";
+			default:
+				return audience;
 		}
 	}
 
@@ -665,22 +678,6 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 			} else {
 				await this.handleError(error);
 			}
-		}
-	}
-
-	// Returns the sign-in audience
-	private getSignInAudience(audience: string): string {
-		switch (audience) {
-			case "AzureADMyOrg":
-				return "Single Tenant";
-			case "AzureADMultipleOrgs":
-				return "Multiple Tenants";
-			case "AzureADandPersonalMicrosoftAccount":
-				return "Multiple Tenants and Personal Microsoft Accounts";
-			case "PersonalMicrosoftAccount":
-				return "Personal Microsoft Accounts";
-			default:
-				return audience;
 		}
 	}
 

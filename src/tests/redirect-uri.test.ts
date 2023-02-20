@@ -21,6 +21,7 @@ describe("Redirect URI Service Tests", () => {
 	// Create spy variables
 	let triggerCompleteSpy: jest.SpyInstance<any, unknown[], any>;
 	let triggerErrorSpy: jest.SpyInstance<any, unknown[], any>;
+	let triggerTreeErrorSpy: jest.SpyInstance<any, unknown[], any>;
 	let statusBarSpy: jest.SpyInstance<any, [text: string], any>;
 	let iconSpy: jest.SpyInstance<any, [id: string, color?: any | undefined], any>;
 	let treeSpy: jest.SpyInstance<Promise<void>, [status?: string | undefined, type?: string | undefined], any>;
@@ -49,6 +50,7 @@ describe("Redirect URI Service Tests", () => {
 		iconSpy = jest.spyOn(vscode, "ThemeIcon");
 		triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(redirectUriService), "triggerRefresh");
 		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(redirectUriService), "handleError");
+		triggerTreeErrorSpy = jest.spyOn(Object.getPrototypeOf(treeDataProvider), "handleError");
 		treeSpy = jest.spyOn(treeDataProvider, "render");
 
 		// The item to be tested
@@ -615,5 +617,62 @@ describe("Redirect URI Service Tests", () => {
 		expect(triggerCompleteSpy).toHaveBeenCalled();
 		expect(treeItem?.children?.length).toEqual(2);
 		expect(treeItem?.children?.[1].label).toEqual("https://newmobile.com");
+	});
+
+	test("Error getting web redirect children", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "WEB-REDIRECT" };
+		const error = new Error("Error getting web redirect children");
+		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (id: string, select: string) => {
+			if (select === "web") {
+				return { success: false, error };
+			}
+			return mockApplications.find((app) => app.id === id);
+		});
+
+		// Act
+		await treeDataProvider.render();
+		await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "WEB-REDIRECT");
+
+		// Assert
+		expect(triggerTreeErrorSpy).toHaveBeenCalledWith(error);
+	});
+
+	test("Error getting spa redirect children", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "SPA-REDIRECT" };
+		const error = new Error("Error getting spa redirect children");
+		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (id: string, select: string) => {
+			if (select === "spa") {
+				return { success: false, error };
+			}
+			return mockApplications.find((app) => app.id === id);
+		});
+
+		// Act
+		await treeDataProvider.render();
+		await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "SPA-REDIRECT");
+
+		// Assert
+		expect(triggerTreeErrorSpy).toHaveBeenCalledWith(error);
+	});
+
+	test("Error getting native redirect children", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "NATIVE-REDIRECT" };
+		const error = new Error("Error getting native redirect children");
+		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (id: string, select: string) => {
+			if (select === "publicClient") {
+				return { success: false, error };
+			}
+			return mockApplications.find((app) => app.id === id);
+		});
+
+		// Act
+		await treeDataProvider.render();
+		await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "NATIVE-REDIRECT");
+
+		// Assert
+		expect(triggerTreeErrorSpy).toHaveBeenCalledWith(error);
 	});
 });

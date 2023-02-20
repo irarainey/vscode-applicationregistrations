@@ -22,7 +22,7 @@ export const workspace = {
 		get: (key: string) => {
 			switch (key) {
 				case "useEventualConsistency":
-					return true;
+					return false;
 				case "showApplicationCountWarning":
 					return false;
 				case "showOwnedApplicationsOnly":
@@ -46,6 +46,9 @@ export const workspace = {
 export class EventEmitter {
 	event = jest.fn();
 	fire() {
+		return jest.fn();
+	}
+	dispose() {
 		return jest.fn();
 	}
 }
@@ -86,9 +89,7 @@ export const TreeItem = jest.fn();
 export const TreeItemCollapsibleState = jest.fn();
 
 export const TreeDataProvider = {
-	onDidChangeTreeDataEvent: () => ({
-		dispose: () => jest.fn()
-	})
+	onDidChangeTreeDataEvent: new EventEmitter()
 };
 
 export const ProviderResult = jest.fn();

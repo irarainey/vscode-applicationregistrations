@@ -6,4 +6,5 @@ export type ErrorResult = {
 	error?: Error;
 	item?: AppRegItem;
 	treeDataProvider?: AppRegTreeDataProvider;
+	source?: string | undefined;
 };
