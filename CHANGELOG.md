@@ -2,6 +2,7 @@
 
 - Added functionality to open the user or application in the Entra portal.
 - Added the ability to open in the portal using an explicit tenant id.
+- Added a warning if a duplicate app role or exposed api scope is detected.
 - Refactored redirect uri editing and creation to improve performance.
 - Fixed an issue adding API scopes from a new application.
 - Fixed an issue validating expiry dates for password credentials.
