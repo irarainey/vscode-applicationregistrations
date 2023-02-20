@@ -119,7 +119,7 @@ describe("Password Credential Service Tests", () => {
 		jest.spyOn(passwordCredentialService, "inputDescription").mockImplementation(async () => "Test Description");
 		jest.spyOn(passwordCredentialService, "inputExpiryDate").mockImplementation(async (_expiryDate: Date, validation: (value: string) => string | undefined) => {
 			const result = validation("NOTADATE");
-			expect(result).toBe("Expiry must be a valid date.");
+			expect(result).toBe("Expiry must be in the format YYYY-MM-DD or YYYY/MM/DD.");
 			return result;
 		});
 

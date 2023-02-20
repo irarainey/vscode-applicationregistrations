@@ -100,7 +100,7 @@ describe("Required Resource Access Service Tests", () => {
 		// Assert
 		expect(graphSpy).toHaveBeenCalled();
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error, undefined);
 	});
 
 	test("Remove one scope for an api app successfully", async () => {
@@ -162,7 +162,7 @@ describe("Required Resource Access Service Tests", () => {
 		// Assert
 		expect(graphSpy).toHaveBeenCalled();
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error, undefined);
 	});
 
 	test("Add delegated scope successfully to existing api app", async () => {
