@@ -81,4 +81,26 @@ describe("Error Handler Tests", () => {
 		// Assert
 		expect(showErrorMessageSpy).toHaveBeenCalled();
 	});
+
+	test("Duplicate app role error", async () => {
+		// Arrange
+		jest.spyOn(vscode.window, "showErrorMessage");
+
+		// Act
+		await errorHandlerModule.errorHandler({ error: new Error("Request contains a property with duplicate values"), item: { iconPath: "spinner", baseIcon: "base" }, treeDataProvider: treeDataProvider, source: "APP-ROLES" });
+
+		// Assert
+		expect(showErrorMessageSpy).toHaveBeenCalledWith("The App Role value entered cannot be saved. This is because an Exposed API Permission with the same scope already exists with the value you have defined.", "OK");
+	});
+
+	test("Duplicate exposed api scope error", async () => {
+		// Arrange
+		jest.spyOn(vscode.window, "showErrorMessage");
+
+		// Act
+		await errorHandlerModule.errorHandler({ error: new Error("Request contains a property with duplicate values"), item: { iconPath: "spinner", baseIcon: "base" }, treeDataProvider: treeDataProvider, source: "EXPOSED-API-PERMISSIONS" });
+
+		// Assert
+		expect(showErrorMessageSpy).toHaveBeenCalledWith("The Exposed API Permission scope entered cannot be saved. This is because an App Role with the same value already exists with the scope you have defined.", "OK");
+	});
 });

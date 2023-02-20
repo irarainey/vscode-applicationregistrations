@@ -113,13 +113,31 @@ describe("Password Credential Service Tests", () => {
 		expect(treeItem?.children?.length).toEqual(2);
 	});
 
-	test("Add password credential with incorrect date validation error", async () => {
+	test("Add password credential with incorrect date validation bad characters error", async () => {
 		// Arrange
 		const validationSpy = jest.spyOn(validation, "validatePasswordCredentialExpiryDate");
 		jest.spyOn(passwordCredentialService, "inputDescription").mockImplementation(async () => "Test Description");
 		jest.spyOn(passwordCredentialService, "inputExpiryDate").mockImplementation(async (_expiryDate: Date, validation: (value: string) => string | undefined) => {
 			const result = validation("NOTADATE");
 			expect(result).toBe("Expiry must be in the format YYYY-MM-DD or YYYY/MM/DD.");
+			return result;
+		});
+
+		// Act
+		await passwordCredentialService.add(item);
+
+		// Assert
+		expect(passwordCredentialService.inputExpiryDate).toHaveBeenCalled();
+		expect(validationSpy).toHaveBeenCalled();
+	});
+
+	test("Add password credential with incorrect date validation not a date error", async () => {
+		// Arrange
+		const validationSpy = jest.spyOn(validation, "validatePasswordCredentialExpiryDate");
+		jest.spyOn(passwordCredentialService, "inputDescription").mockImplementation(async () => "Test Description");
+		jest.spyOn(passwordCredentialService, "inputExpiryDate").mockImplementation(async (_expiryDate: Date, validation: (value: string) => string | undefined) => {
+			const result = validation("2100-01-42");
+			expect(result).toBe("Expiry must be a valid date.");
 			return result;
 		});
 
