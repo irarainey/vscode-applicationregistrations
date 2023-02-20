@@ -43,12 +43,21 @@ export const validateRedirectUri = (uri: string, context: string, existingRedire
 
 // Validates the expiry date.
 export const validatePasswordCredentialExpiryDate = (expiry: string): string | undefined => {
-	const expiryDate = Date.parse(expiry);
+	if (!/^\d{4}[-\/]\d{2}[-\/]\d{2}$/.test(expiry)) {
+		return "Expiry must be in the format YYYY-MM-DD or YYYY/MM/DD.";
+	}
+
+	// Check if the input string contains only valid characters (numbers, hyphens, or slashes)
+	if (!/^[\d\-\/]+$/.test(expiry)) {
+		return "Expiry must be in the format YYYY-MM-DD or YYYY/MM/DD.";
+	}
+
+	const expiryDate = new Date(expiry);
 	const now = Date.now();
 	const maximumExpireDate = addYears(new Date(), 2);
 
 	//Check if the expiry date is a valid date.
-	if (Number.isNaN(expiryDate)) {
+	if (Number.isNaN(expiryDate.getTime())) {
 		return "Expiry must be a valid date.";
 	}
 

@@ -14,8 +14,8 @@ export class GraphApiRepository {
 	async getApplicationListOwned(filter?: string): Promise<GraphResult<Application[]>> {
 		const apps = mockApplications.filter((a) => a.owners.some((u: User) => u.id === mockUser.id));
 		if (filter !== undefined && filter !== "") {
-			filter = filter.replace("startswith(displayName, \'", "");
-			filter = filter.replace("\')", "");
+			filter = filter.replace("startswith(displayName, '", "");
+			filter = filter.replace("')", "");
 			return { success: true, value: apps.filter((a) => a.displayName.includes(filter)) };
 		} else {
 			return { success: true, value: apps };
