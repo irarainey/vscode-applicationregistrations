@@ -1,9 +1,16 @@
 import { ApiApplication, AppRole, User } from "@microsoft/microsoft-graph-types";
-import { addYears, isAfter, isBefore, isDate } from "date-fns";
+import { addYears, isAfter, isBefore } from "date-fns";
 import { errorHandler } from "../error-handler";
 import { OwnerList } from "../models/owner-list";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { GraphResult } from "../types/graph-result";
+
+// Validates the number of keys pressed for deboucing input for application search.
+export const validateDebouncedInput = (value: string): string | undefined => {
+	if (value.length < 3) {
+		return "You must enter at least partial name of the API Application to filter the list. A minimum of 3 characters is required.";
+	}
+};
 
 // Validates the redirect URI as per https://learn.microsoft.com/en-us/azure/active-directory/develop/reply-url
 export const validateRedirectUri = (uri: string, context: string, existingRedirectUris: string[], isEditing: boolean, oldValue: string | undefined): string | undefined => {

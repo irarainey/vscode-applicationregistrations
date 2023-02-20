@@ -20,6 +20,7 @@ describe("Required Resource Access Service Tests", () => {
 	// Create spy variables
 	let triggerCompleteSpy: jest.SpyInstance<any, unknown[], any>;
 	let triggerErrorSpy: jest.SpyInstance<any, unknown[], any>;
+	let triggerTreeErrorSpy: jest.SpyInstance<any, unknown[], any>;
 	let statusBarSpy: jest.SpyInstance<any, [text: string], any>;
 	let iconSpy: jest.SpyInstance<any, [id: string, color?: any | undefined], any>;
 
@@ -46,6 +47,7 @@ describe("Required Resource Access Service Tests", () => {
 		iconSpy = jest.spyOn(vscode, "ThemeIcon");
 		triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(requiredResourceAccessService), "triggerRefresh");
 		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(requiredResourceAccessService), "handleError");
+		triggerTreeErrorSpy = jest.spyOn(Object.getPrototypeOf(treeDataProvider), "handleError");
 
 		// The item to be tested
 		item = { objectId: mockAppObjectId, contextValue: "API-PERMISSIONS-APP", resourceAppId: mockGraphApiAppId };
@@ -429,4 +431,37 @@ describe("Required Resource Access Service Tests", () => {
 		expect(inputSpy).toHaveBeenCalled();
 		expect(quickPickSpy).toHaveBeenCalled();
 	});
+
+	test("Error getting required resource access children", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "API-PERMISSIONS" };
+		const error = new Error("Error getting required resource access children");
+		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (id: string, select: string) => {
+			if (select === "requiredResourceAccess") {
+				return { success: false, error };
+			}
+			return mockApplications.find((app) => app.id === id);
+		});
+
+		// Act
+		await treeDataProvider.render();
+		await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "API-PERMISSIONS");
+
+		// Assert
+		expect(triggerTreeErrorSpy).toHaveBeenCalledWith(error);
+	});	
+
+	test("Error finding service principal when accessing children", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "API-PERMISSIONS" };
+		const error = new Error("Error finding service principal when accessing children");
+		jest.spyOn(graphApiRepository, "findServicePrincipalByAppId").mockImplementation(async (id: string) => ({ success: false, error }));
+
+		// Act
+		await treeDataProvider.render();
+		await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "API-PERMISSIONS");
+
+		// Assert
+		expect(triggerTreeErrorSpy).toHaveBeenCalledWith(error);
+	});	
 });

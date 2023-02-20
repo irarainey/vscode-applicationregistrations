@@ -4,7 +4,7 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { PasswordCredentialService } from "../services/password-credential";
-import { mockAppObjectId, mockNewPasswordKeyId, seedMockData } from "./data/test-data";
+import { mockApplications, mockAppObjectId, mockNewPasswordKeyId, seedMockData } from "./data/test-data";
 import { getTopLevelTreeItem } from "./test-utils";
 import { format } from "date-fns";
 
@@ -22,6 +22,7 @@ describe("Password Credential Service Tests", () => {
 	// Create spy variables
 	let triggerCompleteSpy: jest.SpyInstance<any, unknown[], any>;
 	let triggerErrorSpy: jest.SpyInstance<any, unknown[], any>;
+	let triggerTreeErrorSpy: jest.SpyInstance<any, unknown[], any>;
 	let statusBarSpy: jest.SpyInstance<any, [text: string], any>;
 	let iconSpy: jest.SpyInstance<any, [id: string, color?: any | undefined], any>;
 
@@ -48,6 +49,7 @@ describe("Password Credential Service Tests", () => {
 		statusBarSpy = jest.spyOn(vscode.window, "setStatusBarMessage");
 		iconSpy = jest.spyOn(vscode, "ThemeIcon");
 		triggerCompleteSpy = jest.spyOn(Object.getPrototypeOf(passwordCredentialService), "triggerRefresh");
+		triggerTreeErrorSpy = jest.spyOn(Object.getPrototypeOf(treeDataProvider), "handleError");
 		triggerErrorSpy = jest.spyOn(Object.getPrototypeOf(passwordCredentialService), "handleError");
 
 		// The item to be tested
@@ -175,5 +177,24 @@ describe("Password Credential Service Tests", () => {
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(triggerErrorSpy).toHaveBeenCalled();
+	});
+
+	test("Error getting password credential children", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "PASSWORD-CREDENTIALS" };
+		const error = new Error("Error getting password credential children");
+		jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (id: string, select: string) => {
+			if (select === "passwordCredentials") {
+				return { success: false, error };
+			}
+			return mockApplications.find((app) => app.id === id);
+		});
+
+		// Act
+		await treeDataProvider.render();
+		await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "PASSWORD-CREDENTIALS");
+
+		// Assert
+		expect(triggerTreeErrorSpy).toHaveBeenCalledWith(error);
 	});
 });

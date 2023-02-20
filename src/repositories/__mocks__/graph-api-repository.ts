@@ -4,11 +4,30 @@ import { mockApplications, mockOrganizations, mockUser, mockRoleAssignments, moc
 
 export class GraphApiRepository {
 	async getApplicationCountOwned(): Promise<GraphResult<number>> {
+		return { success: true, value: mockApplications.filter((a) => a.owners.some((u: User) => u.id === mockUser.id)).length };
+	}
+
+	async getApplicationCountAll(): Promise<GraphResult<number>> {
 		return { success: true, value: mockApplications.length };
 	}
 
-	async getApplicationListOwned(_filter?: string): Promise<GraphResult<Application[]>> {
-		return { success: true, value: mockApplications };
+	async getApplicationListOwned(filter?: string): Promise<GraphResult<Application[]>> {
+		const apps = mockApplications.filter((a) => a.owners.some((u: User) => u.id === mockUser.id));
+		if (filter !== undefined && filter !== "") {
+			filter = filter.replace("startswith(displayName, \'", "");
+			filter = filter.replace("\')", "");
+			return { success: true, value: apps.filter((a) => a.displayName.includes(filter)) };
+		} else {
+			return { success: true, value: apps };
+		}
+	}
+
+	async getApplicationListAll(filter?: string): Promise<GraphResult<Application[]>> {
+		if (filter !== undefined && filter !== "") {
+			return { success: true, value: mockApplications.filter((a) => a.displayName.toLowerCase().includes(filter.toLowerCase())) };
+		} else {
+			return { success: true, value: mockApplications };
+		}
 	}
 
 	async getApplicationDetailsFull(id: string): Promise<GraphResult<Application>> {

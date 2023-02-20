@@ -187,7 +187,7 @@ const seedApplications: any[] = [
 		displayName: "Second Test App",
 		description: null,
 		identifierUris: [],
-		notes: null,
+		notes: "Second Test App",
 		signInAudience: "AzureADMultipleOrgs",
 		api: {
 			acceptMappedClaims: null,
@@ -222,6 +222,51 @@ const seedApplications: any[] = [
 				displayName: "First User",
 				userPrincipalName: "first@user.com",
 				mail: "first@user.com"
+			}
+		]
+	},
+	{
+		id: "2352b377-784d-4d20-a874-319ca672b637",
+		appId: "0515ee31-a64b-4a03-9d15-ff10c7dbfe39",
+		createdDateTime: "2023-01-01T00:00:00Z",
+		displayName: "Third Test App",
+		description: null,
+		identifierUris: [],
+		notes: null,
+		signInAudience: "AzureADMultipleOrgs",
+		api: {
+			acceptMappedClaims: null,
+			knownClientApplications: [],
+			requestedAccessTokenVersion: null,
+			oauth2PermissionScopes: [],
+			preAuthorizedApplications: []
+		},
+		appRoles: [],
+		keyCredentials: [],
+		passwordCredentials: [],
+		publicClient: {
+			redirectUris: []
+		},
+		requiredResourceAccess: [],
+		web: {
+			homePageUrl: null,
+			logoutUrl: null,
+			redirectUris: [],
+			implicitGrantSettings: {
+				enableAccessTokenIssuance: false,
+				enableIdTokenIssuance: false
+			},
+			redirectUriSettings: []
+		},
+		spa: {
+			redirectUris: []
+		},
+		owners: [
+			{
+				id: "b204cef1-baa1-4284-8ae1-2285a609ba35",
+				displayName: "Second User",
+				userPrincipalName: "second@user.com",
+				mail: "second@user.com"
 			}
 		]
 	}
