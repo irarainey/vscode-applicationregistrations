@@ -42,6 +42,18 @@ export const errorHandler = async (result: ErrorResult) => {
 			return;
 		}
 
+		// Determine if the error is due to trying to change the sign in audience.
+		if (result.error.message.includes("Request contains a property with duplicate values")) {
+			if(result.source === "APP-ROLES") {
+				window.showErrorMessage("The App Role value entered cannot be saved. This is because an Exposed API Permission with the same scope already exists with the value you have defined.", "OK");
+				return;
+			}
+			else if (result.source === "EXPOSED-API-PERMISSIONS") {
+				window.showErrorMessage("The Exposed API Permission scope entered cannot be saved. This is because an App Role with the same value already exists with the scope you have defined.", "OK");
+				return;
+			}
+		}
+
 		// Display an error message.
 		window.showErrorMessage(`An error occurred trying to complete your task: ${result.error!.message}.`, "OK");
 	}

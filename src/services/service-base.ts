@@ -30,8 +30,8 @@ export class ServiceBase {
 	}
 
 	// Handle an error
-	protected async handleError(error?: Error) {
-		await errorHandler({ error: error, item: this.item, treeDataProvider: this.treeDataProvider });
+	protected async handleError(error?: Error, source?: string | undefined) {
+		await errorHandler({ error: error, item: this.item, treeDataProvider: this.treeDataProvider, source: source });
 	}
 
 	// Trigger completion by refreshing the tree
@@ -57,9 +57,9 @@ export class ServiceBase {
 	}
 
 	// Updates the application registration.
-	protected async updateApplication(id: string, application: Application, status: string | undefined = undefined): Promise<void> {
+	protected async updateApplication(id: string, application: Application, status: string | undefined = undefined, source?: string | undefined): Promise<void> {
 		const update: GraphResult<void> = await this.graphRepository.updateApplication(id, application);
-		update.success === true ? await this.triggerRefresh(status) : await this.handleError(update.error);
+		update.success === true ? await this.triggerRefresh(status) : await this.handleError(update.error, source);
 	}
 
 	// Resets the icon for a tree item
