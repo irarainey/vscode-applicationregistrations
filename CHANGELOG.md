@@ -50,7 +50,7 @@
 - Fixed an issue where the filter became inactive if the list was filtered empty.
 - Other minor refactoring.
 
-- ## 0.3.0
+## 0.3.0
 
 - Added the ability to show current tenant information.
 - Fixed a bug where the application icon wasn't reset after opening the manifest.
