@@ -27,20 +27,18 @@ jobs:
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
-          dryRun: true
 
-      - name: Output Path
+      - name: Rename Package
         run: |
           mv ${{ steps.publish.outputs.vsixPath }} irarainey.${{ steps.publish.outputs.vsixPath }}
-          ls
 
-      # - name: Upload extension package to release
-      #   id: upload-release-asset 
-      #   uses: softprops/action-gh-release@v0.1.15
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     upload_url: ${{ github.event.release.upload_url }} 
-      #     asset_path: ./irarainey.applicationregistrations-${{ github.event.release.tag_name }}.vsix
-      #     asset_name: irarainey.applicationregistrations-${{ github.event.release.tag_name }}.vsix
-      #     asset_content_type: application/octet-stream
+      - name: Upload extension package to release
+        id: upload-release-asset 
+        uses: softprops/action-gh-release@v0.1.15
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }} 
+          asset_path: ./irarainey.${{ steps.publish.outputs.vsixPath }}
+          asset_name: irarainey.${{ steps.publish.outputs.vsixPath }}
+          asset_content_type: application/octet-stream
