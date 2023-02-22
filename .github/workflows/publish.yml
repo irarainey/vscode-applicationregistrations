@@ -22,11 +22,16 @@ jobs:
         run: npm install
 
       - name: Publish to Visual Studio Marketplace
+        id: publish
         uses: HaaLeo/publish-vscode-extension@v1
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
           dryRun: true
+
+      - name: Output Path
+        run: |
+          echo ${{ publish.vsixPath }}
 
       # - name: Upload extension package to release
       #   id: upload-release-asset 
