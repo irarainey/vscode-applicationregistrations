@@ -31,7 +31,7 @@ jobs:
 
       - name: Output Path
         run: |
-          echo ${{ publish.vsixPath }}
+          echo ${{ steps.publish.vsixPath }}
 
       # - name: Upload extension package to release
       #   id: upload-release-asset 
