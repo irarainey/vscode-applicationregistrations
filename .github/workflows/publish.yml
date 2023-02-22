@@ -31,7 +31,8 @@ jobs:
 
       - name: Output Path
         run: |
-          echo "${{ steps.publish.outputs.vsixPath }}"
+          mv ${{ steps.publish.outputs.vsixPath }} irarainey.${{ steps.publish.outputs.vsixPath }}
+          ls
 
       # - name: Upload extension package to release
       #   id: upload-release-asset 
