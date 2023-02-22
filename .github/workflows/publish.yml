@@ -1,0 +1,40 @@
+#
+# Runs when a release is created
+# Publishes the extension to the VS Marketplace
+# Also packages the vsix file and uploads it to the corresponding release
+#
+
+name: Publish & Package
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Install NPM Packages
+        run: npm install
+
+      - name: Publish to Visual Studio Marketplace
+        uses: HaaLeo/publish-vscode-extension@v1
+        with:
+          pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+          registryUrl: https://marketplace.visualstudio.com
+          dryRun: true
+
+      # - name: Upload extension package to release
+      #   id: upload-release-asset 
+      #   uses: softprops/action-gh-release@v0.1.15
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ github.event.release.upload_url }} 
+      #     asset_path: ./irarainey.applicationregistrations-${{ github.event.release.tag_name }}.vsix
+      #     asset_name: irarainey.applicationregistrations-${{ github.event.release.tag_name }}.vsix
+      #     asset_content_type: application/octet-stream

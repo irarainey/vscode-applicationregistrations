@@ -27,6 +27,7 @@ jobs:
         output: report-markdown
         annotations: failed-tests
 
-    - uses: marocchino/sticky-pull-request-comment@v2
+    - name: Create Pull Request Comment for Coverage
+      uses: marocchino/sticky-pull-request-comment@v2
       with:
         message: ${{ steps.coverage.outputs.report }}
