@@ -1,3 +1,7 @@
+## 0.9.0
+
+- Refactored use of sign in audience to improve performance when performing various validations.
+
 ## 0.8.0
 
 - Added functionality to open the user or application in the Entra portal.

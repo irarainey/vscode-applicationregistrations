@@ -346,7 +346,8 @@ describe("Redirect URI Service Tests", () => {
 	test("Add web redirect successfully for AAD audiences", async () => {
 		// Arrange
 		item = { objectId: mockAppObjectId, contextValue: "WEB-REDIRECT" };
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "AzureADMyOrg" }));
+		await treeDataProvider.render();
+		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "AzureADMyOrg" }));
 
 		// Act
 		await redirectUriService.add(item);
@@ -507,16 +508,16 @@ describe("Redirect URI Service Tests", () => {
 
 	test("Add web redirect for AAD audiences with total error", async () => {
 		// Arrange
+		await treeDataProvider.render();
 		item = { objectId: mockAppObjectId, contextValue: "WEB-REDIRECT" };
 		const warningSpy = jest.spyOn(vscode.window, "showWarningMessage");
 		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string, _select: string, _expandOwners?: boolean | undefined) => ({ success: true, value: mockRedirectUris }));
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "AzureADMyOrg" }));
+		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "AzureADMyOrg" }));
 
 		// Act
 		await redirectUriService.add(item);
 
 		// Assert
-		expect(graphSpy).toHaveBeenCalled();
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
 		expect(warningSpy).toHaveBeenCalledWith("You cannot add any more Redirect URIs. The maximum for this application type is 256.", "OK");
@@ -524,16 +525,16 @@ describe("Redirect URI Service Tests", () => {
 
 	test("Add web redirect for AAD and consumer audiences with total error", async () => {
 		// Arrange
+		await treeDataProvider.render();
 		item = { objectId: mockAppObjectId, contextValue: "WEB-REDIRECT" };
 		const warningSpy = jest.spyOn(vscode.window, "showWarningMessage");
 		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string, _select: string, _expandOwners?: boolean | undefined) => ({ success: true, value: mockRedirectUris }));
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "AzureADandPersonalMicrosoftAccount" }));
+		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "AzureADandPersonalMicrosoftAccount" }));
 
 		// Act
 		await redirectUriService.add(item);
 
 		// Assert
-		expect(graphSpy).toHaveBeenCalled();
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
 		expect(warningSpy).toHaveBeenCalledWith("You cannot add any more Redirect URIs. The maximum for this application type is 100.", "OK");
@@ -542,7 +543,8 @@ describe("Redirect URI Service Tests", () => {
 	test("Add web redirect successfully for AAD and consumer audiences", async () => {
 		// Arrange
 		item = { objectId: mockAppObjectId, contextValue: "WEB-REDIRECT" };
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "AzureADandPersonalMicrosoftAccount" }));
+		await treeDataProvider.render();
+		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "AzureADandPersonalMicrosoftAccount" }));
 
 		// Act
 		await redirectUriService.add(item);
@@ -567,21 +569,6 @@ describe("Redirect URI Service Tests", () => {
 
 		// Assert
 		expect(graphSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
-		expect(treeSpy).toHaveBeenCalledTimes(0);
-	});
-
-	test("Add web redirect with sign in audience error", async () => {
-		// Arrange
-		const error = new Error("Add web redirect with sign in audience error");
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: false, error }));
-		item = { objectId: mockAppObjectId, contextValue: "WEB-REDIRECT" };
-
-		// Act
-		await redirectUriService.add(item);
-
-		// Assert
-		// Assert
 		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 		expect(treeSpy).toHaveBeenCalledTimes(0);
 	});

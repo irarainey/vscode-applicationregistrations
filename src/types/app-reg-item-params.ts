@@ -6,9 +6,9 @@ export type AppRegItemParams = {
 	label: string;
 	context: string;
 	iconPath: string | ThemeIcon;
+	objectId?: string;
 	baseIcon?: string | ThemeIcon;
 	value?: string;
-	objectId?: string;
 	appId?: string;
 	resourceAppId?: string;
 	resourceScopeId?: string;

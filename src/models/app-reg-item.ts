@@ -4,9 +4,9 @@ import { AppRegItemParams } from "../types/app-reg-item-params";
 // This is the data structure for the application registration tree view item
 export class AppRegItem extends TreeItem {
 	// Private properties
+	public objectId?: string = "";
 	public baseIcon?: string | ThemeIcon = "";
 	public children?: AppRegItem[];
-	public objectId?: string = "";
 	public appId?: string = "";
 	public userId?: string = "";
 	public keyId?: string = "";
@@ -30,10 +30,10 @@ export class AppRegItem extends TreeItem {
 		this.label = params.label;
 
 		// Set the remaining properties
+		this.objectId = params.objectId;
 		this.baseIcon = params.baseIcon;
 		this.children = params.children;
 		this.value = params.value;
-		this.objectId = params.objectId;
 		this.appId = params.appId;
 		this.userId = params.userId;
 		this.keyId = params.keyId;

@@ -48,14 +48,10 @@ export class ApplicationService extends ServiceBase {
 
 	// Edit an application id URI.
 	async editAppIdUri(item: AppRegItem): Promise<void> {
-		const result: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
-		if (result.success !== true || result.value === undefined) {
-			await this.handleError(result.error);
-			return;
-		}
+		const audience = this.treeDataProvider.getTreeItemChildByContext(this.treeDataProvider.getTreeItemApplicationParent(item), "AUDIENCE-PARENT");
 
 		// Prompt the user for the new uri.
-		const uri = await this.inputAppIdUri(item, result.value, validateAppIdUri);
+		const uri = await this.inputAppIdUri(item, audience!.value!, validateAppIdUri);
 
 		// If the new application id uri is not undefined then update the application.
 		if (uri !== undefined) {
@@ -78,14 +74,10 @@ export class ApplicationService extends ServiceBase {
 
 	// Renames an application registration.
 	async rename(item: AppRegItem): Promise<void> {
-		const result: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
-		if (result.success !== true || result.value === undefined) {
-			await this.handleError(result.error);
-			return;
-		}
+		const audience = this.treeDataProvider.getTreeItemChildByContext(this.treeDataProvider.getTreeItemApplicationParent(item), "AUDIENCE-PARENT");
 
 		// Prompt the user for the new application name.
-		const displayName = await this.inputDisplayNameForRename(item.value!, result.value, validateApplicationDisplayName);
+		const displayName = await this.inputDisplayNameForRename(item.value!, audience!.value!, validateApplicationDisplayName);
 
 		// If the new application name is not undefined then update the application.
 		if (displayName !== undefined) {
@@ -134,86 +126,82 @@ export class ApplicationService extends ServiceBase {
     // Shows the application endpoints.
     async showEndpoints(item: AppRegItem): Promise<void> {
         const status = this.indicateChange("Loading Endpoints...");
-        const result: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
-        if (result.success === true && result.value !== undefined) {
+		const audience = this.treeDataProvider.getTreeItemChildByContext(this.treeDataProvider.getTreeItemApplicationParent(item), "AUDIENCE-PARENT");
 
-            let endpoints: { [key: string]: string } = {};
-            // Create the endpoints.
-            switch (result.value) {
-                case "AzureADMyOrg":
-                    await this.accountProvider.getAccountInformation()
-                        .then(async (accountInformation) => {
-                            const response = accountInformation.tenantId.replace(/(\r\n)/gm, "");
-                            endpoints = {
-                                "OAuth 2.0 Authorization Endpoint": `${BASE_ENDPOINT}${response}/oauth2/v2.0/authorize`,
-                                "OAuth 2.0 Token Endpoint": `${BASE_ENDPOINT}${response}/oauth2/v2.0/token`,
-                                "OAuth 2.0 Device Authorization Endpoint": `${BASE_ENDPOINT}${response}/oauth2/v2.0/devicecode`,
-                                "OAuth 2.0 Token Revocation Endpoint": `${BASE_ENDPOINT}${response}/oauth2/v2.0/logout`,
-                                "OpenID Connect Discovery Document": `${BASE_ENDPOINT}${response}/v2.0/.well-known/openid-configuration`,
-                                "OpenID Connect Metadata Document": `${BASE_ENDPOINT}${response}/v2.0/.well-known/openid-configuration?p=${item.appId}`,
-                                "OpenID Connect Keys Document": `${BASE_ENDPOINT}${response}/discovery/v2.0/keys`
-                            };
-                        })
-                        .catch(async (error) => {
-                            await this.handleError(error);
-                        });
-                    break;
-                case "AzureADMultipleOrgs":
-                    endpoints = {
-                        "OAuth 2.0 Authorization Endpoint (Organizations)": `${BASE_ENDPOINT}organizations/oauth2/v2.0/authorize`,
-                        "OAuth 2.0 Token Endpoint (Organizations)": `${BASE_ENDPOINT}organizations/oauth2/v2.0/token`,
-                        "OAuth 2.0 Device Authorization Endpoint (Organizations)": `${BASE_ENDPOINT}organizations/oauth2/v2.0/devicecode`,
-                        "OAuth 2.0 Token Revocation Endpoint (Organizations)": `${BASE_ENDPOINT}organizations/oauth2/v2.0/logout`,
-                        "OpenID Connect Discovery Document (Organizations)": `${BASE_ENDPOINT}organizations/v2.0/.well-known/openid-configuration`,
-                        "OpenID Connect Metadata Document (Organizations)": `${BASE_ENDPOINT}organizations/v2.0/.well-known/openid-configuration?p=${item.appId}`,
-                        "OpenID Connect Keys Document (Organizations)": `${BASE_ENDPOINT}organizations/discovery/v2.0/keys`
-                    };
-                    break;
-                case "AzureADandPersonalMicrosoftAccount":
-                    endpoints = {
-                        "OAuth 2.0 Authorization Endpoint (Common)": `${BASE_ENDPOINT}common/oauth2/v2.0/authorize`,
-                        "OAuth 2.0 Token Endpoint (Common)": `${BASE_ENDPOINT}common/oauth2/v2.0/token`,
-                        "OAuth 2.0 Device Authorization Endpoint (Common)": `${BASE_ENDPOINT}common/oauth2/v2.0/devicecode`,
-                        "OAuth 2.0 Token Revocation Endpoint (Common)": `${BASE_ENDPOINT}common/oauth2/v2.0/logout`,
-                        "OpenID Connect Discovery Document (Common)": `${BASE_ENDPOINT}common/v2.0/.well-known/openid-configuration`,
-                        "OpenID Connect Metadata Document (Common)": `${BASE_ENDPOINT}common/v2.0/.well-known/openid-configuration?p=${item.appId}`,
-                        "OpenID Connect Keys Document (Common)": `${BASE_ENDPOINT}common/discovery/v2.0/keys`
-                    };
-                    break;
-                case "PersonalMicrosoftAccount":
-                    endpoints = {
-                        "OAuth 2.0 Authorization Endpoint (Consumers)": `${BASE_ENDPOINT}consumers/oauth2/v2.0/authorize`,
-                        "OAuth 2.0 Token Endpoint (Consumers)": `${BASE_ENDPOINT}consumers/oauth2/v2.0/token`,
-                        "OAuth 2.0 Device Authorization Endpoint (Consumers)": `${BASE_ENDPOINT}consumers/oauth2/v2.0/devicecode`,
-                        "OAuth 2.0 Token Revocation Endpoint (Consumers)": `${BASE_ENDPOINT}consumers/oauth2/v2.0/logout`,
-                        "OpenID Connect Discovery Document (Consumers)": `${BASE_ENDPOINT}consumers/v2.0/.well-known/openid-configuration`,
-                        "OpenID Connect Metadata Document (Consumers)": `${BASE_ENDPOINT}consumers/v2.0/.well-known/openid-configuration?p=${item.appId}`,
-                        "OpenID Connect Keys Document (Consumers)": `${BASE_ENDPOINT}consumers/discovery/v2.0/keys`
-                    };
-                    break;
-                default:
-                    endpoints = {};
-                    break;
-            }
-
-			const newDocument = new (class implements TextDocumentContentProvider {
-				onDidChangeEmitter = new EventEmitter<Uri>();
-				onDidChange = this.onDidChangeEmitter.event;
-				provideTextDocumentContent(): string {
-					return JSON.stringify(endpoints, null, 4);
-				}
-			})();
-
-			const contentProvider = uuidv4();
-			this.disposable.push(workspace.registerTextDocumentContentProvider(contentProvider, newDocument));
-			const uri = Uri.parse(`${contentProvider}:Endpoints - ${item.label}.json`);
-			workspace.openTextDocument(uri).then(async (doc) => {
-				await window.showTextDocument(doc, { preview: false });
-				clearStatusBarMessage(status!);
-			});
-		} else {
-			await this.handleError(result.error);
+		let endpoints: { [key: string]: string } = {};
+		// Create the endpoints.
+		switch (audience!.value!) {
+			case "AzureADMyOrg":
+				await this.accountProvider.getAccountInformation()
+					.then(async (accountInformation) => {
+						const response = accountInformation.tenantId.replace(/(\r\n)/gm, "");
+						endpoints = {
+							"OAuth 2.0 Authorization Endpoint": `${BASE_ENDPOINT}${response}/oauth2/v2.0/authorize`,
+							"OAuth 2.0 Token Endpoint": `${BASE_ENDPOINT}${response}/oauth2/v2.0/token`,
+							"OAuth 2.0 Device Authorization Endpoint": `${BASE_ENDPOINT}${response}/oauth2/v2.0/devicecode`,
+							"OAuth 2.0 Token Revocation Endpoint": `${BASE_ENDPOINT}${response}/oauth2/v2.0/logout`,
+							"OpenID Connect Discovery Document": `${BASE_ENDPOINT}${response}/v2.0/.well-known/openid-configuration`,
+							"OpenID Connect Metadata Document": `${BASE_ENDPOINT}${response}/v2.0/.well-known/openid-configuration?p=${item.appId}`,
+							"OpenID Connect Keys Document": `${BASE_ENDPOINT}${response}/discovery/v2.0/keys`
+						};
+					})
+					.catch(async (error) => {
+						await this.handleError(error);
+					});
+				break;
+			case "AzureADMultipleOrgs":
+				endpoints = {
+					"OAuth 2.0 Authorization Endpoint (Organizations)": `${BASE_ENDPOINT}organizations/oauth2/v2.0/authorize`,
+					"OAuth 2.0 Token Endpoint (Organizations)": `${BASE_ENDPOINT}organizations/oauth2/v2.0/token`,
+					"OAuth 2.0 Device Authorization Endpoint (Organizations)": `${BASE_ENDPOINT}organizations/oauth2/v2.0/devicecode`,
+					"OAuth 2.0 Token Revocation Endpoint (Organizations)": `${BASE_ENDPOINT}organizations/oauth2/v2.0/logout`,
+					"OpenID Connect Discovery Document (Organizations)": `${BASE_ENDPOINT}organizations/v2.0/.well-known/openid-configuration`,
+					"OpenID Connect Metadata Document (Organizations)": `${BASE_ENDPOINT}organizations/v2.0/.well-known/openid-configuration?p=${item.appId}`,
+					"OpenID Connect Keys Document (Organizations)": `${BASE_ENDPOINT}organizations/discovery/v2.0/keys`
+				};
+				break;
+			case "AzureADandPersonalMicrosoftAccount":
+				endpoints = {
+					"OAuth 2.0 Authorization Endpoint (Common)": `${BASE_ENDPOINT}common/oauth2/v2.0/authorize`,
+					"OAuth 2.0 Token Endpoint (Common)": `${BASE_ENDPOINT}common/oauth2/v2.0/token`,
+					"OAuth 2.0 Device Authorization Endpoint (Common)": `${BASE_ENDPOINT}common/oauth2/v2.0/devicecode`,
+					"OAuth 2.0 Token Revocation Endpoint (Common)": `${BASE_ENDPOINT}common/oauth2/v2.0/logout`,
+					"OpenID Connect Discovery Document (Common)": `${BASE_ENDPOINT}common/v2.0/.well-known/openid-configuration`,
+					"OpenID Connect Metadata Document (Common)": `${BASE_ENDPOINT}common/v2.0/.well-known/openid-configuration?p=${item.appId}`,
+					"OpenID Connect Keys Document (Common)": `${BASE_ENDPOINT}common/discovery/v2.0/keys`
+				};
+				break;
+			case "PersonalMicrosoftAccount":
+				endpoints = {
+					"OAuth 2.0 Authorization Endpoint (Consumers)": `${BASE_ENDPOINT}consumers/oauth2/v2.0/authorize`,
+					"OAuth 2.0 Token Endpoint (Consumers)": `${BASE_ENDPOINT}consumers/oauth2/v2.0/token`,
+					"OAuth 2.0 Device Authorization Endpoint (Consumers)": `${BASE_ENDPOINT}consumers/oauth2/v2.0/devicecode`,
+					"OAuth 2.0 Token Revocation Endpoint (Consumers)": `${BASE_ENDPOINT}consumers/oauth2/v2.0/logout`,
+					"OpenID Connect Discovery Document (Consumers)": `${BASE_ENDPOINT}consumers/v2.0/.well-known/openid-configuration`,
+					"OpenID Connect Metadata Document (Consumers)": `${BASE_ENDPOINT}consumers/v2.0/.well-known/openid-configuration?p=${item.appId}`,
+					"OpenID Connect Keys Document (Consumers)": `${BASE_ENDPOINT}consumers/discovery/v2.0/keys`
+				};
+				break;
+			default:
+				endpoints = {};
+				break;
 		}
+
+		const newDocument = new (class implements TextDocumentContentProvider {
+			onDidChangeEmitter = new EventEmitter<Uri>();
+			onDidChange = this.onDidChangeEmitter.event;
+			provideTextDocumentContent(): string {
+				return JSON.stringify(endpoints, null, 4);
+			}
+		})();
+
+		const contentProvider = uuidv4();
+		this.disposable.push(workspace.registerTextDocumentContentProvider(contentProvider, newDocument));
+		const uri = Uri.parse(`${contentProvider}:Endpoints - ${item.label}.json`);
+		workspace.openTextDocument(uri).then(async (doc) => {
+			await window.showTextDocument(doc, { preview: false });
+			clearStatusBarMessage(status!);
+		});
 	}
 
 	// Opens the application manifest in a new editor window.

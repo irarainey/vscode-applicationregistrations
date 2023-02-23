@@ -54,7 +54,7 @@ describe("Tree Data Provider Tests", () => {
 		const audience = "AzureADMyOrg";
 
 		// Act
-		const result = treeDataProvider.getSignInAudience(audience);
+		const result = treeDataProvider.getSignInAudienceDescription(audience);
 
 		// Assert
 		expect(result).toBe("Single Tenant");
@@ -65,7 +65,7 @@ describe("Tree Data Provider Tests", () => {
 		const audience = "AzureADMultipleOrgs";
 
 		// Act
-		const result = treeDataProvider.getSignInAudience(audience);
+		const result = treeDataProvider.getSignInAudienceDescription(audience);
 
 		// Assert
 		expect(result).toBe("Multiple Tenants");
@@ -76,7 +76,7 @@ describe("Tree Data Provider Tests", () => {
 		const audience = "AzureADandPersonalMicrosoftAccount";
 
 		// Act
-		const result = treeDataProvider.getSignInAudience(audience);
+		const result = treeDataProvider.getSignInAudienceDescription(audience);
 
 		// Assert
 		expect(result).toBe("Multiple Tenants and Personal Microsoft Accounts");
@@ -87,7 +87,7 @@ describe("Tree Data Provider Tests", () => {
 		const audience = "PersonalMicrosoftAccount";
 
 		// Act
-		const result = treeDataProvider.getSignInAudience(audience);
+		const result = treeDataProvider.getSignInAudienceDescription(audience);
 
 		// Assert
 		expect(result).toBe("Personal Microsoft Accounts");
@@ -98,10 +98,48 @@ describe("Tree Data Provider Tests", () => {
 		const audience = "unknown";
 
 		// Act
-		const result = treeDataProvider.getSignInAudience(audience);
+		const result = treeDataProvider.getSignInAudienceDescription(audience);
 
 		// Assert
 		expect(result).toBe("unknown");
+	});
+
+	test("Get tree item by context successfully", async () => {
+		// Arrange
+		await treeDataProvider.render();
+
+		// Act
+		const parent = treeDataProvider.getTreeItemApplicationParent({ objectId: mockAppObjectId });
+		const result = treeDataProvider.getTreeItemChildByContext(parent, "AUDIENCE-PARENT");
+
+		// Assert
+		expect(result).toBeDefined();
+		expect(result?.value).toEqual("AzureADMultipleOrgs");
+	});
+
+	test("Get tree item by context from child successfully", async () => {
+		// Arrange
+		await treeDataProvider.render();
+
+		// Act
+		const parent = treeDataProvider.getTreeItemApplicationParent({ objectId: mockAppObjectId });
+		const result = treeDataProvider.getTreeItemChildByContext(parent, "AUDIENCE");
+
+		// Assert
+		expect(result).toBeDefined();
+		expect(result?.value).toEqual("AzureADMultipleOrgs");
+	});
+
+	test("Get tree item by context unsuccessfully", async () => {
+		// Arrange
+		await treeDataProvider.render();
+
+		// Act
+		const parent = treeDataProvider.getTreeItemApplicationParent({ objectId: mockAppObjectId });
+		const result = treeDataProvider.getTreeItemChildByContext(parent, "NOT-FOUND");
+
+		// Assert
+		expect(result).toBeUndefined();
 	});
 
 	test("Get all tree data for owned applications", async () => {

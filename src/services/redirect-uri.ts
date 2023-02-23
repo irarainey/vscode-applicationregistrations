@@ -5,7 +5,6 @@ import { ServiceBase } from "./service-base";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { GraphResult } from "../types/graph-result";
 import { Application } from "@microsoft/microsoft-graph-types";
-import { clearStatusBarMessage, setStatusBarMessage } from "../utils/status-bar";
 import { validateRedirectUri } from "../utils/validation";
 
 export class RedirectUriService extends ServiceBase {
@@ -16,9 +15,6 @@ export class RedirectUriService extends ServiceBase {
 
 	// Adds a new redirect URI to an application registration.
 	async add(item: AppRegItem): Promise<void> {
-		// Show that we're doing something
-		const check = setStatusBarMessage("Checking Sign In Audience...");
-
 		// Get all existing redirect URIs with type.
 		const allRedirectUrisWithType: [string, string][] | undefined = await this.getExistingUris(item);
 
@@ -31,17 +27,10 @@ export class RedirectUriService extends ServiceBase {
 		let allRedirectUris: string[] = allRedirectUrisWithType.map(([, uri]) => uri);
 
 		// Get the sign in audience for the application.
-		const signInAudience: GraphResult<string> = await this.graphRepository.getSignInAudience(item.objectId!);
-		if (signInAudience.success !== true || signInAudience.value === undefined) {
-			await this.handleError(signInAudience.error);
-			return;
-		}
-
-		// Clear the status bar message.
-		clearStatusBarMessage(check!);
+		const audience = this.treeDataProvider.getTreeItemChildByContext(this.treeDataProvider.getTreeItemApplicationParent(item), "AUDIENCE-PARENT");
 
 		// Check the maximum number of redirect URIs for the application type.
-		switch (signInAudience.value) {
+		switch (audience!.value!) {
 			case "AzureADMyOrg":
 			case "AzureADMultipleOrgs":
 				if (allRedirectUris.length > 255) {
