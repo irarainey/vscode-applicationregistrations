@@ -73,6 +73,20 @@ describe("Application Service Tests", () => {
 		expect(applicationService).toBeDefined();
 	});
 
+	test("Show endpoints with account command error", async () => {
+		// Arrange
+		const error = new Error("Show endpoints with account command error");
+		await treeDataProvider.render();
+		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "AzureADMyOrg" }));
+		jest.spyOn(accountProvider, "getAccountInformation").mockImplementation(async () => { throw error; });
+
+		// Act
+		await applicationService.showEndpoints(item);
+
+		// Assert
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
+	});
+
 	test("Show endpoints for multi-tenant app", async () => {
 		// Arrange
 		await treeDataProvider.render();

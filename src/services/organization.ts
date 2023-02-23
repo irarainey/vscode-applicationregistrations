@@ -1,12 +1,10 @@
-import { window, Uri, TextDocumentContentProvider, EventEmitter, workspace } from "vscode";
 import { ServiceBase } from "./service-base";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { GraphResult } from "../types/graph-result";
 import { Organization, User, RoleAssignment } from "@microsoft/microsoft-graph-types";
-import { clearStatusBarMessage } from "../utils/status-bar";
-import { v4 as uuidv4 } from "uuid";
 import { AccountProvider } from "../types/account-provider";
+import { showJsonDocument } from "../utils/text-document-utils";
 
 export class OrganizationService extends ServiceBase {
 
@@ -74,22 +72,7 @@ export class OrganizationService extends ServiceBase {
 				verifiedDomains: result.value.verifiedDomains?.map((x) => x.name),
 				user: userInformation
 			};
-
-			const newDocument = new (class implements TextDocumentContentProvider {
-				onDidChangeEmitter = new EventEmitter<Uri>();
-				onDidChange = this.onDidChangeEmitter.event;
-				provideTextDocumentContent(): string {
-					return JSON.stringify(tenantInformation, null, 4);
-				}
-			})();
-
-			const contentProvider = uuidv4();
-			this.disposable.push(workspace.registerTextDocumentContentProvider(contentProvider, newDocument));
-			const uri = Uri.parse(`${contentProvider}:Tenant - ${result.value.displayName}.json`);
-			workspace.openTextDocument(uri).then(async (doc) => {
-				await window.showTextDocument(doc, { preview: false });
-				clearStatusBarMessage(status!);
-			});
+			this.disposable.push(await showJsonDocument(`Tenant - ${result.value.displayName!}`, tenantInformation, status));
 		} else {
 			await this.handleError(result.error);
 			return;

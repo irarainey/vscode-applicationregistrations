@@ -4,7 +4,6 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { OrganizationService } from "../services/organization";
 import { mockTenantId, seedMockData } from "./data/test-data";
-import { TextDocumentContentProvider } from "vscode";
 import { AzureCliAccountProvider } from "../utils/azure-cli-account-provider";
 
 // Create Jest mocks
@@ -58,9 +57,6 @@ describe("Organization Service Tests", () => {
 
 	test("Check status bar message updated on request and open text document is called", async () => {
 		// Arrange
-		const registerTextDocumentContentProviderSpy = jest.spyOn(vscode.workspace, "registerTextDocumentContentProvider").mockImplementation((_scheme: string, _provider: TextDocumentContentProvider) => {
-			return { dispose: jest.fn() };
-		});
 		jest.spyOn(accountProvider, "getAccountInformation").mockImplementation(async () => ({ tenantId: mockTenantId } as any));
 
 		// Act
@@ -68,7 +64,6 @@ describe("Organization Service Tests", () => {
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(registerTextDocumentContentProviderSpy).toHaveBeenCalled();
 		expect(openTextDocumentSpy).toHaveBeenCalled();
 	});
 

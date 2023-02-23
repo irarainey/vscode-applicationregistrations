@@ -1,16 +1,15 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { AZURE_PORTAL_ROOT, ENTRA_PORTAL_ROOT, AZURE_AND_ENTRA_PORTAL_APP_PATH, SIGNIN_AUDIENCE_OPTIONS, BASE_ENDPOINT } from "../constants";
-import { window, env, Uri, TextDocumentContentProvider, EventEmitter, workspace } from "vscode";
+import { window, env, Uri, workspace } from "vscode";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { Application } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../types/graph-result";
-import { clearStatusBarMessage } from "../utils/status-bar";
-import { v4 as uuidv4 } from "uuid";
 import { validateAppIdUri, validateApplicationDisplayName, validateLogoutUrl } from "../utils/validation";
 import { AccountProvider } from "../types/account-provider";
+import { showJsonDocument } from "../utils/text-document-utils";
 
 export class ApplicationService extends ServiceBase {
 
@@ -186,22 +185,7 @@ export class ApplicationService extends ServiceBase {
 				endpoints = {};
 				break;
 		}
-
-		const newDocument = new (class implements TextDocumentContentProvider {
-			onDidChangeEmitter = new EventEmitter<Uri>();
-			onDidChange = this.onDidChangeEmitter.event;
-			provideTextDocumentContent(): string {
-				return JSON.stringify(endpoints, null, 4);
-			}
-		})();
-
-		const contentProvider = uuidv4();
-		this.disposable.push(workspace.registerTextDocumentContentProvider(contentProvider, newDocument));
-		const uri = Uri.parse(`${contentProvider}:Endpoints - ${item.label}.json`);
-		workspace.openTextDocument(uri).then(async (doc) => {
-			await window.showTextDocument(doc, { preview: false });
-			clearStatusBarMessage(status!);
-		});
+		this.disposable.push(await showJsonDocument(`Endpoints - ${item.label}`, endpoints, status));
 	}
 
 	// Opens the application manifest in a new editor window.
@@ -209,21 +193,7 @@ export class ApplicationService extends ServiceBase {
 		const status = this.indicateChange("Loading Application Manifest...");
 		const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsFull(item.objectId!);
 		if (result.success === true && result.value !== undefined) {
-			const newDocument = new (class implements TextDocumentContentProvider {
-				onDidChangeEmitter = new EventEmitter<Uri>();
-				onDidChange = this.onDidChangeEmitter.event;
-				provideTextDocumentContent(): string {
-					return JSON.stringify(result.value, null, 4);
-				}
-			})();
-
-			const contentProvider = uuidv4();
-			this.disposable.push(workspace.registerTextDocumentContentProvider(contentProvider, newDocument));
-			const uri = Uri.parse(`${contentProvider}:Manifest - ${item.label}.json`);
-			workspace.openTextDocument(uri).then(async (doc) => {
-				await window.showTextDocument(doc, { preview: false });
-				clearStatusBarMessage(status!);
-			});
+			this.disposable.push(await showJsonDocument(`Manifest - ${item.label}`, result.value, status));
 		} else {
 			await this.handleError(result.error);
 		}
