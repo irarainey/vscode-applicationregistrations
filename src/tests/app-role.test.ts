@@ -128,8 +128,9 @@ describe("App Role Service Tests", () => {
 
 	test("Delete disabled app role with no existing roles returned", async () => {
 		// Arrange
+		const error = new Error("Delete disabled app role with no existing roles returned");
 		item = { objectId: mockAppObjectId, contextValue: "ROLE-ENABLED", value: mockAppRoleId, state: false, label: "Test Role" };
-		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error: new Error("Test Error") }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error }));
 		const warningSpy = jest.spyOn(vscode.window, "showWarningMessage").mockResolvedValue("Yes" as any);
 
 		// Act
@@ -145,8 +146,9 @@ describe("App Role Service Tests", () => {
 
 	test("Disable enabled app role but no existing roles returned", async () => {
 		// Arrange
+		const error = new Error("Disable enabled app role but no existing roles returned");
 		item = { objectId: mockAppObjectId, contextValue: "ROLE-ENABLED", value: mockAppRoleId, state: true, label: "Test Role" };
-		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error: new Error("Test Error") }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error }));
 
 		// Act
 		await appRoleService.changeState(item, false);
@@ -190,8 +192,9 @@ describe("App Role Service Tests", () => {
 
 	test("Edit value but no roles returned", async () => {
 		// Arrange
+		const error = new Error("Edit value but no roles returned");
 		item = { objectId: mockAppObjectId, contextValue: "ROLE-ENABLED", value: mockAppRoleId, state: false, label: "Test Role" };
-		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error: new Error("Test Error") }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error }));
 		jest.spyOn(vscode.window, "showInputBox").mockResolvedValue("New Role" as any);
 
 		// Act
@@ -346,9 +349,10 @@ describe("App Role Service Tests", () => {
 
 	test("Add new role but fail to get existing roles", async () => {
 		// Arrange
+		const error = new Error("Add new role but fail to get existing roles");
 		item = { objectId: mockAppObjectId, contextValue: "APP-ROLES", value: mockAppRoleId };
 		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial")
-			.mockImplementationOnce(async () => ({ success: false, error: new Error("Test Error") }));
+			.mockImplementationOnce(async () => ({ success: false, error }));
 
 		// Act
 		await appRoleService.add(item);
@@ -666,8 +670,9 @@ describe("App Role Service Tests", () => {
 
 	test("Edit role with no existing app roles error", async () => {
 		// Arrange
+		const error = new Error("Edit role with no existing app roles error");
 		item = { objectId: mockAppObjectId, contextValue: "ROLE-ENABLED", value: mockAppRoleId };
-		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error: new Error("Test Error") }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementationOnce(async () => ({ success: false, error }));
 
 		// Act
 		await appRoleService.edit(item);

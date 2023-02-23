@@ -143,14 +143,15 @@ describe("Application Service Tests", () => {
 
 	test("View manifest error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "getApplicationDetailsFull").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("View manifest error");
+		jest.spyOn(graphApiRepository, "getApplicationDetailsFull").mockImplementation(async (_id: string) => ({ success: false, error }));
 
 		// Act
 		await applicationService.viewManifest(item);
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Copy client id", async () => {
@@ -508,13 +509,14 @@ describe("Application Service Tests", () => {
 
 	test("Remove Logout URL update application error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("Remove Logout URL update application error");
+		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error }));
 
 		// Act
 		await applicationService.removeLogoutUrl(item);
 
 		// Assert
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error, undefined);
 	});
 
 	test("Remove App Id Uri", async () => {
@@ -541,14 +543,15 @@ describe("Application Service Tests", () => {
 
 	test("Delete application with error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "deleteApplication").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("Delete application with error");
+		jest.spyOn(graphApiRepository, "deleteApplication").mockImplementation(async (_id: string) => ({ success: false, error }));
 
 		// Act
 		await applicationService.delete(item);
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Rename application successfully", async () => {
@@ -576,8 +579,9 @@ describe("Application Service Tests", () => {
 
 	test("Rename application with update error", async () => {
 		// Arrange
+		const error = new Error("Rename application with update error");
 		await treeDataProvider.render();
-		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("Test Error") }));
+		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error }));
 		vscode.window.showInputBox = jest.fn().mockResolvedValue("New Application Name");
 
 		// Act
@@ -585,7 +589,7 @@ describe("Application Service Tests", () => {
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error, undefined);
 	});
 
 	test("Add application successfully", async () => {
@@ -665,7 +669,8 @@ describe("Application Service Tests", () => {
 
 	test("Add application with creation error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "createApplication").mockImplementation(async () => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("Add application with creation error");
+		jest.spyOn(graphApiRepository, "createApplication").mockImplementation(async () => ({ success: false, error }));
 		vscode.window.showQuickPick = jest.fn().mockResolvedValue({ value: "AzureADMyOrg" });
 		vscode.window.showInputBox = jest.fn().mockResolvedValue("Add Application Name");
 
@@ -674,6 +679,6 @@ describe("Application Service Tests", () => {
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 });

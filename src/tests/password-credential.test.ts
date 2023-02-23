@@ -80,14 +80,15 @@ describe("Password Credential Service Tests", () => {
 
 	test("Delete password credential with error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "deletePasswordCredential").mockImplementation(async () => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("Delete password credential with error");
+		jest.spyOn(graphApiRepository, "deletePasswordCredential").mockImplementation(async () => ({ success: false, error }));
 
 		// Act
 		await passwordCredentialService.delete(item);
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Add password credential successfully", async () => {
@@ -187,14 +188,15 @@ describe("Password Credential Service Tests", () => {
 
 	test("Add password credential with error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "addPasswordCredential").mockImplementation(async () => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("Add password credential with error");
+		jest.spyOn(graphApiRepository, "addPasswordCredential").mockImplementation(async () => ({ success: false, error }));
 
 		// Act
 		await passwordCredentialService.add(item);
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Error getting password credential children", async () => {
