@@ -9,7 +9,7 @@ export const window = {
 	showErrorMessage: jest.fn(),
 	showWarningMessage: jest.fn(),
 	showQuickPick: jest.fn(),
-	showTextDocument: jest.fn(),
+	showTextDocument: async () => { return true; },
 	showInputBox: jest.fn(() => {
 		return {
 			validateInput: jest.fn()
@@ -36,11 +36,11 @@ export const workspace = {
 			}
 		}
 	}),
-	TextDocument: jest.fn(),
-	openTextDocument: () => {
-		return new Promise(workspace.TextDocument);
-	},
-	registerTextDocumentContentProvider: jest.fn()
+	TextDocument: () => { return true; },
+	openTextDocument: async (_options?: { _language?: string; _content?: string }) => { return true; },
+	registerTextDocumentContentProvider: () => {
+		return new Disposable();
+	}
 };
 
 export class EventEmitter {

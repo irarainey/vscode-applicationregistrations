@@ -9,7 +9,7 @@ import { Application } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../types/graph-result";
 import { validateAppIdUri, validateApplicationDisplayName, validateLogoutUrl } from "../utils/validation";
 import { AccountProvider } from "../types/account-provider";
-import { showJsonDocument } from "../utils/text-document-utils";
+import { showJsonDocument } from "../utils/json-document-utils";
 
 export class ApplicationService extends ServiceBase {
 

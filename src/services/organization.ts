@@ -4,7 +4,7 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { GraphResult } from "../types/graph-result";
 import { Organization, User, RoleAssignment } from "@microsoft/microsoft-graph-types";
 import { AccountProvider } from "../types/account-provider";
-import { showJsonDocument } from "../utils/text-document-utils";
+import { showJsonDocument } from "../utils/json-document-utils";
 
 export class OrganizationService extends ServiceBase {
 
