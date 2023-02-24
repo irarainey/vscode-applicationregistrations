@@ -4,7 +4,6 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { OrganizationService } from "../services/organization";
 import { mockTenantId, seedMockData } from "./data/test-data";
-import { TextDocumentContentProvider } from "vscode";
 import { AzureCliAccountProvider } from "../utils/azure-cli-account-provider";
 
 // Create Jest mocks
@@ -47,8 +46,8 @@ describe("Organization Service Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the service
 		organizationService.dispose();
+		treeDataProvider.dispose();
 	});
 
 	test("Create class instance", () => {
@@ -58,9 +57,6 @@ describe("Organization Service Tests", () => {
 
 	test("Check status bar message updated on request and open text document is called", async () => {
 		// Arrange
-		const registerTextDocumentContentProviderSpy = jest.spyOn(vscode.workspace, "registerTextDocumentContentProvider").mockImplementation((_scheme: string, _provider: TextDocumentContentProvider) => {
-			return { dispose: jest.fn() };
-		});
 		jest.spyOn(accountProvider, "getAccountInformation").mockImplementation(async () => ({ tenantId: mockTenantId } as any));
 
 		// Act
@@ -68,53 +64,56 @@ describe("Organization Service Tests", () => {
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(registerTextDocumentContentProviderSpy).toHaveBeenCalled();
 		expect(openTextDocumentSpy).toHaveBeenCalled();
 	});
 
 	test("CLI returns error", async () => {
 		// Arrange
+		const error = new Error("CLI returns error");
 		jest.spyOn(execShellCmdModule, "execShellCmd").mockImplementation(async (_cmd: string) => {
-			throw new Error("Test error");
+			throw error;
 		});
 
 		// Act
 		await organizationService.showTenantInformation();
 
 		// Assert
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("User return error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "getUserInformation").mockImplementation(async () => ({ success: false, error: new Error("Test error") }));
+		const error = new Error("User return error");
+		jest.spyOn(graphApiRepository, "getUserInformation").mockImplementation(async () => ({ success: false, error }));
 
 		// Act
 		await organizationService.showTenantInformation();
 
 		// Assert
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Roles return error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "getRoleAssignments").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test error") }));
+		const error = new Error("Roles return error");
+		jest.spyOn(graphApiRepository, "getRoleAssignments").mockImplementation(async (_id: string) => ({ success: false, error }));
 
 		// Act
 		await organizationService.showTenantInformation();
 
 		// Assert
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Tenant information return error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "getTenantInformation").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test error") }));
+		const error = new Error("Tenant information return error");
+		jest.spyOn(graphApiRepository, "getTenantInformation").mockImplementation(async (_id: string) => ({ success: false, error }));
 
 		// Act
 		await organizationService.showTenantInformation();
 
 		// Assert
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 });

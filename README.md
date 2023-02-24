@@ -11,6 +11,7 @@ It allows for easy viewing, copying, adding, and editing of most the core applic
 * Sign In Audience
 * Certificates and Secrets
 * Redirect URIs
+* Front-channel Logout URL
 * API Permissions
 * Exposed API Permissions
 * App Roles
@@ -25,6 +26,14 @@ All application properties have their own range of functionality. From the top-l
 ![Context Menus](resources/images/context_001.png)
 
 ![Context Menus](resources/images/context_002.png)
+
+Most elements also have tooltips to help explain what they are and how they work, this includes the application list itself, which gives a quick view of the date the application was created and any internal notes you may have added.
+
+![Tooltip](resources/images/tooltip.png)
+
+Where password or certificate credentials are shown, the tooltip and icon colour will indicate if the credential is about to expire or has expired. This is based upon the expiry date of the credential. An upcoming expiry is determined as anything less than 30 days.
+
+![Expiring Credentials](resources/images/credentials.png)
 
 By default, to improve performance, the application list is limited to show 40 applications. This however is exposed as a user setting and can be changed if you wish. The list is sorted by application display name. If your application is not shown in the list you can also apply a filter on display name, which is applied before the maximum application shown limit _(although only when eventual consistency is applied - see section below)_.
 
@@ -69,7 +78,7 @@ There are a number of user settings to control the behaviour of this extension. 
 * **Show Owned Applications Only**
     * When selected the list of applications shown will only be where the current logged in user has been added as an owner. Uncheck this option to show all applications in the current tenant. Default value is `true`.
 * **Use Eventual Consistency**
-    * When selected the `ConsistencyLevel: eventual` header is added to Graph API calls. This opens up the opportunity for advanced query functionality such as server-side ordering and filtering. However enabling this setting results in applications and properties only being shown in the list when all copies have been updated. This can lead to a delay in recent changes being shown. If you are working with a large number of applications (more than 200) it is recommended to enable this. Default value is `enabled`.
+    * When selected the `ConsistencyLevel: eventual` header is added to Graph API calls. This opens up the opportunity for advanced query functionality such as server-side ordering and filtering. However enabling this setting results in applications and properties only being shown in the list when all copies have been updated. This can lead to a delay in recent changes being shown. If you are working with a large number of applications (more than 200) it is recommended to enable this. Default value is `true`.
 * **Show Application Count Warning**
     * With this enabled the total number of applications you have in your tenant will be counted and a warning will be displayed if it is determined your **Use Eventual Consistency** setting is not set to the optimal value for your best experience. Default value is `true`.
 * **Maximum Query Apps**

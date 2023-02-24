@@ -37,6 +37,10 @@ describe("Authentication Tests", () => {
 		triggerErrorSpy = jest.spyOn(errorHandlerUtils, "errorHandler");
 	});
 
+	afterAll(() => {
+		treeDataProvider.dispose();
+	});
+
 	test("Authenticate user successfully without tenant", async () => {
 		// Assert
 		const treeSpy = jest.spyOn(treeDataProvider, "render");
@@ -105,7 +109,7 @@ describe("Authentication Tests", () => {
 		// Assert
 		const treeSpy = jest.spyOn(treeDataProvider, "render");
 		jest.spyOn(execShellCmdUtil, "execShellCmd").mockImplementation(async (_cmd: string) => {
-			throw new Error("Error");
+			throw new Error("Error authenticating user");
 		});
 		jest.spyOn(vscode.window, "showInputBox").mockResolvedValue(mockTenantId);
 		jest.spyOn(statusBarUtils, "setStatusBarMessage").mockImplementation((_message: string) => "1d399f60-5249-4232-80d3-7a3546eeb62b");

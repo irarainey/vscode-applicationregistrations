@@ -1,3 +1,10 @@
+## 0.9.0
+
+- Enhanced application tooltip to show additional information including creation date.
+- Added visual indication of expired credentials and credentials expiring soon.
+- Changed the visual appearance of disabled app roles and exposed api permissions to maintain consistent icons.
+- Refactored use of sign in audience to improve performance when performing various validations.
+
 ## 0.8.0
 
 - Added functionality to open the user or application in the Entra portal.

@@ -309,6 +309,22 @@ const seedUsers: any[] = [
 		mail: "second@user.com",
 		surname: "User",
 		userPrincipalName: "second@user.com"
+	},
+	{
+		id: "57f2aafa-0a41-43cf-a9b9-8897b813e1b1",
+		displayName: "Third User",
+		givenName: "Third One",
+		mail: "third.one@user.com",
+		surname: "User",
+		userPrincipalName: "third.one@user.com"
+	},
+	{
+		id: "7e354ea2-2b9a-4a4f-add7-7d47a4c1c6dd",
+		displayName: "Third User",
+		givenName: "Third Two",
+		mail: "third.two@user.com",
+		surname: "User",
+		userPrincipalName: "third.two@user.com"
 	}
 ];
 

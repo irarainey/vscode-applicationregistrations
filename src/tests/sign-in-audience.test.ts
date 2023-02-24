@@ -57,8 +57,8 @@ describe("Sign In Audience Service Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the service
 		signInAudienceService.dispose();
+		treeDataProvider.dispose();
 	});
 
 	test("Create class instance", () => {
@@ -95,58 +95,63 @@ describe("Sign In Audience Service Tests", () => {
 
 	test("Trigger error on unsuccessful edit with a generic error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("Trigger error on unsuccessful edit with a generic error");
+		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error }));
 
 		// Act
 		await signInAudienceService.edit(item);
 
 		// Assert
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Trigger error on unsuccessful edit with an authentication error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("az login") }));
+		const error = new Error("az login");
+		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error }));
 
 		// Act
 		await signInAudienceService.edit(item);
 
 		// Assert
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Trigger error on unsuccessful edit with an authentication error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("az account set") }));
+		const error = new Error("az account set");
+		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error }));
 
 		// Act
 		await signInAudienceService.edit(item);
 
 		// Assert
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Trigger error on unsuccessful edit with a sign in audience error and open documentation clicked", async () => {
 		// Arrange
+		const error = new Error("signInAudience");
 		jest.spyOn(vscode.window, "showErrorMessage").mockReturnValue({ then: (callback: any) => callback("Open Documentation") });
-		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("signInAudience") }));
+		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error }));
 
 		// Act
 		await signInAudienceService.edit(item);
 
 		// Assert
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Trigger error on unsuccessful edit with a sign in audience error", async () => {
 		// Arrange
+		const error = new Error("signInAudience");
 		jest.spyOn(vscode.window, "showErrorMessage").mockReturnValue({ then: (callback: any) => callback("OK") });
-		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("signInAudience") }));
+		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error }));
 
 		// Act
 		await signInAudienceService.edit(item);
 
 		// Assert
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 });

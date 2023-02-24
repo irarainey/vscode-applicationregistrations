@@ -33,6 +33,10 @@ describe("Error Handler Tests", () => {
 		treeViewRenderSpy = jest.spyOn(treeDataProvider, "render");
 	});
 
+	afterAll(() => {
+		treeDataProvider.dispose();
+	});
+
 	test("Reset icons on error", async () => {
 		// Act
 		await errorHandlerModule.errorHandler({ error: new Error("Test Error"), item: { iconPath: "spinner", baseIcon: "base" }, treeDataProvider: treeDataProvider });

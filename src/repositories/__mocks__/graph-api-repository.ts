@@ -154,4 +154,13 @@ export class GraphApiRepository {
 		const result: any[] = JSON.parse(JSON.stringify(mockServicePrincipals.filter((s) => s.displayName === name)));
 		return { success: true, value: result };
 	}
+
+	async findUsersByName(name: string): Promise<GraphResult<User[]>> {
+		return { success: true, value: mockUsers.filter((u) => u.displayName === name) };
+	}
+
+	// Find users by email address
+	async findUsersByEmail(name: string): Promise<GraphResult<User[]>> {
+		return { success: true, value: mockUsers.filter((u) => u.mail === name) };
+	}
 }

@@ -57,8 +57,8 @@ describe("Key Credential Service Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the key credential service
 		keyCredentialService.dispose();
+		treeDataProvider.dispose();
 	});
 
 	test("Create class instance", () => {
@@ -80,7 +80,8 @@ describe("Key Credential Service Tests", () => {
 
 	test("Delete key credential with get key error", async () => {
 		// Arrange
-		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async () => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("Delete key credential with get key error");
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async () => ({ success: false, error }));
 
 		// Act
 		await keyCredentialService.delete(item);
@@ -88,19 +89,20 @@ describe("Key Credential Service Tests", () => {
 		// Assert
 		expect(graphSpy).toHaveBeenCalled();
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Delete key credential with update key error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "updateKeyCredentials").mockImplementation(async () => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("Delete key credential with update key error");
+		jest.spyOn(graphApiRepository, "updateKeyCredentials").mockImplementation(async () => ({ success: false, error }));
 
 		// Act
 		await keyCredentialService.delete(item);
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Upload pem certificate and add key credential successfully", async () => {

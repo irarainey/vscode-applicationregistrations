@@ -3,7 +3,7 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { OwnerService } from "../services/owner";
-import { mockAppId, mockApplications, mockAppObjectId, mockSecondAppObjectId, mockSecondUserId, mockTenantId, mockUserId, seedMockData } from "./data/test-data";
+import { mockAppId, mockAppObjectId, mockSecondAppObjectId, mockSecondUserId, mockTenantId, mockUserId, seedMockData } from "./data/test-data";
 import { getTopLevelTreeItem } from "./test-utils";
 import { AzureCliAccountProvider } from "../utils/azure-cli-account-provider";
 import { AZURE_AND_ENTRA_PORTAL_USER_PATH, AZURE_PORTAL_ROOT, ENTRA_PORTAL_ROOT } from "../constants";
@@ -56,8 +56,8 @@ describe("Owner Service Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the owner service
 		ownerService.dispose();
+		treeDataProvider.dispose();
 	});
 
 	test("Create class instance", () => {
@@ -103,14 +103,15 @@ describe("Owner Service Tests", () => {
 
 	test("Remove owner with error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "removeApplicationOwner").mockImplementation(async (_id: string, _userId: string) => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("Remove owner with error");
+		jest.spyOn(graphApiRepository, "removeApplicationOwner").mockImplementation(async (_id: string, _userId: string) => ({ success: false, error }));
 
 		// Act
 		await ownerService.remove(item);
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Add owner successfully", async () => {
@@ -133,9 +134,10 @@ describe("Owner Service Tests", () => {
 
 	test("Add owner with add error", async () => {
 		// Arrange
+		const error = new Error("Add owner with add error");
 		item = { objectId: mockSecondAppObjectId, contextValue: "OWNERS" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue("Second User");
-		jest.spyOn(graphApiRepository, "addApplicationOwner").mockImplementation(async (_id: string, _userId: string) => ({ success: false, error: new Error("Test Error") }));
+		jest.spyOn(graphApiRepository, "addApplicationOwner").mockImplementation(async (_id: string, _userId: string) => ({ success: false, error }));
 		ownerService.setUserList([{ id: mockSecondUserId }]);
 
 		// Act
@@ -143,7 +145,7 @@ describe("Owner Service Tests", () => {
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Add owner with error getting existing owners", async () => {

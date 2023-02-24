@@ -64,8 +64,8 @@ describe("Application Service Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the application service
 		applicationService.dispose();
+		treeDataProvider.dispose();
 	});
 
 	test("Create class instance", () => {
@@ -73,7 +73,24 @@ describe("Application Service Tests", () => {
 		expect(applicationService).toBeDefined();
 	});
 
+	test("Show endpoints with account command error", async () => {
+		// Arrange
+		const error = new Error("Show endpoints with account command error");
+		await treeDataProvider.render();
+		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "AzureADMyOrg" }));
+		jest.spyOn(accountProvider, "getAccountInformation").mockImplementation(async () => { throw error; });
+
+		// Act
+		await applicationService.showEndpoints(item);
+
+		// Assert
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
+	});
+
 	test("Show endpoints for multi-tenant app", async () => {
+		// Arrange
+		await treeDataProvider.render();
+
 		// Act
 		await applicationService.showEndpoints(item);
 
@@ -83,7 +100,8 @@ describe("Application Service Tests", () => {
 
 	test("Show endpoints for multi-tenant and personal app", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "AzureADandPersonalMicrosoftAccount" }));
+		await treeDataProvider.render();
+		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "AzureADandPersonalMicrosoftAccount" }));
 
 		// Act
 		await applicationService.showEndpoints(item);
@@ -94,7 +112,8 @@ describe("Application Service Tests", () => {
 
 	test("Show endpoints for consumer app", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "PersonalMicrosoftAccount" }));
+		await treeDataProvider.render();
+		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "PersonalMicrosoftAccount" }));
 
 		// Act
 		await applicationService.showEndpoints(item);
@@ -105,7 +124,8 @@ describe("Application Service Tests", () => {
 
 	test("Show endpoints for consumer app", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "AzureADMyOrg" }));
+		await treeDataProvider.render();
+		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "AzureADMyOrg" }));
 
 		// Act
 		await applicationService.showEndpoints(item);
@@ -116,38 +136,14 @@ describe("Application Service Tests", () => {
 
 	test("Show endpoints for unknown app type", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "Unknown" }));
+		await treeDataProvider.render();
+		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "Unknown" }));
 
 		// Act
 		await applicationService.showEndpoints(item);
 
 		// Assert
 		expect(openTextDocumentSpy).toHaveBeenCalled();
-	});
-
-	test("Show endpoints with sign in audience error", async () => {
-		// Arrange
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test Error") }));
-
-		// Act
-		await applicationService.showEndpoints(item);
-
-		// Assert
-		expect(triggerErrorSpy).toHaveBeenCalled();
-	});
-
-	test("Show endpoints with Az CLI error", async () => {
-		// Arrange
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "AzureADMyOrg" }));
-		jest.spyOn(execShellCmdUtil, "execShellCmd").mockImplementation(async (_cmd: string) => {
-			throw new Error("Test Error");
-		});
-
-		// Act
-		await applicationService.showEndpoints(item);
-
-		// Assert
-		expect(triggerErrorSpy).toHaveBeenCalled();
 	});
 
 	test("View manifest", async () => {
@@ -161,14 +157,15 @@ describe("Application Service Tests", () => {
 
 	test("View manifest error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "getApplicationDetailsFull").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("View manifest error");
+		jest.spyOn(graphApiRepository, "getApplicationDetailsFull").mockImplementation(async (_id: string) => ({ success: false, error }));
 
 		// Act
 		await applicationService.viewManifest(item);
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Copy client id", async () => {
@@ -449,10 +446,11 @@ describe("Application Service Tests", () => {
 
 	test("Edit App Id Uri with scheme error for AAD and consumer audiences", async () => {
 		// Arrange
+		await treeDataProvider.render();
 		const newAppIdUri: string = "cheese://test.com";
 		item = { ...item, value: "api://oldtest.com", contextValue: "APPID-URI" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue(newAppIdUri);
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "PersonalMicrosoftAccount" }));
+		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "PersonalMicrosoftAccount" }));
 		const validationSpy = jest.spyOn(validation, "validateAppIdUri");
 		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined) => {
 			const result = validation(newAppIdUri, signInAudience);
@@ -470,10 +468,11 @@ describe("Application Service Tests", () => {
 
 	test("Edit App Id Uri with wildcard error for AAD and consumer audiences", async () => {
 		// Arrange
+		await treeDataProvider.render();
 		const newAppIdUri: string = "api://test.com/*";
 		item = { ...item, value: "api://oldtest.com", contextValue: "APPID-URI" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue(newAppIdUri);
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "PersonalMicrosoftAccount" }));
+		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "PersonalMicrosoftAccount" }));
 		const validationSpy = jest.spyOn(validation, "validateAppIdUri");
 		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined) => {
 			const result = validation(newAppIdUri, signInAudience);
@@ -491,10 +490,11 @@ describe("Application Service Tests", () => {
 
 	test("Edit App Id Uri with length error for AAD and consumer audiences", async () => {
 		// Arrange
+		await treeDataProvider.render();
 		const newAppIdUri: string = "api://test.com/".padEnd(121, "X");
 		item = { ...item, value: "api://oldtest.com", contextValue: "APPID-URI" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue(newAppIdUri);
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: true, value: "PersonalMicrosoftAccount" }));
+		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "PersonalMicrosoftAccount" }));
 		const validationSpy = jest.spyOn(validation, "validateAppIdUri");
 		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined) => {
 			const result = validation(newAppIdUri, signInAudience);
@@ -510,20 +510,6 @@ describe("Application Service Tests", () => {
 		expect(validationSpy).toHaveBeenCalled();
 	});
 
-	test("Edit App Id Uri sign in error", async () => {
-		// Arrange
-		item = { ...item, value: "api://oldtest.com", contextValue: "APPID-URI" };
-		vscode.window.showInputBox = jest.fn().mockResolvedValue("api://test.com");
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test Error") }));
-
-		// Act
-		await applicationService.editAppIdUri(item);
-
-		// Assert
-		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
-	});
-
 	test("Remove Logout URL", async () => {
 		// Act
 		await applicationService.removeLogoutUrl(item);
@@ -537,13 +523,14 @@ describe("Application Service Tests", () => {
 
 	test("Remove Logout URL update application error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("Remove Logout URL update application error");
+		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error }));
 
 		// Act
 		await applicationService.removeLogoutUrl(item);
 
 		// Assert
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error, undefined);
 	});
 
 	test("Remove App Id Uri", async () => {
@@ -570,18 +557,20 @@ describe("Application Service Tests", () => {
 
 	test("Delete application with error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "deleteApplication").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("Delete application with error");
+		jest.spyOn(graphApiRepository, "deleteApplication").mockImplementation(async (_id: string) => ({ success: false, error }));
 
 		// Act
 		await applicationService.delete(item);
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 
 	test("Rename application successfully", async () => {
 		// Arrange
+		await treeDataProvider.render();
 		const newAppName: string = "New Application Name";
 		vscode.window.showInputBox = jest.fn().mockResolvedValue(newAppName);
 		const validationSpy = jest.spyOn(validation, "validateApplicationDisplayName");
@@ -604,7 +593,9 @@ describe("Application Service Tests", () => {
 
 	test("Rename application with update error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("Rename application with update error");
+		await treeDataProvider.render();
+		jest.spyOn(graphApiRepository, "updateApplication").mockImplementation(async (_id: string, _appChange: Application) => ({ success: false, error }));
 		vscode.window.showInputBox = jest.fn().mockResolvedValue("New Application Name");
 
 		// Act
@@ -612,19 +603,7 @@ describe("Application Service Tests", () => {
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
-	});
-
-	test("Rename application with sign in error", async () => {
-		// Arrange
-		jest.spyOn(graphApiRepository, "getSignInAudience").mockImplementation(async (_id: string) => ({ success: false, error: new Error("Test Error") }));
-
-		// Act
-		await applicationService.rename(item);
-
-		// Assert
-		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error, undefined);
 	});
 
 	test("Add application successfully", async () => {
@@ -704,7 +683,8 @@ describe("Application Service Tests", () => {
 
 	test("Add application with creation error", async () => {
 		// Arrange
-		jest.spyOn(graphApiRepository, "createApplication").mockImplementation(async () => ({ success: false, error: new Error("Test Error") }));
+		const error = new Error("Add application with creation error");
+		jest.spyOn(graphApiRepository, "createApplication").mockImplementation(async () => ({ success: false, error }));
 		vscode.window.showQuickPick = jest.fn().mockResolvedValue({ value: "AzureADMyOrg" });
 		vscode.window.showInputBox = jest.fn().mockResolvedValue("Add Application Name");
 
@@ -713,6 +693,6 @@ describe("Application Service Tests", () => {
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
-		expect(triggerErrorSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
 	});
 });

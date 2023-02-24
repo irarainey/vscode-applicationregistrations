@@ -54,7 +54,7 @@ describe("Azure CLI Account Provider Tests", () => {
 	test("Login user unsuccessfully", async () => {
 		// Assert
 		const execSpy = jest.spyOn(execShellCmdUtil, "execShellCmd").mockImplementation(async (_cmd: string) => {
-			throw new Error("Error");
+			throw new Error("Login user unsuccessfully");
 		});
 
 		// Act
