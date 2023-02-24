@@ -58,8 +58,8 @@ describe("Redirect URI Service Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the application service
 		redirectUriService.dispose();
+		treeDataProvider.dispose();
 	});
 
 	test("Create class instance", () => {

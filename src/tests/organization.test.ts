@@ -46,8 +46,8 @@ describe("Organization Service Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the service
 		organizationService.dispose();
+		treeDataProvider.dispose();
 	});
 
 	test("Create class instance", () => {

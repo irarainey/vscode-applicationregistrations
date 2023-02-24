@@ -57,8 +57,8 @@ describe("Sign In Audience Service Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the service
 		signInAudienceService.dispose();
+		treeDataProvider.dispose();
 	});
 
 	test("Create class instance", () => {

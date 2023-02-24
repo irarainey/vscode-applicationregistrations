@@ -56,8 +56,8 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the application service
 		oauth2PermissionScopeService.dispose();
+		treeDataProvider.dispose();
 	});
 
 	test("Create class instance", () => {

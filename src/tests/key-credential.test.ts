@@ -57,8 +57,8 @@ describe("Key Credential Service Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the key credential service
 		keyCredentialService.dispose();
+		treeDataProvider.dispose();
 	});
 
 	test("Create class instance", () => {

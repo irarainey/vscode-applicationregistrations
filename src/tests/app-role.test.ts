@@ -54,8 +54,8 @@ describe("App Role Service Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the application service
 		appRoleService.dispose();
+		treeDataProvider.dispose();
 	});
 
 	test("Create class instance", () => {

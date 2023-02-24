@@ -9,7 +9,7 @@ import { mockApplications, mockAppObjectId, seedMockData } from "./data/test-dat
 jest.mock("vscode");
 jest.mock("../repositories/graph-api-repository");
 
-// Create the test suite for app role service
+// Create the test suite for tree data provider
 describe("Tree Data Provider Tests", () => {
 	// Create instances of objects used in the tests
 	const graphApiRepository = new GraphApiRepository();
@@ -40,7 +40,6 @@ describe("Tree Data Provider Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the application service
 		treeDataProvider.dispose();
 	});
 

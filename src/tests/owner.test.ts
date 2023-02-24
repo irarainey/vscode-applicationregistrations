@@ -56,8 +56,8 @@ describe("Owner Service Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the owner service
 		ownerService.dispose();
+		treeDataProvider.dispose();
 	});
 
 	test("Create class instance", () => {

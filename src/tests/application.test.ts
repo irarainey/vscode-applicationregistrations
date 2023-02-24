@@ -64,8 +64,8 @@ describe("Application Service Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the application service
 		applicationService.dispose();
+		treeDataProvider.dispose();
 	});
 
 	test("Create class instance", () => {

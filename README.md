@@ -27,6 +27,14 @@ All application properties have their own range of functionality. From the top-l
 
 ![Context Menus](resources/images/context_002.png)
 
+Most elements also have tooltips to help explain what they are and how they work, this includes the application list itself, which gives a quick view of the date the application was created and any internal notes you may have added.
+
+![Tooltip](resources/images/tooltip.png)
+
+Where password or certificate credentials are shown, the tooltip and icon colour will indicate if the credential is about to expire or has expired. This is based upon the expiry date of the credential. An upcoming expiry is determined as anything less than 30 days.
+
+![Expiring Credentials](resources/images/credentials.png)
+
 By default, to improve performance, the application list is limited to show 40 applications. This however is exposed as a user setting and can be changed if you wish. The list is sorted by application display name. If your application is not shown in the list you can also apply a filter on display name, which is applied before the maximum application shown limit _(although only when eventual consistency is applied - see section below)_.
 
 The default view only shows applications where the signed in user is an owner. This behaviour can be changed in user settings to show all applications if required.

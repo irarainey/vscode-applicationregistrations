@@ -259,48 +259,48 @@ export const validateLogoutUrl = (uri: string): string | undefined => {
 };
 
 // Validates the owner name or email address.
-export const validateOwner = async (owner: string, existing: User[], graphRepository: GraphApiRepository, owners: OwnerList): Promise<string | undefined> => {
+export const validateOwner = async (ownerSearch: string | undefined, existing: User[], graphRepository: GraphApiRepository, owners: OwnerList): Promise<string | undefined> => {
 	// Check if the owner name is empty.
-	if (owner === undefined || owner === null || owner.length === 0) {
+	if (ownerSearch === undefined || ownerSearch === null || ownerSearch.length === 0) {
 		return undefined;
 	}
 
 	owners.users = undefined;
 	let identifier: string = "";
-	if (owner.indexOf("@") > -1) {
+	if (ownerSearch.indexOf("@") > -1) {
 		// Try to find the user by email.
-		const result: GraphResult<User[]> = await graphRepository.findUsersByEmail(owner);
+		const result: GraphResult<User[]> = await graphRepository.findUsersByEmail(ownerSearch);
 		if (result.success === true && result.value !== undefined) {
 			owners.users = result.value;
 			identifier = "user with an email address";
 		} else {
 			await errorHandler({ error: result.error });
-			return;
+			return undefined;
 		}
 	} else {
 		// Try to find the user by name.
-		const result: GraphResult<User[]> = await graphRepository.findUsersByName(owner);
+		const result: GraphResult<User[]> = await graphRepository.findUsersByName(ownerSearch);
 		if (result.success === true && result.value !== undefined) {
 			owners.users = result.value;
 			identifier = "name";
 		} else {
 			await errorHandler({ error: result.error });
-			return;
+			return undefined;
 		}
 	}
 
 	if (owners.users.length === 0) {
 		// User not found
-		return `No ${identifier} beginning with ${owner} can be found in your directory.`;
+		return `No ${identifier} beginning with ${ownerSearch} can be found in your directory.`;
 	} else if (owners.users.length > 1) {
 		// More than one user found
-		return `More than one user with the ${identifier} beginning with ${owner} exists in your directory.`;
+		return `More than one user with the ${identifier} beginning with ${ownerSearch} exists in your directory.`;
 	}
 
 	// Check if the user is already an owner.
 	for (let i = 0; i < existing.length; i++) {
 		if (existing[i].id === owners.users[0].id) {
-			return `${owner} is already an owner of this application.`;
+			return `${ownerSearch} is already an owner of this application.`;
 		}
 	}
 

@@ -54,8 +54,8 @@ describe("Required Resource Access Service Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the application service
 		requiredResourceAccessService.dispose();
+		treeDataProvider.dispose();
 	});
 
 	test("Create class instance", () => {

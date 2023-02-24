@@ -57,8 +57,8 @@ describe("Password Credential Service Tests", () => {
 	});
 
 	afterAll(() => {
-		// Dispose of the application service
 		passwordCredentialService.dispose();
+		treeDataProvider.dispose();
 	});
 
 	test("Create class instance", () => {

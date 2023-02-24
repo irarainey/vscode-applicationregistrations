@@ -37,6 +37,10 @@ describe("Authentication Tests", () => {
 		triggerErrorSpy = jest.spyOn(errorHandlerUtils, "errorHandler");
 	});
 
+	afterAll(() => {
+		treeDataProvider.dispose();
+	});
+
 	test("Authenticate user successfully without tenant", async () => {
 		// Assert
 		const treeSpy = jest.spyOn(treeDataProvider, "render");
