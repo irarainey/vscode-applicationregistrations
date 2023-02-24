@@ -47,6 +47,7 @@ export async function activate(context: ExtensionContext) {
 		event.affectsConfiguration("applicationRegistrations.omitTenantIdFromPortalRequests") || 
 		event.affectsConfiguration("applicationRegistrations.maximumQueryApps") || 
 		event.affectsConfiguration("applicationRegistrations.maximumApplicationsShown") || 
+		event.affectsConfiguration("applicationRegistrations.showDeletedApplications") || 
 		event.affectsConfiguration("applicationRegistrations.useEventualConsistency")) {
 			await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."));
 		}

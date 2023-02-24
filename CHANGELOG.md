@@ -1,3 +1,7 @@
+## 0.10.0
+
+- TBD
+
 ## 0.9.0
 
 - Enhanced application tooltip to show additional information including creation date.

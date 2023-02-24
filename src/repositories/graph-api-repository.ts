@@ -89,6 +89,31 @@ export class GraphApiRepository {
 		}
 	}
 
+	// Returns ids and names for all deleted application registrations
+	async getApplicationListDeleted(filter?: string): Promise<GraphResult<Application[]>> {
+		try {
+			const useEventualConsistency = workspace.getConfiguration("applicationRegistrations").get("useEventualConsistency") as boolean;
+			if (useEventualConsistency === true) {
+				const maximumApplicationsShown = workspace.getConfiguration("applicationRegistrations").get("maximumApplicationsShown") as number;
+				const result: any = await this.client!.api("/directory/deleteditems/Microsoft.Graph.Application")
+					.filter(filter === undefined ? "" : filter)
+					.header("ConsistencyLevel", "eventual")
+					.count(true)
+					.top(maximumApplicationsShown)
+					.orderby("displayName")
+					.select("id,displayName,deletedDateTime")
+					.get();
+				return { success: true, value: result.value };
+			} else {
+				const maximumQueryApps = workspace.getConfiguration("applicationRegistrations").get("maximumQueryApps") as number;
+				const result: any = await this.client!.api("/directory/deleteditems/Microsoft.Graph.Application").top(maximumQueryApps).select("id,displayName,deletedDateTime").get();
+				return { success: true, value: result.value };
+			}
+		} catch (error: any) {
+			return { success: false, error: error };
+		}
+	}
+
 	// Returns ids and names for all owned application registrations
 	async getApplicationListOwned(filter?: string): Promise<GraphResult<Application[]>> {
 		try {
