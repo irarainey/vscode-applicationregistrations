@@ -8,13 +8,9 @@ import { showJsonDocument } from "../utils/json-document-utils";
 
 export class OrganizationService extends ServiceBase {
 
-	// The account provider.
-    private accountProvider: AccountProvider;
-
-    // The constructor for the OwnerService class.
-    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider, accountProvider: AccountProvider) {
+    // The constructor for the OrganizationService class.
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider, private accountProvider: AccountProvider) {
         super(graphRepository, treeDataProvider);
-        this.accountProvider = accountProvider;
     }
 
 	// Shows the tenant information.

@@ -13,13 +13,9 @@ import { showJsonDocument } from "../utils/json-document-utils";
 
 export class ApplicationService extends ServiceBase {
 
-	// The account provider.
-    private accountProvider: AccountProvider;
-
     // The constructor for the ApplicationService class.
-    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider, accountProvider: AccountProvider) {
+    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider, private accountProvider: AccountProvider) {
         super(graphRepository, treeDataProvider);
-        this.accountProvider = accountProvider;
     }
 
 	// Creates a new application registration.

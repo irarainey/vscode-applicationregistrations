@@ -11,12 +11,6 @@ export class ServiceBase {
 	// A protected array of disposables for the service.
 	protected readonly disposable: Disposable[] = [];
 
-	// A private instance of the AppRegTreeDataProvider class.
-	protected readonly treeDataProvider: AppRegTreeDataProvider;
-
-	// A protected instance of the Graph Api Repository.
-	protected readonly graphRepository: GraphApiRepository;
-
 	// A protected instance of the tree item.
 	protected item: AppRegItem | undefined = undefined;
 
@@ -24,9 +18,7 @@ export class ServiceBase {
 	protected statusBarHandle: Disposable | undefined = undefined;
 
 	// The constructor for the OwnerService class.
-	constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
-		this.graphRepository = graphRepository;
-		this.treeDataProvider = treeDataProvider;
+	constructor(protected graphRepository: GraphApiRepository, protected treeDataProvider: AppRegTreeDataProvider) {
 	}
 
 	// Handle an error

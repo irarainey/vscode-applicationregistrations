@@ -3,19 +3,18 @@ import { AppRegItemParams } from "../types/app-reg-item-params";
 
 // This is the data structure for the application registration tree view item
 export class AppRegItem extends TreeItem {
-	// Private properties
-	public objectId?: string = "";
-	public baseIcon?: string | ThemeIcon = "";
-	public children?: AppRegItem[];
-	public appId?: string = "";
-	public userId?: string = "";
-	public keyId?: string = "";
-	public value?: string = "";
-	public order?: number = 0;
-	public state?: boolean = false;
-	public resourceAppId?: string = "";
-	public resourceScopeId?: string = "";
-	public label?: string | TreeItemLabel | undefined;
+	objectId?: string = "";
+	baseIcon?: string | ThemeIcon = "";
+	children?: AppRegItem[];
+	appId?: string = "";
+	userId?: string = "";
+	keyId?: string = "";
+	value?: string = "";
+	order?: number = 0;
+	state?: boolean = false;
+	resourceAppId?: string = "";
+	resourceScopeId?: string = "";
+	label?: string | TreeItemLabel | undefined;
 
 	// Constructor for the application registration tree view item
 	constructor(params: AppRegItemParams) {

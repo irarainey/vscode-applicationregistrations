@@ -13,16 +13,12 @@ import { AccountProvider } from "../types/account-provider";
 
 export class OwnerService extends ServiceBase {
 
-	// The account provider.
-    private accountProvider : AccountProvider;
-
 	// The list of users in the directory.
 	private owners = new OwnerList();
 
 	// The constructor for the OwnerService class.
-	constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider, accountProvider : AccountProvider) {
+	constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider, private accountProvider : AccountProvider) {
 		super(graphRepository, treeDataProvider);
-        this.accountProvider = accountProvider;
 	}
 
 	// Sets the user list.

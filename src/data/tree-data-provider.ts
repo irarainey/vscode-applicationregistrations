@@ -27,9 +27,6 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 	//Defines the event that is fired when the tree view is refreshed.
 	public readonly onDidChangeTreeData: Event<AppRegItem | undefined | null | void> = this.onDidChangeTreeDataEvent.event;
 
-	// A public property for the Graph Api Repository.
-	public graphRepository: GraphApiRepository;
-
 	// A public get property to get the updating state
 	public isUpdating: boolean = false;
 
@@ -50,8 +47,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 	}
 
 	// The constructor for the AppRegTreeDataProvider class.
-	constructor(graphRepository: GraphApiRepository) {
-		this.graphRepository = graphRepository;
+	constructor(public graphRepository: GraphApiRepository) {
 		this.graphRepository.initialiseTreeView = async (type: string) => {
 			await this.render(undefined, type);
 		};

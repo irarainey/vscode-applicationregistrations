@@ -1,17 +1,5 @@
-// Basic information about the currently signed-in account
 export class AccountInformation {
-	tenantId: string; // The tenant ID
-	homeTenantId: string; // The home tenant ID
-	environmentName: string; // The current cloud type - AzureCloud, AzureChinaCloud, AzureUSGovernment, AzureGermanCloud
-	subscriptionName: string; // The subscription name
-	subscriptionId: string; // The subscription ID
-
-	constructor(tenantId: string = "", homeTenantId: string = "", environmentName: string = "", subscriptionName: string = "", subscriptionId: string = "") {
-		this.tenantId = tenantId;
-		this.homeTenantId = homeTenantId;
-		this.environmentName = environmentName;
-		this.subscriptionName = subscriptionName;
-		this.subscriptionId = subscriptionId;
+	constructor(public tenantId: string = "", public homeTenantId: string = "", public environmentName: string = "", public subscriptionName: string = "", public subscriptionId: string = "") {
 	}
 
 	deserialize(jsonTextInput: string): AccountInformation {
