@@ -67,7 +67,7 @@ export const SIGNIN_AUDIENCE_OPTIONS = [
 export const SIGNIN_AUDIENCE_DOCUMENTATION_URI = "https://learn.microsoft.com/en-gb/azure/active-directory/develop/supported-accounts-validation";
 
 // The properties to return when querying for applications
-export const APPLICATION_SELECT_PROPERTIES = "id,displayName,appId,notes,signInAudience,appRoles,oauth2Permissions,web,spa,api,requiredResourceAccess,publicClient,identifierUris,passwordCredentials,keyCredentials";
+export const APPLICATION_SELECT_PROPERTIES = "id,displayName,appId,notes,signInAudience,appRoles,oauth2Permissions,web,spa,api,requiredResourceAccess,publicClient,identifierUris,passwordCredentials,keyCredentials,createdDateTime";
 
 // The Azure CLI command to login a user
 export const CLI_LOGIN_CMD = "az login";

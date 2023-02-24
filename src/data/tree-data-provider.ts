@@ -5,7 +5,7 @@ import { Application, KeyCredential, PasswordCredential, User, AppRole, Required
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegItem } from "../models/app-reg-item";
 import { sort } from "fast-sort";
-import { format } from "date-fns";
+import { addDays, format, isAfter } from "date-fns";
 import { GraphResult } from "../types/graph-result";
 import { clearStatusBarMessage, setStatusBarMessage } from "../utils/status-bar";
 import { errorHandler } from "../error-handler";
@@ -427,7 +427,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 							baseIcon: path.join(__filename, "..", "..", "resources", "icons", "app.svg"),
 							objectId: app.id!,
 							appId: app.appId!,
-							tooltip: app.notes !== null ? app.notes! : app.displayName!,
+							tooltip: `Name: ${app.displayName!}\nClient Id: ${app.appId!}\nCreated: ${format(new Date(app.createdDateTime!), "yyyy-MM-dd")}${app.notes !== null ? "\nNotes: " + app.notes! : ""}`,
 							order: index,
 							children: []
 						});
@@ -783,36 +783,41 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 	// Returns the password credentials for the given application
 	private async getApplicationPasswordCredentials(element: AppRegItem, passwords: PasswordCredential[]): Promise<AppRegItem[]> {
 		return passwords.map((credential) => {
+			const isExpired = isAfter(Date.now(), new Date(credential.endDateTime!));
+			const isAboutToExpire = isAfter(addDays(Date.now(), 30), new Date(credential.endDateTime!));
+			const iconColour = isExpired ? "list.errorForeground" : isAboutToExpire ? "list.warningForeground" : "editor.foreground";
 			return new AppRegItem({
 				label: credential.displayName!,
 				context: "PASSWORD",
-				iconPath: new ThemeIcon("symbol-key", new ThemeColor("editor.foreground")),
-				baseIcon: new ThemeIcon("symbol-key", new ThemeColor("editor.foreground")),
+				iconPath: new ThemeIcon("symbol-key", new ThemeColor(iconColour)),
+				baseIcon: new ThemeIcon("symbol-key", new ThemeColor(iconColour)),
 				value: credential.keyId!,
 				objectId: element.objectId,
-				tooltip: "A secret string that the application uses to prove its identity when requesting a token. Also can be referred to as application password.",
+				tooltip: isExpired === true ? "This credential has expired." 
+									: isAboutToExpire === true ? "This credential will expire soon." 
+										: "A secret string that the application uses to prove its identity when requesting a token. Also can be referred to as application password.",
 				children: [
 					new AppRegItem({
 						label: `Value: ${credential.hint!}******************`,
 						context: "PASSWORD-VALUE",
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
 						objectId: element.objectId,
 						tooltip: "Client secret values cannot be viewed or accessed, except for immediately after creation."
 					}),
 					new AppRegItem({
 						label: `Created: ${format(new Date(credential.startDateTime!), "yyyy-MM-dd")}`,
 						context: "PASSWORD-VALUE",
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
 						objectId: element.objectId,
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
 					}),
 					new AppRegItem({
 						label: `Expires: ${format(new Date(credential.endDateTime!), "yyyy-MM-dd")}`,
 						context: "PASSWORD-VALUE",
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
 						objectId: element.objectId,
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
 					})
 				]
 			});
@@ -822,43 +827,48 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 	// Returns the password credentials for the given application
 	private async getApplicationKeyCredentials(element: AppRegItem, keys: KeyCredential[]): Promise<AppRegItem[]> {
 		return keys.map((credential) => {
+			const isExpired = isAfter(Date.now(), new Date(credential.endDateTime!));
+			const isAboutToExpire = isAfter(addDays(Date.now(), 30), new Date(credential.endDateTime!));
+			const iconColour = isExpired ? "list.errorForeground" : isAboutToExpire ? "list.warningForeground" : "editor.foreground";
 			return new AppRegItem({
 				label: credential.displayName!,
 				context: "CERTIFICATE",
-				iconPath: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
-				baseIcon: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
+				iconPath: new ThemeIcon("gist-secret", new ThemeColor(iconColour)),
+				baseIcon: new ThemeIcon("gist-secret", new ThemeColor(iconColour)),
 				objectId: element.objectId,
 				keyId: credential.keyId!,
-				tooltip: "A certificate that the application uses to prove its identity when requesting a token. Also can be referred to as application certificate or public key.",
+				tooltip: isExpired === true ? "This credential has expired." 
+									: isAboutToExpire === true ? "This credential will expire soon." 
+										: "A certificate that the application uses to prove its identity when requesting a token. Also can be referred to as application certificate or public key.",
 				children: [
 					new AppRegItem({
 						label: `Type: ${credential.type!}`,
 						context: "CERTIFICATE-VALUE",
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
 						objectId: element.objectId,
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
 					}),
 					new AppRegItem({
 						label: `Key Identifier: ${credential.customKeyIdentifier!}`,
 						context: "COPY",
 						value: credential.customKeyIdentifier!,
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
 						objectId: element.objectId,
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
 					}),
 					new AppRegItem({
 						label: `Created: ${format(new Date(credential.startDateTime!), "yyyy-MM-dd")}`,
 						context: "CERTIFICATE-VALUE",
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
 						objectId: element.objectId,
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
 					}),
 					new AppRegItem({
 						label: `Expires: ${format(new Date(credential.endDateTime!), "yyyy-MM-dd")}`,
 						context: "CERTIFICATE-VALUE",
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
 						objectId: element.objectId,
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
 					})
 				]
 			});
@@ -911,7 +921,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 				});
 			} else {
 				await this.handleError(result.error);
-				return {};
+				return { label: "Error" };
 			}
 		});
 
@@ -921,12 +931,12 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 	// Returns the exposed api permissions for the given application
 	private async getApplicationExposedApiPermissions(element: AppRegItem, scopes: PermissionScope[]): Promise<AppRegItem[]> {
 		return scopes.map((scope) => {
-			const icon = scope.isEnabled! ? "list-tree" : "close";
+			const iconColour = scope.isEnabled! ? "editor.foreground" : "disabledForeground";
 			return new AppRegItem({
 				label: scope.adminConsentDisplayName!,
 				context: `SCOPE-${scope.isEnabled! === true ? "ENABLED" : "DISABLED"}`,
-				iconPath: new ThemeIcon(icon, new ThemeColor("editor.foreground")),
-				baseIcon: new ThemeIcon(icon, new ThemeColor("editor.foreground")),
+				iconPath: new ThemeIcon("list-tree", new ThemeColor(iconColour)),
+				baseIcon: new ThemeIcon("list-tree", new ThemeColor(iconColour)),
 				objectId: element.objectId,
 				value: scope.id!,
 				state: scope.isEnabled!,
@@ -936,32 +946,32 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 						context: "SCOPE-VALUE",
 						objectId: element.objectId,
 						value: scope.id!,
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
 					}),
 					new AppRegItem({
 						label: `Description: ${scope.adminConsentDescription!}`,
 						context: "SCOPE-DESCRIPTION",
 						objectId: element.objectId,
 						value: scope.id!,
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
 					}),
 					new AppRegItem({
 						label: `Consent: ${scope.type! === "User" ? "Admins and Users" : "Admins Only"}`,
 						context: "SCOPE-CONSENT",
 						objectId: element.objectId,
 						value: scope.id!,
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
 					}),
 					new AppRegItem({
 						label: `Enabled: ${scope.isEnabled! ? "Yes" : "No"}`,
 						context: "SCOPE-STATE",
 						objectId: element.objectId,
 						value: scope.id!,
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
 					})
 				]
 			});
@@ -971,12 +981,12 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 	// Returns the app roles for the given application
 	private async getApplicationAppRoles(element: AppRegItem, roles: AppRole[]): Promise<AppRegItem[]> {
 		return roles.map((role) => {
-			const icon = role.isEnabled! ? "person" : "close";
+			const iconColour = role.isEnabled! ? "editor.foreground" : "disabledForeground";
 			return new AppRegItem({
 				label: role.displayName!,
 				context: `ROLE-${role.isEnabled! === true ? "ENABLED" : "DISABLED"}`,
-				iconPath: new ThemeIcon(icon, new ThemeColor("editor.foreground")),
-				baseIcon: new ThemeIcon(icon, new ThemeColor("editor.foreground")),
+				iconPath: new ThemeIcon("person", new ThemeColor(iconColour)),
+				baseIcon: new ThemeIcon("person", new ThemeColor(iconColour)),
 				objectId: element.objectId,
 				value: role.id!,
 				state: role.isEnabled!,
@@ -986,32 +996,32 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 						context: "ROLE-VALUE",
 						objectId: element.objectId,
 						value: role.id!,
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
 					}),
 					new AppRegItem({
 						label: `Description: ${role.description!}`,
 						context: "ROLE-DESCRIPTION",
 						objectId: element.objectId,
 						value: role.id!,
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
 					}),
 					new AppRegItem({
 						label: `Allowed: ${role.allowedMemberTypes!.map((type) => (type === "Application" ? "Applications" : "Users/Groups")).join(", ")}`,
 						context: "ROLE-ALLOWED",
 						objectId: element.objectId,
 						value: role.id!,
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
 					}),
 					new AppRegItem({
 						label: `Enabled: ${role.isEnabled! ? "Yes" : "No"}`,
 						context: "ROLE-STATE",
 						objectId: element.objectId,
 						value: role.id!,
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground"))
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
 					})
 				]
 			});
