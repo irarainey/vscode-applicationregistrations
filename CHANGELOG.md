@@ -1,6 +1,6 @@
 ## 0.10.0
 
-- TBD
+- Added functionality to manage deleted applications.
 
 ## 0.9.0
 

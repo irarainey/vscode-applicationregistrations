@@ -16,6 +16,7 @@ It allows for easy viewing, copying, adding, and editing of most the core applic
 * Exposed API Permissions
 * App Roles
 * Owners
+* Deleted Applications
 
 It also allows for the simple creation of new applications, quickly viewing of the full application manifest in the editor, and has the ability to open the application registration directly in the Azure Portal when you need full editing control.
 
@@ -99,8 +100,6 @@ The following functionality has not yet been implemented, but is on the backlog 
 * Android / iOS Redirect URIs
 * Optional token claims
 * Federation credentials
-* Deleted applications
-
 
 ## Notes
 This extension was created both as a learning exercise, and to address the common annoyances of managing Application Registrations. It is not officially supported and you use it at your own risk.
