@@ -47,7 +47,7 @@ export async function activate(context: ExtensionContext) {
 		event.affectsConfiguration("applicationRegistrations.omitTenantIdFromPortalRequests") || 
 		event.affectsConfiguration("applicationRegistrations.maximumQueryApps") || 
 		event.affectsConfiguration("applicationRegistrations.maximumApplicationsShown") || 
-		event.affectsConfiguration("applicationRegistrations.showDeletedApplications") || 
+		event.affectsConfiguration("applicationRegistrations.applicationListView") || 
 		event.affectsConfiguration("applicationRegistrations.useEventualConsistency")) {
 			await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."));
 		}
@@ -75,7 +75,10 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.showEndpoints`, (item) => applicationService.showEndpoints(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openAppInAzurePortal`, async (item) => await applicationService.openInAzurePortal(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openAppInEntraPortal`, async (item) => await applicationService.openInEntraPortal(item)));
-
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.restoreApplication`, async (item) => await applicationService.restore(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteApplicationPermanent`, async (item) => await applicationService.deletePermanently(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.changeApplicationView`, async (item) => await applicationService.changeView()));
+	
 	// App Role Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAppRole`, async (item) => await appRoleService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editAppRole`, async (item) => await appRoleService.edit(item)));

@@ -47,17 +47,24 @@
           "maximum": 200,
           "order": 0
         },
+        "applicationRegistrations.applicationListView": {
+          "type": "string",
+          "default": "Owned Applications",
+          "enum": ["Owned Applications", "All Applications", "Deleted Applications"],
+          "description": "The type of applications to show in the list.",
+          "enumDescriptions": [
+            "Show only applications owned by the current user.",
+            "Show all applications.",
+            "Show only deleted applications."
+          ],
+          "order": 1
+        },
         "applicationRegistrations.showOwnedApplicationsOnly": {
           "type": "boolean",
           "description": "Show only applications owned by the current user.",
           "default": true,
-          "order": 1
-        },
-        "applicationRegistrations.showDeletedApplications": {
-          "type": "boolean",
-          "description": "Show only deleted applications.",
-          "default": false,
-          "order": 2
+          "order": 2,
+          "deprecationMessage": "Deprecated: Please use Application List View instead."
         },
         "applicationRegistrations.useEventualConsistency": {
           "type": "boolean",
@@ -102,6 +109,14 @@
       ]
     },
     "commands": [
+      {
+        "command": "appRegistrations.restoreApplication",
+        "title": "Restore"
+      },
+      {
+        "command": "appRegistrations.deleteApplicationPermanent",
+        "title": "Permanently Delete"
+      },
       {
         "command": "appRegistrations.uploadKeyCredential",
         "title": "Upload"
@@ -341,10 +356,22 @@
       {
         "command": "appRegistrations.cmdSignIn",
         "title": "Application Registrations: Sign In to Azure CLI"
+      },
+      {
+        "command": "appRegistrations.changeApplicationView",
+        "title": "Application Registrations: Change Application View"
       }
     ],
     "menus": {
       "commandPalette": [
+        {
+          "command": "appRegistrations.restoreApplication",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.deleteApplicationPermanent",
+          "when": "false"
+        },
         {
           "command": "appRegistrations.editLogoutUrl",
           "when": "false"
@@ -549,12 +576,12 @@
       "view/title": [
         {
           "command": "appRegistrations.filterApps",
-          "when": "view == appRegistrations",
+          "when": "view == appRegistrations && config.applicationRegistrations.useEventualConsistency",
           "group": "navigation@0"
         },
         {
           "command": "appRegistrations.addApp",
-          "when": "view == appRegistrations",
+          "when": "view == appRegistrations && config.applicationRegistrations.applicationListView != 'Deleted Applications'",
           "group": "navigation@1"
         },
         {
@@ -569,6 +596,16 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "appRegistrations.restoreApplication",
+          "when": "view == appRegistrations && viewItem == APPLICATION-DELETED",
+          "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.deleteApplicationPermanent",
+          "when": "view == appRegistrations && viewItem == APPLICATION-DELETED",
+          "group": "appRegistrations@1"
+        },
         {
           "command": "appRegistrations.uploadKeyCredential",
           "when": "view == appRegistrations && viewItem == CERTIFICATE-CREDENTIALS",

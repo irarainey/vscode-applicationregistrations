@@ -1,7 +1,27 @@
 import * as path from "path";
 import { SIGNIN_COMMAND_TEXT, APPLICATION_SELECT_PROPERTIES } from "../constants";
-import { workspace, window, ThemeIcon, ThemeColor, TreeDataProvider, TreeItem, Event, EventEmitter, ProviderResult, ConfigurationTarget } from "vscode";
-import { Application, KeyCredential, PasswordCredential, User, AppRole, RequiredResourceAccess, PermissionScope, ServicePrincipal } from "@microsoft/microsoft-graph-types";
+import {
+	workspace,
+	window,
+	ThemeIcon,
+	ThemeColor,
+	TreeDataProvider,
+	TreeItem,
+	Event,
+	EventEmitter,
+	ProviderResult,
+	ConfigurationTarget
+} from "vscode";
+import {
+	Application,
+	KeyCredential,
+	PasswordCredential,
+	User,
+	AppRole,
+	RequiredResourceAccess,
+	PermissionScope,
+	ServicePrincipal
+} from "@microsoft/microsoft-graph-types";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegItem } from "../models/app-reg-item";
 import { sort } from "fast-sort";
@@ -22,10 +42,13 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 	private filterText: string | undefined = undefined;
 
 	// This is the event that is fired when the tree view is refreshed.
-	private onDidChangeTreeDataEvent: EventEmitter<AppRegItem | undefined | null | void> = new EventEmitter<AppRegItem | undefined | null | void>();
+	private onDidChangeTreeDataEvent: EventEmitter<AppRegItem | undefined | null | void> = new EventEmitter<
+		AppRegItem | undefined | null | void
+	>();
 
 	//Defines the event that is fired when the tree view is refreshed.
-	public readonly onDidChangeTreeData: Event<AppRegItem | undefined | null | void> = this.onDidChangeTreeDataEvent.event;
+	public readonly onDidChangeTreeData: Event<AppRegItem | undefined | null | void> =
+		this.onDidChangeTreeDataEvent.event;
 
 	// A public get property to get the updating state
 	public isUpdating: boolean = false;
@@ -138,11 +161,16 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 		}
 
 		// Determine if eventual consistency is enabled.
-		const useEventualConsistency = workspace.getConfiguration("applicationRegistrations").get("useEventualConsistency") as boolean;
+		const useEventualConsistency = workspace
+			.getConfiguration("applicationRegistrations")
+			.get("useEventualConsistency") as boolean;
 
 		// If eventual consistency is disabled then we cannot apply the filter
 		if (useEventualConsistency === false) {
-			window.showInformationMessage("The application list cannot be filtered when not using eventual consistency. Please enable this in user settings first.", "OK");
+			window.showInformationMessage(
+				"The application list cannot be filtered when not using eventual consistency. Please enable this in user settings first.",
+				"OK"
+			);
 			return;
 		}
 
@@ -215,84 +243,121 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 				return Promise.resolve(this.getApplicationOwners(element));
 			case "WEB-REDIRECT":
 				// Return the web redirect URIs for the application
-				return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "web").then(async (result: GraphResult<Application>) => {
-					if (result.success === true && result.value !== undefined) {
-						return await this.getApplicationRedirectUris(element, "WEB-REDIRECT-URI", result.value.web!.redirectUris!);
-					} else {
-						await this.handleError(result.error);
-						return undefined;
-					}
-				});
+				return this.graphRepository
+					.getApplicationDetailsPartial(element.objectId!, "web")
+					.then(async (result: GraphResult<Application>) => {
+						if (result.success === true && result.value !== undefined) {
+							return await this.getApplicationRedirectUris(
+								element,
+								"WEB-REDIRECT-URI",
+								result.value.web!.redirectUris!
+							);
+						} else {
+							await this.handleError(result.error);
+							return undefined;
+						}
+					});
 			case "SPA-REDIRECT":
 				// Return the SPA redirect URIs for the application
-				return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "spa").then(async (result: GraphResult<Application>) => {
-					if (result.success === true && result.value !== undefined) {
-						return await this.getApplicationRedirectUris(element, "SPA-REDIRECT-URI", result.value.spa!.redirectUris!);
-					} else {
-						await this.handleError(result.error);
-						return undefined;
-					}
-				});
+				return this.graphRepository
+					.getApplicationDetailsPartial(element.objectId!, "spa")
+					.then(async (result: GraphResult<Application>) => {
+						if (result.success === true && result.value !== undefined) {
+							return await this.getApplicationRedirectUris(
+								element,
+								"SPA-REDIRECT-URI",
+								result.value.spa!.redirectUris!
+							);
+						} else {
+							await this.handleError(result.error);
+							return undefined;
+						}
+					});
 			case "NATIVE-REDIRECT":
 				// Return the native redirect URIs for the application
-				return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "publicClient").then(async (result: GraphResult<Application>) => {
-					if (result.success === true && result.value !== undefined) {
-						return await this.getApplicationRedirectUris(element, "NATIVE-REDIRECT-URI", result.value.publicClient!.redirectUris!);
-					} else {
-						await this.handleError(result.error);
-						return undefined;
-					}
-				});
+				return this.graphRepository
+					.getApplicationDetailsPartial(element.objectId!, "publicClient")
+					.then(async (result: GraphResult<Application>) => {
+						if (result.success === true && result.value !== undefined) {
+							return await this.getApplicationRedirectUris(
+								element,
+								"NATIVE-REDIRECT-URI",
+								result.value.publicClient!.redirectUris!
+							);
+						} else {
+							await this.handleError(result.error);
+							return undefined;
+						}
+					});
 			case "PASSWORD-CREDENTIALS":
 				// Return the password credentials for the application
-				return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "passwordCredentials").then(async (result: GraphResult<Application>) => {
-					if (result.success === true && result.value !== undefined) {
-						return await this.getApplicationPasswordCredentials(element, result.value.passwordCredentials!);
-					} else {
-						await this.handleError(result.error);
-						return undefined;
-					}
-				});
+				return this.graphRepository
+					.getApplicationDetailsPartial(element.objectId!, "passwordCredentials")
+					.then(async (result: GraphResult<Application>) => {
+						if (result.success === true && result.value !== undefined) {
+							return await this.getApplicationPasswordCredentials(
+								element,
+								result.value.passwordCredentials!
+							);
+						} else {
+							await this.handleError(result.error);
+							return undefined;
+						}
+					});
 			case "CERTIFICATE-CREDENTIALS":
 				// Return the key credentials for the application
-				return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "keyCredentials").then(async (result: GraphResult<Application>) => {
-					if (result.success === true && result.value !== undefined) {
-						return await this.getApplicationKeyCredentials(element, result.value.keyCredentials!);
-					} else {
-						await this.handleError(result.error);
-						return undefined;
-					}
-				});
+				return this.graphRepository
+					.getApplicationDetailsPartial(element.objectId!, "keyCredentials")
+					.then(async (result: GraphResult<Application>) => {
+						if (result.success === true && result.value !== undefined) {
+							return await this.getApplicationKeyCredentials(element, result.value.keyCredentials!);
+						} else {
+							await this.handleError(result.error);
+							return undefined;
+						}
+					});
 			case "API-PERMISSIONS":
 				// Return the API permissions for the application
-				return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "requiredResourceAccess").then(async (result: GraphResult<Application>) => {
-					if (result.success === true && result.value !== undefined) {
-						return await this.getApplicationApiPermissions(element, result.value.requiredResourceAccess!);
-					} else {
-						await this.handleError(result.error);
-						return undefined;
-					}
-				});
+				return this.graphRepository
+					.getApplicationDetailsPartial(element.objectId!, "requiredResourceAccess")
+					.then(async (result: GraphResult<Application>) => {
+						if (result.success === true && result.value !== undefined) {
+							return await this.getApplicationApiPermissions(
+								element,
+								result.value.requiredResourceAccess!
+							);
+						} else {
+							await this.handleError(result.error);
+							return undefined;
+						}
+					});
 			case "EXPOSED-API-PERMISSIONS":
 				// Return the exposed API permissions for the application
-				return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "api").then(async (result: GraphResult<Application>) => {
-					if (result.success === true && result.value !== undefined) {
-						return await this.getApplicationExposedApiPermissions(element, result.value.api?.oauth2PermissionScopes!);
-					} else {
-						await this.handleError(result.error);
-						return undefined;
-					}
-				});
+				return this.graphRepository
+					.getApplicationDetailsPartial(element.objectId!, "api")
+					.then(async (result: GraphResult<Application>) => {
+						if (result.success === true && result.value !== undefined) {
+							return await this.getApplicationExposedApiPermissions(
+								element,
+								result.value.api?.oauth2PermissionScopes!
+							);
+						} else {
+							await this.handleError(result.error);
+							return undefined;
+						}
+					});
 			case "APP-ROLES":
 				// Return the app roles for the application
-				return this.graphRepository.getApplicationDetailsPartial(element.objectId!, "appRoles").then(async (result: GraphResult<Application>) => {
-					if (result.success === true && result.value !== undefined) {
-						return await this.getApplicationAppRoles(element, result.value.appRoles!);
-					} else {
-						await this.handleError(result.error);
-						return undefined;
-					}
-				});
+				return this.graphRepository
+					.getApplicationDetailsPartial(element.objectId!, "appRoles")
+					.then(async (result: GraphResult<Application>) => {
+						if (result.success === true && result.value !== undefined) {
+							return await this.getApplicationAppRoles(element, result.value.appRoles!);
+						} else {
+							await this.handleError(result.error);
+							return undefined;
+						}
+					});
 			default:
 				// Nothing specific so return the statically defined children
 				return element.children;
@@ -330,57 +395,60 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 			this.isUpdating = true;
 
 			// Get the configuration settings.
-			const useEventualConsistency = workspace.getConfiguration("applicationRegistrations").get("useEventualConsistency") as boolean;
-			const showApplicationCountWarning = workspace.getConfiguration("applicationRegistrations").get("showApplicationCountWarning") as boolean;
+			const useEventualConsistency = workspace
+				.getConfiguration("applicationRegistrations")
+				.get("useEventualConsistency") as boolean;
+			const showApplicationCountWarning = workspace
+				.getConfiguration("applicationRegistrations")
+				.get("showApplicationCountWarning") as boolean;
 
 			// Determine if the warning message should be displayed.
 			if (showApplicationCountWarning === true) {
-				let totalApplicationCount: number = 0;
-				const showOwnedApplicationsOnly = workspace.getConfiguration("applicationRegistrations").get("showOwnedApplicationsOnly") as boolean;
-
-				// Get the total number of applications in the tenant based on the filter settings.
-				if (showOwnedApplicationsOnly) {
-					const result: GraphResult<number> = await this.graphRepository.getApplicationCountOwned();
-					if (result.success === true && result.value !== undefined) {
-						totalApplicationCount = result.value;
-					} else {
-						this.isUpdating = false;
-						await this.handleError(result.error);
-						return;
-					}
-				} else {
-					const result: GraphResult<number> = await this.graphRepository.getApplicationCountAll();
-					if (result.success === true && result.value !== undefined) {
-						totalApplicationCount = result.value;
-					} else {
-						this.isUpdating = false;
-						await this.handleError(result.error);
-						return;
-					}
-				}
-
+				const totalApplicationCount: number = await this.getApplicationsCount();
 				// If the total number of applications is less than 200 and eventual consistency is enabled then display a warning message.
 				if (totalApplicationCount > 0 && totalApplicationCount <= 200 && useEventualConsistency === true) {
-					window.showWarningMessage(`You have enabled eventual consistency for Graph API calls but only have ${totalApplicationCount} applications in your tenant. You would likely benefit from disabling eventual consistency in user settings. Would you like to do this now?`, "Yes", "No", "Disable Warning").then((result) => {
-						// If the user selects "Disable Warning" then disable the warning message.
-						if (result === "Disable Warning") {
-							workspace.getConfiguration("applicationRegistrations").update("showApplicationCountWarning", false, ConfigurationTarget.Global);
-							// If the user selects "Yes" then disable eventual consistency.
-						} else if (result === "Yes") {
-							workspace.getConfiguration("applicationRegistrations").update("useEventualConsistency", false, ConfigurationTarget.Global);
-						}
-					});
+					window
+						.showWarningMessage(
+							`You have enabled eventual consistency for Graph API calls but only have ${totalApplicationCount} applications in your tenant. You would likely benefit from disabling eventual consistency in user settings. Would you like to do this now?`,
+							"Yes",
+							"No",
+							"Disable Warning"
+						)
+						.then((result) => {
+							// If the user selects "Disable Warning" then disable the warning message.
+							if (result === "Disable Warning") {
+								workspace
+									.getConfiguration("applicationRegistrations")
+									.update("showApplicationCountWarning", false, ConfigurationTarget.Global);
+								// If the user selects "Yes" then disable eventual consistency.
+							} else if (result === "Yes") {
+								workspace
+									.getConfiguration("applicationRegistrations")
+									.update("useEventualConsistency", false, ConfigurationTarget.Global);
+							}
+						});
 					// If the total number of applications is greater than 200 and eventual consistency is disabled then display a warning message.
 				} else if (totalApplicationCount > 200 && useEventualConsistency === false) {
-					window.showWarningMessage(`You do not have enabled eventual consistency enabled for Graph API calls and have ${totalApplicationCount} applications in your tenant. You would likely benefit from enabling eventual consistency in user settings. Would you like to do this now?`, "Yes", "No", "Disable Warning").then((result) => {
-						// If the user selects "Disable Warning" then disable the warning message.
-						if (result === "Disable Warning") {
-							workspace.getConfiguration("applicationRegistrations").update("showApplicationCountWarning", false, ConfigurationTarget.Global);
-							// If the user selects "Yes" then enable eventual consistency.
-						} else if (result === "Yes") {
-							workspace.getConfiguration("applicationRegistrations").update("useEventualConsistency", true, ConfigurationTarget.Global);
-						}
-					});
+					window
+						.showWarningMessage(
+							`You do not have enabled eventual consistency enabled for Graph API calls and have ${totalApplicationCount} applications in your tenant. You would likely benefit from enabling eventual consistency in user settings. Would you like to do this now?`,
+							"Yes",
+							"No",
+							"Disable Warning"
+						)
+						.then((result) => {
+							// If the user selects "Disable Warning" then disable the warning message.
+							if (result === "Disable Warning") {
+								workspace
+									.getConfiguration("applicationRegistrations")
+									.update("showApplicationCountWarning", false, ConfigurationTarget.Global);
+								// If the user selects "Yes" then enable eventual consistency.
+							} else if (result === "Yes") {
+								workspace
+									.getConfiguration("applicationRegistrations")
+									.update("useEventualConsistency", true, ConfigurationTarget.Global);
+							}
+						});
 				}
 			}
 
@@ -405,19 +473,29 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
 			// If we're not using eventual consistency then we need to sort the application registrations by display name.
 			if (useEventualConsistency === false) {
-				allApplications = sort(applicationList).asc((a) => a.displayName!.toLowerCase().replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, ""));
+				allApplications = sort(applicationList).asc((a) =>
+					a.displayName!.toLowerCase().replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, "")
+				);
 			} else {
 				allApplications = applicationList;
 			}
 
 			let unsorted: Promise<AppRegItem | undefined>[] = [];
-			const showDeletedApplications = workspace.getConfiguration("applicationRegistrations").get("showDeletedApplications") as boolean;
-			if (showDeletedApplications === false) {
+			const applicationListView = workspace
+				.getConfiguration("applicationRegistrations")
+				.get("applicationListView") as string;
+
+			if (applicationListView !== "Deleted Applications") {
 				// Iterate through the application registrations and create the tree view items.
 				unsorted = allApplications.map(async (application, index) => {
 					try {
 						// Get the application details.
-						const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(application.id!, APPLICATION_SELECT_PROPERTIES, true);
+						const result: GraphResult<Application> =
+							await this.graphRepository.getApplicationDetailsPartial(
+								application.id!,
+								APPLICATION_SELECT_PROPERTIES,
+								true
+							);
 						if (result.success === true && result.value !== undefined) {
 							const app: Application = result.value;
 
@@ -430,7 +508,10 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 								baseIcon: path.join(__filename, "..", "..", "resources", "icons", "app.svg"),
 								objectId: app.id!,
 								appId: app.appId!,
-								tooltip: `Name: ${app.displayName!}\nClient Id: ${app.appId!}\nCreated: ${format(new Date(app.createdDateTime!), "yyyy-MM-dd")}${app.notes !== null ? "\nNotes: " + app.notes! : ""}`,
+								tooltip: `Name: ${app.displayName!}\nClient Id: ${app.appId!}\nCreated: ${format(
+									new Date(app.createdDateTime!),
+									"yyyy-MM-dd"
+								)}${app.notes !== null ? "\nNotes: " + app.notes! : ""}`,
 								order: index,
 								children: []
 							});
@@ -443,16 +524,24 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 									iconPath: new ThemeIcon("preview"),
 									baseIcon: new ThemeIcon("preview"),
 									objectId: app.id!,
-									tooltip: "The Application (Client) Id is used to identify the application to Azure AD.",
+									tooltip:
+										"The Application (Client) Id is used to identify the application to Azure AD.",
 									children: [
 										new AppRegItem({
 											label: app.appId!,
 											value: app.appId!,
 											context: "COPY",
-											iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-											baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+											iconPath: new ThemeIcon(
+												"symbol-field",
+												new ThemeColor("editor.foreground")
+											),
+											baseIcon: new ThemeIcon(
+												"symbol-field",
+												new ThemeColor("editor.foreground")
+											),
 											objectId: app.id!,
-											tooltip: "The Application (Client) Id is used to identify the application to Azure AD."
+											tooltip:
+												"The Application (Client) Id is used to identify the application to Azure AD."
 										})
 									]
 								})
@@ -468,17 +557,32 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 									value: app.identifierUris![0] === undefined ? "Not set" : app.identifierUris![0],
 									iconPath: new ThemeIcon("globe"),
 									baseIcon: new ThemeIcon("globe"),
-									tooltip: "The Application Id URI is a globally unique URI used to identify this web API. It is the prefix for scopes and in access tokens, it is the value of the audience claim. Also referred to as an identifier URI.",
+									tooltip:
+										"The Application Id URI is a globally unique URI used to identify this web API. It is the prefix for scopes and in access tokens, it is the value of the audience claim. Also referred to as an identifier URI.",
 									children: [
 										new AppRegItem({
-											label: app.identifierUris![0] === undefined ? "Not set" : app.identifierUris![0],
-											value: app.identifierUris![0] === undefined ? "Not set" : app.identifierUris![0],
+											label:
+												app.identifierUris![0] === undefined
+													? "Not set"
+													: app.identifierUris![0],
+											value:
+												app.identifierUris![0] === undefined
+													? "Not set"
+													: app.identifierUris![0],
 											appId: app.appId!,
 											objectId: app.id!,
-											context: app.identifierUris![0] !== undefined ? "APPID-URI" : "APPID-URI-EMPTY",
-											iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-											baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-											tooltip: "The Application Id URI, this is set when an application is used as a resource app. The URI acts as the prefix for the scopes you'll reference in your API's code, and must be globally unique."
+											context:
+												app.identifierUris![0] !== undefined ? "APPID-URI" : "APPID-URI-EMPTY",
+											iconPath: new ThemeIcon(
+												"symbol-field",
+												new ThemeColor("editor.foreground")
+											),
+											baseIcon: new ThemeIcon(
+												"symbol-field",
+												new ThemeColor("editor.foreground")
+											),
+											tooltip:
+												"The Application Id URI, this is set when an application is used as a resource app. The URI acts as the prefix for the scopes you'll reference in your API's code, and must be globally unique."
 										})
 									]
 								})
@@ -493,16 +597,24 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 									baseIcon: new ThemeIcon("account"),
 									value: app.signInAudience!,
 									objectId: app.id!,
-									tooltip: "The Sign In Audience determines whether the application can be used by accounts in the same Azure AD tenant or accounts in any Azure AD tenant.",
+									tooltip:
+										"The Sign In Audience determines whether the application can be used by accounts in the same Azure AD tenant or accounts in any Azure AD tenant.",
 									children: [
 										new AppRegItem({
 											label: this.getSignInAudienceDescription(app.signInAudience!),
 											context: "AUDIENCE",
-											iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-											baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+											iconPath: new ThemeIcon(
+												"symbol-field",
+												new ThemeColor("editor.foreground")
+											),
+											baseIcon: new ThemeIcon(
+												"symbol-field",
+												new ThemeColor("editor.foreground")
+											),
 											objectId: app.id!,
 											value: app.signInAudience!,
-											tooltip: "The Sign In Audience determines whether the application can be used by accounts in the same Azure AD tenant or accounts in any Azure AD tenant."
+											tooltip:
+												"The Sign In Audience determines whether the application can be used by accounts in the same Azure AD tenant or accounts in any Azure AD tenant."
 										})
 									]
 								})
@@ -517,16 +629,42 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 										iconPath: new ThemeIcon("sign-out"),
 										baseIcon: new ThemeIcon("sign-out"),
 										objectId: app.id!,
-										value: app.web!.logoutUrl! === undefined || app.web!.logoutUrl! === "" || app.web!.logoutUrl! === null ? "Not set" : app.web!.logoutUrl!,
+										value:
+											app.web!.logoutUrl! === undefined ||
+											app.web!.logoutUrl! === "" ||
+											app.web!.logoutUrl! === null
+												? "Not set"
+												: app.web!.logoutUrl!,
 										tooltip: "The URL to logout of the application.",
 										children: [
 											new AppRegItem({
-												label: app.web!.logoutUrl! === undefined || app.web!.logoutUrl! === "" || app.web!.logoutUrl! === null ? "Not set" : app.web!.logoutUrl!,
-												context: app.web!.logoutUrl! === undefined || app.web!.logoutUrl! === "" || app.web!.logoutUrl! === null ? "LOGOUT-URL-EMPTY" : "LOGOUT-URL",
-												iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
-												baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+												label:
+													app.web!.logoutUrl! === undefined ||
+													app.web!.logoutUrl! === "" ||
+													app.web!.logoutUrl! === null
+														? "Not set"
+														: app.web!.logoutUrl!,
+												context:
+													app.web!.logoutUrl! === undefined ||
+													app.web!.logoutUrl! === "" ||
+													app.web!.logoutUrl! === null
+														? "LOGOUT-URL-EMPTY"
+														: "LOGOUT-URL",
+												iconPath: new ThemeIcon(
+													"symbol-field",
+													new ThemeColor("editor.foreground")
+												),
+												baseIcon: new ThemeIcon(
+													"symbol-field",
+													new ThemeColor("editor.foreground")
+												),
 												objectId: app.id!,
-												value: app.web!.logoutUrl! === undefined || app.web!.logoutUrl! === "" || app.web!.logoutUrl! === null ? "Not set" : app.web!.logoutUrl!,
+												value:
+													app.web!.logoutUrl! === undefined ||
+													app.web!.logoutUrl! === "" ||
+													app.web!.logoutUrl! === null
+														? "Not set"
+														: app.web!.logoutUrl!,
 												tooltip: "The URL to logout of the application."
 											})
 										]
@@ -542,7 +680,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 									iconPath: new ThemeIcon("go-to-file", new ThemeColor("editor.foreground")),
 									baseIcon: new ThemeIcon("go-to-file", new ThemeColor("editor.foreground")),
 									objectId: app.id!,
-									tooltip: "The Redirect URIs are the endpoints where Azure AD will return responses containing tokens or errors.",
+									tooltip:
+										"The Redirect URIs are the endpoints where Azure AD will return responses containing tokens or errors.",
 									children: [
 										new AppRegItem({
 											label: "Web",
@@ -583,7 +722,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 									objectId: app.id!,
 									iconPath: new ThemeIcon("shield", new ThemeColor("editor.foreground")),
 									baseIcon: new ThemeIcon("shield", new ThemeColor("editor.foreground")),
-									tooltip: "Credentials enable confidential applications to identify themselves to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
+									tooltip:
+										"Credentials enable confidential applications to identify themselves to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
 									children: [
 										new AppRegItem({
 											label: "Client Secrets",
@@ -591,7 +731,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 											objectId: app.id!,
 											iconPath: new ThemeIcon("key", new ThemeColor("editor.foreground")),
 											baseIcon: new ThemeIcon("key", new ThemeColor("editor.foreground")),
-											tooltip: "Client secrets are used to authenticate confidential applications to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
+											tooltip:
+												"Client secrets are used to authenticate confidential applications to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
 											children: app.passwordCredentials!.length === 0 ? undefined : []
 										}),
 										new AppRegItem({
@@ -600,7 +741,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 											objectId: app.id!,
 											iconPath: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
 											baseIcon: new ThemeIcon("gist-secret", new ThemeColor("editor.foreground")),
-											tooltip: "Certificates are used to authenticate confidential applications to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
+											tooltip:
+												"Certificates are used to authenticate confidential applications to the authentication service when receiving tokens at a web addressable location (using an HTTPS scheme).",
 											children: app.keyCredentials!.length === 0 ? undefined : []
 										})
 									]
@@ -628,7 +770,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 									objectId: app.id!,
 									iconPath: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
 									baseIcon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
-									tooltip: "Exposed API permissions define custom scopes to restrict access to data and functionality protected by this API.",
+									tooltip:
+										"Exposed API permissions define custom scopes to restrict access to data and functionality protected by this API.",
 									children: app.api!.oauth2PermissionScopes!.length === 0 ? undefined : []
 								})
 							);
@@ -641,7 +784,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 									objectId: app.id!,
 									iconPath: new ThemeIcon("note", new ThemeColor("editor.foreground")),
 									baseIcon: new ThemeIcon("note", new ThemeColor("editor.foreground")),
-									tooltip: "App roles define custom roles that can be assigned to users and groups, or assigned as application-only scopes to a client application.",
+									tooltip:
+										"App roles define custom roles that can be assigned to users and groups, or assigned as application-only scopes to a client application.",
 									children: app.appRoles!.length === 0 ? undefined : []
 								})
 							);
@@ -677,7 +821,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 			} else {
 				// Iterate through the application registrations and create the tree view items.
 				unsorted = allApplications.map(async (application, index) => {
-					return new AppRegItem({
+					const appRegItem: AppRegItem = new AppRegItem({
 						label: application.displayName!,
 						value: application.displayName!,
 						context: "APPLICATION-DELETED",
@@ -686,13 +830,45 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 						objectId: application.id!,
 						appId: application.appId!,
 						order: index,
+						tooltip: `Name: ${application.displayName!}\nClient Id: ${application.appId!}\nDeleted: ${format(
+							new Date(application.deletedDateTime!),
+							"yyyy-MM-dd"
+						)}`,
 						children: []
 					});
+
+					// Application (Client) Id
+					appRegItem.children!.push(
+						new AppRegItem({
+							label: "Client Id",
+							context: "APPID-PARENT",
+							iconPath: new ThemeIcon("preview"),
+							baseIcon: new ThemeIcon("preview"),
+							objectId: application.id!,
+							tooltip: "The Application (Client) Id is used to identify the application to Azure AD.",
+							children: [
+								new AppRegItem({
+									label: application.appId!,
+									value: application.appId!,
+									context: "COPY",
+									iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+									baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+									objectId: application.id!,
+									tooltip:
+										"The Application (Client) Id is used to identify the application to Azure AD."
+								})
+							]
+						})
+					);
+
+					return appRegItem;
 				});
 			}
 
 			// Sort the applications by name and assign to the class-level array used to render the tree.
-			this.treeData = sort((await Promise.all(unsorted.filter((a) => a !== undefined))) as AppRegItem[]).asc(async (a) => a.order);
+			this.treeData = sort((await Promise.all(unsorted.filter((a) => a !== undefined))) as AppRegItem[]).asc(
+				async (a) => a.order
+			);
 
 			// Trigger the event to refresh the tree view
 			this.triggerOnDidChangeTreeData();
@@ -724,37 +900,75 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
 	// Returns application list depending on the user setting
 	private async getApplicationList(): Promise<Application[] | undefined> {
-		// If the user has selected to show deleted applications then get the list of deleted applications
-		const showDeletedApplications = workspace.getConfiguration("applicationRegistrations").get("showDeletedApplications") as boolean;
-		if (showDeletedApplications === true) {
-			const result: GraphResult<Application[]> = await this.graphRepository.getApplicationListDeleted(this.filterCommand);
-			if (result.success === true && result.value !== undefined) {
-				return result.value;
-			} else {
-				await this.handleError(result.error);
-				return undefined;
-			}
+		const applicationListView = workspace
+			.getConfiguration("applicationRegistrations")
+			.get("applicationListView") as string;
+		let result: GraphResult<Application[]>;
+
+		switch (applicationListView) {
+			case "Owned Applications":
+				result = await this.graphRepository.getApplicationListOwned(this.filterCommand);
+				if (result.success === true && result.value !== undefined) {
+					return result.value;
+				} else {
+					await this.handleError(result.error);
+					return undefined;
+				}
+			case "All Applications":
+				result = await this.graphRepository.getApplicationListAll(this.filterCommand);
+				if (result.success === true && result.value !== undefined) {
+					return result.value;
+				} else {
+					await this.handleError(result.error);
+					return undefined;
+				}
+			case "Deleted Applications":
+				result = await this.graphRepository.getApplicationListDeleted(this.filterCommand);
+				if (result.success === true && result.value !== undefined) {
+					return result.value;
+				} else {
+					await this.handleError(result.error);
+					return undefined;
+				}
+		}
+	}
+
+	// Returns the total number of applications depending on the user setting
+	private async getApplicationsCount(): Promise<number> {
+		const applicationListView = workspace
+			.getConfiguration("applicationRegistrations")
+			.get("applicationListView") as string;
+		let result: GraphResult<number>;
+		let totalApplicationCount: number = 0;
+
+		switch (applicationListView) {
+			case "Owned Applications":
+				result = await this.graphRepository.getApplicationCountOwned();
+				if (result.success === true && result.value !== undefined) {
+					totalApplicationCount = result.value;
+				} else {
+					this.isUpdating = false;
+					await this.handleError(result.error);
+				}
+			case "All Applications":
+				result = await this.graphRepository.getApplicationCountAll();
+				if (result.success === true && result.value !== undefined) {
+					totalApplicationCount = result.value;
+				} else {
+					this.isUpdating = false;
+					await this.handleError(result.error);
+				}
+			case "Deleted Applications":
+				result = await this.graphRepository.getApplicationCountDeleted();
+				if (result.success === true && result.value !== undefined) {
+					totalApplicationCount = result.value;
+				} else {
+					this.isUpdating = false;
+					await this.handleError(result.error);
+				}
 		}
 
-		// Get the user setting to determine whether to show all applications or just the ones owned by the user
-		const showOwnedApplicationsOnly = workspace.getConfiguration("applicationRegistrations").get("showOwnedApplicationsOnly") as boolean;
-		if (showOwnedApplicationsOnly === true) {
-			const result: GraphResult<Application[]> = await this.graphRepository.getApplicationListOwned(this.filterCommand);
-			if (result.success === true && result.value !== undefined) {
-				return result.value;
-			} else {
-				await this.handleError(result.error);
-				return undefined;
-			}
-		} else {
-			const result: GraphResult<Application[]> = await this.graphRepository.getApplicationListAll(this.filterCommand);
-			if (result.success === true && result.value !== undefined) {
-				return result.value;
-			} else {
-				await this.handleError(result.error);
-				return undefined;
-			}
-		}
+		return totalApplicationCount;
 	}
 
 	// Returns the application owners for the given application
@@ -798,7 +1012,11 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 	}
 
 	// Returns the redirect URIs for the given application
-	private async getApplicationRedirectUris(element: AppRegItem, context: string, redirects: string[]): Promise<AppRegItem[]> {
+	private async getApplicationRedirectUris(
+		element: AppRegItem,
+		context: string,
+		redirects: string[]
+	): Promise<AppRegItem[]> {
 		return redirects.map((redirectUri) => {
 			return new AppRegItem({
 				label: redirectUri,
@@ -812,11 +1030,18 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 	}
 
 	// Returns the password credentials for the given application
-	private async getApplicationPasswordCredentials(element: AppRegItem, passwords: PasswordCredential[]): Promise<AppRegItem[]> {
+	private async getApplicationPasswordCredentials(
+		element: AppRegItem,
+		passwords: PasswordCredential[]
+	): Promise<AppRegItem[]> {
 		return passwords.map((credential) => {
 			const isExpired = isAfter(Date.now(), new Date(credential.endDateTime!));
 			const isAboutToExpire = isAfter(addDays(Date.now(), 30), new Date(credential.endDateTime!));
-			const iconColour = isExpired ? "list.errorForeground" : isAboutToExpire ? "list.warningForeground" : "editor.foreground";
+			const iconColour = isExpired
+				? "list.errorForeground"
+				: isAboutToExpire
+				? "list.warningForeground"
+				: "editor.foreground";
 			return new AppRegItem({
 				label: credential.displayName!,
 				context: "PASSWORD",
@@ -824,7 +1049,12 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 				baseIcon: new ThemeIcon("symbol-key", new ThemeColor(iconColour)),
 				value: credential.keyId!,
 				objectId: element.objectId,
-				tooltip: isExpired === true ? "This credential has expired." : isAboutToExpire === true ? "This credential will expire soon." : "A secret string that the application uses to prove its identity when requesting a token. Also can be referred to as application password.",
+				tooltip:
+					isExpired === true
+						? "This credential has expired."
+						: isAboutToExpire === true
+						? "This credential will expire soon."
+						: "A secret string that the application uses to prove its identity when requesting a token. Also can be referred to as application password.",
 				children: [
 					new AppRegItem({
 						label: `Value: ${credential.hint!}******************`,
@@ -832,7 +1062,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
 						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
 						objectId: element.objectId,
-						tooltip: "Client secret values cannot be viewed or accessed, except for immediately after creation."
+						tooltip:
+							"Client secret values cannot be viewed or accessed, except for immediately after creation."
 					}),
 					new AppRegItem({
 						label: `Created: ${format(new Date(credential.startDateTime!), "yyyy-MM-dd")}`,
@@ -858,7 +1089,11 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 		return keys.map((credential) => {
 			const isExpired = isAfter(Date.now(), new Date(credential.endDateTime!));
 			const isAboutToExpire = isAfter(addDays(Date.now(), 30), new Date(credential.endDateTime!));
-			const iconColour = isExpired ? "list.errorForeground" : isAboutToExpire ? "list.warningForeground" : "editor.foreground";
+			const iconColour = isExpired
+				? "list.errorForeground"
+				: isAboutToExpire
+				? "list.warningForeground"
+				: "editor.foreground";
 			return new AppRegItem({
 				label: credential.displayName!,
 				context: "CERTIFICATE",
@@ -866,7 +1101,12 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 				baseIcon: new ThemeIcon("gist-secret", new ThemeColor(iconColour)),
 				objectId: element.objectId,
 				keyId: credential.keyId!,
-				tooltip: isExpired === true ? "This credential has expired." : isAboutToExpire === true ? "This credential will expire soon." : "A certificate that the application uses to prove its identity when requesting a token. Also can be referred to as application certificate or public key.",
+				tooltip:
+					isExpired === true
+						? "This credential has expired."
+						: isAboutToExpire === true
+						? "This credential will expire soon."
+						: "A certificate that the application uses to prove its identity when requesting a token. Also can be referred to as application certificate or public key.",
 				children: [
 					new AppRegItem({
 						label: `Type: ${credential.type!}`,
@@ -903,10 +1143,15 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 	}
 
 	// Returns the api permissions for the given application
-	private async getApplicationApiPermissions(element: AppRegItem, permissions: RequiredResourceAccess[]): Promise<AppRegItem[]> {
+	private async getApplicationApiPermissions(
+		element: AppRegItem,
+		permissions: RequiredResourceAccess[]
+	): Promise<AppRegItem[]> {
 		// Iterate through each permission and get the service principal app name
 		const applicationNames = permissions.map(async (permission) => {
-			const result: GraphResult<ServicePrincipal> = await this.graphRepository.findServicePrincipalByAppId(permission.resourceAppId!);
+			const result: GraphResult<ServicePrincipal> = await this.graphRepository.findServicePrincipalByAppId(
+				permission.resourceAppId!
+			);
 			if (result.success === true && result.value !== undefined) {
 				return new AppRegItem({
 					label: result.value.displayName!,
@@ -922,15 +1167,23 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 						if (resourceAccess.type === "Scope") {
 							const tmp = result.value!.oauth2PermissionScopes;
 							const tmp2 = resourceAccess.id;
-							const tmp3 = result.value!.oauth2PermissionScopes!.find((scope) => scope.id === resourceAccess.id);
+							const tmp3 = result.value!.oauth2PermissionScopes!.find(
+								(scope) => scope.id === resourceAccess.id
+							);
 
-							scope = result.value!.oauth2PermissionScopes!.find((scope) => scope.id === resourceAccess.id)!.value!;
+							scope = result.value!.oauth2PermissionScopes!.find(
+								(scope) => scope.id === resourceAccess.id
+							)!.value!;
 							scopeLabel = `Delegated: ${scope}`;
-							tooltip = result.value!.oauth2PermissionScopes!.find((scope) => scope.id === resourceAccess.id)!.adminConsentDescription;
+							tooltip = result.value!.oauth2PermissionScopes!.find(
+								(scope) => scope.id === resourceAccess.id
+							)!.adminConsentDescription;
 						} else {
 							scope = result.value!.appRoles!.find((scope) => scope.id === resourceAccess.id)!.value!;
 							scopeLabel = `Application: ${scope}`;
-							tooltip = result.value!.appRoles!.find((scope) => scope.id === resourceAccess.id)!.description;
+							tooltip = result.value!.appRoles!.find(
+								(scope) => scope.id === resourceAccess.id
+							)!.description;
 						}
 
 						return new AppRegItem({
@@ -956,7 +1209,10 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 	}
 
 	// Returns the exposed api permissions for the given application
-	private async getApplicationExposedApiPermissions(element: AppRegItem, scopes: PermissionScope[]): Promise<AppRegItem[]> {
+	private async getApplicationExposedApiPermissions(
+		element: AppRegItem,
+		scopes: PermissionScope[]
+	): Promise<AppRegItem[]> {
 		return scopes.map((scope) => {
 			const iconColour = scope.isEnabled! ? "editor.foreground" : "disabledForeground";
 			return new AppRegItem({
@@ -1035,7 +1291,11 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
 					}),
 					new AppRegItem({
-						label: `Allowed: ${role.allowedMemberTypes!.map((type) => (type === "Application" ? "Applications" : "Users/Groups")).join(", ")}`,
+						label: `Allowed: ${role
+							.allowedMemberTypes!.map((type) =>
+								type === "Application" ? "Applications" : "Users/Groups"
+							)
+							.join(", ")}`,
 						context: "ROLE-ALLOWED",
 						objectId: element.objectId,
 						value: role.id!,
