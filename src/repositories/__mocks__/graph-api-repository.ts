@@ -1,6 +1,6 @@
 import { Application, Organization, User, RoleAssignment, PasswordCredential, KeyCredential, ServicePrincipal } from "@microsoft/microsoft-graph-types";
 import { GraphResult } from "../../types/graph-result";
-import { mockApplications, mockOrganizations, mockUser, mockRoleAssignments, mockUsers, mockNewPasswordKeyId, mockServicePrincipals } from "../../tests/data/test-data";
+import { mockApplications, mockOrganizations, mockUser, mockRoleAssignments, mockUsers, mockNewPasswordKeyId, mockServicePrincipals, mockDeletedApplications } from "../../tests/data/test-data";
 
 export class GraphApiRepository {
 	async getApplicationCountOwned(): Promise<GraphResult<number>> {
@@ -9,6 +9,10 @@ export class GraphApiRepository {
 
 	async getApplicationCountAll(): Promise<GraphResult<number>> {
 		return { success: true, value: mockApplications.length };
+	}
+
+	async getApplicationCountDeleted(): Promise<GraphResult<number>> {
+		return { success: true, value: mockDeletedApplications.length };
 	}
 
 	async getApplicationListOwned(filter?: string): Promise<GraphResult<Application[]>> {
@@ -27,6 +31,14 @@ export class GraphApiRepository {
 			return { success: true, value: mockApplications.filter((a) => a.displayName.toLowerCase().includes(filter.toLowerCase())) };
 		} else {
 			return { success: true, value: mockApplications };
+		}
+	}
+
+	async getApplicationListDeleted(filter?: string): Promise<GraphResult<Application[]>> {
+		if (filter !== undefined && filter !== "") {
+			return { success: true, value: mockDeletedApplications.filter((a) => a.displayName.toLowerCase().includes(filter.toLowerCase())) };
+		} else {
+			return { success: true, value: mockDeletedApplications };
 		}
 	}
 
@@ -88,6 +100,22 @@ export class GraphApiRepository {
 	async deleteApplication(id: string): Promise<GraphResult<void>> {
 		mockApplications.splice(
 			mockApplications.findIndex((a) => a.id === id),
+			1
+		);
+		return { success: true };
+	}
+
+	async restoreApplication(id: string): Promise<GraphResult<void>> {
+		mockDeletedApplications.splice(
+			mockDeletedApplications.findIndex((a) => a.id === id),
+			1
+		);
+		return { success: true };
+	}
+
+	async permanentlyDeleteApplication(id: string): Promise<GraphResult<void>> {
+		mockDeletedApplications.splice(
+			mockDeletedApplications.findIndex((a) => a.id === id),
 			1
 		);
 		return { success: true };

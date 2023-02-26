@@ -6,7 +6,7 @@ import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ApplicationService } from "../services/application";
 import { Application } from "@microsoft/microsoft-graph-types";
-import { mockAppId, mockAppObjectId, mockTenantId, seedMockData } from "./data/test-data";
+import { mockAppId, mockAppObjectId, mockDeletedAppObjectId, mockTenantId, seedMockData } from "./data/test-data";
 import { getTopLevelTreeItem } from "./test-utils";
 import { AzureCliAccountProvider } from "../utils/azure-cli-account-provider";
 import { AZURE_AND_ENTRA_PORTAL_APP_PATH, AZURE_PORTAL_ROOT, ENTRA_PORTAL_ROOT } from "../constants";
@@ -562,6 +562,64 @@ describe("Application Service Tests", () => {
 
 		// Act
 		await applicationService.delete(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
+	});
+
+	test("Restore deleted application successfully", async () => {
+		// Arrange
+		item = { objectId: mockDeletedAppObjectId, contextValue: "APPLICATION-DELETED" };
+		await treeDataProvider.render();
+
+		// Act
+		await applicationService.restore(item);
+
+		// Assert
+		const treeItem = await getTopLevelTreeItem(mockDeletedAppObjectId, treeDataProvider);
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerCompleteSpy).toHaveBeenCalled();
+		expect(treeItem).toBeUndefined();
+	});
+
+	test("Restore application with error", async () => {
+		// Arrange
+		const error = new Error("Restore application with error");
+		await treeDataProvider.render();
+		jest.spyOn(graphApiRepository, "restoreApplication").mockImplementation(async (_id: string) => ({ success: false, error }));
+
+		// Act
+		await applicationService.restore(item);
+
+		// Assert
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
+	});
+
+	test("Permanently delete application successfully", async () => {
+		// Arrange
+		item = { objectId: mockDeletedAppObjectId, contextValue: "APPLICATION-DELETED" };
+		await treeDataProvider.render();
+
+		// Act
+		await applicationService.deletePermanently(item);
+
+		// Assert
+		const treeItem = await getTopLevelTreeItem(mockDeletedAppObjectId, treeDataProvider);
+		expect(statusBarSpy).toHaveBeenCalled();
+		expect(triggerCompleteSpy).toHaveBeenCalled();
+		expect(treeItem).toBeUndefined();
+	});
+
+	test("Permanently delete application with error", async () => {
+		// Arrange
+		const error = new Error("Restore application with error");
+		await treeDataProvider.render();
+		jest.spyOn(graphApiRepository, "permanentlyDeleteApplication").mockImplementation(async (_id: string) => ({ success: false, error }));
+
+		// Act
+		await applicationService.deletePermanently(item);
 
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();

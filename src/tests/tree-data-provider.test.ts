@@ -174,6 +174,45 @@ describe("Tree Data Provider Tests", () => {
 		expect(treeDataProvider.isTreeEmpty).toBeFalsy();
 	});
 
+	test("Get all tree data for deleted applications", async () => {
+		// Arrange
+		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
+			return {
+				get: (key: string) => {
+					return key === "applicationListView" ? "Deleted Applications" : undefined;
+				}
+			} as any;
+		});
+
+		// Act
+		await treeDataProvider.render();
+
+		// Assert
+		const result = treeDataProvider.getChildren(undefined);
+		expect(result).toBeDefined();
+		expect(result).toHaveLength(3);
+		expect(treeDataProvider.isTreeEmpty).toBeFalsy();
+	});
+
+	test("Get all tree data for deleted applications with graph error", async () => {
+		// Arrange
+		const error = new Error("Get all tree data for deleted applications with graph error");
+		jest.spyOn(graphApiRepository, "getApplicationListDeleted").mockImplementation(async (_filter: string | undefined) => ({ success: false, error }));
+		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
+			return {
+				get: (key: string) => {
+					return key === "applicationListView" ? "Deleted Applications" : undefined;
+				}
+			} as any;
+		});
+
+		// Act
+		await treeDataProvider.render();
+
+		// Assert
+		expect(triggerTreeErrorSpy).toHaveBeenCalledWith(error);
+	});
+
     test("Get all tree data for all applications with filter", async () => {
 		// Arrange
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
@@ -369,6 +408,30 @@ describe("Tree Data Provider Tests", () => {
 		expect(triggerTreeErrorSpy).toHaveBeenCalledWith(error);
 	});
 
+	test("Get all tree data with deleted applications but with error getting application count", async () => {
+		// Arrange
+		const error = new Error("Get all tree data with deleted applications but with error getting application count");
+		jest.spyOn(graphApiRepository, "getApplicationCountDeleted").mockImplementation(async () => ({ success: false, error }));
+		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
+			return {
+				get: (key: string) => {
+					if (key === "applicationListView") {
+						return "Deleted Applications";
+					} else if (key === "showApplicationCountWarning") {
+						return true;
+					}
+					return undefined;
+				}
+			} as any;
+		});
+
+		// Act
+		await treeDataProvider.render();
+
+		// Assert
+		expect(triggerTreeErrorSpy).toHaveBeenCalledWith(error);
+	});
+
 	test("Get all tree data with all applications but with error getting application count", async () => {
 		// Arrange
 		const error = new Error("Get all tree data with all applications but with error getting application count");
@@ -428,6 +491,32 @@ describe("Tree Data Provider Tests", () => {
 				get: (key: string) => {
 					if (key === "applicationListView") {
 						return "All Applications";
+					} else if (key === "showApplicationCountWarning") {
+						return true;
+					} else if (key === "useEventualConsistency") {
+						return false;
+					}
+					return undefined;
+				}
+			} as any;
+		});
+
+		// Act
+		await treeDataProvider.render();
+
+		// Assert
+		expect(showWarningSpy).toHaveBeenCalledWith(`You do not have enabled eventual consistency enabled for Graph API calls and have 201 applications in your tenant. You would likely benefit from enabling eventual consistency in user settings. Would you like to do this now?`, "Yes", "No", "Disable Warning");
+	});
+
+	test("Get all tree data and show deleted applications with count warning", async () => {
+		// Arrange
+		const showWarningSpy = jest.spyOn(vscode.window, "showWarningMessage");
+		jest.spyOn(graphApiRepository, "getApplicationCountDeleted").mockImplementation(async () => ({ success: true, value: 201 }));
+		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
+			return {
+				get: (key: string) => {
+					if (key === "applicationListView") {
+						return "Deleted Applications";
 					} else if (key === "showApplicationCountWarning") {
 						return true;
 					} else if (key === "useEventualConsistency") {

@@ -498,6 +498,7 @@ export const mockGraphApiAppId = "00000003-0000-0000-c000-000000000000";
 export const mockExposedApiId = seedApplications[0].api.oauth2PermissionScopes[0].id;
 export const mockApiScopeId = seedApplications[0].requiredResourceAccess[0].resourceAppId;
 export const mockAppObjectId = seedApplications[0].id;
+export const mockDeletedAppObjectId = seedDeletedApplications[0].id;
 export const mockSecondAppObjectId = seedApplications[1].id;
 export const mockAppId = seedApplications[0].appId;
 export const mockSecondAppId = seedApplications[1].appId;
