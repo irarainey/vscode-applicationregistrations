@@ -159,7 +159,7 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					return key === "showOwnedApplicationsOnly" ? false : undefined;
+					return key === "applicationListView" ? "All Applications" : undefined;
 				}
 			} as any;
 		});
@@ -179,8 +179,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return true;
+					if (key === "applicationListView") {
+						return "Owned Applications";
 					} else if (key === "useEventualConsistency") {
 						return true;
 					}
@@ -206,8 +206,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return true;
+					if (key === "applicationListView") {
+						return "Owned Applications";
 					} else if (key === "useEventualConsistency") {
 						return true;
 					}
@@ -235,8 +235,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return true;
+					if (key === "applicationListView") {
+						return "Owned Applications";
 					} else if (key === "useEventualConsistency") {
 						return true;
 					}
@@ -261,8 +261,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return true;
+					if (key === "applicationListView") {
+						return "Owned Applications";
 					} else if (key === "useEventualConsistency") {
 						return true;
 					}
@@ -283,37 +283,13 @@ describe("Tree Data Provider Tests", () => {
 		expect(treeDataProvider.isTreeEmpty).toBeFalsy();
 	});
 
-    test("Get all tree data for all applications with filter but eventual consistency not enabled", async () => {
-		// Arrange
-		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
-			return {
-				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return true;
-					} else if (key === "useEventualConsistency") {
-						return false;
-					}
-					return undefined;
-				}
-			} as any;
-		});
-        const informationSpy = jest.spyOn(vscode.window, "showInformationMessage");
-        await treeDataProvider.render();
-        
-		// Act
-		await treeDataProvider.filter();
-
-		// Assert
-        expect(informationSpy).toHaveBeenCalledWith("The application list cannot be filtered when not using eventual consistency. Please enable this in user settings first.", "OK");
-	});
-
 	test("Get all tree data for all applications but with error", async () => {
 		// Arrange
 		const error = new Error("Get all tree data for all applications but with error");
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					return key === "showOwnedApplicationsOnly" ? false : undefined;
+					return key === "applicationListView" ? "All Applications" : undefined;
 				}
 			} as any;
 		});
@@ -352,8 +328,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return true;
+					if (key === "applicationListView") {
+						return "Owned Applications";
 					} else if (key === "showApplicationCountWarning") {
 						return true;
 					}
@@ -376,8 +352,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return true;
+					if (key === "applicationListView") {
+						return "Owned Applications";
 					} else if (key === "showApplicationCountWarning") {
 						return true;
 					}
@@ -400,8 +376,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return false;
+					if (key === "applicationListView") {
+						return "All Applications";
 					} else if (key === "showApplicationCountWarning") {
 						return true;
 					}
@@ -424,8 +400,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return true;
+					if (key === "applicationListView") {
+						return "Owned Applications";
 					} else if (key === "showApplicationCountWarning") {
 						return true;
 					} else if (key === "useEventualConsistency") {
@@ -450,8 +426,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return false;
+					if (key === "applicationListView") {
+						return "All Applications";
 					} else if (key === "showApplicationCountWarning") {
 						return true;
 					} else if (key === "useEventualConsistency") {
@@ -475,8 +451,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return false;
+					if (key === "applicationListView") {
+						return "All Applications";
 					} else if (key === "showApplicationCountWarning") {
 						return true;
 					} else if (key === "useEventualConsistency") {

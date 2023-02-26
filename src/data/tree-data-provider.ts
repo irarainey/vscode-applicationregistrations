@@ -936,6 +936,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 					this.isUpdating = false;
 					await this.handleError(result.error);
 				}
+				break;
 			case "All Applications":
 				result = await this.graphRepository.getApplicationCountAll();
 				if (result.success === true && result.value !== undefined) {
@@ -944,6 +945,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 					this.isUpdating = false;
 					await this.handleError(result.error);
 				}
+				break;
 			case "Deleted Applications":
 				result = await this.graphRepository.getApplicationCountDeleted();
 				if (result.success === true && result.value !== undefined) {
@@ -952,6 +954,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 					this.isUpdating = false;
 					await this.handleError(result.error);
 				}
+				break;
 		}
 
 		return totalApplicationCount;
