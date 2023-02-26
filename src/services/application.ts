@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { AZURE_PORTAL_ROOT, ENTRA_PORTAL_ROOT, AZURE_AND_ENTRA_PORTAL_APP_PATH, SIGNIN_AUDIENCE_OPTIONS, BASE_ENDPOINT } from "../constants";
-import { window, env, Uri, workspace } from "vscode";
+import {
+	AZURE_PORTAL_ROOT,
+	ENTRA_PORTAL_ROOT,
+	AZURE_AND_ENTRA_PORTAL_APP_PATH,
+	SIGNIN_AUDIENCE_OPTIONS,
+	BASE_ENDPOINT
+} from "../constants";
+import { window, env, Uri, workspace, ConfigurationTarget } from "vscode";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { ServiceBase } from "./service-base";
@@ -12,11 +18,51 @@ import { AccountProvider } from "../types/account-provider";
 import { showJsonDocument } from "../utils/json-document-utils";
 
 export class ApplicationService extends ServiceBase {
+	// The constructor for the ApplicationService class.
+	constructor(
+		graphRepository: GraphApiRepository,
+		treeDataProvider: AppRegTreeDataProvider,
+		private accountProvider: AccountProvider
+	) {
+		super(graphRepository, treeDataProvider);
+	}
 
-    // The constructor for the ApplicationService class.
-    constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider, private accountProvider: AccountProvider) {
-        super(graphRepository, treeDataProvider);
-    }
+	// Changes the application view selections.
+	async changeView(): Promise<void> {
+		const selection = await window.showQuickPick(
+			["Owned Applications", "All Applications", "Deleted Applications"],
+			{
+				title: "Change Application View",
+				ignoreFocusOut: true
+			}
+		);
+
+		if (selection !== undefined) {
+			await workspace
+				.getConfiguration("applicationRegistrations")
+				.update("applicationListView", selection, ConfigurationTarget.Global);
+		}
+	}
+
+	// Restores a deleted application registration.
+	async restore(item: AppRegItem): Promise<void> {
+		const status = this.indicateChange("Restoring Application Registration...", item);
+		const result = await this.graphRepository.restoreApplication(item.objectId!);
+		result.success === true ? await this.triggerRefresh(status)	: await this.handleError(result.error);
+	}
+
+	// Permanently deletes an application registration.
+	async deletePermanently(item: AppRegItem): Promise<void> {
+		// Prompt the user to confirm the deletion.
+		const answer = await window.showWarningMessage(`Do you want to permanently delete the application ${item.label}?`, "Yes", "No");
+
+		// If the user confirms the removal then remove it.
+		if (answer === "Yes") {
+			const status = this.indicateChange("Permanently Deleting Application Registration...", item);
+			const result = await this.graphRepository.permanentlyDeleteApplication(item.objectId!);
+			result.success === true ? await this.triggerRefresh(status)	: await this.handleError(result.error);
+		}
+	}
 
 	// Creates a new application registration.
 	async add(): Promise<void> {
@@ -35,15 +81,23 @@ export class ApplicationService extends ServiceBase {
 			if (displayName !== undefined) {
 				// Set the added trigger to the status bar message.
 				const status = this.indicateChange("Creating Application Registration...");
-				const update: GraphResult<Application> = await this.graphRepository.createApplication({ displayName: displayName, signInAudience: signInAudience.value });
-				update.success === true && update.value !== undefined ? await this.triggerRefresh(status) : await this.handleError(update.error);
+				const update: GraphResult<Application> = await this.graphRepository.createApplication({
+					displayName: displayName,
+					signInAudience: signInAudience.value
+				});
+				update.success === true && update.value !== undefined
+					? await this.triggerRefresh(status)
+					: await this.handleError(update.error);
 			}
 		}
 	}
 
 	// Edit an application id URI.
 	async editAppIdUri(item: AppRegItem): Promise<void> {
-		const audience = this.treeDataProvider.getTreeItemChildByContext(this.treeDataProvider.getTreeItemApplicationParent(item), "AUDIENCE-PARENT");
+		const audience = this.treeDataProvider.getTreeItemChildByContext(
+			this.treeDataProvider.getTreeItemApplicationParent(item),
+			"AUDIENCE-PARENT"
+		);
 
 		// Prompt the user for the new uri.
 		const uri = await this.inputAppIdUri(item, audience!.value!, validateAppIdUri);
@@ -69,10 +123,17 @@ export class ApplicationService extends ServiceBase {
 
 	// Renames an application registration.
 	async rename(item: AppRegItem): Promise<void> {
-		const audience = this.treeDataProvider.getTreeItemChildByContext(this.treeDataProvider.getTreeItemApplicationParent(item), "AUDIENCE-PARENT");
+		const audience = this.treeDataProvider.getTreeItemChildByContext(
+			this.treeDataProvider.getTreeItemApplicationParent(item),
+			"AUDIENCE-PARENT"
+		);
 
 		// Prompt the user for the new application name.
-		const displayName = await this.inputDisplayNameForRename(item.value!, audience!.value!, validateApplicationDisplayName);
+		const displayName = await this.inputDisplayNameForRename(
+			item.value!,
+			audience!.value!,
+			validateApplicationDisplayName
+		);
 
 		// If the new application name is not undefined then update the application.
 		if (displayName !== undefined) {
@@ -84,7 +145,11 @@ export class ApplicationService extends ServiceBase {
 	// Deletes an application registration.
 	async delete(item: AppRegItem): Promise<void> {
 		// Prompt the user to confirm the deletion.
-		const answer = await window.showWarningMessage(`Do you want to delete the Application ${item.label}?`, "Yes", "No");
+		const answer = await window.showWarningMessage(
+			`Do you want to delete the Application ${item.label}?`,
+			"Yes",
+			"No"
+		);
 
 		// If the user confirms the deletion then delete the application.
 		if (answer === "Yes") {
@@ -109,7 +174,11 @@ export class ApplicationService extends ServiceBase {
 	// Removes a Logout Url
 	async removeLogoutUrl(item: AppRegItem): Promise<void> {
 		// Prompt the user to confirm the removal.
-		const answer = await window.showWarningMessage("Do you want to remove the Front-channel Logout URL?", "Yes", "No");
+		const answer = await window.showWarningMessage(
+			"Do you want to remove the Front-channel Logout URL?",
+			"Yes",
+			"No"
+		);
 
 		// If the user confirms the removal then remove it.
 		if (answer === "Yes") {
@@ -118,16 +187,20 @@ export class ApplicationService extends ServiceBase {
 		}
 	}
 
-    // Shows the application endpoints.
-    async showEndpoints(item: AppRegItem): Promise<void> {
-        const status = this.indicateChange("Loading Endpoints...");
-		const audience = this.treeDataProvider.getTreeItemChildByContext(this.treeDataProvider.getTreeItemApplicationParent(item), "AUDIENCE-PARENT");
+	// Shows the application endpoints.
+	async showEndpoints(item: AppRegItem): Promise<void> {
+		const status = this.indicateChange("Loading Endpoints...");
+		const audience = this.treeDataProvider.getTreeItemChildByContext(
+			this.treeDataProvider.getTreeItemApplicationParent(item),
+			"AUDIENCE-PARENT"
+		);
 
 		let endpoints: { [key: string]: string } = {};
 		// Create the endpoints.
 		switch (audience!.value!) {
 			case "AzureADMyOrg":
-				await this.accountProvider.getAccountInformation()
+				await this.accountProvider
+					.getAccountInformation()
 					.then(async (accountInformation) => {
 						const response = accountInformation.tenantId.replace(/(\r\n)/gm, "");
 						endpoints = {
@@ -200,39 +273,44 @@ export class ApplicationService extends ServiceBase {
 		env.clipboard.writeText(item.appId!);
 	}
 
-    // Opens the application registration in the Azure Portal.
-    async openInAzurePortal(item: AppRegItem): Promise<boolean> {
-        return await this.openInPortal(AZURE_PORTAL_ROOT, item);
-    }
+	// Opens the application registration in the Azure Portal.
+	async openInAzurePortal(item: AppRegItem): Promise<boolean> {
+		return await this.openInPortal(AZURE_PORTAL_ROOT, item);
+	}
 
-    // Opens the application registration in the Entra Portal.
-    async openInEntraPortal(item: AppRegItem): Promise<boolean> {
+	// Opens the application registration in the Entra Portal.
+	async openInEntraPortal(item: AppRegItem): Promise<boolean> {
 		return await this.openInPortal(ENTRA_PORTAL_ROOT, item);
-    }
+	}
 
 	// Opens the application registration in the Azure or Entra Portal.
-    async openInPortal(portalRoot: string, item: AppRegItem): Promise<boolean>{
-        // Determine if "omit tenant ID from portal requests" has been set.
-        const omitTenantIdFromPortalRequests = workspace.getConfiguration("applicationRegistrations").get("omitTenantIdFromPortalRequests") as boolean;
+	async openInPortal(portalRoot: string, item: AppRegItem): Promise<boolean> {
+		// Determine if "omit tenant ID from portal requests" has been set.
+		const omitTenantIdFromPortalRequests = workspace
+			.getConfiguration("applicationRegistrations")
+			.get("omitTenantIdFromPortalRequests") as boolean;
 
-        let uriText = "";
-        if (omitTenantIdFromPortalRequests === false){
-            const accountInformation = await this.accountProvider.getAccountInformation();
-            if (accountInformation.tenantId){
-                uriText = `${portalRoot}/${accountInformation.tenantId}${AZURE_AND_ENTRA_PORTAL_APP_PATH}${item.appId}`;
-            }
-        }
+		let uriText = "";
+		if (omitTenantIdFromPortalRequests === false) {
+			const accountInformation = await this.accountProvider.getAccountInformation();
+			if (accountInformation.tenantId) {
+				uriText = `${portalRoot}/${accountInformation.tenantId}${AZURE_AND_ENTRA_PORTAL_APP_PATH}${item.appId}`;
+			}
+		}
 
-        // Check if uriText has been set to anything meaningful yet. If not, then set it w/o a tenant ID.
-        if (typeof(uriText) === "string" && uriText.trim().length === 0){
-            uriText = `${portalRoot}${AZURE_AND_ENTRA_PORTAL_APP_PATH}${item.appId}`;
-        }
+		// Check if uriText has been set to anything meaningful yet. If not, then set it w/o a tenant ID.
+		if (typeof uriText === "string" && uriText.trim().length === 0) {
+			uriText = `${portalRoot}${AZURE_AND_ENTRA_PORTAL_APP_PATH}${item.appId}`;
+		}
 
-        return await env.openExternal(Uri.parse(uriText));
-    }
+		return await env.openExternal(Uri.parse(uriText));
+	}
 
 	// Input box for creating a new application registration display name.
-	async inputDisplayNameForNew(signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined): Promise<string | undefined> {
+	async inputDisplayNameForNew(
+		signInAudience: string,
+		validation: (value: string, signInAudience: string) => string | undefined
+	): Promise<string | undefined> {
 		return await window.showInputBox({
 			placeHolder: "Application name",
 			prompt: "Create new Application Registration",
@@ -243,7 +321,11 @@ export class ApplicationService extends ServiceBase {
 	}
 
 	// Input box for renaming an application registration display name.
-	async inputDisplayNameForRename(appName: string, signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined): Promise<string | undefined> {
+	async inputDisplayNameForRename(
+		appName: string,
+		signInAudience: string,
+		validation: (value: string, signInAudience: string) => string | undefined
+	): Promise<string | undefined> {
 		return await window.showInputBox({
 			placeHolder: "Application name",
 			prompt: "Rename application with new display name",
@@ -255,7 +337,11 @@ export class ApplicationService extends ServiceBase {
 	}
 
 	// Input box for editing an application registration App Id URI.
-	async inputAppIdUri(item: AppRegItem, signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined): Promise<string | undefined> {
+	async inputAppIdUri(
+		item: AppRegItem,
+		signInAudience: string,
+		validation: (value: string, signInAudience: string) => string | undefined
+	): Promise<string | undefined> {
 		return await window.showInputBox({
 			placeHolder: "Application ID URI",
 			prompt: "Set Application ID URI",
@@ -267,7 +353,10 @@ export class ApplicationService extends ServiceBase {
 	}
 
 	// Input box for editing an application registration Logout URL.
-	async inputLogoutUrl(item: AppRegItem, validation: (value: string) => string | undefined): Promise<string | undefined> {
+	async inputLogoutUrl(
+		item: AppRegItem,
+		validation: (value: string) => string | undefined
+	): Promise<string | undefined> {
 		return await window.showInputBox({
 			placeHolder: "Front-channel Logout URL",
 			prompt: "Set Front-channel Logout URL",

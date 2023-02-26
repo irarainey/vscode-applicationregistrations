@@ -6,9 +6,11 @@ export let mockOrganizations: any[];
 export let mockRoleAssignments: any[];
 export let mockRedirectUris: any;
 export let mockServicePrincipals: any[];
+export let mockDeletedApplications: any[];
 
 export const seedMockData = () => {
 	mockApplications = JSON.parse(JSON.stringify(seedApplications));
+	mockDeletedApplications = JSON.parse(JSON.stringify(seedDeletedApplications));
 	mockUser = JSON.parse(JSON.stringify(seedUser));
 	mockUsers = JSON.parse(JSON.stringify(seedUsers));
 	mockOrganizations = JSON.parse(JSON.stringify(seedOrganizations));
@@ -272,6 +274,27 @@ const seedApplications: any[] = [
 	}
 ];
 
+const seedDeletedApplications: any[] = [
+	{
+		id: "788c44b9-f176-4a04-9f82-25e736a2c9bd",
+		appId: "2ad1723f-3f80-4ca5-8d97-ca77abdfefb8",
+		deletedDateTime: "2022-12-01T00:00:00Z",
+		displayName: "First Deleted Test App"
+	},
+	{
+		id: "f3479dd4-7b8e-48cd-8004-e48a9d443be2",
+		appId: "c606dc62-5e6e-485f-b3d3-00fefd7ba6c8",
+		deletedDateTime: "2023-01-01T00:00:00Z",
+		displayName: "Second Deleted Test App"
+	},
+	{
+		id: "2f75d713-694b-4ea3-96a7-d12e65f71460",
+		appId: "7fefdaa2-c1c4-4707-92c3-3893da868792",
+		deletedDateTime: "2023-02-01T00:00:00Z",
+		displayName: "Third Deleted Test App"
+	}
+];
+
 const seedRedirectUris: any = {
 	web: {
 		redirectUris: Array.from({ length: 100 }, (_, i) => `https://web${i}.com`)
@@ -475,6 +498,7 @@ export const mockGraphApiAppId = "00000003-0000-0000-c000-000000000000";
 export const mockExposedApiId = seedApplications[0].api.oauth2PermissionScopes[0].id;
 export const mockApiScopeId = seedApplications[0].requiredResourceAccess[0].resourceAppId;
 export const mockAppObjectId = seedApplications[0].id;
+export const mockDeletedAppObjectId = seedDeletedApplications[0].id;
 export const mockSecondAppObjectId = seedApplications[1].id;
 export const mockAppId = seedApplications[0].appId;
 export const mockSecondAppId = seedApplications[1].appId;

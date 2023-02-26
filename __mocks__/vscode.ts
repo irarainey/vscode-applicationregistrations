@@ -21,12 +21,12 @@ export const workspace = {
 	getConfiguration: (_value: string) => ({
 		get: (key: string) => {
 			switch (key) {
+				case "applicationListView":
+					return "Owned Applications";
 				case "useEventualConsistency":
 					return false;
 				case "showApplicationCountWarning":
 					return false;
-				case "showOwnedApplicationsOnly":
-					return true;
 				case "includeEntraPortal":
 					return true;
 				case "omitTenantIdFromPortalRequests":

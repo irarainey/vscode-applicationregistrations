@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/irarainey/vscode-applicationregistrations/blob/main/README.md",
   "license": "SEE LICENSE IN LICENSE.md",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "engines": {
     "vscode": "^1.73.0"
   },
@@ -47,23 +47,36 @@
           "maximum": 200,
           "order": 0
         },
+        "applicationRegistrations.applicationListView": {
+          "type": "string",
+          "default": "Owned Applications",
+          "enum": ["Owned Applications", "All Applications", "Deleted Applications"],
+          "description": "The type of applications to show in the list.",
+          "enumDescriptions": [
+            "Show only applications owned by the current user.",
+            "Show all applications.",
+            "Show only deleted applications."
+          ],
+          "order": 1
+        },
         "applicationRegistrations.showOwnedApplicationsOnly": {
           "type": "boolean",
           "description": "Show only applications owned by the current user.",
           "default": true,
-          "order": 1
+          "order": 2,
+          "deprecationMessage": "Deprecated: Please use Application List View instead."
         },
         "applicationRegistrations.useEventualConsistency": {
           "type": "boolean",
           "description": "Use the eventual consistency header on Graph API calls for generating the application list. Enable this if you are working with a large number of applications.",
           "default": true,
-          "order": 2
+          "order": 3
         },
         "applicationRegistrations.showApplicationCountWarning": {
           "type": "boolean",
           "description": "Displays a warning when loading the application list if it is detected that you could benefit from a change in the eventual consistency setting.",
           "default": true,
-          "order": 3
+          "order": 4
         },
         "applicationRegistrations.maximumQueryApps": {
           "type": "number",
@@ -71,19 +84,19 @@
           "default": 100,
           "minimum": 1,
           "maximum": 200,
-          "order": 4
+          "order": 5
         },
         "applicationRegistrations.includeEntraPortal": {
           "type": "boolean",
           "description": "Includes Open in Entra Portal alongside options to open applications or users in the Azure portal.",
           "default": true,
-          "order": 5
+          "order": 6
         },     
         "applicationRegistrations.omitTenantIdFromPortalRequests": {
           "type": "boolean",
           "description": "Disables the inclusion of tenant IDs in portal URLs when opening applications or users in the Azure and/or Entra portals. Including the tenant ID in the portal URLs can help when you have logged into the extension with a non-default tenant and try to open items in the portals.",
           "default": false,
-          "order": 6
+          "order": 7
         }
       }
     },
@@ -96,6 +109,14 @@
       ]
     },
     "commands": [
+      {
+        "command": "appRegistrations.restoreApplication",
+        "title": "Restore"
+      },
+      {
+        "command": "appRegistrations.deleteApplicationPermanent",
+        "title": "Permanently Delete"
+      },
       {
         "command": "appRegistrations.uploadKeyCredential",
         "title": "Upload"
@@ -289,11 +310,11 @@
         }
       },
       {
-        "command": "appRegistrations.addApp",
-        "title": "Add",
+        "command": "appRegistrations.changeApplicationView",
+        "title": "Change Application View",
         "icon": {
-          "light": "resources/icons/light/add.svg",
-          "dark": "resources/icons/dark/add.svg"
+          "light": "resources/icons/light/eye.svg",
+          "dark": "resources/icons/dark/eye.svg"
         }
       },
       {
@@ -302,6 +323,14 @@
         "icon": {
           "light": "resources/icons/light/filter.svg",
           "dark": "resources/icons/dark/filter.svg"
+        }
+      },
+      {
+        "command": "appRegistrations.addApp",
+        "title": "Add",
+        "icon": {
+          "light": "resources/icons/light/add.svg",
+          "dark": "resources/icons/dark/add.svg"
         }
       },
       {
@@ -335,10 +364,26 @@
       {
         "command": "appRegistrations.cmdSignIn",
         "title": "Application Registrations: Sign In to Azure CLI"
+      },
+      {
+        "command": "appRegistrations.cmdChangeApplicationView",
+        "title": "Application Registrations: Change Application View"
       }
     ],
     "menus": {
       "commandPalette": [
+        {
+          "command": "appRegistrations.changeApplicationView",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.restoreApplication",
+          "when": "false"
+        },
+        {
+          "command": "appRegistrations.deleteApplicationPermanent",
+          "when": "false"
+        },
         {
           "command": "appRegistrations.editLogoutUrl",
           "when": "false"
@@ -542,27 +587,47 @@
       ],
       "view/title": [
         {
-          "command": "appRegistrations.filterApps",
+          "command": "appRegistrations.changeApplicationView",
           "when": "view == appRegistrations",
           "group": "navigation@0"
         },
         {
-          "command": "appRegistrations.addApp",
-          "when": "view == appRegistrations",
+          "command": "appRegistrations.filterApps",
+          "when": "view == appRegistrations && config.applicationRegistrations.useEventualConsistency",
           "group": "navigation@1"
+        },
+        {
+          "command": "appRegistrations.filterApps",
+          "when": "view == appRegistrations && config.applicationRegistrations.useEventualConsistency",
+          "group": "navigation@2"
+        },
+        {
+          "command": "appRegistrations.addApp",
+          "when": "view == appRegistrations && config.applicationRegistrations.applicationListView != 'Deleted Applications'",
+          "group": "navigation@3"
         },
         {
           "command": "appRegistrations.refreshApps",
           "when": "view == appRegistrations",
-          "group": "navigation@2"
+          "group": "navigation@4"
         },
         {
           "command": "appRegistrations.tenantInfo",
           "when": "view == appRegistrations",
-          "group": "navigation@3"
+          "group": "navigation@5"
         }
       ],
       "view/item/context": [
+        {
+          "command": "appRegistrations.restoreApplication",
+          "when": "view == appRegistrations && viewItem == APPLICATION-DELETED",
+          "group": "appRegistrations@0"
+        },
+        {
+          "command": "appRegistrations.deleteApplicationPermanent",
+          "when": "view == appRegistrations && viewItem == APPLICATION-DELETED",
+          "group": "appRegistrations@1"
+        },
         {
           "command": "appRegistrations.uploadKeyCredential",
           "when": "view == appRegistrations && viewItem == CERTIFICATE-CREDENTIALS",

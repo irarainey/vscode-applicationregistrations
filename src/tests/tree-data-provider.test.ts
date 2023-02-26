@@ -159,7 +159,7 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					return key === "showOwnedApplicationsOnly" ? false : undefined;
+					return key === "applicationListView" ? "All Applications" : undefined;
 				}
 			} as any;
 		});
@@ -174,13 +174,52 @@ describe("Tree Data Provider Tests", () => {
 		expect(treeDataProvider.isTreeEmpty).toBeFalsy();
 	});
 
+	test("Get all tree data for deleted applications", async () => {
+		// Arrange
+		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
+			return {
+				get: (key: string) => {
+					return key === "applicationListView" ? "Deleted Applications" : undefined;
+				}
+			} as any;
+		});
+
+		// Act
+		await treeDataProvider.render();
+
+		// Assert
+		const result = treeDataProvider.getChildren(undefined);
+		expect(result).toBeDefined();
+		expect(result).toHaveLength(3);
+		expect(treeDataProvider.isTreeEmpty).toBeFalsy();
+	});
+
+	test("Get all tree data for deleted applications with graph error", async () => {
+		// Arrange
+		const error = new Error("Get all tree data for deleted applications with graph error");
+		jest.spyOn(graphApiRepository, "getApplicationListDeleted").mockImplementation(async (_filter: string | undefined) => ({ success: false, error }));
+		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
+			return {
+				get: (key: string) => {
+					return key === "applicationListView" ? "Deleted Applications" : undefined;
+				}
+			} as any;
+		});
+
+		// Act
+		await treeDataProvider.render();
+
+		// Assert
+		expect(triggerTreeErrorSpy).toHaveBeenCalledWith(error);
+	});
+
     test("Get all tree data for all applications with filter", async () => {
 		// Arrange
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return true;
+					if (key === "applicationListView") {
+						return "Owned Applications";
 					} else if (key === "useEventualConsistency") {
 						return true;
 					}
@@ -206,8 +245,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return true;
+					if (key === "applicationListView") {
+						return "Owned Applications";
 					} else if (key === "useEventualConsistency") {
 						return true;
 					}
@@ -235,8 +274,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return true;
+					if (key === "applicationListView") {
+						return "Owned Applications";
 					} else if (key === "useEventualConsistency") {
 						return true;
 					}
@@ -261,8 +300,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return true;
+					if (key === "applicationListView") {
+						return "Owned Applications";
 					} else if (key === "useEventualConsistency") {
 						return true;
 					}
@@ -283,37 +322,13 @@ describe("Tree Data Provider Tests", () => {
 		expect(treeDataProvider.isTreeEmpty).toBeFalsy();
 	});
 
-    test("Get all tree data for all applications with filter but eventual consistency not enabled", async () => {
-		// Arrange
-		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
-			return {
-				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return true;
-					} else if (key === "useEventualConsistency") {
-						return false;
-					}
-					return undefined;
-				}
-			} as any;
-		});
-        const informationSpy = jest.spyOn(vscode.window, "showInformationMessage");
-        await treeDataProvider.render();
-        
-		// Act
-		await treeDataProvider.filter();
-
-		// Assert
-        expect(informationSpy).toHaveBeenCalledWith("The application list cannot be filtered when not using eventual consistency. Please enable this in user settings first.", "OK");
-	});
-
 	test("Get all tree data for all applications but with error", async () => {
 		// Arrange
 		const error = new Error("Get all tree data for all applications but with error");
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					return key === "showOwnedApplicationsOnly" ? false : undefined;
+					return key === "applicationListView" ? "All Applications" : undefined;
 				}
 			} as any;
 		});
@@ -352,8 +367,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return true;
+					if (key === "applicationListView") {
+						return "Owned Applications";
 					} else if (key === "showApplicationCountWarning") {
 						return true;
 					}
@@ -376,8 +391,32 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
+					if (key === "applicationListView") {
+						return "Owned Applications";
+					} else if (key === "showApplicationCountWarning") {
 						return true;
+					}
+					return undefined;
+				}
+			} as any;
+		});
+
+		// Act
+		await treeDataProvider.render();
+
+		// Assert
+		expect(triggerTreeErrorSpy).toHaveBeenCalledWith(error);
+	});
+
+	test("Get all tree data with deleted applications but with error getting application count", async () => {
+		// Arrange
+		const error = new Error("Get all tree data with deleted applications but with error getting application count");
+		jest.spyOn(graphApiRepository, "getApplicationCountDeleted").mockImplementation(async () => ({ success: false, error }));
+		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
+			return {
+				get: (key: string) => {
+					if (key === "applicationListView") {
+						return "Deleted Applications";
 					} else if (key === "showApplicationCountWarning") {
 						return true;
 					}
@@ -400,8 +439,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return false;
+					if (key === "applicationListView") {
+						return "All Applications";
 					} else if (key === "showApplicationCountWarning") {
 						return true;
 					}
@@ -424,8 +463,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return true;
+					if (key === "applicationListView") {
+						return "Owned Applications";
 					} else if (key === "showApplicationCountWarning") {
 						return true;
 					} else if (key === "useEventualConsistency") {
@@ -450,8 +489,34 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
+					if (key === "applicationListView") {
+						return "All Applications";
+					} else if (key === "showApplicationCountWarning") {
+						return true;
+					} else if (key === "useEventualConsistency") {
 						return false;
+					}
+					return undefined;
+				}
+			} as any;
+		});
+
+		// Act
+		await treeDataProvider.render();
+
+		// Assert
+		expect(showWarningSpy).toHaveBeenCalledWith(`You do not have enabled eventual consistency enabled for Graph API calls and have 201 applications in your tenant. You would likely benefit from enabling eventual consistency in user settings. Would you like to do this now?`, "Yes", "No", "Disable Warning");
+	});
+
+	test("Get all tree data and show deleted applications with count warning", async () => {
+		// Arrange
+		const showWarningSpy = jest.spyOn(vscode.window, "showWarningMessage");
+		jest.spyOn(graphApiRepository, "getApplicationCountDeleted").mockImplementation(async () => ({ success: true, value: 201 }));
+		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
+			return {
+				get: (key: string) => {
+					if (key === "applicationListView") {
+						return "Deleted Applications";
 					} else if (key === "showApplicationCountWarning") {
 						return true;
 					} else if (key === "useEventualConsistency") {
@@ -475,8 +540,8 @@ describe("Tree Data Provider Tests", () => {
 		jest.spyOn(vscode.workspace, "getConfiguration").mockImplementation(() => {
 			return {
 				get: (key: string) => {
-					if (key === "showOwnedApplicationsOnly") {
-						return false;
+					if (key === "applicationListView") {
+						return "All Applications";
 					} else if (key === "showApplicationCountWarning") {
 						return true;
 					} else if (key === "useEventualConsistency") {
