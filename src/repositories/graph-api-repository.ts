@@ -448,6 +448,32 @@ export class GraphApiRepository {
 		}
 	}
 
+	// Restores a deleted application registration
+	async restoreApplication(id: string): Promise<GraphResult<void>> {
+		try {
+			return await this.client!.api(`/directory/deletedItems/${id}/restore`)
+				.post({})
+				.then(() => {
+					return { success: true };
+				});
+		} catch (error: any) {
+			return { success: false, error: error };
+		}
+	}
+
+	// Permanently deletes a deleted application registration
+	async permanentlyDeleteApplication(id: string): Promise<GraphResult<void>> {
+		try {
+			return await this.client!.api(`/directory/deletedItems/${id}`)
+				.delete()
+				.then(() => {
+					return { success: true };
+				});
+		} catch (error: any) {
+			return { success: false, error: error };
+		}
+	}
+
 	// Disposes the client
 	dispose(): void {
 		this.client = undefined;

@@ -160,20 +160,6 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 			return;
 		}
 
-		// Determine if eventual consistency is enabled.
-		const useEventualConsistency = workspace
-			.getConfiguration("applicationRegistrations")
-			.get("useEventualConsistency") as boolean;
-
-		// If eventual consistency is disabled then we cannot apply the filter
-		if (useEventualConsistency === false) {
-			window.showInformationMessage(
-				"The application list cannot be filtered when not using eventual consistency. Please enable this in user settings first.",
-				"OK"
-			);
-			return;
-		}
-
 		// Prompt the user for the filter text.
 		const newFilter = await window.showInputBox({
 			placeHolder: "Name starts with",

@@ -1,6 +1,8 @@
 ## 0.10.0
 
 - Added functionality to manage deleted applications.
+- Added new command to the command palette to change the list view.
+- Amended logic showing filter and add functionality to ensure it is only shown when relevant.
 
 ## 0.9.0
 

@@ -45,10 +45,24 @@ export class ApplicationService extends ServiceBase {
 	}
 
 	// Restores a deleted application registration.
-	async restore(item: AppRegItem): Promise<void> {}
+	async restore(item: AppRegItem): Promise<void> {
+		const status = this.indicateChange("Restoring Application Registration...", item);
+		const result = await this.graphRepository.restoreApplication(item.objectId!);
+		result.success === true ? await this.triggerRefresh(status)	: await this.handleError(result.error);
+	}
 
 	// Permanently deletes an application registration.
-	async deletePermanently(item: AppRegItem): Promise<void> {}
+	async deletePermanently(item: AppRegItem): Promise<void> {
+		// Prompt the user to confirm the deletion.
+		const answer = await window.showWarningMessage(`Do you want to permanetly delete the application ${item.label}?`, "Yes", "No");
+
+		// If the user confirms the removal then remove it.
+		if (answer === "Yes") {
+			const status = this.indicateChange("Deleting Application Registration...", item);
+			const result = await this.graphRepository.permanentlyDeleteApplication(item.objectId!);
+			result.success === true ? await this.triggerRefresh(status)	: await this.handleError(result.error);
+		}
+	}
 
 	// Creates a new application registration.
 	async add(): Promise<void> {
