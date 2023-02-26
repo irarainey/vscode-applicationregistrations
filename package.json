@@ -310,11 +310,11 @@
         }
       },
       {
-        "command": "appRegistrations.addApp",
-        "title": "Add",
+        "command": "appRegistrations.changeApplicationView",
+        "title": "Change Application View",
         "icon": {
-          "light": "resources/icons/light/add.svg",
-          "dark": "resources/icons/dark/add.svg"
+          "light": "resources/icons/light/eye.svg",
+          "dark": "resources/icons/dark/eye.svg"
         }
       },
       {
@@ -323,6 +323,14 @@
         "icon": {
           "light": "resources/icons/light/filter.svg",
           "dark": "resources/icons/dark/filter.svg"
+        }
+      },
+      {
+        "command": "appRegistrations.addApp",
+        "title": "Add",
+        "icon": {
+          "light": "resources/icons/light/add.svg",
+          "dark": "resources/icons/dark/add.svg"
         }
       },
       {
@@ -358,12 +366,16 @@
         "title": "Application Registrations: Sign In to Azure CLI"
       },
       {
-        "command": "appRegistrations.changeApplicationView",
+        "command": "appRegistrations.cmdChangeApplicationView",
         "title": "Application Registrations: Change Application View"
       }
     ],
     "menus": {
       "commandPalette": [
+        {
+          "command": "appRegistrations.changeApplicationView",
+          "when": "false"
+        },
         {
           "command": "appRegistrations.restoreApplication",
           "when": "false"
@@ -575,24 +587,34 @@
       ],
       "view/title": [
         {
+          "command": "appRegistrations.changeApplicationView",
+          "when": "view == appRegistrations",
+          "group": "navigation@0"
+        },
+        {
           "command": "appRegistrations.filterApps",
           "when": "view == appRegistrations && config.applicationRegistrations.useEventualConsistency",
-          "group": "navigation@0"
+          "group": "navigation@1"
+        },
+        {
+          "command": "appRegistrations.filterApps",
+          "when": "view == appRegistrations && config.applicationRegistrations.useEventualConsistency",
+          "group": "navigation@2"
         },
         {
           "command": "appRegistrations.addApp",
           "when": "view == appRegistrations && config.applicationRegistrations.applicationListView != 'Deleted Applications'",
-          "group": "navigation@1"
+          "group": "navigation@3"
         },
         {
           "command": "appRegistrations.refreshApps",
           "when": "view == appRegistrations",
-          "group": "navigation@2"
+          "group": "navigation@4"
         },
         {
           "command": "appRegistrations.tenantInfo",
           "when": "view == appRegistrations",
-          "group": "navigation@3"
+          "group": "navigation@5"
         }
       ],
       "view/item/context": [

@@ -60,6 +60,7 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdRefreshApps`, async () => await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."))));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdFilterApps`, async () => await treeDataProvider.filter()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdTenantInfo`, async () => await organizationService.showTenantInformation()));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdChangeApplicationView`, async (item) => await applicationService.changeView()));
 
 	// Menu Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addApp`, async () => await applicationService.add()));

@@ -54,11 +54,11 @@ export class ApplicationService extends ServiceBase {
 	// Permanently deletes an application registration.
 	async deletePermanently(item: AppRegItem): Promise<void> {
 		// Prompt the user to confirm the deletion.
-		const answer = await window.showWarningMessage(`Do you want to permanetly delete the application ${item.label}?`, "Yes", "No");
+		const answer = await window.showWarningMessage(`Do you want to permanently delete the application ${item.label}?`, "Yes", "No");
 
 		// If the user confirms the removal then remove it.
 		if (answer === "Yes") {
-			const status = this.indicateChange("Deleting Application Registration...", item);
+			const status = this.indicateChange("Permanently Deleting Application Registration...", item);
 			const result = await this.graphRepository.permanentlyDeleteApplication(item.objectId!);
 			result.success === true ? await this.triggerRefresh(status)	: await this.handleError(result.error);
 		}
