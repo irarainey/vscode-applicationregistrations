@@ -22,6 +22,10 @@ It also allows for the simple creation of new applications, quickly viewing of t
 
 ![Application Registration List](resources/images/applications.png)
 
+The application list is shown in a tree view, with the application itself at the top level, and each of the application properties as children. This allows for easy navigation and management of the application properties. The default list view is for applications owned by the signed in user. This can be changed in user settings, via the command palette, or via the view button on the toolbar to show all applications, or deleted applications.
+
+![Application List View](resources/images/application_view.png)
+
 All application properties have their own range of functionality. From the top-level application itself, down to each individual property, functionality can be accessed via a range of context menus. If required functionality is not currently implemented for a particular property then you can open the application registration in the Azure portal from the context menu of the application itself.
 
 ![Context Menus](resources/images/context_001.png)
@@ -76,8 +80,8 @@ There are a number of user settings to control the behaviour of this extension. 
 
 * **Maximum Applications Shown**
     * This controls how many applications to show in the list. When **Use Eventual Consistency** is enabled applications will be ordered by display name by the Graph API. If it is not enabled then applications are ordered client-side from the total list defined in **Maximum Query Apps**. Default value is `40`.
-* **Show Owned Applications Only**
-    * When selected the list of applications shown will only be where the current logged in user has been added as an owner. Uncheck this option to show all applications in the current tenant. Default value is `true`.
+* **Application List View**
+    * Selects the type of applications to show in the list view. Default value is `Owned Applications`.
 * **Use Eventual Consistency**
     * When selected the `ConsistencyLevel: eventual` header is added to Graph API calls. This opens up the opportunity for advanced query functionality such as server-side ordering and filtering. However enabling this setting results in applications and properties only being shown in the list when all copies have been updated. This can lead to a delay in recent changes being shown. If you are working with a large number of applications (more than 200) it is recommended to enable this. Default value is `true`.
 * **Show Application Count Warning**
