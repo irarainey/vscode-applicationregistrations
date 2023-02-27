@@ -261,4 +261,32 @@ describe("Key Credential Service Tests", () => {
 		// Assert
 		expect(triggerTreeErrorSpy).toHaveBeenCalledWith(error);
 	});
+
+	test("Get tree data for application with expired key credential", async () => {
+		// Arrange
+		mockApplications[0].keyCredentials[0].endDateTime = new Date("2020-01-01T00:00:00.000Z");
+		await treeDataProvider.render();
+
+		// Act
+		const result = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "CERTIFICATE-CREDENTIALS");
+
+		// Assert
+		expect(result).toBeDefined();
+		expect(result!.children![0].tooltip).toEqual("This credential has expired.");
+	});
+
+	test("Get tree data for application with expiring key credential", async () => {
+		// Arrange
+		const expiryDate = new Date();
+		expiryDate.setDate(expiryDate.getDate() + 21);
+		mockApplications[0].keyCredentials[0].endDateTime = expiryDate;
+		await treeDataProvider.render();
+
+		// Act
+		const result = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "CERTIFICATE-CREDENTIALS");
+
+		// Assert
+		expect(result).toBeDefined();
+		expect(result!.children![0].tooltip).toEqual("This credential will expire soon.");
+	});
 });
