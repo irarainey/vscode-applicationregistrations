@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/irarainey/vscode-applicationregistrations/blob/main/README.md",
   "license": "SEE LICENSE IN LICENSE.md",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "engines": {
     "vscode": "^1.73.0"
   },
@@ -218,6 +218,10 @@
         "title": "Copy"
       },
       {
+        "command": "appRegistrations.addAppIdUri",
+        "title": "Add"
+      },
+      {
         "command": "appRegistrations.editAppIdUri",
         "title": "Edit"
       },
@@ -226,8 +230,8 @@
         "title": "Copy"
       },
       {
-        "command": "appRegistrations.removeAppIdUri",
-        "title": "Remove"
+        "command": "appRegistrations.deleteAppIdUri",
+        "title": "Delete"
       },
       {
         "command": "appRegistrations.editLogoutUrl",
@@ -517,11 +521,15 @@
           "when": "false"
         },
         {
+          "command": "appRegistrations.addAppIdUri",
+          "when": "false"
+        },
+        {
           "command": "appRegistrations.copyAppIdUri",
           "when": "false"
         },
         {
-          "command": "appRegistrations.removeAppIdUri",
+          "command": "appRegistrations.deleteAppIdUri",
           "when": "false"
         },
         {
@@ -829,8 +837,13 @@
           "group": "appRegistrations@0"
         },
         {
+          "command": "appRegistrations.addAppIdUri",
+          "when": "view == appRegistrations && viewItem == APPID-URIS || viewItem == APPID-URIS-EMPTY",
+          "group": "appRegistrations@0"
+        },
+        {
           "command": "appRegistrations.editAppIdUri",
-          "when": "view == appRegistrations && viewItem == APPID-URI || viewItem == APPID-URI-PARENT || viewItem == APPID-URI-EMPTY",
+          "when": "view == appRegistrations && viewItem == APPID-URI",
           "group": "appRegistrations@0"
         },
         {
@@ -839,7 +852,7 @@
           "group": "appRegistrations@1"
         },
         {
-          "command": "appRegistrations.removeAppIdUri",
+          "command": "appRegistrations.deleteAppIdUri",
           "when": "view == appRegistrations && viewItem == APPID-URI",
           "group": "appRegistrations@2"
         },

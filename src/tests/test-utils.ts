@@ -7,10 +7,10 @@ export const getTopLevelTreeItem = async (objectId: string, treeDataProvider: Ap
 	switch (contextValue) {
 		case undefined:
 		case "LOGOUT-URL-PARENT":
-		case "APPID-URI-PARENT":
 			element = undefined;
 			break;
 		case "OWNERS":
+		case "APPID-URIS":
 		case "PASSWORD-CREDENTIALS":
 		case "CERTIFICATE-CREDENTIALS":
 		case "WEB-REDIRECT":

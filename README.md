@@ -7,7 +7,7 @@ This Visual Studio Code extension provides an easy way to view and manage Azure 
 It allows for easy viewing, copying, adding, and editing of most the core application properties, such as:
 
 * Client Id
-* Application ID URI
+* Application ID URIs
 * Sign In Audience
 * Certificates and Secrets
 * Redirect URIs

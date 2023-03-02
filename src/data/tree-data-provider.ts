@@ -227,6 +227,21 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 			case "OWNERS":
 				// Return the owners for the application
 				return Promise.resolve(this.getApplicationOwners(element));
+			case "APPID-URIS":
+				// Return the App Id URIs for the application
+				return this.graphRepository
+					.getApplicationDetailsPartial(element.objectId!, "identifierUris")
+					.then(async (result: GraphResult<Application>) => {
+						if (result.success === true && result.value !== undefined) {
+							return await this.getAppIdUris(
+								element,
+								result.value.identifierUris!
+							);
+						} else {
+							await this.handleError(result.error);
+							return undefined;
+						}
+					});
 			case "WEB-REDIRECT":
 				// Return the web redirect URIs for the application
 				return this.graphRepository
@@ -533,44 +548,19 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 								})
 							);
 
-							// Application ID URI
+							// Application ID URIs
 							appRegItem.children!.push(
 								new AppRegItem({
-									label: "Application Id URI",
-									context: "APPID-URI-PARENT",
+									label: "Application Id URIs",
+									context: app.identifierUris?.length !== 0 ? "APPID-URIS" : "APPID-URIS-EMPTY",
 									objectId: app.id!,
 									appId: app.appId!,
-									value: app.identifierUris![0] === undefined ? "Not set" : app.identifierUris![0],
+									value: app.identifierUris![0] === undefined ? "Not set" : "Set",
 									iconPath: new ThemeIcon("globe"),
 									baseIcon: new ThemeIcon("globe"),
 									tooltip:
 										"The Application Id URI is a globally unique URI used to identify this web API. It is the prefix for scopes and in access tokens, it is the value of the audience claim. Also referred to as an identifier URI.",
-									children: [
-										new AppRegItem({
-											label:
-												app.identifierUris![0] === undefined
-													? "Not set"
-													: app.identifierUris![0],
-											value:
-												app.identifierUris![0] === undefined
-													? "Not set"
-													: app.identifierUris![0],
-											appId: app.appId!,
-											objectId: app.id!,
-											context:
-												app.identifierUris![0] !== undefined ? "APPID-URI" : "APPID-URI-EMPTY",
-											iconPath: new ThemeIcon(
-												"symbol-field",
-												new ThemeColor("editor.foreground")
-											),
-											baseIcon: new ThemeIcon(
-												"symbol-field",
-												new ThemeColor("editor.foreground")
-											),
-											tooltip:
-												"The Application Id URI, this is set when an application is used as a resource app. The URI acts as the prefix for the scopes you'll reference in your API's code, and must be globally unique."
-										})
-									]
+									children: app.identifierUris?.length === 0 ? undefined : []
 								})
 							);
 
@@ -1011,6 +1001,23 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 				label: redirectUri,
 				value: redirectUri,
 				context: context,
+				iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+				baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
+				objectId: element.objectId
+			});
+		});
+	}
+	
+	// Returns the App Id URIs for the given application
+	private async getAppIdUris(
+		element: AppRegItem,
+		identifierUris: string[]
+	): Promise<AppRegItem[]> {
+		return identifierUris.map((identifierUri) => {
+			return new AppRegItem({
+				label: identifierUri,
+				value: identifierUri,
+				context: "APPID-URI",
 				iconPath: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
 				baseIcon: new ThemeIcon("symbol-field", new ThemeColor("editor.foreground")),
 				objectId: element.objectId

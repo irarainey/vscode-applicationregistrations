@@ -216,7 +216,15 @@ export const validateApplicationDisplayName = (name: string, signInAudience: str
 };
 
 // Validates the app id URI.
-export const validateAppIdUri = (uri: string, signInAudience: string): string | undefined => {
+export const validateAppIdUri = (uri: string, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined): string | undefined => {
+
+	// Check to see if the uri already exists.
+	if ((isEditing === true && oldValue !== uri) || isEditing === false) {
+		if (existingUris.includes(uri)) {
+			return "The App Id URI specified already exists in this application.";
+		}
+	}
+
 	if (uri.endsWith("/") === true) {
 		return "The Application ID URI cannot end with a trailing slash.";
 	}
@@ -240,6 +248,9 @@ export const validateAppIdUri = (uri: string, signInAudience: string): string | 
 		}
 		if (uri.length > 120) {
 			return "The Application ID URI is not valid. A URI cannot be longer than 120 characters.";
+		}
+		if (existingUris.length === 50) {
+			return "The Application ID URI cannot be added. A maximum of 50 URIs can be added to an application with the specified sign-in audience.";
 		}
 	}
 
