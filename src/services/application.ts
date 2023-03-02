@@ -48,19 +48,23 @@ export class ApplicationService extends ServiceBase {
 	async restore(item: AppRegItem): Promise<void> {
 		const status = this.indicateChange("Restoring Application Registration...", item);
 		const result = await this.graphRepository.restoreApplication(item.objectId!);
-		result.success === true ? await this.triggerRefresh(status)	: await this.handleError(result.error);
+		result.success === true ? await this.triggerRefresh(status) : await this.handleError(result.error);
 	}
 
 	// Permanently deletes an application registration.
 	async deletePermanently(item: AppRegItem): Promise<void> {
 		// Prompt the user to confirm the deletion.
-		const answer = await window.showWarningMessage(`Do you want to permanently delete the application ${item.label}?`, "Yes", "No");
+		const answer = await window.showWarningMessage(
+			`Do you want to permanently delete the application ${item.label}?`,
+			"Yes",
+			"No"
+		);
 
 		// If the user confirms the removal then remove it.
 		if (answer === "Yes") {
 			const status = this.indicateChange("Permanently Deleting Application Registration...", item);
 			const result = await this.graphRepository.permanentlyDeleteApplication(item.objectId!);
-			result.success === true ? await this.triggerRefresh(status)	: await this.handleError(result.error);
+			result.success === true ? await this.triggerRefresh(status) : await this.handleError(result.error);
 		}
 	}
 
@@ -92,6 +96,31 @@ export class ApplicationService extends ServiceBase {
 		}
 	}
 
+	// Add an application id URI.
+	async addAppIdUri(item: AppRegItem): Promise<void> {
+		const audience = this.treeDataProvider.getTreeItemChildByContext(
+			this.treeDataProvider.getTreeItemApplicationParent(item),
+			"AUDIENCE-PARENT"
+		);
+
+		const allAppIdentifierUris: string[] | undefined = await this.getExistingAppIdUris(item);
+
+		// If the array is undefined then it'll be an Azure CLI authentication issue.
+		if (allAppIdentifierUris === undefined) {
+			return;
+		}
+
+		// Prompt the user for the new uri.
+		const uri = await this.inputAppIdUri(item, audience!.value!, allAppIdentifierUris, false, undefined, validateAppIdUri);
+
+		// If the new application id uri is not undefined then update the application.
+		if (uri !== undefined) {
+			allAppIdentifierUris.push(uri);
+			const status = this.indicateChange("Adding Application ID URI...", item);
+			await this.updateApplication(item.objectId!, { identifierUris: allAppIdentifierUris }, status);
+		}
+	}
+
 	// Edit an application id URI.
 	async editAppIdUri(item: AppRegItem): Promise<void> {
 		const audience = this.treeDataProvider.getTreeItemChildByContext(
@@ -99,13 +128,22 @@ export class ApplicationService extends ServiceBase {
 			"AUDIENCE-PARENT"
 		);
 
+		const allAppIdentifierUris: string[] | undefined = await this.getExistingAppIdUris(item);
+
+		// If the array is undefined then it'll be an Azure CLI authentication issue.
+		if (allAppIdentifierUris === undefined) {
+			return;
+		}
+
 		// Prompt the user for the new uri.
-		const uri = await this.inputAppIdUri(item, audience!.value!, validateAppIdUri);
+		const uri = await this.inputAppIdUri(item, audience!.value!, allAppIdentifierUris, true, item.label!.toString(), validateAppIdUri);
 
 		// If the new application id uri is not undefined then update the application.
 		if (uri !== undefined) {
-			const status = this.indicateChange("Setting Application ID URI...", item);
-			await this.updateApplication(item.objectId!, { identifierUris: [uri] }, status);
+			allAppIdentifierUris.splice(allAppIdentifierUris.indexOf(item.label!.toString()), 1);
+			allAppIdentifierUris.push(uri);
+			const status = this.indicateChange("Updating Application ID URI...", item);
+			await this.updateApplication(item.objectId!, { identifierUris: allAppIdentifierUris }, status);
 		}
 	}
 
@@ -159,15 +197,24 @@ export class ApplicationService extends ServiceBase {
 		}
 	}
 
-	// Removes an App Id Uri.
-	async removeAppIdUri(item: AppRegItem): Promise<void> {
-		// Prompt the user to confirm the removal.
-		const answer = await window.showWarningMessage("Do you want to remove the Application ID URI?", "Yes", "No");
+	// Deletes an App Id Uri.
+	async deleteAppIdUri(item: AppRegItem): Promise<void> {
+		// Prompt the user to confirm the deletion.
+		const answer = await window.showWarningMessage(`Do you want to delete the Application ID URI ${item.label}?`, "Yes", "No");
 
-		// If the user confirms the removal then remove it.
+		const allAppIdentifierUris: string[] | undefined = await this.getExistingAppIdUris(item);
+
+		// If the array is undefined then it'll be an Azure CLI authentication issue.
+		if (allAppIdentifierUris === undefined) {
+			return;
+		}
+
+		allAppIdentifierUris.splice(allAppIdentifierUris.indexOf(item.label!.toString()), 1);
+
+		// If the user confirms the deletion then delete it.
 		if (answer === "Yes") {
-			const status = this.indicateChange("Removing Application ID URI...", item);
-			await this.updateApplication(item.objectId!, { identifierUris: [] }, status);
+			const status = this.indicateChange("Deleting Application ID URI...", item);
+			await this.updateApplication(item.objectId!, { identifierUris: allAppIdentifierUris }, status);
 		}
 	}
 
@@ -340,15 +387,18 @@ export class ApplicationService extends ServiceBase {
 	async inputAppIdUri(
 		item: AppRegItem,
 		signInAudience: string,
-		validation: (value: string, signInAudience: string) => string | undefined
+		existingUris: string[],
+		isEditing: boolean,
+		oldValue: string | undefined,
+		validation: (value: string, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined) => string | undefined
 	): Promise<string | undefined> {
 		return await window.showInputBox({
 			placeHolder: "Application ID URI",
 			prompt: "Set Application ID URI",
-			value: item.value! === "Not set" ? `api://${item.appId!}` : item.value!,
-			title: "Edit Application ID URI",
+			value: item.value! === "Not set" ? `api://${item.appId!}` : isEditing === true ? item.value! : undefined,
+			title: `${isEditing === false ? "Add" : "Edit"} Application ID URI`,
 			ignoreFocusOut: true,
-			validateInput: (value) => validation(value, signInAudience)
+			validateInput: (value) => validation(value, signInAudience, existingUris, isEditing, oldValue)
 		});
 	}
 
@@ -365,5 +415,16 @@ export class ApplicationService extends ServiceBase {
 			ignoreFocusOut: true,
 			validateInput: (value) => validation(value)
 		});
+	}
+
+	// Gets a list of existing App Id URIs for the application registration.
+	private async getExistingAppIdUris(item: AppRegItem): Promise<string[] | undefined> {
+		const result: GraphResult<Application> = await this.graphRepository.getApplicationDetailsPartial(item.objectId!, "identifierUris");
+		if (result.success === true && result.value !== undefined) {
+			return result.value.identifierUris;
+		} else {
+			await this.handleError(result.error);
+			return undefined;
+		}
 	}
 }

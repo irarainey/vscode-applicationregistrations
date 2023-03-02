@@ -308,25 +308,61 @@ describe("Application Service Tests", () => {
 		expect(validationSpy).toHaveBeenCalled();
 	});
 
-	test("Edit App Id Uri with unset value", async () => {
+	test("Add App Id Uri successfully", async () => {
 		// Arrange
-		item = { ...item, value: "Not set", contextValue: "APPID-URI" };
-		vscode.window.showInputBox = jest.fn().mockResolvedValue("api://test.com");
+		const newAppIdUri: string = "api://test.com";
+		item = { ...item, value: "Not set", contextValue: "APPID-URIS" };
+		vscode.window.showInputBox = jest.fn().mockResolvedValue(newAppIdUri);
+		jest.spyOn(applicationService, "inputAppIdUri");
 
 		// Act
-		await applicationService.editAppIdUri(item);
+		await applicationService.addAppIdUri(item);
 
 		// Assert
-		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APPID-URI-PARENT");
+		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APPID-URIS");
+		expect(applicationService.inputAppIdUri).toHaveBeenCalled();
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(triggerCompleteSpy).toHaveBeenCalled();
-		expect(treeItem!.children![0].label).toEqual("api://test.com");
+		expect(treeItem!.children?.length).toEqual(2);
 	});
 
+	test("Add App Id Uri with get existing error", async () => {
+		// Arrange
+		item = { ...item, value: "Not set", contextValue: "APPID-URIS" };
+		const error = new Error("Add App Id Uri with get existing error");
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
+
+		// Act
+		await applicationService.addAppIdUri(item);
+
+		// Assert
+		expect(graphSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
+	});
+
+	test("Add App Id Uri with duplicate validation error", async () => {
+		// Arrange
+		const newAppIdUri: string = "https://firsttestapp.com";
+		item = { ...item, contextValue: "APPID-URIS" };
+		const validationSpy = jest.spyOn(validation, "validateAppIdUri");
+		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined, validation: (value: string, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined) => string | undefined) => {
+			const result = validation(newAppIdUri, signInAudience, existingUris, isEditing, oldValue);
+			return result === undefined ? newAppIdUri : undefined;
+		});
+
+		// Act
+		await applicationService.addAppIdUri(item);
+
+		// Assert
+		expect(applicationService.inputAppIdUri).toHaveBeenCalled();
+		expect(validationSpy).toHaveReturnedWith("The App Id URI specified already exists in this application.");
+		expect(statusBarSpy).toHaveBeenCalled();
+	});
+	
 	test("Edit App Id Uri with existing value", async () => {
 		// Arrange
 		const newAppIdUri: string = "api://test.com";
-		item = { ...item, value: "api://oldtest.com", contextValue: "APPID-URI" };
+		item = { ...item, label: "api://oldtest.com", value: "api://oldtest.com", contextValue: "APPID-URI" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue(newAppIdUri);
 		jest.spyOn(applicationService, "inputAppIdUri");
 
@@ -334,21 +370,49 @@ describe("Application Service Tests", () => {
 		await applicationService.editAppIdUri(item);
 
 		// Assert
-		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APPID-URI-PARENT");
+		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APPID-URIS");
 		expect(applicationService.inputAppIdUri).toHaveBeenCalled();
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(triggerCompleteSpy).toHaveBeenCalled();
 		expect(treeItem!.children![0].label).toEqual(newAppIdUri);
 	});
 
+	test("Edit App Id Uri with get existing error", async () => {
+		// Arrange
+		const error = new Error("Edit App Id Uri with get existing error");
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
+		item = { ...item, label: "api://oldtest.com", value: "api://oldtest.com", contextValue: "APPID-URI" };
+
+		// Act
+		await applicationService.editAppIdUri(item);
+
+		// Assert
+		expect(graphSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
+	});
+
+	test("Delete App Id Uri with get existing error", async () => {
+		// Arrange
+		const error = new Error("Delete App Id Uri with get existing error");
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
+		item = { ...item, label: "api://oldtest.com", value: "api://oldtest.com", contextValue: "APPID-URI" };
+
+		// Act
+		await applicationService.deleteAppIdUri(item);
+
+		// Assert
+		expect(graphSpy).toHaveBeenCalled();
+		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
+	});
+
 	test("Edit App Id Uri with existing value with validation", async () => {
 		// Arrange
 		const newAppIdUri: string = "api://test.com";
-		item = { ...item, value: "api://oldtest.com", contextValue: "APPID-URI" };
+		item = { ...item, label: "api://oldtest.com", value: "api://oldtest.com", contextValue: "APPID-URI" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue(newAppIdUri);
 		const validationSpy = jest.spyOn(validation, "validateAppIdUri");
-		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined) => {
-			const result = validation(newAppIdUri, signInAudience);
+		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined, validation: (value: string, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined) => string | undefined) => {
+			const result = validation(newAppIdUri, signInAudience, existingUris, isEditing, oldValue);
 			return result === undefined ? newAppIdUri : undefined;
 		});
 
@@ -356,7 +420,7 @@ describe("Application Service Tests", () => {
 		await applicationService.editAppIdUri(item);
 
 		// Assert
-		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APPID-URI-PARENT");
+		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APPID-URIS");
 		expect(applicationService.inputAppIdUri).toHaveBeenCalled();
 		expect(validationSpy).toHaveBeenCalled();
 		expect(statusBarSpy).toHaveBeenCalled();
@@ -367,11 +431,11 @@ describe("Application Service Tests", () => {
 	test("Edit App Id Uri with trailing slash error for AAD audience", async () => {
 		// Arrange
 		const newAppIdUri: string = "api://test.com/";
-		item = { ...item, value: "api://oldtest.com", contextValue: "APPID-URI" };
+		item = { ...item, label: "api://oldtest.com", value: "api://oldtest.com", contextValue: "APPID-URI" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue(newAppIdUri);
 		const validationSpy = jest.spyOn(validation, "validateAppIdUri");
-		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined) => {
-			const result = validation(newAppIdUri, signInAudience);
+		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined, validation: (value: string, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined) => string | undefined) => {
+			const result = validation(newAppIdUri, signInAudience, existingUris, isEditing, oldValue);
 			expect(result).toBe("The Application ID URI cannot end with a trailing slash.");
 			return result;
 		});
@@ -387,11 +451,11 @@ describe("Application Service Tests", () => {
 	test("Edit App Id Uri with scheme error for AAD audience", async () => {
 		// Arrange
 		const newAppIdUri: string = "test.com";
-		item = { ...item, value: "api://oldtest.com", contextValue: "APPID-URI" };
+		item = { ...item, label: "api://oldtest.com", value: "api://oldtest.com", contextValue: "APPID-URI" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue(newAppIdUri);
 		const validationSpy = jest.spyOn(validation, "validateAppIdUri");
-		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined) => {
-			const result = validation(newAppIdUri, signInAudience);
+		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined, validation: (value: string, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined) => string | undefined) => {
+			const result = validation(newAppIdUri, signInAudience, existingUris, isEditing, oldValue);
 			expect(result).toBe("The Application ID URI is not valid. It must start with http://, https://, api://, MS-APPX://, or customScheme://.");
 			return result;
 		});
@@ -407,11 +471,11 @@ describe("Application Service Tests", () => {
 	test("Edit App Id Uri with wildcard error for AAD audience", async () => {
 		// Arrange
 		const newAppIdUri: string = "api://test.com/*";
-		item = { ...item, value: "api://oldtest.com", contextValue: "APPID-URI" };
+		item = { ...item, label: "api://oldtest.com", value: "api://oldtest.com", contextValue: "APPID-URI" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue(newAppIdUri);
 		const validationSpy = jest.spyOn(validation, "validateAppIdUri");
-		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined) => {
-			const result = validation(newAppIdUri, signInAudience);
+		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined, validation: (value: string, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined) => string | undefined) => {
+			const result = validation(newAppIdUri, signInAudience, existingUris, isEditing, oldValue);
 			expect(result).toBe("Wildcards are not supported.");
 			return result;
 		});
@@ -427,11 +491,11 @@ describe("Application Service Tests", () => {
 	test("Edit App Id Uri with length error for AAD audience", async () => {
 		// Arrange
 		const newAppIdUri: string = "api://test.com/".padEnd(256, "X");
-		item = { ...item, value: "api://oldtest.com", contextValue: "APPID-URI" };
+		item = { ...item, label: "api://oldtest.com", value: "api://oldtest.com", contextValue: "APPID-URI" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue(newAppIdUri);
 		const validationSpy = jest.spyOn(validation, "validateAppIdUri");
-		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined) => {
-			const result = validation(newAppIdUri, signInAudience);
+		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined, validation: (value: string, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined) => string | undefined) => {
+			const result = validation(newAppIdUri, signInAudience, existingUris, isEditing, oldValue);
 			expect(result).toBe("The Application ID URI is not valid. A URI cannot be longer than 255 characters.");
 			return result;
 		});
@@ -448,12 +512,12 @@ describe("Application Service Tests", () => {
 		// Arrange
 		await treeDataProvider.render();
 		const newAppIdUri: string = "cheese://test.com";
-		item = { ...item, value: "api://oldtest.com", contextValue: "APPID-URI" };
+		item = { ...item, label: "api://oldtest.com", value: "api://oldtest.com", contextValue: "APPID-URI" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue(newAppIdUri);
 		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "PersonalMicrosoftAccount" }));
 		const validationSpy = jest.spyOn(validation, "validateAppIdUri");
-		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined) => {
-			const result = validation(newAppIdUri, signInAudience);
+		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined, validation: (value: string, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined) => string | undefined) => {
+			const result = validation(newAppIdUri, signInAudience, existingUris, isEditing, oldValue);
 			expect(result).toBe("The Application ID URI is not valid. It must start with http://, https://, or api://.");
 			return result;
 		});
@@ -466,16 +530,37 @@ describe("Application Service Tests", () => {
 		expect(validationSpy).toHaveBeenCalled();
 	});
 
+	test("Add App Id Uri with total error for AAD and consumer audiences", async () => {
+		// Arrange
+		const newAppIdUri: string = "api://test.com";
+		item = { ...item, contextValue: "APPID-URIS" };
+		vscode.window.showInputBox = jest.fn().mockResolvedValue(newAppIdUri);
+		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "PersonalMicrosoftAccount" }));
+		const validationSpy = jest.spyOn(validation, "validateAppIdUri");
+		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, _existingUris: string[], isEditing: boolean, oldValue: string | undefined, validation: (value: string, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined) => string | undefined) => {
+			const result = validation(newAppIdUri, signInAudience, Array.from({ length: 50 }, (_, i) => `https://web${i}.com`), isEditing, oldValue);
+			expect(result).toBe("The Application ID URI cannot be added. A maximum of 50 URIs can be added to an application with the specified sign-in audience.");
+			return result;
+		});
+
+		// Act
+		await applicationService.addAppIdUri(item);
+
+		// Assert
+		expect(applicationService.inputAppIdUri).toHaveBeenCalled();
+		expect(validationSpy).toHaveBeenCalled();
+	});
+
 	test("Edit App Id Uri with wildcard error for AAD and consumer audiences", async () => {
 		// Arrange
 		await treeDataProvider.render();
 		const newAppIdUri: string = "api://test.com/*";
-		item = { ...item, value: "api://oldtest.com", contextValue: "APPID-URI" };
+		item = { ...item, label: "api://oldtest.com", value: "api://oldtest.com", contextValue: "APPID-URI" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue(newAppIdUri);
 		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "PersonalMicrosoftAccount" }));
 		const validationSpy = jest.spyOn(validation, "validateAppIdUri");
-		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined) => {
-			const result = validation(newAppIdUri, signInAudience);
+		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined, validation: (value: string, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined) => string | undefined) => {
+			const result = validation(newAppIdUri, signInAudience, existingUris, isEditing, oldValue);
 			expect(result).toBe("Wildcards, fragments, and query strings are not supported.");
 			return result;
 		});
@@ -492,12 +577,12 @@ describe("Application Service Tests", () => {
 		// Arrange
 		await treeDataProvider.render();
 		const newAppIdUri: string = "api://test.com/".padEnd(121, "X");
-		item = { ...item, value: "api://oldtest.com", contextValue: "APPID-URI" };
+		item = { ...item, label: "api://oldtest.com", value: "api://oldtest.com", contextValue: "APPID-URI" };
 		vscode.window.showInputBox = jest.fn().mockResolvedValue(newAppIdUri);
 		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "PersonalMicrosoftAccount" }));
 		const validationSpy = jest.spyOn(validation, "validateAppIdUri");
-		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, validation: (value: string, signInAudience: string) => string | undefined) => {
-			const result = validation(newAppIdUri, signInAudience);
+		jest.spyOn(applicationService, "inputAppIdUri").mockImplementation(async (_item: AppRegItem, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined, validation: (value: string, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined) => string | undefined) => {
+			const result = validation(newAppIdUri, signInAudience, existingUris, isEditing, oldValue);
 			expect(result).toBe("The Application ID URI is not valid. A URI cannot be longer than 120 characters.");
 			return result;
 		});
@@ -533,15 +618,18 @@ describe("Application Service Tests", () => {
 		expect(triggerErrorSpy).toHaveBeenCalledWith(error, undefined);
 	});
 
-	test("Remove App Id Uri", async () => {
+	test("Delete Single App Id Uri", async () => {
+		// Arrange
+		item = { ...item, label: "api://oldtest.com", value: "api://oldtest.com", contextValue: "APPID-URI" };
+
 		// Act
-		await applicationService.removeAppIdUri(item);
+		await applicationService.deleteAppIdUri(item);
 
 		// Assert
-		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APPID-URI-PARENT");
+		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APPID-URIS");
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(triggerCompleteSpy).toHaveBeenCalled();
-		expect(treeItem!.children![0].label).toEqual("Not set");
+		expect(treeItem!.children?.length).toEqual(0);
 	});
 
 	test("Delete application successfully", async () => {

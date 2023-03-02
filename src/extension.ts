@@ -105,8 +105,9 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.disableExposedApiScope`, async (item) => await oauth2PermissionScopeService.changeState(item, false)));
 
 	// App Id URI Commands
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAppIdUri`, async (item) => await applicationService.addAppIdUri(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editAppIdUri`, async (item) => await applicationService.editAppIdUri(item)));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeAppIdUri`, async (item) => await applicationService.removeAppIdUri(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteAppIdUri`, async (item) => await applicationService.deleteAppIdUri(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyAppIdUri`, (item) => copyValue(item)));
 
 	// Logout URL Commands

@@ -1,3 +1,7 @@
+## 0.11.0
+
+- Added functionality to manage multiple Application Id URIs.
+
 ## 0.10.0
 
 - Added functionality to view and manage deleted applications.

@@ -7,10 +7,15 @@
 	"configurations": [
 		{
 			"name": "Run Extension",
+			"outFiles": [
+				"${workspaceFolder}/dist/*.js"
+			],
 			"type": "extensionHost",
 			"request": "launch",
 			"args": ["--extensionDevelopmentPath=${workspaceFolder}"],
-			"preLaunchTask": "npm: esbuild"
+			"preLaunchTask": "npm: esbuild",
+			"sourceMaps": true,
+			"smartStep": true
 		}
 	]
 }
