@@ -53,20 +53,16 @@ export async function activate(context: ExtensionContext) {
 		}
 	});
 
-	// Command Palette Commands
+	// Authentication Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdSignIn`, async () => await signInUser(treeDataProvider, accountProvider)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdSignOut`, async () => await signOutUser(treeDataProvider, accountProvider)));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdAddApp`, async () => await applicationService.add()));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdRefreshApps`, async () => await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."))));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdFilterApps`, async () => await treeDataProvider.filter()));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdTenantInfo`, async () => await organizationService.showTenantInformation()));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdChangeApplicationView`, async (item) => await applicationService.changeView()));
-
+	
 	// Menu Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addApp`, async () => await applicationService.add()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshApps`, async () => await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."))));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.filterApps`, async () => await treeDataProvider.filter()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.tenantInfo`, async () => await organizationService.showTenantInformation()));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.changeApplicationView`, async () => await applicationService.changeView()));
 
 	// Application Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteApp`, async (item) => await applicationService.delete(item)));
@@ -78,7 +74,6 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.openAppInEntraPortal`, async (item) => await applicationService.openInEntraPortal(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.restoreApplication`, async (item) => await applicationService.restore(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteApplicationPermanent`, async (item) => await applicationService.deletePermanently(item)));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.changeApplicationView`, async (item) => await applicationService.changeView()));
 	
 	// App Role Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAppRole`, async (item) => await appRoleService.add(item)));
