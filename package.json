@@ -307,7 +307,8 @@
       },
       {
         "command": "appRegistrations.refreshApps",
-        "title": "Refresh",
+        "category": "Application Registrations",
+        "title": "Refresh List",
         "icon": {
           "light": "resources/icons/light/refresh.svg",
           "dark": "resources/icons/dark/refresh.svg"
@@ -315,6 +316,7 @@
       },
       {
         "command": "appRegistrations.changeApplicationView",
+        "category": "Application Registrations",
         "title": "Change Application View",
         "icon": {
           "light": "resources/icons/light/eye.svg",
@@ -323,7 +325,8 @@
       },
       {
         "command": "appRegistrations.filterApps",
-        "title": "Filter",
+        "category": "Application Registrations",
+        "title": "Filter Application List",
         "icon": {
           "light": "resources/icons/light/filter.svg",
           "dark": "resources/icons/dark/filter.svg"
@@ -331,7 +334,8 @@
       },
       {
         "command": "appRegistrations.addApp",
-        "title": "Add",
+        "category": "Application Registrations",
+        "title": "Add New Application",
         "icon": {
           "light": "resources/icons/light/add.svg",
           "dark": "resources/icons/dark/add.svg"
@@ -339,46 +343,33 @@
       },
       {
         "command": "appRegistrations.tenantInfo",
-        "title": "Tenant Information",
+        "category": "Application Registrations",
+        "title": "Show Tenant Information",
         "icon": {
           "light": "resources/icons/light/info.svg",
           "dark": "resources/icons/dark/info.svg"
         }
       },
       {
-        "command": "appRegistrations.cmdRefreshApps",
-        "title": "Application Registrations: Refresh List"
-      },
-      {
-        "command": "appRegistrations.cmdAddApp",
-        "title": "Application Registrations: Add New Application"
-      },
-      {
-        "command": "appRegistrations.cmdFilterApps",
-        "title": "Application Registrations: Filter List"
-      },
-      {
-        "command": "appRegistrations.cmdTenantInfo",
-        "title": "Application Registrations: Show Tenant Information"
-      },
-      {
         "command": "appRegistrations.cmdSignOut",
-        "title": "Application Registrations: Sign Out of Azure CLI"
+        "category": "Application Registrations",
+        "title": "Sign Out of Azure CLI"
       },
       {
         "command": "appRegistrations.cmdSignIn",
-        "title": "Application Registrations: Sign In to Azure CLI"
-      },
-      {
-        "command": "appRegistrations.cmdChangeApplicationView",
-        "title": "Application Registrations: Change Application View"
+        "category": "Application Registrations",
+        "title": "Sign In to Azure CLI"
       }
     ],
     "menus": {
       "commandPalette": [
         {
-          "command": "appRegistrations.changeApplicationView",
-          "when": "false"
+          "command": "appRegistrations.filterApps",
+          "when": "config.applicationRegistrations.useEventualConsistency"
+        },
+        {
+          "command": "appRegistrations.addApp",
+          "when": "config.applicationRegistrations.applicationListView != 'Deleted Applications'"
         },
         {
           "command": "appRegistrations.restoreApplication",
@@ -398,22 +389,6 @@
         },
         {
           "command": "appRegistrations.removeLogoutUrl",
-          "when": "false"
-        },
-        {
-          "command": "appRegistrations.refreshApps",
-          "when": "false"
-        },
-        {
-          "command": "appRegistrations.addApp",
-          "when": "false"
-        },
-        {
-          "command": "appRegistrations.filterApps",
-          "when": "false"
-        },
-        {
-          "command": "appRegistrations.tenantInfo",
           "when": "false"
         },
         {
@@ -605,14 +580,9 @@
           "group": "navigation@1"
         },
         {
-          "command": "appRegistrations.filterApps",
-          "when": "view == appRegistrations && config.applicationRegistrations.useEventualConsistency",
-          "group": "navigation@2"
-        },
-        {
           "command": "appRegistrations.addApp",
           "when": "view == appRegistrations && config.applicationRegistrations.applicationListView != 'Deleted Applications'",
-          "group": "navigation@3"
+          "group": "navigation@2"
         },
         {
           "command": "appRegistrations.refreshApps",
