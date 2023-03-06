@@ -51,7 +51,7 @@ Please ensure your Azure CLI is authenticated to the correct tenant using `az lo
 
 ![VS Code Sign In](resources/images/sign_in.png)
 
-Manual commands are also available via the command palette to allow you to sign into a different tenant or sign out of the Azure CLI. Other additional top level application commands are also available, as can be seen in the image below.
+Manual commands are also available via the command palette to allow you to sign into a different tenant or sign out of the Azure CLI. Other additional top level application commands are also available, as can be seen in the image below. All top level commands also have keyboard shortcuts assigned to them.
 
 ![Commands](resources/images/commands.png)
 
