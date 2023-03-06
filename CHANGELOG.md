@@ -1,3 +1,8 @@
+## 0.12.0
+
+- Restricted when command palette commands are shown to only show when extension panel is visible.
+- Added keyboard shortcuts for all top-level commands.
+
 ## 0.11.0
 
 - Added functionality to manage multiple Application Id URIs.

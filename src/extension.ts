@@ -54,14 +54,14 @@ export async function activate(context: ExtensionContext) {
 	});
 
 	// Authentication Commands
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdSignIn`, async () => await signInUser(treeDataProvider, accountProvider)));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cmdSignOut`, async () => await signOutUser(treeDataProvider, accountProvider)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cliSignIn`, async () => await signInUser(treeDataProvider, accountProvider)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.cliSignOut`, async () => await signOutUser(treeDataProvider, accountProvider)));
 	
 	// Menu Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addApp`, async () => await applicationService.add()));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshApps`, async () => await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."))));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.filterApps`, async () => await treeDataProvider.filter()));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.tenantInfo`, async () => await organizationService.showTenantInformation()));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.refreshAppList`, async () => await treeDataProvider.render(setStatusBarMessage("Refreshing Application Registrations..."))));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.filterAppList`, async () => await treeDataProvider.filter()));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.showTenantInfo`, async () => await organizationService.showTenantInformation()));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.changeApplicationView`, async () => await applicationService.changeView()));
 
 	// Application Commands
@@ -136,7 +136,6 @@ export async function activate(context: ExtensionContext) {
 
 	// Common Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.copyValue`, (item) => copyValue(item)));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.signInToAzure`, async () => await signInUser(treeDataProvider, accountProvider)));
 
 	// Register the tree data provider.
 	window.registerTreeDataProvider(VIEW_NAME, treeDataProvider);
