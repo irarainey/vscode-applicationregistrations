@@ -100,12 +100,9 @@ The following functionality has not yet been implemented, but is on the backlog 
 
 * Implicit flow settings
 * Public flow settings
-* Pre-authorized applications
 * Android / iOS Redirect URIs
 * Optional token claims
 * Federation credentials
 
 ## Notes
-This extension was created both as a learning exercise, and to address the common annoyances of managing Application Registrations. It is not officially supported and you use it at your own risk.
-
-It has a dependency on the [Azure Tools extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack), but only because it places the application registrations view into the Azure view container.
+This extension is not officially supported and you use it at your own risk. It has a dependency on the [Azure Tools extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack), but only because it places the application registrations view into the Azure view container.

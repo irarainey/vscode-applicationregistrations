@@ -1,3 +1,7 @@
+## 0.13.0
+
+- TBD
+
 ## 0.12.0
 
 - Restricted when command palette commands are shown to only show when extension panel is visible.
