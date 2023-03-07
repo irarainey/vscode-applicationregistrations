@@ -20,7 +20,9 @@ import {
 	AppRole,
 	RequiredResourceAccess,
 	PermissionScope,
-	ServicePrincipal
+	ServicePrincipal,
+	ApiApplication,
+	NullableOption
 } from "@microsoft/microsoft-graph-types";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegItem } from "../models/app-reg-item";
@@ -233,10 +235,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 					.getApplicationDetailsPartial(element.objectId!, "identifierUris")
 					.then(async (result: GraphResult<Application>) => {
 						if (result.success === true && result.value !== undefined) {
-							return await this.getAppIdUris(
-								element,
-								result.value.identifierUris!
-							);
+							return await this.getAppIdUris(element, result.value.identifierUris!);
 						} else {
 							await this.handleError(result.error);
 							return undefined;
@@ -340,7 +339,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 						if (result.success === true && result.value !== undefined) {
 							return await this.getApplicationExposedApiPermissions(
 								element,
-								result.value.api?.oauth2PermissionScopes!
+								result.value.api
 							);
 						} else {
 							await this.handleError(result.error);
@@ -1007,12 +1006,9 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 			});
 		});
 	}
-	
+
 	// Returns the App Id URIs for the given application
-	private async getAppIdUris(
-		element: AppRegItem,
-		identifierUris: string[]
-	): Promise<AppRegItem[]> {
+	private async getAppIdUris(element: AppRegItem, identifierUris: string[]): Promise<AppRegItem[]> {
 		return identifierUris.map((identifierUri) => {
 			return new AppRegItem({
 				label: identifierUri,
@@ -1207,54 +1203,90 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 	// Returns the exposed api permissions for the given application
 	private async getApplicationExposedApiPermissions(
 		element: AppRegItem,
-		scopes: PermissionScope[]
+		api: NullableOption<ApiApplication> | undefined
 	): Promise<AppRegItem[]> {
-		return scopes.map((scope) => {
-			const iconColour = scope.isEnabled! ? "editor.foreground" : "disabledForeground";
-			return new AppRegItem({
-				label: scope.adminConsentDisplayName!,
-				context: `SCOPE-${scope.isEnabled! === true ? "ENABLED" : "DISABLED"}`,
-				iconPath: new ThemeIcon("list-tree", new ThemeColor(iconColour)),
-				baseIcon: new ThemeIcon("list-tree", new ThemeColor(iconColour)),
-				objectId: element.objectId,
-				value: scope.id!,
-				state: scope.isEnabled!,
-				children: [
-					new AppRegItem({
-						label: `Scope: ${scope.value!}`,
-						context: "SCOPE-VALUE",
-						objectId: element.objectId,
-						value: scope.id!,
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
-					}),
-					new AppRegItem({
-						label: `Description: ${scope.adminConsentDescription!}`,
-						context: "SCOPE-DESCRIPTION",
-						objectId: element.objectId,
-						value: scope.id!,
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
-					}),
-					new AppRegItem({
-						label: `Consent: ${scope.type! === "User" ? "Admins and Users" : "Admins Only"}`,
-						context: "SCOPE-CONSENT",
-						objectId: element.objectId,
-						value: scope.id!,
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
-					}),
-					new AppRegItem({
-						label: `Enabled: ${scope.isEnabled! ? "Yes" : "No"}`,
-						context: "SCOPE-STATE",
-						objectId: element.objectId,
-						value: scope.id!,
-						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
-						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
+		let exposedApiChildren: AppRegItem[] = [];
+		if (api !== undefined && api !==null && api!.oauth2PermissionScopes!.length > 0) {
+			exposedApiChildren.push(
+				new AppRegItem({
+					label: "Authorized Client Applications",
+					context: "AUTHORIZED-CLIENTS",
+					iconPath: new ThemeIcon("preview"),
+					baseIcon: new ThemeIcon("preview"),
+					objectId: element.objectId,
+					tooltip: "Authorizing a client application indicates that this API trusts the application and users should not be asked to consent when the client calls this API.",
+					children: api!.preAuthorizedApplications!.length === 0 ? undefined : api!.preAuthorizedApplications!.map((client) => {
+						return new AppRegItem({
+							label: client.appId!,
+							context: "AUTHORIZED-CLIENT",
+							iconPath: new ThemeIcon("preview"),
+							baseIcon: new ThemeIcon("preview"),
+							objectId: element.objectId,
+							value: client.appId!,
+							children: client.delegatedPermissionIds!.map((scope) => {
+								return new AppRegItem({
+									label: api!.oauth2PermissionScopes!.find((scp) => scp.id === scope)!.adminConsentDisplayName!,
+									context: "AUTHORIZED-CLIENT-SCOPE",
+									iconPath: new ThemeIcon("list-tree"),
+									baseIcon: new ThemeIcon("list-tree"),
+									objectId: element.objectId,
+									value: scope
+								});
+							})
+						});
 					})
-				]
-			});
-		});
+				})
+			);
+			exposedApiChildren = exposedApiChildren.concat(
+				api!.oauth2PermissionScopes!.map((scope) => {
+					const iconColour = scope.isEnabled! ? "editor.foreground" : "disabledForeground";
+					return new AppRegItem({
+						label: scope.adminConsentDisplayName!,
+						context: `SCOPE-${scope.isEnabled! === true ? "ENABLED" : "DISABLED"}`,
+						iconPath: new ThemeIcon("list-tree", new ThemeColor(iconColour)),
+						baseIcon: new ThemeIcon("list-tree", new ThemeColor(iconColour)),
+						objectId: element.objectId,
+						value: scope.id!,
+						state: scope.isEnabled!,
+						children: [
+							new AppRegItem({
+								label: `Scope: ${scope.value!}`,
+								context: "SCOPE-VALUE",
+								objectId: element.objectId,
+								value: scope.id!,
+								iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
+								baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
+							}),
+							new AppRegItem({
+								label: `Description: ${scope.adminConsentDescription!}`,
+								context: "SCOPE-DESCRIPTION",
+								objectId: element.objectId,
+								value: scope.id!,
+								iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
+								baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
+							}),
+							new AppRegItem({
+								label: `Consent: ${scope.type! === "User" ? "Admins and Users" : "Admins Only"}`,
+								context: "SCOPE-CONSENT",
+								objectId: element.objectId,
+								value: scope.id!,
+								iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
+								baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
+							}),
+							new AppRegItem({
+								label: `Enabled: ${scope.isEnabled! ? "Yes" : "No"}`,
+								context: "SCOPE-STATE",
+								objectId: element.objectId,
+								value: scope.id!,
+								iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
+								baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
+							})
+						]
+					});
+				})
+			);
+		}
+		return exposedApiChildren;
 	}
 
 	// Returns the app roles for the given application
