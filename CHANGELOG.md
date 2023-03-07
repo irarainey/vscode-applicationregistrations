@@ -2,6 +2,10 @@
 
 - TBD
 
+## 0.12.1
+
+- Fixed an issue signing into Azure CLI.
+
 ## 0.12.0
 
 - Restricted when command palette commands are shown to only show when extension panel is visible.

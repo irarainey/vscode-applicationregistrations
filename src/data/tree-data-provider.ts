@@ -123,7 +123,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 						context: "SIGN-IN",
 						iconPath: new ThemeIcon("sign-in", new ThemeColor("editor.foreground")),
 						command: {
-							command: "appRegistrations.signInToAzure",
+							command: "appRegistrations.cliSignIn",
 							title: SIGNIN_COMMAND_TEXT
 						}
 					})
