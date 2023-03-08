@@ -678,7 +678,7 @@
 				},
 				{
 					"command": "appRegistrations.removeSingleScope",
-					"when": "view == appRegistrations && viewItem == API-PERMISSIONS-SCOPE",
+					"when": "view == appRegistrations && viewItem == API-PERMISSIONS-SCOPE || viewItem == API-PERMISSIONS-SCOPE-UNKNOWN",
 					"group": "appRegistrations@0"
 				},
 				{
@@ -693,7 +693,7 @@
 				},
 				{
 					"command": "appRegistrations.removeApiScopes",
-					"when": "view == appRegistrations && viewItem == API-PERMISSIONS-APP",
+					"when": "view == appRegistrations && viewItem == API-PERMISSIONS-APP || viewItem == API-PERMISSIONS-APP-UNKNOWN",
 					"group": "appRegistrations@1"
 				},
 				{

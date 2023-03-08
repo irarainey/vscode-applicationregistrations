@@ -2,6 +2,9 @@
 
 - Added functionality to manage authorised client applications for exposed api permissions.
 - Amended the display item for exposed api permissions to show scope value instead of admin display name as it's unique.
+- Added functionality to display deleted app roles and scopes when referenced by an application with an error indicator.
+- Fixed an issue where displaying deleted api permissions would cause an error.
+- Fixed an issue where displaying scopes from a deleted application would cause an error.
 
 ## 0.12.1
 
