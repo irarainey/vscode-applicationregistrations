@@ -1,6 +1,7 @@
 ## 0.13.0
 
-- TBD
+- Added functionality to manage authorised client applications for exposed api permissions.
+- Amended the display item for exposed api permissions to show scope value instead of admin display name as it's unique.
 
 ## 0.12.1
 

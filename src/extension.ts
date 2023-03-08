@@ -91,7 +91,6 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeApiScopes`, async (item) => await requiredResourceAccessService.removeApi(item)));
 
 	// Exposed API Scope Commands
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.renameExposedApiScope`, async (item) => await oauth2PermissionScopeService.editValue(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editExposedApiScopeValue`, async (item) => await oauth2PermissionScopeService.editValue(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addExposedApiScope`, async (item) => await oauth2PermissionScopeService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editExposedApiScope`, async (item) => await oauth2PermissionScopeService.edit(item)));

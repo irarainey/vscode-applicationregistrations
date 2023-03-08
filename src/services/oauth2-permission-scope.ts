@@ -124,22 +124,10 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		// Clear off the status bar message.
 		clearStatusBarMessage(check!);
 
-		// Get the existsing scope.
+		// Get the existing scope.
 		const scope = properties.api!.oauth2PermissionScopes!.filter((r) => r.id === item.value!)[0];
 
 		switch (item.contextValue) {
-			case "SCOPE-ENABLED":
-			case "SCOPE-DISABLED":
-				// Prompt the user for the new admin consent display name.
-				const adminConsentDisplayName = await this.inputAdminConsentDisplayName("Edit Exposed API Permission (1/1)", scope.adminConsentDisplayName!, validateScopeAdminDisplayName);
-
-				// If escape is pressed or the new display name is empty then return undefined.
-				if (adminConsentDisplayName === undefined) {
-					return undefined;
-				}
-
-				scope.adminConsentDisplayName = adminConsentDisplayName;
-				break;
 			case "SCOPE-VALUE":
 				const value = await this.inputValue("Edit Exposed API Permission (1/1)", scope.value!, true, properties.signInAudience!, properties.api!, validateScopeValue);
 
@@ -149,6 +137,17 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 				}
 
 				scope.value = value;
+				break;
+			case "SCOPE-NAME":
+				// Prompt the user for the new admin consent display name.
+				const adminConsentDisplayName = await this.inputAdminConsentDisplayName("Edit Exposed API Permission (1/1)", scope.adminConsentDisplayName!, validateScopeAdminDisplayName);
+
+				// If escape is pressed or the new display name is empty then return undefined.
+				if (adminConsentDisplayName === undefined) {
+					return undefined;
+				}
+
+				scope.adminConsentDisplayName = adminConsentDisplayName;
 				break;
 			case "SCOPE-DESCRIPTION":
 				// Prompt the user for the new admin consent description.
@@ -248,8 +247,8 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 
 		// Prompt the user for the new value.
 		return await window.showInputBox({
-			prompt: "Scope name",
-			placeHolder: "Enter a scope name (e.g. Files.Read)",
+			prompt: "Scope value",
+			placeHolder: "Enter a scope value (e.g. Files.Read)",
 			title: title,
 			ignoreFocusOut: true,
 			value: existingValue,

@@ -194,10 +194,6 @@
 				"title": "Add"
 			},
 			{
-				"command": "appRegistrations.renameExposedApiScope",
-				"title": "Rename"
-			},
-			{
 				"command": "appRegistrations.editExposedApiScope",
 				"title": "Edit"
 			},
@@ -488,10 +484,6 @@
 					"when": "false"
 				},
 				{
-					"command": "appRegistrations.renameExposedApiScope",
-					"when": "false"
-				},
-				{
 					"command": "appRegistrations.editExposedApiScope",
 					"when": "false"
 				},
@@ -710,11 +702,6 @@
 					"group": "appRegistrations@0"
 				},
 				{
-					"command": "appRegistrations.renameExposedApiScope",
-					"when": "view == appRegistrations && viewItem == SCOPE-DISABLED || viewItem == SCOPE-ENABLED",
-					"group": "appRegistrations@0"
-				},
-				{
 					"command": "appRegistrations.editExposedApiScope",
 					"when": "view == appRegistrations && viewItem == SCOPE-DISABLED || viewItem == SCOPE-ENABLED",
 					"group": "appRegistrations@1"
@@ -736,7 +723,7 @@
 				},
 				{
 					"command": "appRegistrations.editExposedApiScopeValue",
-					"when": "view == appRegistrations && viewItem == SCOPE-VALUE || viewItem == SCOPE-DESCRIPTION || viewItem == SCOPE-CONSENT",
+					"when": "view == appRegistrations && viewItem == SCOPE-NAME || viewItem == SCOPE-VALUE || viewItem == SCOPE-DESCRIPTION || viewItem == SCOPE-CONSENT",
 					"group": "appRegistrations@0"
 				},
 				{

@@ -337,10 +337,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 					.getApplicationDetailsPartial(element.objectId!, "api")
 					.then(async (result: GraphResult<Application>) => {
 						if (result.success === true && result.value !== undefined) {
-							return await this.getApplicationExposedApiPermissions(
-								element,
-								result.value.api
-							);
+							return await this.getApplicationExposedApiPermissions(element, result.value.api);
 						} else {
 							await this.handleError(result.error);
 							return undefined;
@@ -1206,7 +1203,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 		api: NullableOption<ApiApplication> | undefined
 	): Promise<AppRegItem[]> {
 		let exposedApiChildren: AppRegItem[] = [];
-		if (api !== undefined && api !==null && api!.oauth2PermissionScopes!.length > 0) {
+		if (api !== undefined && api !== null && api!.oauth2PermissionScopes!.length > 0) {
 			exposedApiChildren.push(
 				new AppRegItem({
 					label: "Authorized Client Applications",
@@ -1214,44 +1211,67 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 					iconPath: new ThemeIcon("preview"),
 					baseIcon: new ThemeIcon("preview"),
 					objectId: element.objectId,
-					tooltip: "Authorizing a client application indicates that this API trusts the application and users should not be asked to consent when the client calls this API.",
-					children: api!.preAuthorizedApplications!.length === 0 ? undefined : api!.preAuthorizedApplications!.map((client) => {
-						return new AppRegItem({
-							label: client.appId!,
-							context: "AUTHORIZED-CLIENT",
-							iconPath: new ThemeIcon("preview"),
-							baseIcon: new ThemeIcon("preview"),
-							objectId: element.objectId,
-							value: client.appId!,
-							children: client.delegatedPermissionIds!.map((scope) => {
-								return new AppRegItem({
-									label: api!.oauth2PermissionScopes!.find((scp) => scp.id === scope)!.adminConsentDisplayName!,
-									context: "AUTHORIZED-CLIENT-SCOPE",
-									iconPath: new ThemeIcon("list-tree"),
-									baseIcon: new ThemeIcon("list-tree"),
-									objectId: element.objectId,
-									value: scope
-								});
-							})
-						});
-					})
+					tooltip:
+						"Authorizing a client application indicates that this API trusts the application and users should not be asked to consent when the client calls this API.",
+					children:
+						api!.preAuthorizedApplications!.length === 0
+							? undefined
+							: await Promise.all(
+									api!.preAuthorizedApplications!.map(async (client) => {
+										let clientName: string = client.appId!;
+										const result: GraphResult<ServicePrincipal> =
+											await this.graphRepository.findServicePrincipalByAppId(client.appId!);
+										if (result.success === true && result.value !== undefined) {
+											clientName = result.value.displayName!;
+										}
+										return new AppRegItem({
+											label: clientName,
+											context: "AUTHORIZED-CLIENT",
+											iconPath: new ThemeIcon("preview"),
+											baseIcon: new ThemeIcon("preview"),
+											objectId: element.objectId,
+											value: client.appId!,
+											children: client.delegatedPermissionIds!.map((scope) => {
+												const child = api!.oauth2PermissionScopes!.find((scp) => scp.id === scope);
+												return new AppRegItem({
+													label: child!.value!,
+													context: "AUTHORIZED-CLIENT-SCOPE",
+													iconPath: new ThemeIcon("list-tree"),
+													baseIcon: new ThemeIcon("list-tree"),
+													objectId: element.objectId,
+													value: scope,
+													tooltip: child!.adminConsentDisplayName!
+												});
+											})
+										});
+									})
+							  )
 				})
 			);
 			exposedApiChildren = exposedApiChildren.concat(
 				api!.oauth2PermissionScopes!.map((scope) => {
 					const iconColour = scope.isEnabled! ? "editor.foreground" : "disabledForeground";
 					return new AppRegItem({
-						label: scope.adminConsentDisplayName!,
+						label: scope.value!,
 						context: `SCOPE-${scope.isEnabled! === true ? "ENABLED" : "DISABLED"}`,
 						iconPath: new ThemeIcon("list-tree", new ThemeColor(iconColour)),
 						baseIcon: new ThemeIcon("list-tree", new ThemeColor(iconColour)),
 						objectId: element.objectId,
 						value: scope.id!,
 						state: scope.isEnabled!,
+						tooltip: scope.adminConsentDisplayName!,
 						children: [
 							new AppRegItem({
 								label: `Scope: ${scope.value!}`,
 								context: "SCOPE-VALUE",
+								objectId: element.objectId,
+								value: scope.id!,
+								iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
+								baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
+							}),
+							new AppRegItem({
+								label: `Name: ${scope.adminConsentDisplayName!}`,
+								context: "SCOPE-NAME",
 								objectId: element.objectId,
 								value: scope.id!,
 								iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
