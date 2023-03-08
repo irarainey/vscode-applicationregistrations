@@ -55,7 +55,14 @@ const seedApplications: any[] = [
 					value: "Sample.Two"
 				}
 			],
-			preAuthorizedApplications: []
+			preAuthorizedApplications: [
+				{
+					"appId": "af019b40-4421-4734-bd8e-201c60d4e948",
+					"delegatedPermissionIds": [
+						"97956368-899b-4e0b-b51e-61743cb60f36"
+					]
+				}
+			]
 		},
 		appRoles: [
 			{
@@ -489,6 +496,14 @@ export const seedServicePrincipals = [
 				value: "Do.Something"
 			}
 		]
+	},
+	{
+		id: "0b8ca89e-c44f-4af3-a95a-575d1e758723",
+		appDisplayName: "Second Test App",
+		appId: "af019b40-4421-4734-bd8e-201c60d4e948",
+		displayName: "Second Test App",
+		appRoles: [],
+		oauth2PermissionScopes: []
 	}
 ];
 
