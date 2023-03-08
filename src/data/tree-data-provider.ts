@@ -1150,6 +1150,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 					iconPath: new ThemeIcon("preview"),
 					baseIcon: new ThemeIcon("preview"),
 					objectId: element.objectId,
+					value: element.resourceAppId!,
 					tooltip:
 						"Authorizing a client application indicates that this API trusts the application and users should not be asked to consent when the client calls this API.",
 					children:

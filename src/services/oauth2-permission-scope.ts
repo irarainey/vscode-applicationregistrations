@@ -8,7 +8,7 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { debounce } from "ts-debounce";
 import { GraphResult } from "../types/graph-result";
 import { clearStatusBarMessage, setStatusBarMessage } from "../utils/status-bar";
-import { validateScopeAdminDescription, validateScopeAdminDisplayName, validateScopeUserDisplayName, validateScopeValue } from "../utils/validation";
+import { validateDebouncedInput, validateScopeAdminDescription, validateScopeAdminDisplayName, validateScopeUserDisplayName, validateScopeValue } from "../utils/validation";
 import { sort } from "fast-sort";
 
 export class OAuth2PermissionScopeService extends ServiceBase {
@@ -17,19 +17,85 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		super(graphRepository, treeDataProvider);
 	}
 
-	async addToExistingAuthorisedClient(item: AppRegItem, existingAppId?: NullableOption<string> | undefined, existingAppName?: string): Promise<void> {
-		const startStep = existingAppId === undefined ? 0 : 2;
-		const numberOfSteps = existingAppId === undefined ? 1 : 3;
-		const apiAppName = existingAppId === undefined ? item.label : existingAppName;
+	// Add a scope to a new authorised client application.
+	async addAuthorisedClientScope(item: AppRegItem): Promise<void> {
+		// Debounce the validation function to prevent multiple calls to the Graph API.
+		const debouncedValidation = debounce(validateDebouncedInput, 500);
+
+		// Prompt the user for the new value.
+		const apiAppSearch = await window.showInputBox({
+			prompt: "Search for Application",
+			placeHolder: "Enter part of an Application name to build a list of matching applications.",
+			ignoreFocusOut: true,
+			title: "Add Authorized Client Application (1/3)",
+			validateInput: (value) => debouncedValidation(value)
+		});
+
+		// If the user cancels the input then return undefined.
+		if (apiAppSearch === undefined) {
+			return;
+		}
 
 		// Update the tree item icon to show the loading animation.
-		const status = this.indicateChange(`Loading Scopes for ${apiAppName}...`, item);
+		const status = this.indicateChange("Loading Applications...", item);
 
-		// Determine the application ID to use.
-		const appIdToUse = existingAppId === undefined ? item.value : existingAppId;
+		// Get the service principals that match the search criteria.
+		const result: GraphResult<ServicePrincipal[]> = await this.graphRepository.findServicePrincipalsByDisplayName(apiAppSearch);
+		if (result.success === false || result.value === undefined) {
+			await this.handleError(result.error);
+			return;
+		}
+
+		const servicePrincipals: ServicePrincipal[] = result.value;
+
+		// If there are no service principals found then drop out.
+		if (servicePrincipals.length === 0) {
+			window.showInformationMessage("No Applications were found that match the search criteria.", "OK");
+			clearStatusBarMessage(status!);
+			this.resetTreeItemIcon(item);
+			return;
+		}
+
+		// Sort the list of service principals by display name.
+		const newList = sort(servicePrincipals)
+			.asc((x) => x.appDisplayName)
+			.map((r) => {
+				return {
+					label: r.appDisplayName!,
+					description: r.appDescription!,
+					value: r.appId
+				};
+			});
+
+		clearStatusBarMessage(status!);
+		this.resetTreeItemIcon(item);
+
+		// Prompt the user for the new allowed member types.
+		const allowed = await window.showQuickPick(newList, {
+			placeHolder: "Select an Application",
+			title: "Add Authorized Client Application (2/3)",
+			ignoreFocusOut: true
+		});
+
+		// If the user cancels the input then return undefined.
+		if (allowed === undefined) {
+			return;
+		}
+
+		//Now we have the API application ID we can call the addToExisting method.
+		await this.addToExistingAuthorisedClient(item, allowed.value);
+	}
+
+	// Add a new scope to an existing authorised client application.
+	async addToExistingAuthorisedClient(item: AppRegItem, clientAppId?: NullableOption<string> | undefined): Promise<void> {
+		const startStep = clientAppId === undefined ? 0 : 2;
+		const numberOfSteps = clientAppId === undefined ? 1 : 3;
+
+		// Update the tree item icon to show the loading animation.
+		const status = this.indicateChange(`Loading available Scopes...`, item);
 
 		// Get the service principal for the application so we can get the scopes.
-		const result: GraphResult<ServicePrincipal> = await this.graphRepository.findServicePrincipalByAppId(appIdToUse!);
+		const result: GraphResult<ServicePrincipal> = await this.graphRepository.findServicePrincipalByAppId(item.value!);
 		if (result.success === false || result.value === undefined) {
 			await this.handleError(result.error);
 			return;
@@ -79,7 +145,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 			});
 		scopeItem = await window.showQuickPick(permissions, {
 			placeHolder: "Select a scope",
-			title: `Add Scope (${startStep + 1}/${numberOfSteps})`,
+			title: `Add Authorized Client Application (${startStep + 1}/${numberOfSteps})`,
 			ignoreFocusOut: true
 		});
 
@@ -97,7 +163,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		} else {
 			// Add the new scope to a new api app.
 			properties.api?.preAuthorizedApplications!.push({
-				appId: appIdToUse!,
+				appId: clientAppId!,
 				delegatedPermissionIds: [ scopeItem.value ]
 			});
 		}
@@ -106,10 +172,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		await this.updateApplication(item.objectId!, { api: properties.api }, addStatus);
 	}
 
-	async addAuthorisedClientScope(item: AppRegItem): Promise<void> {
-		
-	}
-
+	// Remove a scope from an authorized client application.
 	async removeAuthorisedClientScope(item: AppRegItem): Promise<void> {
 		// Prompt the user to confirm the removal.
 		const answer = await window.showWarningMessage(`Do you want to remove the Authorized Client Scope ${item.label}?`, "Yes", "No");
@@ -149,6 +212,7 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		}
 	}
 
+	// Remove an authorized client application.
 	async removeAuthorisedClient(item: AppRegItem): Promise<void> {
 		// Prompt the user to confirm the removal.
 		const answer = await window.showWarningMessage(`Do you want to remove the Authorized Client Application ${item.label}?`, "Yes", "No");
