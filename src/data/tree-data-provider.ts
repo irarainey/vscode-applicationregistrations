@@ -1266,17 +1266,26 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 		return roles.map((role) => {
 			const iconColour = role.isEnabled! ? "editor.foreground" : "disabledForeground";
 			return new AppRegItem({
-				label: role.displayName!,
+				label: role.value!,
 				context: `ROLE-${role.isEnabled! === true ? "ENABLED" : "DISABLED"}`,
 				iconPath: new ThemeIcon("person", new ThemeColor(iconColour)),
 				baseIcon: new ThemeIcon("person", new ThemeColor(iconColour)),
 				objectId: element.objectId,
 				value: role.id!,
 				state: role.isEnabled!,
+				tooltip: `${role!.description!}${role.isEnabled! ? "" : " (Disabled)"}`,
 				children: [
 					new AppRegItem({
 						label: `Value: ${role.value!}`,
 						context: "ROLE-VALUE",
+						objectId: element.objectId,
+						value: role.id!,
+						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),
+						baseIcon: new ThemeIcon("symbol-field", new ThemeColor(iconColour))
+					}),
+					new AppRegItem({
+						label: `Name: ${role.displayName!}`,
+						context: "ROLE-NAME",
 						objectId: element.objectId,
 						value: role.id!,
 						iconPath: new ThemeIcon("symbol-field", new ThemeColor(iconColour)),

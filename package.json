@@ -214,10 +214,6 @@
 				"title": "Disable"
 			},
 			{
-				"command": "appRegistrations.renameAppRole",
-				"title": "Rename"
-			},
-			{
 				"command": "appRegistrations.addAppRole",
 				"title": "Add"
 			},
@@ -504,10 +500,6 @@
 					"when": "false"
 				},
 				{
-					"command": "appRegistrations.renameAppRole",
-					"when": "false"
-				},
-				{
 					"command": "appRegistrations.addAppRole",
 					"when": "false"
 				},
@@ -732,18 +724,13 @@
 					"group": "appRegistrations@0"
 				},
 				{
-					"command": "appRegistrations.renameAppRole",
-					"when": "view == appRegistrations && viewItem == ROLE-DISABLED || viewItem == ROLE-ENABLED",
-					"group": "appRegistrations@0"
-				},
-				{
 					"command": "appRegistrations.editAppRole",
 					"when": "view == appRegistrations && viewItem == ROLE-DISABLED || viewItem == ROLE-ENABLED",
 					"group": "appRegistrations@1"
 				},
 				{
 					"command": "appRegistrations.editAppRoleValue",
-					"when": "view == appRegistrations && viewItem == ROLE-VALUE || viewItem == ROLE-DESCRIPTION || viewItem == ROLE-ALLOWED",
+					"when": "view == appRegistrations && viewItem == ROLE-VALUE || viewItem == ROLE-NAME || viewItem == ROLE-DESCRIPTION || viewItem == ROLE-ALLOWED",
 					"group": "appRegistrations@0"
 				},
 				{

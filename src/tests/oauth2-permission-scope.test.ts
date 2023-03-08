@@ -102,13 +102,11 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		item = { objectId: mockAppObjectId, contextValue: "SCOPE-DISABLED", value: mockExposedApiId, state: false };
 		const error = new Error("Delete disabled exposed api permissions but error getting existing scopes");
 		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
-		const warningSpy = jest.spyOn(vscode.window, "showWarningMessage");
 
 		// Act
 		await oauth2PermissionScopeService.delete(item);
 
 		// Assert
-		expect(warningSpy).toHaveBeenCalledWith(`Do you want to delete the Scope ${item.label}?`, "Yes", "No");
 		expect(graphSpy).toHaveBeenCalled();
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(triggerErrorSpy).toHaveBeenCalledWith(error);

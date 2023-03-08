@@ -79,7 +79,6 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAppRole`, async (item) => await appRoleService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editAppRole`, async (item) => await appRoleService.edit(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editAppRoleValue`, async (item) => await appRoleService.editValue(item)));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.renameAppRole`, async (item) => await appRoleService.editValue(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteAppRole`, async (item) => await appRoleService.delete(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.enableAppRole`, async (item) => await appRoleService.changeState(item, true)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.disableAppRole`, async (item) => await appRoleService.changeState(item, false)));

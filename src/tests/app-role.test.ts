@@ -207,7 +207,7 @@ describe("App Role Service Tests", () => {
 
 	test("Edit display name", async () => {
 		// Arrange
-		item = { objectId: mockAppObjectId, contextValue: "ROLE-ENABLED", value: mockAppRoleId, state: false, label: "Test Role" };
+		item = { objectId: mockAppObjectId, contextValue: "ROLE-NAME", value: mockAppRoleId, state: false, label: "Test Role" };
 		jest.spyOn(vscode.window, "showInputBox").mockResolvedValue("New Role" as any);
 
 		// Act
@@ -217,7 +217,7 @@ describe("App Role Service Tests", () => {
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APP-ROLES");
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
-		expect(treeItem?.children?.[0].label).toEqual("New Role");
+		expect(treeItem?.children?.[0].children?.[1].label).toEqual("Name: New Role");
 	});
 
 	test("Edit display name but cancel input", async () => {
@@ -273,7 +273,7 @@ describe("App Role Service Tests", () => {
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APP-ROLES");
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
-		expect(treeItem?.children![0].children![1].label).toEqual("Description: New Description");
+		expect(treeItem?.children![0].children![2].label).toEqual("Description: New Description");
 	});
 
 	test("Edit role description but cancel input", async () => {
@@ -301,7 +301,7 @@ describe("App Role Service Tests", () => {
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APP-ROLES");
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
-		expect(treeItem?.children![0].children![2].label).toEqual("Allowed: Users/Groups");
+		expect(treeItem?.children![0].children![3].label).toEqual("Allowed: Users/Groups");
 	});
 
 	test("Edit role allowed types to users and applications", async () => {
@@ -316,7 +316,7 @@ describe("App Role Service Tests", () => {
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APP-ROLES");
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
-		expect(treeItem?.children![0].children![2].label).toEqual("Allowed: Applications, Users/Groups");
+		expect(treeItem?.children![0].children![3].label).toEqual("Allowed: Applications, Users/Groups");
 	});
 
 	test("Edit role allowed types to applications", async () => {
@@ -331,7 +331,7 @@ describe("App Role Service Tests", () => {
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "APP-ROLES");
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
-		expect(treeItem?.children![0].children![2].label).toEqual("Allowed: Applications");
+		expect(treeItem?.children![0].children![3].label).toEqual("Allowed: Applications");
 	});
 
 	test("Edit role allowed types but cancel input", async () => {
@@ -482,7 +482,7 @@ describe("App Role Service Tests", () => {
 		expect(inputSpy).toBeCalled();
 		expect(quickPickSpy).toBeCalled();
 		expect(treeItem?.children!.length).toEqual(3);
-		expect(treeItem?.children![2].label).toEqual("Test Add Role");
+		expect(treeItem?.children![2].label).toEqual("Test.Role");
 	});
 
 	test("Add new role with display name too short error", async () => {
@@ -665,7 +665,7 @@ describe("App Role Service Tests", () => {
 		expect(inputSpy).toBeCalled();
 		expect(quickPickSpy).toBeCalled();
 		expect(treeItem?.children!.length).toEqual(2);
-		expect(treeItem?.children![0].label).toEqual("New Write Files Role");
+		expect(treeItem?.children![0].label).toEqual("Test.Role");
 	});
 
 	test("Edit role with no existing app roles error", async () => {
