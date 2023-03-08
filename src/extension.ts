@@ -16,6 +16,7 @@ import { copyValue } from "./utils/copy-value";
 import { setStatusBarMessage } from "./utils/status-bar";
 import { signInUser, signOutUser } from "./utils/authentication";
 import { AzureCliAccountProvider } from "./utils/azure-cli-account-provider";
+import { PreAuthorizedApplicationsService } from "./services/pre-authorized-applications";
 
 // Create a new instance of the Azure CLI Account Provider
 const accountProvider = new AzureCliAccountProvider();
@@ -31,6 +32,7 @@ const applicationService = new ApplicationService(graphRepository, treeDataProvi
 const appRoleService = new AppRoleService(graphRepository, treeDataProvider);
 const keyCredentialService = new KeyCredentialService(graphRepository, treeDataProvider);
 const oauth2PermissionScopeService = new OAuth2PermissionScopeService(graphRepository, treeDataProvider);
+const preAuthorizedApplicationsService = new PreAuthorizedApplicationsService(graphRepository, treeDataProvider);
 const organizationService = new OrganizationService(graphRepository, treeDataProvider, accountProvider);
 const ownerService = new OwnerService(graphRepository, treeDataProvider, accountProvider);
 const passwordCredentialService = new PasswordCredentialService(graphRepository, treeDataProvider);
@@ -98,10 +100,10 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.disableExposedApiScope`, async (item) => await oauth2PermissionScopeService.changeState(item, false)));
 
 	// Authorized Client Application Commands
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addSingleScopeToExistingAuthorisedClient`, async (item) => await oauth2PermissionScopeService.addToExistingAuthorisedClient(item)));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAuthorisedClientSingleScope`, async (item) => await oauth2PermissionScopeService.addAuthorisedClientScope(item)));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeAuthorisedClientSingleScope`, async (item) => await oauth2PermissionScopeService.removeAuthorisedClientScope(item)));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeAuthorisedClient`, async (item) => await oauth2PermissionScopeService.removeAuthorisedClient(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addSingleScopeToExistingAuthorisedClient`, async (item) => await preAuthorizedApplicationsService.addToExistingAuthorisedClient(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAuthorisedClientSingleScope`, async (item) => await preAuthorizedApplicationsService.addAuthorisedClientScope(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeAuthorisedClientSingleScope`, async (item) => await preAuthorizedApplicationsService.removeAuthorisedClientScope(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeAuthorisedClient`, async (item) => await preAuthorizedApplicationsService.removeAuthorisedClient(item)));
 
 	// App Id URI Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAppIdUri`, async (item) => await applicationService.addAppIdUri(item)));
@@ -170,6 +172,7 @@ export function deactivate(): void {
 	organizationService.dispose();
 	ownerService.dispose();
 	oauth2PermissionScopeService.dispose();
+	preAuthorizedApplicationsService.dispose();
 	keyCredentialService.dispose();
 	appRoleService.dispose();
 	applicationService.dispose();
