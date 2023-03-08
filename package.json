@@ -174,6 +174,22 @@
 				"title": "Delete"
 			},
 			{
+				"command": "appRegistrations.addSingleScopeToExistingAuthorisedClient",
+				"title": "Add"
+			},
+			{
+				"command": "appRegistrations.addAuthorisedClientSingleScope",
+				"title": "Add"
+			},
+			{
+				"command": "appRegistrations.removeAuthorisedClientSingleScope",
+				"title": "Remove"
+			},
+			{
+				"command": "appRegistrations.removeAuthorisedClient",
+				"title": "Remove"
+			},
+			{
 				"command": "appRegistrations.addSingleScopeToExisting",
 				"title": "Add"
 			},
@@ -432,6 +448,22 @@
 					"when": "view.appRegistrations.visible && config.applicationRegistrations.applicationListView != 'Deleted Applications'"
 				},
 				{
+					"command": "appRegistrations.addSingleScopeToExistingAuthorisedClient",
+					"when": "false"
+				},
+				{
+					"command": "appRegistrations.addAuthorisedClientSingleScope",
+					"when": "false"
+				},
+				{
+					"command": "appRegistrations.removeAuthorisedClientSingleScope",
+					"when": "false"
+				},
+				{
+					"command": "appRegistrations.removeAuthorisedClient",
+					"when": "false"
+				},
+				{
 					"command": "appRegistrations.restoreApplication",
 					"when": "false"
 				},
@@ -666,6 +698,26 @@
 				{
 					"command": "appRegistrations.deleteKeyCredential",
 					"when": "view == appRegistrations && viewItem == CERTIFICATE",
+					"group": "appRegistrations@0"
+				},
+				{
+					"command": "appRegistrations.addAuthorisedClientSingleScope",
+					"when": "view == appRegistrations && viewItem == AUTHORIZED-CLIENTS",
+					"group": "appRegistrations@0"
+				},
+				{
+					"command": "appRegistrations.addSingleScopeToExistingAuthorisedClient",
+					"when": "view == appRegistrations && viewItem == AUTHORIZED-CLIENT",
+					"group": "appRegistrations@0"
+				},
+				{
+					"command": "appRegistrations.removeAuthorisedClient",
+					"when": "view == appRegistrations && viewItem == AUTHORIZED-CLIENT",
+					"group": "appRegistrations@1"
+				},
+				{
+					"command": "appRegistrations.removeAuthorisedClientSingleScope",
+					"when": "view == appRegistrations && viewItem == AUTHORIZED-CLIENT-SCOPE || viewItem == AUTHORIZED-CLIENT-SCOPE-UNKNOWN",
 					"group": "appRegistrations@0"
 				},
 				{

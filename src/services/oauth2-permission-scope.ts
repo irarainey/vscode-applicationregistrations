@@ -1,7 +1,7 @@
-import { window } from "vscode";
+import { QuickPickItem, window } from "vscode";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
-import { PermissionScope, ApiApplication, Application } from "@microsoft/microsoft-graph-types";
+import { PermissionScope, ApiApplication, Application, NullableOption, ServicePrincipal } from "@microsoft/microsoft-graph-types";
 import { v4 as uuidv4 } from "uuid";
 import { ServiceBase } from "./service-base";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
@@ -9,11 +9,172 @@ import { debounce } from "ts-debounce";
 import { GraphResult } from "../types/graph-result";
 import { clearStatusBarMessage, setStatusBarMessage } from "../utils/status-bar";
 import { validateScopeAdminDescription, validateScopeAdminDisplayName, validateScopeUserDisplayName, validateScopeValue } from "../utils/validation";
+import { sort } from "fast-sort";
 
 export class OAuth2PermissionScopeService extends ServiceBase {
 	// The constructor for the OAuth2PermissionScopeService class.
 	constructor(graphRepository: GraphApiRepository, treeDataProvider: AppRegTreeDataProvider) {
 		super(graphRepository, treeDataProvider);
+	}
+
+	async addToExistingAuthorisedClient(item: AppRegItem, existingAppId?: NullableOption<string> | undefined, existingAppName?: string): Promise<void> {
+		const startStep = existingAppId === undefined ? 0 : 2;
+		const numberOfSteps = existingAppId === undefined ? 1 : 3;
+		const apiAppName = existingAppId === undefined ? item.label : existingAppName;
+
+		// Update the tree item icon to show the loading animation.
+		const status = this.indicateChange(`Loading Scopes for ${apiAppName}...`, item);
+
+		// Determine the application ID to use.
+		const appIdToUse = existingAppId === undefined ? item.value : existingAppId;
+
+		// Get the service principal for the application so we can get the scopes.
+		const result: GraphResult<ServicePrincipal> = await this.graphRepository.findServicePrincipalByAppId(appIdToUse!);
+		if (result.success === false || result.value === undefined) {
+			await this.handleError(result.error);
+			return;
+		}
+
+		const servicePrincipal: ServicePrincipal = result.value;
+
+		// Get all the properties for the application.
+		const properties = await this.getProperties(item.objectId!);
+
+		// If the array is undefined then it'll be an Azure CLI authentication issue.
+		if (properties === undefined) {
+			return;
+		}
+
+		// Find the client app in the collection.
+		const apiAppScopes = properties.api?.preAuthorizedApplications!.filter((r) => r.appId === item.resourceAppId!)[0];
+
+		// Define a variable to hold the selected scope item.
+		let scopeItem: any;
+
+		// Remove any scopes that are already assigned.
+		if (apiAppScopes !== undefined) {
+			apiAppScopes.delegatedPermissionIds!.forEach((r) => {
+				servicePrincipal.oauth2PermissionScopes = servicePrincipal.oauth2PermissionScopes!.filter((s) => s.id !== r);
+			});
+		}
+
+		clearStatusBarMessage(status!);
+		this.resetTreeItemIcon(item);
+
+		// If there are no scopes available then drop out.
+		if (servicePrincipal.oauth2PermissionScopes === undefined || servicePrincipal.oauth2PermissionScopes!.length === 0) {
+			window.showInformationMessage("There are no scopes available to add to this application.", "OK");
+			return;
+		}
+
+		// Prompt the user for the scope to add.
+		const permissions = sort(servicePrincipal.oauth2PermissionScopes!)
+			.asc((r) => r.value!)
+			.map((r) => {
+				return {
+					label: r.value!,
+					description: r.adminConsentDescription!,
+					value: r.id!
+				} as QuickPickItem;
+			});
+		scopeItem = await window.showQuickPick(permissions, {
+			placeHolder: "Select a scope",
+			title: `Add Scope (${startStep + 1}/${numberOfSteps})`,
+			ignoreFocusOut: true
+		});
+
+		// If the user cancels the input then drop out.
+		if (scopeItem === undefined) {
+			return;
+		}
+
+		// Set the added trigger to the status bar message.
+		const addStatus = this.indicateChange("Adding Authorized Client Scope...", item);
+
+		if (apiAppScopes !== undefined) {
+			// Add the new scope to the existing app.
+			apiAppScopes.delegatedPermissionIds!.push(scopeItem.value);
+		} else {
+			// Add the new scope to a new api app.
+			properties.api?.preAuthorizedApplications!.push({
+				appId: appIdToUse!,
+				delegatedPermissionIds: [ scopeItem.value ]
+			});
+		}
+
+		//Update the application.
+		await this.updateApplication(item.objectId!, { api: properties.api }, addStatus);
+	}
+
+	async addAuthorisedClientScope(item: AppRegItem): Promise<void> {
+		
+	}
+
+	async removeAuthorisedClientScope(item: AppRegItem): Promise<void> {
+		// Prompt the user to confirm the removal.
+		const answer = await window.showWarningMessage(`Do you want to remove the Authorized Client Scope ${item.label}?`, "Yes", "No");
+
+		// If the user confirms the removal then delete the role.
+		if (answer === "Yes") {
+			// Set the added trigger to the status bar message.
+			const status = this.indicateChange("Removing Authorized Client Scope...", item);
+
+			// Get all the properties for the application.
+			const properties = await this.getProperties(item.objectId!);
+
+			// If the array is undefined then it'll be an Azure CLI authentication issue.
+			if (properties === undefined) {
+				return;
+			}
+
+			// Find the client app in the collection.
+			const apiAppScopes = properties.api?.preAuthorizedApplications!.filter((r) => r.appId === item.resourceAppId!)[0];
+
+			// Remove the scope requested.
+			apiAppScopes?.delegatedPermissionIds!.splice(
+				apiAppScopes.delegatedPermissionIds!.findIndex((x) => x === item.value!),
+				1
+			);
+
+			// If there are no more scopes for the api app then remove the api app from the collection.
+			if (apiAppScopes?.delegatedPermissionIds!.length === 0) {
+				properties.api?.preAuthorizedApplications!.splice(
+					properties.api?.preAuthorizedApplications!.findIndex((r) => r.appId === item.resourceAppId!),
+					1
+				);
+			}
+
+			//Update the application.
+			await this.updateApplication(item.objectId!, { api: properties.api }, status);
+		}
+	}
+
+	async removeAuthorisedClient(item: AppRegItem): Promise<void> {
+		// Prompt the user to confirm the removal.
+		const answer = await window.showWarningMessage(`Do you want to remove the Authorized Client Application ${item.label}?`, "Yes", "No");
+
+		// If the user confirms the removal then remove the client application.
+		if (answer === "Yes") {
+			// Set the added trigger to the status bar message.
+			const status = this.indicateChange("Removing Authorized Client Application...", item);
+
+			// Get all the properties for the application.
+			const properties = await this.getProperties(item.objectId!);
+
+			// If the array is undefined then it'll be an Azure CLI authentication issue.
+			if (properties === undefined) {
+				return;
+			}
+
+			// Find the requested app in the collection and remove it.
+			properties.api?.preAuthorizedApplications!.splice(
+				properties.api?.preAuthorizedApplications!.findIndex((r) => r.appId === item.resourceAppId!),
+				1
+			);
+
+			//Update the application.
+			await this.updateApplication(item.objectId!, { api: properties.api }, status);
+		}
 	}
 
 	// Adds a new exposed api scope to an application registration.
@@ -230,9 +391,12 @@ export class OAuth2PermissionScopeService extends ServiceBase {
 		if (properties === undefined) {
 			return;
 		}
-		
-		if (properties.api?.preAuthorizedApplications!.some(app => app.delegatedPermissionIds!.includes(item.value!)) === true) {
-			await window.showWarningMessage("This scope could not be deleted because it is assigned to an authorized client application. To delete it, please first remove this assignment.", "OK");
+
+		if (properties.api?.preAuthorizedApplications!.some((app) => app.delegatedPermissionIds!.includes(item.value!)) === true) {
+			await window.showWarningMessage(
+				"This scope could not be deleted because it is assigned to an authorized client application. To delete it, please first remove this assignment.",
+				"OK"
+			);
 			return;
 		}
 

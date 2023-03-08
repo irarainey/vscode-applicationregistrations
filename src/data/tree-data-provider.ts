@@ -677,6 +677,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 									label: "Exposed API Permissions",
 									context: "EXPOSED-API-PERMISSIONS",
 									objectId: app.id!,
+									resourceAppId: app.appId!,
 									iconPath: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
 									baseIcon: new ThemeIcon("list-tree", new ThemeColor("editor.foreground")),
 									tooltip:
@@ -1169,7 +1170,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 											iconPath: new ThemeIcon("preview"),
 											baseIcon: new ThemeIcon("preview"),
 											objectId: element.objectId,
-											value: client.appId!,
+											resourceAppId: client.appId!,
+											value: element.resourceAppId!,
 											children: client.delegatedPermissionIds!.map((scope) => {
 												const child = api!.oauth2PermissionScopes!.find((scp) => scp.id === scope);
 												if (child !== undefined) {
@@ -1180,6 +1182,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 														iconPath: new ThemeIcon("list-tree", new ThemeColor(iconColour)),
 														baseIcon: new ThemeIcon("list-tree", new ThemeColor(iconColour)),
 														objectId: element.objectId,
+														resourceAppId: client.appId!,
 														value: scope,
 														tooltip: `${child!.adminConsentDisplayName!}${child.isEnabled! ? "" : " (Disabled)"}`
 													});
@@ -1190,6 +1193,7 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 														iconPath: new ThemeIcon("list-tree", new ThemeColor("list.errorForeground")),
 														baseIcon: new ThemeIcon("list-tree", new ThemeColor("list.errorForeground")),
 														objectId: element.objectId,
+														resourceAppId: client.appId!,
 														value: scope,
 														tooltip: "Scope not found"
 													});

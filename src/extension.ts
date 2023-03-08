@@ -97,6 +97,12 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.enableExposedApiScope`, async (item) => await oauth2PermissionScopeService.changeState(item, true)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.disableExposedApiScope`, async (item) => await oauth2PermissionScopeService.changeState(item, false)));
 
+	// Authorized Client Application Commands
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addSingleScopeToExistingAuthorisedClient`, async (item) => await oauth2PermissionScopeService.addToExistingAuthorisedClient(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAuthorisedClientSingleScope`, async (item) => await oauth2PermissionScopeService.addAuthorisedClientScope(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeAuthorisedClientSingleScope`, async (item) => await oauth2PermissionScopeService.removeAuthorisedClientScope(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeAuthorisedClient`, async (item) => await oauth2PermissionScopeService.removeAuthorisedClient(item)));
+
 	// App Id URI Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAppIdUri`, async (item) => await applicationService.addAppIdUri(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editAppIdUri`, async (item) => await applicationService.editAppIdUri(item)));
