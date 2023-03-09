@@ -93,15 +93,6 @@ export class PreAuthorizedApplicationsService extends ServiceBase {
 		// Update the tree item icon to show the loading animation.
 		const status = this.indicateChange(`Loading available Scopes...`, item);
 
-		// Get the service principal for the application so we can get the scopes.
-		const result: GraphResult<ServicePrincipal> = await this.graphRepository.findServicePrincipalByAppId(item.value!);
-		if (result.success === false || result.value === undefined) {
-			await this.handleError(result.error);
-			return;
-		}
-
-		const servicePrincipal: ServicePrincipal = result.value;
-
 		// Get all the properties for the application.
 		const properties = await this.getApi(item.objectId!);
 
@@ -109,6 +100,9 @@ export class PreAuthorizedApplicationsService extends ServiceBase {
 		if (properties === undefined) {
 			return;
 		}
+
+		// Create a copy of the service principal.
+		const servicePrincipal: ServicePrincipal = JSON.parse(JSON.stringify(properties.api!));
 
 		// Find the client app in the collection.
 		const appScopes = properties.api?.preAuthorizedApplications!.filter((r) => r.appId === item.resourceAppId!)[0];

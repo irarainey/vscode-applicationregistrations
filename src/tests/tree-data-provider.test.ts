@@ -146,7 +146,7 @@ describe("Tree Data Provider Tests", () => {
 		await treeDataProvider.render();
 
 		// Act
-		const result = treeDataProvider.getChildren(undefined);
+		const result = await treeDataProvider.getChildren(undefined);
 
 		// Assert
 		expect(result).toBeDefined();
@@ -168,7 +168,7 @@ describe("Tree Data Provider Tests", () => {
 		await treeDataProvider.render();
 
 		// Assert
-		const result = treeDataProvider.getChildren(undefined);
+		const result = await treeDataProvider.getChildren(undefined);
 		expect(result).toBeDefined();
 		expect(result).toHaveLength(3);
 		expect(treeDataProvider.isTreeEmpty).toBeFalsy();
@@ -188,7 +188,7 @@ describe("Tree Data Provider Tests", () => {
 		await treeDataProvider.render();
 
 		// Assert
-		const result = treeDataProvider.getChildren(undefined);
+		const result = await treeDataProvider.getChildren(undefined);
 		expect(result).toBeDefined();
 		expect(result).toHaveLength(3);
 		expect(treeDataProvider.isTreeEmpty).toBeFalsy();
@@ -234,7 +234,7 @@ describe("Tree Data Provider Tests", () => {
 		await treeDataProvider.filter();
 
 		// Assert
-		const result = treeDataProvider.getChildren(undefined);
+		const result = await treeDataProvider.getChildren(undefined);
 		expect(result).toBeDefined();
 		expect(result).toHaveLength(1);
 		expect(treeDataProvider.isTreeEmpty).toBeFalsy();
@@ -263,7 +263,7 @@ describe("Tree Data Provider Tests", () => {
 		await treeDataProvider.filter();
 
 		// Assert
-		const result = treeDataProvider.getChildren(undefined);
+		const result = await treeDataProvider.getChildren(undefined);
 		expect(result).toBeDefined();
 		expect(result).toHaveLength(2);
 		expect(treeDataProvider.isTreeEmpty).toBeFalsy();
@@ -289,7 +289,7 @@ describe("Tree Data Provider Tests", () => {
 		await treeDataProvider.filter();
 
 		// Assert
-		const result = treeDataProvider.getChildren(undefined);
+		const result = await treeDataProvider.getChildren(undefined);
 		expect(result).toBeDefined();
 		expect(result).toHaveLength(1);
 		expect(treeDataProvider.isTreeEmpty).toBeTruthy();
@@ -564,7 +564,7 @@ describe("Tree Data Provider Tests", () => {
 		await treeDataProvider.render("Status message", "EMPTY");
 
 		// Assert
-		const result = treeDataProvider.getChildren(undefined);
+		const result = await treeDataProvider.getChildren(undefined);
 		expect(result).toBeDefined();
 		expect(result).toHaveLength(1);
 		expect(treeDataProvider.isTreeEmpty).toBeTruthy();
@@ -578,7 +578,7 @@ describe("Tree Data Provider Tests", () => {
 		await treeDataProvider.render();
 
 		// Assert
-		const result = treeDataProvider.getChildren(undefined);
+		const result = await treeDataProvider.getChildren(undefined);
 		expect(result).toBeDefined();
 		expect(result).toHaveLength(1);
 		expect(treeDataProvider.isTreeEmpty).toBeTruthy();
@@ -589,20 +589,76 @@ describe("Tree Data Provider Tests", () => {
 		await treeDataProvider.render("Status message", "SIGN-IN");
 
 		// Assert
-		const result = treeDataProvider.getChildren(undefined);
+		const result = await treeDataProvider.getChildren(undefined);
 		expect(result).toBeDefined();
 		expect(result).toHaveLength(1);
 	});
 
-	test("Get children of a specified element", () => {
+	test("Get children of a specified element", async () => {
 		// Arrange
 		item = { objectId: mockAppObjectId, contextValue: "REDIRECT-PARENT", children: [{ objectId: mockAppObjectId, label: "child" }] };
 
 		// Act
-		const result = treeDataProvider.getChildren(item);
+		const result = await treeDataProvider.getChildren(item);
 
 		// Assert
 		expect(result).toBeDefined();
 		expect(result).toHaveLength(1);
+	});
+
+	test("Render unknown authorised client application scopes", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "EXPOSED-API-PERMISSIONS" };
+		mockApplications[0].api.preAuthorizedApplications[0].delegatedPermissionIds.push("e31b5fab-859c-4f05-ba3a-a77994a54824");
+
+		// Act
+		await treeDataProvider.render();
+
+		// Assert
+		const result = await treeDataProvider.getChildren(item);
+		expect(result).toBeDefined();
+		expect(result![0].children![0].children![2].contextValue).toEqual("AUTHORIZED-CLIENT-SCOPE-UNKNOWN");
+	});
+
+	test("Render unknown api permission scopes", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "API-PERMISSIONS" };
+		mockApplications[0].requiredResourceAccess[0].resourceAccess.push({ id: "e31b5fab-859c-4f05-ba3a-a77994a54824", type: "Scope"});
+
+		// Act
+		await treeDataProvider.render();
+
+		// Assert
+		const result = await treeDataProvider.getChildren(item);
+		expect(result).toBeDefined();
+		expect(result![0].children![3].label).toEqual("Delegated: e31b5fab-859c-4f05-ba3a-a77994a54824");
+	});
+
+	test("Render unknown api permission scopes", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "API-PERMISSIONS" };
+		mockApplications[0].requiredResourceAccess[0].resourceAccess.push({ id: "e31b5fab-859c-4f05-ba3a-a77994a54824", type: "Role"});
+
+		// Act
+		await treeDataProvider.render();
+
+		// Assert
+		const result = await treeDataProvider.getChildren(item);
+		expect(result).toBeDefined();
+		expect(result![0].children![3].label).toEqual("Application: e31b5fab-859c-4f05-ba3a-a77994a54824");
+	});
+
+	test("Render missing scope application", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "API-PERMISSIONS" };
+		const graphSpy = jest.spyOn(graphApiRepository, "findServicePrincipalByAppId").mockResolvedValue({ success: false, error: { statusCode: 404 } } as any);
+
+		// Act
+		await treeDataProvider.render();
+
+		// Assert
+		const result = await treeDataProvider.getChildren(item);
+		expect(result).toBeDefined();
+		expect(result![0].contextValue).toEqual("API-PERMISSIONS-APP-UNKNOWN");
 	});
 });

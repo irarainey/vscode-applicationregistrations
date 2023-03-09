@@ -330,7 +330,9 @@ describe("Application Service Tests", () => {
 		// Arrange
 		item = { ...item, value: "Not set", contextValue: "APPID-URIS" };
 		const error = new Error("Add App Id Uri with get existing error");
-		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
+		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial")
+			.mockResolvedValueOnce({ success: false, error });
+		jest.spyOn(treeDataProvider, "getTreeItemChildByContext").mockImplementation((_element: AppRegItem, _context: string) => ({ value: "AzureADMyOrg" }));
 
 		// Act
 		await applicationService.addAppIdUri(item);
@@ -840,5 +842,31 @@ describe("Application Service Tests", () => {
 		// Assert
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
+	});
+
+	test("Change view successfully", async () => {
+		// Arrange
+		const inputSpy = jest.spyOn(vscode.window, "showQuickPick").mockResolvedValue({ value: "Owned Applications" } as any);
+		const configSpy = jest.spyOn(vscode.workspace, "getConfiguration").mockReturnValue({ update: jest.fn() } as any);
+
+		// Act
+		await applicationService.changeView();
+
+		// Assert
+		expect(inputSpy).toHaveBeenCalled();
+		expect(configSpy).toHaveBeenCalled();
+	});
+
+	test("Change view but user pushed escape", async () => {
+		// Arrange
+		const inputSpy = jest.spyOn(vscode.window, "showQuickPick").mockResolvedValue(undefined);
+		const configSpy = jest.spyOn(vscode.workspace, "getConfiguration");
+
+		// Act
+		await applicationService.changeView();
+
+		// Assert
+		expect(inputSpy).toHaveBeenCalled();
+		expect(configSpy).not.toHaveBeenCalled();
 	});
 });
