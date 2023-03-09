@@ -1,3 +1,15 @@
+## 0.13.0
+
+- Added the ability to create a service principal for an application when creating a new application registration.
+- Added functionality to manage authorised client applications for exposed api permissions.
+- Added functionality to display deleted app roles and scopes when referenced by an application with an error indicator.
+- Added a disabled label to the tooltip of disabled app roles and scopes.
+- Added the ability to filter the list of applications by application id.
+- Amended the display item for exposed api permissions to show scope value instead of admin display name as it's unique.
+- Amended the display item for app roles to show value instead of display name as it's unique.
+- Fixed an issue where displaying deleted api permissions would cause an error.
+- Fixed an issue where displaying scopes from a deleted application would cause an error.
+
 ## 0.12.1
 
 - Fixed an issue signing into Azure CLI.

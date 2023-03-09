@@ -16,6 +16,7 @@ import { copyValue } from "./utils/copy-value";
 import { setStatusBarMessage } from "./utils/status-bar";
 import { signInUser, signOutUser } from "./utils/authentication";
 import { AzureCliAccountProvider } from "./utils/azure-cli-account-provider";
+import { PreAuthorizedApplicationsService } from "./services/pre-authorized-applications";
 
 // Create a new instance of the Azure CLI Account Provider
 const accountProvider = new AzureCliAccountProvider();
@@ -31,6 +32,7 @@ const applicationService = new ApplicationService(graphRepository, treeDataProvi
 const appRoleService = new AppRoleService(graphRepository, treeDataProvider);
 const keyCredentialService = new KeyCredentialService(graphRepository, treeDataProvider);
 const oauth2PermissionScopeService = new OAuth2PermissionScopeService(graphRepository, treeDataProvider);
+const preAuthorizedApplicationsService = new PreAuthorizedApplicationsService(graphRepository, treeDataProvider);
 const organizationService = new OrganizationService(graphRepository, treeDataProvider, accountProvider);
 const ownerService = new OwnerService(graphRepository, treeDataProvider, accountProvider);
 const passwordCredentialService = new PasswordCredentialService(graphRepository, treeDataProvider);
@@ -79,7 +81,6 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAppRole`, async (item) => await appRoleService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editAppRole`, async (item) => await appRoleService.edit(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editAppRoleValue`, async (item) => await appRoleService.editValue(item)));
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.renameAppRole`, async (item) => await appRoleService.editValue(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteAppRole`, async (item) => await appRoleService.delete(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.enableAppRole`, async (item) => await appRoleService.changeState(item, true)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.disableAppRole`, async (item) => await appRoleService.changeState(item, false)));
@@ -91,13 +92,18 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeApiScopes`, async (item) => await requiredResourceAccessService.removeApi(item)));
 
 	// Exposed API Scope Commands
-	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.renameExposedApiScope`, async (item) => await oauth2PermissionScopeService.editValue(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editExposedApiScopeValue`, async (item) => await oauth2PermissionScopeService.editValue(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addExposedApiScope`, async (item) => await oauth2PermissionScopeService.add(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.editExposedApiScope`, async (item) => await oauth2PermissionScopeService.edit(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.deleteExposedApiScope`, async (item) => await oauth2PermissionScopeService.delete(item)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.enableExposedApiScope`, async (item) => await oauth2PermissionScopeService.changeState(item, true)));
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.disableExposedApiScope`, async (item) => await oauth2PermissionScopeService.changeState(item, false)));
+
+	// Authorized Client Application Commands
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addSingleScopeToExistingAuthorisedClient`, async (item) => await preAuthorizedApplicationsService.addToExistingAuthorisedClient(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAuthorisedClientSingleScope`, async (item) => await preAuthorizedApplicationsService.addAuthorisedClientScope(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeAuthorisedClientSingleScope`, async (item) => await preAuthorizedApplicationsService.removeAuthorisedClientScope(item)));
+	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.removeAuthorisedClient`, async (item) => await preAuthorizedApplicationsService.removeAuthorisedClient(item)));
 
 	// App Id URI Commands
 	context.subscriptions.push(commands.registerCommand(`${VIEW_NAME}.addAppIdUri`, async (item) => await applicationService.addAppIdUri(item)));
@@ -166,6 +172,7 @@ export function deactivate(): void {
 	organizationService.dispose();
 	ownerService.dispose();
 	oauth2PermissionScopeService.dispose();
+	preAuthorizedApplicationsService.dispose();
 	keyCredentialService.dispose();
 	appRoleService.dispose();
 	applicationService.dispose();

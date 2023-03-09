@@ -5,6 +5,26 @@ import { OwnerList } from "../models/owner-list";
 import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { GraphResult } from "../types/graph-result";
 
+// Validates a string is a GUID
+export const isGuid = (str: string): boolean => {
+	if (str.length !== 36) {
+		return false;
+	}
+	if (str[8] !== "-" || str[13] !== "-" || str[18] !== "-" || str[23] !== "-") {
+		return false;
+	}
+	for (var i = 0; i < str.length; i++) {
+		var c = str[i];
+		if (i === 8 || i === 13 || i === 18 || i === 23) {
+			continue;
+		}
+		if (c < "0" || c > "f" || (c > "9" && c < "a")) {
+			return false;
+		}
+	}
+	return true;
+};
+
 // Validates the number of keys pressed for deboucing input for application search.
 export const validateDebouncedInput = (value: string): string | undefined => {
 	if (value.length < 3) {
@@ -13,7 +33,13 @@ export const validateDebouncedInput = (value: string): string | undefined => {
 };
 
 // Validates the redirect URI as per https://learn.microsoft.com/en-us/azure/active-directory/develop/reply-url
-export const validateRedirectUri = (uri: string, context: string, existingRedirectUris: string[], isEditing: boolean, oldValue: string | undefined): string | undefined => {
+export const validateRedirectUri = (
+	uri: string,
+	context: string,
+	existingRedirectUris: string[],
+	isEditing: boolean,
+	oldValue: string | undefined
+): string | undefined => {
 	// Check to see if the uri already exists.
 	if ((isEditing === true && oldValue !== uri) || isEditing === false) {
 		if (existingRedirectUris.includes(uri)) {
@@ -96,7 +122,13 @@ export const validateScopeUserDisplayName = (displayName: string): string | unde
 };
 
 // Validates the value of an scope.
-export const validateScopeValue = (value: string, isEditing: boolean, existingValue: string | undefined, signInAudience: string, scopes: ApiApplication): string | undefined => {
+export const validateScopeValue = (
+	value: string,
+	isEditing: boolean,
+	existingValue: string | undefined,
+	signInAudience: string,
+	scopes: ApiApplication
+): string | undefined => {
 	// Check the length of the value.
 	switch (signInAudience) {
 		case "AzureADMyOrg":
@@ -216,8 +248,13 @@ export const validateApplicationDisplayName = (name: string, signInAudience: str
 };
 
 // Validates the app id URI.
-export const validateAppIdUri = (uri: string, signInAudience: string, existingUris: string[], isEditing: boolean, oldValue: string | undefined): string | undefined => {
-
+export const validateAppIdUri = (
+	uri: string,
+	signInAudience: string,
+	existingUris: string[],
+	isEditing: boolean,
+	oldValue: string | undefined
+): string | undefined => {
 	// Check to see if the uri already exists.
 	if ((isEditing === true && oldValue !== uri) || isEditing === false) {
 		if (existingUris.includes(uri)) {
@@ -270,7 +307,12 @@ export const validateLogoutUrl = (uri: string): string | undefined => {
 };
 
 // Validates the owner name or email address.
-export const validateOwner = async (ownerSearch: string | undefined, existing: User[], graphRepository: GraphApiRepository, owners: OwnerList): Promise<string | undefined> => {
+export const validateOwner = async (
+	ownerSearch: string | undefined,
+	existing: User[],
+	graphRepository: GraphApiRepository,
+	owners: OwnerList
+): Promise<string | undefined> => {
 	// Check if the owner name is empty.
 	if (ownerSearch === undefined || ownerSearch === null || ownerSearch.length === 0) {
 		return undefined;

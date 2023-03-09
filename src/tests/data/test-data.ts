@@ -53,9 +53,27 @@ const seedApplications: any[] = [
 					userConsentDescription: null,
 					userConsentDisplayName: null,
 					value: "Sample.Two"
+				},
+				{
+					adminConsentDescription: "Sample description three",
+					adminConsentDisplayName: "Sample Scope Three",
+					id: "69a69f57-8552-48cd-a4be-187f37a769cf",
+					isEnabled: true,
+					type: "Admin",
+					userConsentDescription: null,
+					userConsentDisplayName: null,
+					value: "Sample.Three"
 				}
 			],
-			preAuthorizedApplications: []
+			preAuthorizedApplications: [
+				{
+					"appId": "af019b40-4421-4734-bd8e-201c60d4e948",
+					"delegatedPermissionIds": [
+						"97956368-899b-4e0b-b51e-61743cb60f36",
+						"69a69f57-8552-48cd-a4be-187f37a769cf"
+					]
+				}
+			]
 		},
 		appRoles: [
 			{
@@ -489,13 +507,63 @@ export const seedServicePrincipals = [
 				value: "Do.Something"
 			}
 		]
+	},
+	{
+		id: "0b8ca89e-c44f-4af3-a95a-575d1e758723",
+		appDisplayName: "Second Test App",
+		appId: "af019b40-4421-4734-bd8e-201c60d4e948",
+		displayName: "Second Test App",
+		appRoles: [],
+		oauth2PermissionScopes: []
+	},
+	{
+		id: "ab4e6904-6629-41c9-91d7-2ec9c7d3e46c",
+		appDisplayName: "First Test App",
+		appId: "96a2745c-6920-4149-a8b0-90339bee74f9",
+		displayName: "First Test App",
+		appRoles: [],
+		oauth2PermissionScopes: [
+			{
+				adminConsentDescription: "Sample description one",
+				adminConsentDisplayName: "Sample Scope One",
+				id: "2af52627-d1b4-408e-b188-ccca2a5cd33c",
+				isEnabled: true,
+				type: "User",
+				userConsentDescription: null,
+				userConsentDisplayName: null,
+				value: "Sample.One"
+			},
+			{
+				adminConsentDescription: "Sample description two",
+				adminConsentDisplayName: "Sample Scope Two",
+				id: "97956368-899b-4e0b-b51e-61743cb60f36",
+				isEnabled: true,
+				type: "Admin",
+				userConsentDescription: null,
+				userConsentDisplayName: null,
+				value: "Sample.Two"
+			},
+			{
+				adminConsentDescription: "Sample description three",
+				adminConsentDisplayName: "Sample Scope Three",
+				id: "69a69f57-8552-48cd-a4be-187f37a769cf",
+				isEnabled: true,
+				type: "Admin",
+				userConsentDescription: null,
+				userConsentDisplayName: null,
+				value: "Sample.Three"
+			}
+		]
 	}
 ];
 
 export const mockTenantId = "c7b3da28-01b8-46d3-9523-d1b24cbbde76";
 export const mockNewPasswordKeyId = "a7da2abf-da93-4bad-bf0b-6d9ee0d3e8ec";
 export const mockGraphApiAppId = "00000003-0000-0000-c000-000000000000";
+export const mockPreAuthorizedAppId = seedApplications[0].api.preAuthorizedApplications[0].appId;
+export const mockDelegatedPermissionId = seedApplications[0].api.preAuthorizedApplications[0].delegatedPermissionIds[0];
 export const mockExposedApiId = seedApplications[0].api.oauth2PermissionScopes[0].id;
+export const mockSecondExposedApiId = seedApplications[0].api.oauth2PermissionScopes[1].id;
 export const mockApiScopeId = seedApplications[0].requiredResourceAccess[0].resourceAppId;
 export const mockAppObjectId = seedApplications[0].id;
 export const mockDeletedAppObjectId = seedDeletedApplications[0].id;

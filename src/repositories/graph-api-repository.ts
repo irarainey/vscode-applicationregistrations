@@ -89,9 +89,7 @@ export class GraphApiRepository {
 	// Returns a count of all application registrations
 	async getApplicationCountAll(): Promise<GraphResult<number>> {
 		try {
-			const result: number = await this.client!.api("/applications/$count")
-				.header("ConsistencyLevel", "eventual")
-				.get();
+			const result: number = await this.client!.api("/applications/$count").header("ConsistencyLevel", "eventual").get();
 			return { success: true, value: result };
 		} catch (error: any) {
 			return { success: false, error: error };
@@ -99,21 +97,13 @@ export class GraphApiRepository {
 	}
 
 	// Returns partial details for a specified application registration
-	async getApplicationDetailsPartial(
-		id: string,
-		select: string,
-		expandOwners: boolean = false
-	): Promise<GraphResult<Application>> {
+	async getApplicationDetailsPartial(id: string, select: string, expandOwners: boolean = false): Promise<GraphResult<Application>> {
 		try {
 			if (expandOwners !== true) {
 				const result: Application = await this.client!.api(`/applications/${id}`).top(1).select(select).get();
 				return { success: true, value: result };
 			} else {
-				const result: Application = await this.client!.api(`/applications/${id}`)
-					.top(1)
-					.select(select)
-					.expand("owners")
-					.get();
+				const result: Application = await this.client!.api(`/applications/${id}`).top(1).select(select).expand("owners").get();
 				return { success: true, value: result };
 			}
 		} catch (error: any) {
@@ -124,13 +114,9 @@ export class GraphApiRepository {
 	// Returns ids and names for all deleted application registrations
 	async getApplicationListDeleted(filter?: string): Promise<GraphResult<Application[]>> {
 		try {
-			const useEventualConsistency = workspace
-				.getConfiguration("applicationRegistrations")
-				.get("useEventualConsistency") as boolean;
+			const useEventualConsistency = workspace.getConfiguration("applicationRegistrations").get("useEventualConsistency") as boolean;
 			if (useEventualConsistency === true) {
-				const maximumApplicationsShown = workspace
-					.getConfiguration("applicationRegistrations")
-					.get("maximumApplicationsShown") as number;
+				const maximumApplicationsShown = workspace.getConfiguration("applicationRegistrations").get("maximumApplicationsShown") as number;
 				const result: any = await this.client!.api("/directory/deleteditems/Microsoft.Graph.Application")
 					.filter(filter === undefined ? "" : filter)
 					.header("ConsistencyLevel", "eventual")
@@ -141,9 +127,7 @@ export class GraphApiRepository {
 					.get();
 				return { success: true, value: result.value };
 			} else {
-				const maximumQueryApps = workspace
-					.getConfiguration("applicationRegistrations")
-					.get("maximumQueryApps") as number;
+				const maximumQueryApps = workspace.getConfiguration("applicationRegistrations").get("maximumQueryApps") as number;
 				const result: any = await this.client!.api("/directory/deleteditems/Microsoft.Graph.Application")
 					.top(maximumQueryApps)
 					.select("id,appId,displayName,deletedDateTime")
@@ -158,13 +142,9 @@ export class GraphApiRepository {
 	// Returns ids and names for all owned application registrations
 	async getApplicationListOwned(filter?: string): Promise<GraphResult<Application[]>> {
 		try {
-			const useEventualConsistency = workspace
-				.getConfiguration("applicationRegistrations")
-				.get("useEventualConsistency") as boolean;
+			const useEventualConsistency = workspace.getConfiguration("applicationRegistrations").get("useEventualConsistency") as boolean;
 			if (useEventualConsistency === true) {
-				const maximumApplicationsShown = workspace
-					.getConfiguration("applicationRegistrations")
-					.get("maximumApplicationsShown") as number;
+				const maximumApplicationsShown = workspace.getConfiguration("applicationRegistrations").get("maximumApplicationsShown") as number;
 				const result: any = await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
 					.filter(filter === undefined ? "" : filter)
 					.header("ConsistencyLevel", "eventual")
@@ -175,9 +155,7 @@ export class GraphApiRepository {
 					.get();
 				return { success: true, value: result.value };
 			} else {
-				const maximumQueryApps = workspace
-					.getConfiguration("applicationRegistrations")
-					.get("maximumQueryApps") as number;
+				const maximumQueryApps = workspace.getConfiguration("applicationRegistrations").get("maximumQueryApps") as number;
 				const result: any = await this.client!.api("/me/ownedObjects/$/Microsoft.Graph.Application")
 					.top(maximumQueryApps)
 					.select("id,displayName")
@@ -192,13 +170,9 @@ export class GraphApiRepository {
 	// Returns ids and names for all application registrations
 	async getApplicationListAll(filter?: string): Promise<GraphResult<Application[]>> {
 		try {
-			const useEventualConsistency = workspace
-				.getConfiguration("applicationRegistrations")
-				.get("useEventualConsistency") as boolean;
+			const useEventualConsistency = workspace.getConfiguration("applicationRegistrations").get("useEventualConsistency") as boolean;
 			if (useEventualConsistency === true) {
-				const maximumApplicationsShown = workspace
-					.getConfiguration("applicationRegistrations")
-					.get("maximumApplicationsShown") as number;
+				const maximumApplicationsShown = workspace.getConfiguration("applicationRegistrations").get("maximumApplicationsShown") as number;
 				const result: any = await this.client!.api("/applications/")
 					.filter(filter === undefined ? "" : filter)
 					.header("ConsistencyLevel", "eventual")
@@ -209,13 +183,8 @@ export class GraphApiRepository {
 					.get();
 				return { success: true, value: result.value };
 			} else {
-				const maximumQueryApps = workspace
-					.getConfiguration("applicationRegistrations")
-					.get("maximumQueryApps") as number;
-				const result: any = await this.client!.api("/applications/")
-					.top(maximumQueryApps)
-					.select("id,displayName")
-					.get();
+				const maximumQueryApps = workspace.getConfiguration("applicationRegistrations").get("maximumQueryApps") as number;
+				const result: any = await this.client!.api("/applications/").top(maximumQueryApps).select("id,displayName").get();
 				return { success: true, value: result.value };
 			}
 		} catch (error: any) {
@@ -273,11 +242,7 @@ export class GraphApiRepository {
 	}
 
 	// Adds a password credential to an application registration
-	async addPasswordCredential(
-		id: string,
-		description: string,
-		expiry: string
-	): Promise<GraphResult<PasswordCredential>> {
+	async addPasswordCredential(id: string, description: string, expiry: string): Promise<GraphResult<PasswordCredential>> {
 		try {
 			const result: PasswordCredential = await this.client!.api(`/applications/${id}/addPassword`).post({
 				passwordCredential: {
@@ -325,7 +290,13 @@ export class GraphApiRepository {
 	// Creates a new application registration
 	async createApplication(application: Application): Promise<GraphResult<Application>> {
 		try {
+			const createServicePrincipal = workspace
+				.getConfiguration("applicationRegistrations")
+				.get("createServicePrincipalWithApplication") as boolean;
 			const result: Application = await this.client!.api("/applications/").post(application);
+			if (createServicePrincipal === true) {
+				await this.client!.api("/servicePrincipals/").post({ appId: result.appId });
+			}
 			return { success: true, value: result };
 		} catch (error: any) {
 			return { success: false, error: error };
@@ -415,9 +386,7 @@ export class GraphApiRepository {
 	async getTenantInformation(tenantId: string): Promise<GraphResult<Organization>> {
 		try {
 			// Get the tenant information
-			const result: Organization = await this.client!.api(`/organization/${tenantId}`)
-				.select("id,displayName,verifiedDomains")
-				.get();
+			const result: Organization = await this.client!.api(`/organization/${tenantId}`).select("id,displayName,verifiedDomains").get();
 			return { success: true, value: result };
 		} catch (error: any) {
 			return { success: false, error: error };

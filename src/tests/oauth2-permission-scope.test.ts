@@ -4,7 +4,7 @@ import { GraphApiRepository } from "../repositories/graph-api-repository";
 import { AppRegTreeDataProvider } from "../data/tree-data-provider";
 import { AppRegItem } from "../models/app-reg-item";
 import { OAuth2PermissionScopeService } from "../services/oauth2-permission-scope";
-import { mockApplications, mockAppObjectId, mockExposedApiId, seedMockData } from "./data/test-data";
+import { mockApplications, mockAppObjectId, mockExposedApiId, mockSecondExposedApiId, seedMockData } from "./data/test-data";
 import { getTopLevelTreeItem } from "./test-utils";
 import { ApiApplication } from "@microsoft/microsoft-graph-types";
 
@@ -79,7 +79,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
 		expect(triggerCompleteSpy).toHaveBeenCalled();
-		expect(treeItem?.children?.length).toEqual(1);
+		expect(treeItem?.children?.length).toEqual(3);
 	});
 
 	test("Delete disabled exposed api permissions but decline warning", async () => {
@@ -94,7 +94,22 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(warningSpy).toHaveBeenCalledWith(`Do you want to delete the Scope ${item.label}?`, "Yes", "No");
-		expect(treeItem?.children?.length).toEqual(2);
+		expect(treeItem?.children?.length).toEqual(4);
+	});
+
+	test("Delete disabled exposed api permissions but assigned to authorised client error", async () => {
+		// Arrange
+		item = { objectId: mockAppObjectId, contextValue: "SCOPE-DISABLED", value: mockSecondExposedApiId, state: false, label: "Sample Scope Two" };
+		const warningSpy = jest.spyOn(vscode.window, "showWarningMessage");
+
+		// Act
+		await oauth2PermissionScopeService.delete(item);
+
+		// Assert
+		await treeDataProvider.render();
+		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
+		expect(warningSpy).toHaveBeenCalledWith("This scope could not be deleted because it is assigned to an authorized client application. To delete it, please first remove this assignment.","OK");
+		expect(treeItem?.children?.length).toEqual(4);
 	});
 
 	test("Delete disabled exposed api permissions but error getting existing scopes", async () => {
@@ -102,13 +117,11 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		item = { objectId: mockAppObjectId, contextValue: "SCOPE-DISABLED", value: mockExposedApiId, state: false };
 		const error = new Error("Delete disabled exposed api permissions but error getting existing scopes");
 		const graphSpy = jest.spyOn(graphApiRepository, "getApplicationDetailsPartial").mockImplementation(async (_id: string) => ({ success: false, error }));
-		const warningSpy = jest.spyOn(vscode.window, "showWarningMessage");
 
 		// Act
 		await oauth2PermissionScopeService.delete(item);
 
 		// Assert
-		expect(warningSpy).toHaveBeenCalledWith(`Do you want to delete the Scope ${item.label}?`, "Yes", "No");
 		expect(graphSpy).toHaveBeenCalled();
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(triggerErrorSpy).toHaveBeenCalledWith(error);
@@ -144,7 +157,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
 		expect(triggerCompleteSpy).toHaveBeenCalled();
-		expect(treeItem?.children?.length).toEqual(1);
+		expect(treeItem?.children?.length).toEqual(3);
 	});
 
 	test("Disable enabled exposed api permission but no existing roles returned", async () => {
@@ -173,7 +186,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
-		expect(treeItem?.children?.[0].state).toEqual(false);
+		expect(treeItem?.children?.[1].state).toEqual(false);
 	});
 
 	test("Enable disabled exposed api permission", async () => {
@@ -188,7 +201,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
-		expect(treeItem?.children?.[0].state).toEqual(true);
+		expect(treeItem?.children?.[1].state).toEqual(true);
 	});
 
 	test("Edit value but no permissions returned", async () => {
@@ -222,7 +235,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 
 	test("Edit display name", async () => {
 		// Arrange
-		item = { objectId: mockAppObjectId, contextValue: "SCOPE-ENABLED", value: mockExposedApiId, state: true, label: "Sample Scope One" };
+		item = { objectId: mockAppObjectId, contextValue: "SCOPE-NAME", value: mockExposedApiId, state: true, label: "Sample Scope One" };
 		jest.spyOn(vscode.window, "showInputBox").mockResolvedValue("New Scope" as any);
 
 		// Act
@@ -232,12 +245,12 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
-		expect(treeItem?.children?.[0].label).toEqual("New Scope");
+		expect(treeItem?.children?.[1].children?.[1].label).toEqual("Name: New Scope");
 	});
 
 	test("Edit display name but cancel input", async () => {
 		// Arrange
-		item = { objectId: mockAppObjectId, contextValue: "SCOPE-ENABLED", value: mockExposedApiId, state: true, label: "Sample Scope One" };
+		item = { objectId: mockAppObjectId, contextValue: "SCOPE-NAME", value: mockExposedApiId, state: true, label: "Sample Scope One" };
 		jest.spyOn(vscode.window, "showInputBox").mockResolvedValue(undefined);
 
 		// Act
@@ -260,7 +273,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
-		expect(treeItem?.children![0].children![0].label).toEqual("Scope: New.Scope");
+		expect(treeItem?.children![1].children![0].label).toEqual("Scope: New.Scope");
 	});
 
 	test("Edit scope value but cancel input", async () => {
@@ -288,7 +301,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
-		expect(treeItem?.children![0].children![1].label).toEqual("Description: New Description");
+		expect(treeItem?.children![1].children![2].label).toEqual("Description: New Description");
 	});
 
 	test("Edit scope description but cancel input", async () => {
@@ -316,7 +329,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
-		expect(treeItem?.children![0].children![2].label).toEqual("Consent: Admins Only");
+		expect(treeItem?.children![1].children![3].label).toEqual("Consent: Admins Only");
 	});
 
 	test("Edit scope consent but cancel input", async () => {
@@ -355,10 +368,11 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
-		expect(treeItem?.children![0].children![0].label).toEqual("Scope: New.Scope");
-		expect(treeItem?.children![0].children![1].label).toEqual("Description: New Description");
-		expect(treeItem?.children![0].children![2].label).toEqual("Consent: Admins Only");
-		expect(treeItem?.children![0].children![3].label).toEqual("Enabled: Yes");
+		expect(treeItem?.children![1].children![0].label).toEqual("Scope: New.Scope");
+		expect(treeItem?.children![1].children![1].label).toEqual("Name: New Scope");
+		expect(treeItem?.children![1].children![2].label).toEqual("Description: New Description");
+		expect(treeItem?.children![1].children![3].label).toEqual("Consent: Admins Only");
+		expect(treeItem?.children![1].children![4].label).toEqual("Enabled: Yes");
 	});
 
 	test("Edit scope but cancel from scope input", async () => {
@@ -375,10 +389,11 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		expect(vscode.window.showInputBox).toHaveBeenCalled();
 		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
-		expect(treeItem?.children![0].children![0].label).toEqual("Scope: Sample.One");
-		expect(treeItem?.children![0].children![1].label).toEqual("Description: Sample description one");
-		expect(treeItem?.children![0].children![2].label).toEqual("Consent: Admins and Users");
-		expect(treeItem?.children![0].children![3].label).toEqual("Enabled: Yes");
+		expect(treeItem?.children![1].children![0].label).toEqual("Scope: Sample.One");
+		expect(treeItem?.children![1].children![1].label).toEqual("Name: Sample Scope One");
+		expect(treeItem?.children![1].children![2].label).toEqual("Description: Sample description one");
+		expect(treeItem?.children![1].children![3].label).toEqual("Consent: Admins and Users");
+		expect(treeItem?.children![1].children![4].label).toEqual("Enabled: Yes");
 	});
 
 	test("Edit scope but cancel from consent input", async () => {
@@ -399,10 +414,11 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		expect(vscode.window.showInputBox).toHaveBeenCalled();
 		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
-		expect(treeItem?.children![0].children![0].label).toEqual("Scope: Sample.One");
-		expect(treeItem?.children![0].children![1].label).toEqual("Description: Sample description one");
-		expect(treeItem?.children![0].children![2].label).toEqual("Consent: Admins and Users");
-		expect(treeItem?.children![0].children![3].label).toEqual("Enabled: Yes");
+		expect(treeItem?.children![1].children![0].label).toEqual("Scope: Sample.One");
+		expect(treeItem?.children![1].children![1].label).toEqual("Name: Sample Scope One");
+		expect(treeItem?.children![1].children![2].label).toEqual("Description: Sample description one");
+		expect(treeItem?.children![1].children![3].label).toEqual("Consent: Admins and Users");
+		expect(treeItem?.children![1].children![4].label).toEqual("Enabled: Yes");
 	});
 
 	test("Edit scope but cancel from display name input", async () => {
@@ -424,10 +440,11 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		expect(vscode.window.showInputBox).toHaveBeenCalled();
 		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
-		expect(treeItem?.children![0].children![0].label).toEqual("Scope: Sample.One");
-		expect(treeItem?.children![0].children![1].label).toEqual("Description: Sample description one");
-		expect(treeItem?.children![0].children![2].label).toEqual("Consent: Admins and Users");
-		expect(treeItem?.children![0].children![3].label).toEqual("Enabled: Yes");
+		expect(treeItem?.children![1].children![0].label).toEqual("Scope: Sample.One");
+		expect(treeItem?.children![1].children![1].label).toEqual("Name: Sample Scope One");
+		expect(treeItem?.children![1].children![2].label).toEqual("Description: Sample description one");
+		expect(treeItem?.children![1].children![3].label).toEqual("Consent: Admins and Users");
+		expect(treeItem?.children![1].children![4].label).toEqual("Enabled: Yes");
 	});
 
 	test("Edit scope but cancel from description input", async () => {
@@ -450,10 +467,11 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		expect(vscode.window.showInputBox).toHaveBeenCalled();
 		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
-		expect(treeItem?.children![0].children![0].label).toEqual("Scope: Sample.One");
-		expect(treeItem?.children![0].children![1].label).toEqual("Description: Sample description one");
-		expect(treeItem?.children![0].children![2].label).toEqual("Consent: Admins and Users");
-		expect(treeItem?.children![0].children![3].label).toEqual("Enabled: Yes");
+		expect(treeItem?.children![1].children![0].label).toEqual("Scope: Sample.One");
+		expect(treeItem?.children![1].children![1].label).toEqual("Name: Sample Scope One");
+		expect(treeItem?.children![1].children![2].label).toEqual("Description: Sample description one");
+		expect(treeItem?.children![1].children![3].label).toEqual("Consent: Admins and Users");
+		expect(treeItem?.children![1].children![4].label).toEqual("Enabled: Yes");
 	});
 
 	test("Edit scope but cancel from user consent display name input", async () => {
@@ -477,10 +495,11 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		expect(vscode.window.showInputBox).toHaveBeenCalled();
 		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
-		expect(treeItem?.children![0].children![0].label).toEqual("Scope: Sample.One");
-		expect(treeItem?.children![0].children![1].label).toEqual("Description: Sample description one");
-		expect(treeItem?.children![0].children![2].label).toEqual("Consent: Admins and Users");
-		expect(treeItem?.children![0].children![3].label).toEqual("Enabled: Yes");
+		expect(treeItem?.children![1].children![0].label).toEqual("Scope: Sample.One");
+		expect(treeItem?.children![1].children![1].label).toEqual("Name: Sample Scope One");
+		expect(treeItem?.children![1].children![2].label).toEqual("Description: Sample description one");
+		expect(treeItem?.children![1].children![3].label).toEqual("Consent: Admins and Users");
+		expect(treeItem?.children![1].children![4].label).toEqual("Enabled: Yes");
 	});
 
 	test("Edit scope but cancel from user consent description input", async () => {
@@ -505,10 +524,11 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		expect(vscode.window.showInputBox).toHaveBeenCalled();
 		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
-		expect(treeItem?.children![0].children![0].label).toEqual("Scope: Sample.One");
-		expect(treeItem?.children![0].children![1].label).toEqual("Description: Sample description one");
-		expect(treeItem?.children![0].children![2].label).toEqual("Consent: Admins and Users");
-		expect(treeItem?.children![0].children![3].label).toEqual("Enabled: Yes");
+		expect(treeItem?.children![1].children![0].label).toEqual("Scope: Sample.One");
+		expect(treeItem?.children![1].children![1].label).toEqual("Name: Sample Scope One");
+		expect(treeItem?.children![1].children![2].label).toEqual("Description: Sample description one");
+		expect(treeItem?.children![1].children![3].label).toEqual("Consent: Admins and Users");
+		expect(treeItem?.children![1].children![4].label).toEqual("Enabled: Yes");
 	});
 
 	test("Edit scope but cancel from state input", async () => {
@@ -534,10 +554,11 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		expect(vscode.window.showInputBox).toHaveBeenCalled();
 		await treeDataProvider.render();
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
-		expect(treeItem?.children![0].children![0].label).toEqual("Scope: Sample.One");
-		expect(treeItem?.children![0].children![1].label).toEqual("Description: Sample description one");
-		expect(treeItem?.children![0].children![2].label).toEqual("Consent: Admins and Users");
-		expect(treeItem?.children![0].children![3].label).toEqual("Enabled: Yes");
+		expect(treeItem?.children![1].children![0].label).toEqual("Scope: Sample.One");
+		expect(treeItem?.children![1].children![1].label).toEqual("Name: Sample Scope One");
+		expect(treeItem?.children![1].children![2].label).toEqual("Description: Sample description one");
+		expect(treeItem?.children![1].children![3].label).toEqual("Consent: Admins and Users");
+		expect(treeItem?.children![1].children![4].label).toEqual("Enabled: Yes");
 	});
 
 	test("Edit but no permissions returned", async () => {
@@ -617,12 +638,13 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
-		expect(treeItem?.children!.length).toEqual(3);
-		expect(treeItem?.children![2].label).toEqual(newScopeAdminDisplayName);
-		expect(treeItem?.children![2].children![0].label).toEqual(`Scope: ${newScopeValue}`);
-		expect(treeItem?.children![2].children![1].label).toEqual(`Description: ${newScopeAdminDescription}`);
-		expect(treeItem?.children![2].children![2].label).toEqual("Consent: Admins Only");
-		expect(treeItem?.children![2].children![3].label).toEqual("Enabled: Yes");
+		expect(treeItem?.children!.length).toEqual(5);
+		expect(treeItem?.children![4].label).toEqual(newScopeValue);
+		expect(treeItem?.children![4].children![0].label).toEqual(`Scope: ${newScopeValue}`);
+		expect(treeItem?.children![4].children![1].label).toEqual(`Name: ${newScopeAdminDisplayName}`);
+		expect(treeItem?.children![4].children![2].label).toEqual(`Description: ${newScopeAdminDescription}`);
+		expect(treeItem?.children![4].children![3].label).toEqual("Consent: Admins Only");
+		expect(treeItem?.children![4].children![4].label).toEqual("Enabled: Yes");
 	});
 
 	test("Add new scope but no permissions returned", async () => {
@@ -667,7 +689,7 @@ describe("OAuth2 Permission Scope Service Tests", () => {
 		const treeItem = await getTopLevelTreeItem(mockAppObjectId, treeDataProvider, "EXPOSED-API-PERMISSIONS");
 		expect(statusBarSpy).toHaveBeenCalled();
 		expect(iconSpy).toHaveBeenCalled();
-		expect(treeItem?.children!.length).toEqual(2);
+		expect(treeItem?.children!.length).toEqual(4);
 	});
 
 	test("Add new scope with admin display name too long error", async () => {

@@ -98,8 +98,7 @@ export class AppRoleService extends ServiceBase {
 		const role = roles.filter((r) => r.id === item.value!)[0];
 
 		switch (item.contextValue) {
-			case "ROLE-ENABLED":
-			case "ROLE-DISABLED":
+			case "ROLE-NAME":
 				// Prompt the user for the new display name.
 				const displayName = await this.inputDisplayName("Edit Display Name (1/1)", role.displayName!, validateAppRoleDisplayName);
 
