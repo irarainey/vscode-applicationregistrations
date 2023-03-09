@@ -19,7 +19,6 @@ import {
 	User,
 	AppRole,
 	RequiredResourceAccess,
-	PermissionScope,
 	ServicePrincipal,
 	ApiApplication,
 	NullableOption
@@ -31,6 +30,7 @@ import { addDays, format, isAfter } from "date-fns";
 import { GraphResult } from "../types/graph-result";
 import { clearStatusBarMessage, setStatusBarMessage } from "../utils/status-bar";
 import { errorHandler } from "../error-handler";
+import { isGuid } from "../utils/validation";
 
 // Application registration tree data provider for the tree view.
 export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
@@ -161,8 +161,8 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 
 		// Prompt the user for the filter text.
 		const newFilter = await window.showInputBox({
-			placeHolder: "Name starts with",
-			prompt: "Filter applications by display name",
+			placeHolder: "Name starts with or Application ID equals",
+			prompt: "Filter applications by display name or application ID",
 			value: this.filterText,
 			ignoreFocusOut: true
 		});
@@ -177,7 +177,11 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 		} else if (newFilter !== "" && newFilter !== this.filterText) {
 			// If the filter text is not empty then set the filter command and filter text.
 			this.filterText = newFilter!;
-			this.filterCommand = `startswith(displayName, \'${newFilter.replace(/'/g, "''")}\')`;
+			if(isGuid(newFilter)) {
+				this.filterCommand = `appId eq '${newFilter}'`;
+			} else {
+				this.filterCommand = `startswith(displayName, \'${newFilter.replace(/'/g, "''")}\')`;
+			}
 			await this.render(setStatusBarMessage("Filtering Application Registrations..."));
 		}
 	}

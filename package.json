@@ -70,17 +70,23 @@
 					"order": 2,
 					"deprecationMessage": "Deprecated: Please use Application List View instead."
 				},
+				"applicationRegistrations.createServicePrincipalWithApplication": {
+					"type": "boolean",
+					"description": "Creates a service principal for the application when creating a new application registration",
+					"default": true,
+					"order": 3
+				},
 				"applicationRegistrations.useEventualConsistency": {
 					"type": "boolean",
 					"description": "Use the eventual consistency header on Graph API calls for generating the application list. Enable this if you are working with a large number of applications.",
 					"default": true,
-					"order": 3
+					"order": 4
 				},
 				"applicationRegistrations.showApplicationCountWarning": {
 					"type": "boolean",
 					"description": "Displays a warning when loading the application list if it is detected that you could benefit from a change in the eventual consistency setting.",
 					"default": true,
-					"order": 4
+					"order": 5
 				},
 				"applicationRegistrations.maximumQueryApps": {
 					"type": "number",
@@ -88,19 +94,19 @@
 					"default": 100,
 					"minimum": 1,
 					"maximum": 200,
-					"order": 5
+					"order": 6
 				},
 				"applicationRegistrations.includeEntraPortal": {
 					"type": "boolean",
 					"description": "Includes Open in Entra Portal alongside options to open applications or users in the Azure portal.",
 					"default": true,
-					"order": 6
+					"order": 7
 				},
 				"applicationRegistrations.omitTenantIdFromPortalRequests": {
 					"type": "boolean",
 					"description": "Disables the inclusion of tenant IDs in portal URLs when opening applications or users in the Azure and/or Entra portals. Including the tenant ID in the portal URLs can help when you have logged into the extension with a non-default tenant and try to open items in the portals.",
 					"default": false,
-					"order": 7
+					"order": 8
 				}
 			}
 		},

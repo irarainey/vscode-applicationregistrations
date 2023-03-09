@@ -14,6 +14,7 @@ It allows for easy viewing, copying, adding, and editing of most the core applic
 * Front-channel Logout URL
 * API Permissions
 * Exposed API Permissions
+* Pre-Authorized Applications
 * App Roles
 * Owners
 * Deleted Applications
@@ -82,6 +83,8 @@ There are a number of user settings to control the behaviour of this extension. 
     * This controls how many applications to show in the list. When **Use Eventual Consistency** is enabled applications will be ordered by display name by the Graph API. If it is not enabled then applications are ordered client-side from the total list defined in **Maximum Query Apps**. Default value is `40`.
 * **Application List View**
     * Selects the type of applications to show in the list view between Owned, All, and Deleted applications. Default value is `Owned Applications`.
+* **Create Service Principal With Application**
+    * Creates a service principal for the application when creating a new application registration. Default value is `true`.
 * **Use Eventual Consistency**
     * When selected the `ConsistencyLevel: eventual` header is added to Graph API calls. This opens up the opportunity for advanced query functionality such as server-side ordering and filtering. However enabling this setting results in applications and properties only being shown in the list when all copies have been updated. This can lead to a delay in recent changes being shown. If you are working with a large number of applications (more than 200) it is recommended to enable this. Default value is `true`.
 * **Show Application Count Warning**
