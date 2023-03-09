@@ -1159,20 +1159,25 @@ export class AppRegTreeDataProvider implements TreeDataProvider<AppRegItem> {
 							: await Promise.all(
 									api!.preAuthorizedApplications!.map(async (client) => {
 										let clientName: string = client.appId!;
+										let iconColour = "list.errorForeground";
+										let tooltip = "Application not found";
 										const result: GraphResult<ServicePrincipal> = await this.graphRepository.findServicePrincipalByAppId(
 											client.appId!
 										);
 										if (result.success === true && result.value !== undefined) {
 											clientName = result.value.displayName!;
+											iconColour = "editor.foreground";
+											tooltip = result.value.displayName!;
 										}
 										return new AppRegItem({
 											label: clientName,
 											context: "AUTHORIZED-CLIENT",
-											iconPath: new ThemeIcon("preview"),
-											baseIcon: new ThemeIcon("preview"),
+											iconPath: new ThemeIcon("preview", new ThemeColor(iconColour)),
+											baseIcon: new ThemeIcon("preview", new ThemeColor(iconColour)),
 											objectId: element.objectId,
 											resourceAppId: client.appId!,
 											value: element.resourceAppId!,
+											tooltip: tooltip,
 											children: client.delegatedPermissionIds!.map((scope) => {
 												const child = api!.oauth2PermissionScopes!.find((scp) => scp.id === scope);
 												if (child !== undefined) {
